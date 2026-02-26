@@ -8,7 +8,7 @@ export default function Landing() {
       {/* HERO */}
       <section style={styles.hero}>
         <h1 style={styles.title}>
-          List & Dictionary Struktur Data Python
+          List & Dictionary Struktur Data Python Roy Ganteng 
         </h1>
 
         <p style={styles.subtitle}>
