@@ -17,7 +17,7 @@ export default function Navbar() {
       <div style={styles.left}>
         <Link to="/">
           <img src={logo} alt="ListDictionaryLearn Logo" style={styles.logoImage} 
-          filter = "brightness(1.1) contrast(1.1)"/>
+          filter = "brightness(5) contrast(5)"/>
         </Link>
       </div>
 
