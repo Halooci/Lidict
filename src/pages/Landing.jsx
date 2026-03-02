@@ -31,7 +31,7 @@ export default function Landing() {
       </section>
 
       {/* MATERI */}
-      <section style={styles.material}>
+      {/* <section style={styles.material}>
         <div style={styles.card}>
           <h2 style={styles.cardTitle}>📋 List</h2>
           <p style={styles.cardText}>
@@ -47,7 +47,7 @@ export default function Landing() {
             cocok untuk representasi data yang terstruktur dan cepat diakses.
           </p>
         </div>
-      </section>
+      </section> */}
 
       {/* FOOTER */}
       <footer style={styles.footer}>
