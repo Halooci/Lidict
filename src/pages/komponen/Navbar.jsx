@@ -16,7 +16,8 @@ export default function Navbar() {
       {/* LEFT (LOGO IMAGE) */}
       <div style={styles.left}>
         <Link to="/">
-          <img src={logo} alt="ListDictionaryLearn Logo" style={styles.logoImage} />
+          <img src={logo} alt="ListDictionaryLearn Logo" style={styles.logoImage} 
+          filter = "brightness(1.1) contrast(1.1)"/>
         </Link>
       </div>
 
