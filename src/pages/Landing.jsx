@@ -68,7 +68,7 @@ const styles = {
 
   hero: {
     minHeight: "100vh",
-    background: "linear-gradient(135deg, #3a86c4, #b89344)",
+    background: "linear-gradient(135deg, #b89344, #3a86c4)",
     color: "white",
 
     display: "flex",
