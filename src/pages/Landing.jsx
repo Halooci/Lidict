@@ -63,6 +63,8 @@ const styles = {
     backgroundColor: "#f5f7fa",
     width: "100%",
     minHeight: "100vh",
+    display: "flex",
+    flexDirection: "column",
     overflowX: "hidden",
   },
 
