@@ -63,7 +63,7 @@ const styles = {
     left: 0,
     width: "100%",
     height: "64px",
-    backgroundColor: "#2f6fa3",
+    background: "linear-gradient(90deg, #020407, #2f6fa3)",
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
@@ -73,13 +73,8 @@ const styles = {
   },
 
   left: {
-  display: "flex",
-  alignItems: "center",
-  gap: "8px",
-  flexShrink: 0,
-  backgroundColor: "rgba(0, 0, 0, 0.8)",
-  padding: "6px 12px",
-  borderRadius: "8px"
+    display: "flex",
+    alignItems: "center",
   },
 
   logoImage: {
