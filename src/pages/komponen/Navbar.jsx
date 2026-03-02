@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { useState } from "react";
-import logo from "../../assets/logo-lidict-new.png"; 
+import logo from "../../assets/logo-media-baru.png"; 
 
 export default function Navbar() {
   const [hovered, setHovered] = useState(null);
@@ -16,7 +16,7 @@ export default function Navbar() {
       {/* LEFT (LOGO IMAGE) */}
       <div style={styles.left}>
         <Link to="/">
-          <img src={logo} alt="LiDict Logo" style={styles.logoImage} />
+          <img src={logo} alt="ListDictionaryLearn Logo" style={styles.logoImage} />
         </Link>
       </div>
 
