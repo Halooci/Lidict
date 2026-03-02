@@ -69,7 +69,8 @@ const styles = {
   },
 
   hero: {
-    minHeight: "100vh",
+    flex: 1,
+    paddingTop: "64px",
     background: "linear-gradient(135deg, #b89344, #3a86c4)",
     color: "white",
 
@@ -79,7 +80,8 @@ const styles = {
     alignItems: "center",
 
     textAlign: "center",
-    padding: "0 20px",
+    paddingLeft: "20px",
+    paddingRight: "20px",
   },
 
   title: {
