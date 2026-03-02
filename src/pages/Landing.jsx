@@ -8,7 +8,7 @@ export default function Landing() {
       {/* HERO */}
       <section style={styles.hero}>
         <h1 style={styles.title}>
-          List & Dictionary Struktur Data Python Roy Ganteng 
+          List & Dictionary Struktur Data Python
         </h1>
 
         <p style={styles.subtitle}>
@@ -68,7 +68,7 @@ const styles = {
 
   hero: {
     minHeight: "100vh",
-    background: "linear-gradient(135deg, #b89344, #3a86c4)",
+    background: "linear-gradient(135deg, #3a86c4, #b89344)",
     color: "white",
 
     display: "flex",
