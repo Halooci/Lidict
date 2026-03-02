@@ -77,7 +77,7 @@ const styles = {
   alignItems: "center",
   gap: "8px",
   flexShrink: 0,
-  backgroundColor: "rgba(0, 0, 0, 0.1)",
+  backgroundColor: "rgba(0, 0, 0, 0.8)",
   padding: "6px 12px",
   borderRadius: "8px"
   },
