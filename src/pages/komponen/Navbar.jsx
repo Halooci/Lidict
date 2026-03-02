@@ -73,8 +73,13 @@ const styles = {
   },
 
   left: {
-    display: "flex",
-    alignItems: "center",
+  display: "flex",
+  alignItems: "center",
+  gap: "8px",
+  flexShrink: 0,
+  backgroundColor: "rgba(0, 0, 0, 0.1)",
+  padding: "6px 12px",
+  borderRadius: "8px"
   },
 
   logoImage: {
