@@ -32,7 +32,7 @@ export default function Navbar() {
         </Link>
 
         <Link
-          to="/PendahuluanList"
+          to="/List/PendahuluanList"
           style={getNavItemStyle("materi")}
           onMouseEnter={() => setHovered("materi")}
           onMouseLeave={() => setHovered(null)}
