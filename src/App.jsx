@@ -3,7 +3,7 @@ import Landing from "./pages/Landing";
 import Materi1 from "./pages/materi/Materi1";
 import Materi2 from "./pages/materi/Materi2";
 // import Pengantar from "./pages/materi/pendahuluan/Pengantar";
-import KonsepDasar from "./pages/materi/List/PendahuluanList";
+import PendahuluanList from "./pages/materi/List/PendahuluanList";
 import PembuatanAksesElement from "./pages/materi/List/PembuatanAksesElement";
 import OperasiDanManipulasi from "./pages/materi/List/OperasiDanManipulasi";
 import Rangkuman from "./pages/materi/List/Rangkuman";
