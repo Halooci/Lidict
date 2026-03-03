@@ -7,6 +7,7 @@ export default function SidebarMateri() {
   const getDefaultAccordion = () => {
     // if (currentPath === "/Pengantar") return "pendahuluan";
     if (currentPath.startsWith("/List")) return "list";
+    if (currentPath.startsWith("/NestedList")) return "NestedList";
     if (currentPath.startsWith("/Dictionary")) return "dictionary";
     if (currentPath.startsWith("/Evaluasi")) return "evaluasi";
     return null;
