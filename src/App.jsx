@@ -9,11 +9,11 @@ import OperasiDanManipulasi from "./pages/materi/List/OperasiDanManipulasi";
 import Rangkuman from "./pages/materi/List/Rangkuman";
 import Kuis1 from "./pages/materi/List/Kuis1";
 
-import PendahuluanList from "./pages/materi/NestedList/PendahuluanNestedList";
-import PembuatanAksesElement from "./pages/materi/NestedList/PembuatanAksesNestedList";
-import OperasiDanManipulasi from "./pages/materi/NestedList/OperasiManipulasiNestedList";
-import Rangkuman from "./pages/materi/NestedList/Rangkuman";
-import Kuis1 from "./pages/materi/NestedList/KuisNestedList";
+import PendahuluanNestedList from "./pages/materi/NestedList/PendahuluanNestedList";
+import PembuatanAksesNestedList from "./pages/materi/NestedList/PembuatanAksesNestedList";
+import OperasiManipulasiNestedList from "./pages/materi/NestedList/OperasiManipulasiNestedList";
+import RangkumanNestedList from "./pages/materi/NestedList/RangkumanNested List";
+import KuisNestedList from "./pages/materi/NestedList/KuisNestedList";
 
 import KonsepDasarDictionary from "./pages/materi/Dictionary/KonsepDasarDictionary";
 import PembuatanAksesElementDictionary from "./pages/materi/Dictionary/PembuatanAksesElementDictionary";
