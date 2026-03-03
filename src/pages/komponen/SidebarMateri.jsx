@@ -5,7 +5,7 @@ export default function SidebarMateri() {
 
   // Tentukan accordion aktif berdasarkan URL
   const getDefaultAccordion = () => {
-    if (currentPath === "/Pengantar") return "pendahuluan";
+    // if (currentPath === "/Pengantar") return "pendahuluan";
     if (currentPath.startsWith("/List")) return "list";
     if (currentPath.startsWith("/Dictionary")) return "dictionary";
     if (currentPath.startsWith("/Evaluasi")) return "evaluasi";
@@ -18,14 +18,14 @@ export default function SidebarMateri() {
 
   return (
     <aside style={styles.sidebar}>
-      <Accordion
+      {/* <Accordion
         id="pendahuluan"
         title="Pendahuluan"
         activeAccordion={activeAccordion}
         setActiveAccordion={setActiveAccordion}
       >
         <SubItem label="Pengantar" to="/Pengantar" />
-      </Accordion>
+      </Accordion> */}
 
       <Accordion
         id="list"
@@ -33,7 +33,7 @@ export default function SidebarMateri() {
         activeAccordion={activeAccordion}
         setActiveAccordion={setActiveAccordion}
       >
-        <SubItem label="Konsep Dasar" to="/List/KonsepDasar" />
+        <SubItem label="Konsep Dasar" to="/List/PendahuluanList" />
         <SubItem label="Pembuatan dan Akses Element" to="/List/PembuatanAksesElement"/>
         <SubItem label="Operasi dan Manipulasi" to="/List/OperasiDanManipulasi" />
         <SubItem label="Rangkuman" to="/List/Rangkuman" />

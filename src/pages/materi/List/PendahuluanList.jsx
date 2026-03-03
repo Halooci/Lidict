@@ -2,7 +2,7 @@ import { useState } from "react";
 import Navbar from "../../komponen/Navbar";
 import SidebarMateri from "../../komponen/SidebarMateri";
 
-export default function KonsepDasar() {
+export default function PendahuluanList() {
 
   /* ================= QUIZ 5 SOAL ================= */
   const quizQuestions = [
