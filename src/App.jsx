@@ -23,8 +23,8 @@ function App() {
         <Route path="/" element={<Landing />} />
         <Route path="/Materi1" element={<Materi1 />} />
         <Route path="/Materi2" element={<Materi2 />} />
-        <Route path="/Pengantar" element={<Pengantar />} />
-        <Route path="/List/KonsepDasar" element={<KonsepDasar />} />
+        {/* <Route path="/Pengantar" element={<Pengantar />} /> */}
+        <Route path="/List/PendahuluanList" element={<PendahuluanList />} />
         <Route path="/List/PembuatanAksesElement" element={<PembuatanAksesElement />} />
         <Route path="/List/OperasiDanManipulasi" element={<OperasiDanManipulasi />} />
         <Route path="/List/Rangkuman" element={<Rangkuman />} />
