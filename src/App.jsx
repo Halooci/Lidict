@@ -8,12 +8,19 @@ import PembuatanAksesElement from "./pages/materi/List/PembuatanAksesElement";
 import OperasiDanManipulasi from "./pages/materi/List/OperasiDanManipulasi";
 import Rangkuman from "./pages/materi/List/Rangkuman";
 import Kuis1 from "./pages/materi/List/Kuis1";
-import KonsepDasarDictionary from "./pages/materi/dictionary/KonsepDasarDictionary";
-import PembuatanAksesElementDictionary from "./pages/materi/dictionary/PembuatanAksesElementDictionary";
-import OperasiDasarDictionary from "./pages/materi/dictionary/OperasiDasarDictionary";
-import RangkumanDictionary from "./pages/materi/dictionary/RangkumanDictionary";
-import Kuis2 from "./pages/materi/dictionary/Kuis2";
-import EvaluasiAkhir from "./pages/materi/evaluasi/EvaluasiAkhir";
+
+import PendahuluanList from "./pages/materi/NestedList/PendahuluanNestedList";
+import PembuatanAksesElement from "./pages/materi/NestedList/PembuatanAksesNestedList";
+import OperasiDanManipulasi from "./pages/materi/NestedList/OperasiManipulasiNestedList";
+import Rangkuman from "./pages/materi/NestedList/Rangkuman";
+import Kuis1 from "./pages/materi/NestedList/KuisNestedList";
+
+import KonsepDasarDictionary from "./pages/materi/Dictionary/KonsepDasarDictionary";
+import PembuatanAksesElementDictionary from "./pages/materi/Dictionary/PembuatanAksesElementDictionary";
+import OperasiDasarDictionary from "./pages/materi/Dictionary/OperasiDasarDictionary";
+import RangkumanDictionary from "./pages/materi/Dictionary/RangkumanDictionary";
+import Kuis2 from "./pages/materi/Dictionary/Kuis2";
+import EvaluasiAkhir from "./pages/materi/Evaluasi/EvaluasiAkhir";
 import InformasiPage from "./pages/komponen/informasi/InformasiPage";
 
 function App() {
@@ -29,6 +36,13 @@ function App() {
         <Route path="/List/OperasiDanManipulasi" element={<OperasiDanManipulasi />} />
         <Route path="/List/Rangkuman" element={<Rangkuman />} />
         <Route path="/List/Kuis1" element={<Kuis1 />} />
+
+        <Route path="/NestedList/PendahuluanNestedList" element={<PendahuluanNestedList />} />
+        <Route path="/NestedList/PembuatanAksesNestedList" element={<PembuatanAksesNestedList />} />
+        <Route path="/NestedList/OperasiManipulasiNestedList" element={<OperasiManipulasiNestedList />} />
+        <Route path="/NestedList/RangkumanNestedList" element={<RangkumanNestedList />} />
+        <Route path="/NestedList/KuisNestedList" element={<KuisNestedList />} />
+
         <Route path="/Dictionary/KonsepDasarDictionary" element={<KonsepDasarDictionary />} />
         <Route path="/Dictionary/PembuatanAksesElementDictionary" element={<PembuatanAksesElementDictionary />} />
         <Route path="/Dictionary/OperasiDasarDictionary" element={<OperasiDasarDictionary />} />

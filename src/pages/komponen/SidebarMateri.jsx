@@ -33,11 +33,24 @@ export default function SidebarMateri() {
         activeAccordion={activeAccordion}
         setActiveAccordion={setActiveAccordion}
       >
-        <SubItem label="Konsep Dasar" to="/List/PendahuluanList" />
+        <SubItem label="Pendahuluan List" to="/List/PendahuluanList" />
         <SubItem label="Pembuatan dan Akses Element" to="/List/PembuatanAksesElement"/>
         <SubItem label="Operasi dan Manipulasi" to="/List/OperasiDanManipulasi" />
-        <SubItem label="Rangkuman" to="/List/Rangkuman" />
+        <SubItem label="Rangkuman List" to="/List/Rangkuman" />
         <SubItem label="Kuis List" to="/List/Kuis1" />
+      </Accordion>
+
+      <Accordion
+        id="NestedList"
+        title="NestedList"
+        activeAccordion={activeAccordion}
+        setActiveAccordion={setActiveAccordion}
+      >
+        <SubItem label="Pendahuluan Nested List" to="/Nested List/PendahuluanNested List" />
+        <SubItem label="Pembuatan dan Akses Element Nested List" to="/Nested List/PembuatanAksesNested List"/>
+        <SubItem label="Operasi dan Manipulasi Nested List" to="/List/OperasiManipulasiNested List" />
+        <SubItem label="Rangkuman Nested List" to="/Nested List/RangkumanNested List" />
+        <SubItem label="Kuis Nested List" to="/Nested List/KuisNested List" />
       </Accordion>
 
       <Accordion
@@ -49,7 +62,7 @@ export default function SidebarMateri() {
         <SubItem label="Konsep Dasar Dictionary" to="/Dictionary/KonsepDasarDictionary" />
         <SubItem label="Pembuatan dan Akses Dictionary" to="/Dictionary/PembuatanAksesElementDictionary" />
         <SubItem label="Operasi Dasar Dictionary" to="/Dictionary/OperasiDasarDictionary" />
-        <SubItem label="Rangkuman" to="/Dictionary/RangkumanDictionary" />
+        <SubItem label="Rangkuman Dictionary" to="/Dictionary/RangkumanDictionary" />
         <SubItem label="Kuis Dictionary" to="/Dictionary/Kuis2" />
       </Accordion>
 
