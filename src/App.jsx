@@ -12,7 +12,7 @@ import Kuis1 from "./pages/materi/List/Kuis1";
 import PendahuluanNestedList from "./pages/materi/NestedList/PendahuluanNestedList";
 import PembuatanAksesNestedList from "./pages/materi/NestedList/PembuatanAksesNestedList";
 import OperasiManipulasiNestedList from "./pages/materi/NestedList/OperasiManipulasiNestedList";
-import RangkumanNestedList from "./pages/materi/NestedList/RangkumanNested List";
+import RangkumanNestedList from "./pages/materi/NestedList/RangkumanNestedList";
 import KuisNestedList from "./pages/materi/NestedList/KuisNestedList";
 
 import KonsepDasarDictionary from "./pages/materi/Dictionary/KonsepDasarDictionary";

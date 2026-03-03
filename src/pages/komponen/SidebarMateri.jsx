@@ -47,11 +47,11 @@ export default function SidebarMateri() {
         activeAccordion={activeAccordion}
         setActiveAccordion={setActiveAccordion}
       >
-        <SubItem label="Pendahuluan Nested List" to="/Nested List/PendahuluanNested List" />
-        <SubItem label="Pembuatan dan Akses Element Nested List" to="/Nested List/PembuatanAksesNested List"/>
-        <SubItem label="Operasi dan Manipulasi Nested List" to="/List/OperasiManipulasiNested List" />
-        <SubItem label="Rangkuman Nested List" to="/Nested List/RangkumanNested List" />
-        <SubItem label="Kuis Nested List" to="/Nested List/KuisNested List" />
+        <SubItem label="Pendahuluan Nested List" to="/NestedList/PendahuluanNestedList" />
+        <SubItem label="Pembuatan dan Akses Element Nested List" to="/NestedList/PembuatanAksesNestedList"/>
+        <SubItem label="Operasi dan Manipulasi Nested List" to="/NestedList/OperasiManipulasiNestedList" />
+        <SubItem label="Rangkuman Nested List" to="/NestedList/RangkumanNestedList" />
+        <SubItem label="Kuis Nested List" to="/NestedList/KuisNestedList" />
       </Accordion>
 
       <Accordion
