@@ -183,6 +183,10 @@ const [showEksplorasiJawaban, setShowEksplorasiJawaban] = useState(false);
                   langsung oleh pengguna.
                 </p>
 
+                <p style={styles.text}>
+                  <strong>Contoh kode program:</strong>
+                </p>
+
                 <pre style={styles.code}>
 {`buah = ["durian", "nanas", "mangga", "rambutan"]
 print(buah)`}  
@@ -206,6 +210,10 @@ print(buah)`}
                   bila kita ingin mengambil elemen terakhir tanpa mengetahui panjang list.
                 </p>
 
+                <p style={styles.text}>
+                  <strong>Contoh kode program:</strong>
+                </p>
+
                 <pre style={styles.code}>
 {`data = ["durian", "nanas", "mangga", "rambutan"]
 print(data[0])   # durian
@@ -224,6 +232,10 @@ print(data[-1])  # rambutan`}
                   List bersifat mutable, artinya elemen di dalam list dapat
                   diubah, ditambah, atau dihapus tanpa membuat list baru,
                   sifat ini meembuat list sangat fleksibel dalam pengolahan data.
+                </p>
+
+                <p style={styles.text}>
+                  <strong>Contoh kode program:</strong>
                 </p>
 
                 <pre style={styles.code}>
@@ -247,6 +259,10 @@ print(buah)`}
                   seperti string, integer, float, dan boolean.
                 </p>
 
+                <p style={styles.text}>
+                  <strong>Contoh kode program:</strong>
+                </p>
+              
                 <pre style={styles.code}>
 {`data = ["Andi", 20, 175.5, True]
 print(data)`}  
@@ -267,6 +283,10 @@ print(data)`}
                   List memiliki ukuran yang dinamis, artinya ukuran list dapat
                   berubah secara otomatis ketika elemen ditambahkan atau
                   dihapus.
+                </p>
+
+                <p style={styles.text}>
+                  <strong>Contoh kode program:</strong>
                 </p>
 
                 <pre style={styles.code}>
@@ -291,6 +311,10 @@ print(angka)`}
                   banyak digunakan untuk membuat representasi tabel sederhana.
                 </p>
 
+                <p style={styles.text}>
+                    <strong>Contoh data nilai mahasiswa:</strong>
+                </p>
+
                 <table
                   style={{
                     width: "100%",
@@ -299,7 +323,8 @@ print(angka)`}
                     marginBottom: "20px",
                   }}
                 >
-                  <thead>
+
+                                    <thead>
                     <tr style={{ backgroundColor: "#306998", color: "white" }}>
                       <th style={styles.td}>Nama</th>
                       <th style={styles.td}>UTS</th>
@@ -324,6 +349,10 @@ print(angka)`}
                     </tr>
                   </tbody>
                 </table>
+                
+                <p style={styles.text}>
+                  <strong>Contoh kode program:</strong>
+                </p>
 
                 <pre style={styles.code}>
 {`nilai = [
@@ -564,5 +593,10 @@ const styles = {
     padding: "8px 18px",
     borderRadius: "8px",
     cursor: "pointer"
+  },
+  td: {
+  border: "1px solid #ddd",
+  padding: "10px",
+  textAlign: "center"
   }
 };

@@ -44,6 +44,10 @@ export default function PembuatanAksesElement() {
                   string, integer, float, maupun tipe data lainnya.
                 </p>
 
+                <p style={styles.text}>
+                  <strong>Contoh kode program:</strong>
+                </p>
+
                 <pre style={styles.code}>
 {`buah = ["apel", "jeruk", "mangga"]
 print(buah)`}  
@@ -62,6 +66,10 @@ print(buah)`}
                   Setiap elemen dalam list memiliki indeks yang digunakan untuk
                   mengakses elemen tersebut. Python menggunakan indeks yang
                   dimulai dari angka 0 untuk elemen pertama.
+                </p>
+
+                <p style={styles.text}>
+                  <strong>Contoh kode program:</strong>
                 </p>
 
                 <pre style={styles.code}>
@@ -84,6 +92,10 @@ print(buah[1])`}
                   untuk mengakses elemen terakhir.
                 </p>
 
+                <p style={styles.text}>
+                  <strong>Contoh kode program:</strong>
+                </p>
+
                 <pre style={styles.code}>
 {`buah = ["apel", "jeruk", "mangga"]
 print(buah[-1])
@@ -103,6 +115,10 @@ print(buah[-2])`}
                   Slicing dituliskan dengan format <code>list[awal:akhir]</code>.
                 </p>
 
+                <p style={styles.text}>
+                  <strong>Contoh kode program:</strong>
+                </p>
+
                 <pre style={styles.code}>
 {`angka = [1, 2, 3, 4, 5]
 print(angka[1:4])`}  
@@ -120,6 +136,10 @@ print(angka[1:4])`}
                   Nested list adalah list yang berisi list lain di dalamnya.
                   Struktur ini sering digunakan untuk merepresentasikan data
                   bertingkat atau data berbentuk tabel.
+                </p>
+
+                <p style={styles.text}>
+                  <strong>Contoh kode program:</strong>
                 </p>
 
                 <pre style={styles.code}>
@@ -143,7 +163,11 @@ print(angka[1:4])`}
                   Indeks pertama digunakan untuk memilih baris, sedangkan indeks
                   kedua digunakan untuk memilih kolom.
                 </p>
-
+                
+                <p style={styles.text}>
+                  <strong>Contoh kode program:</strong>
+                </p>
+                
                 <pre style={styles.code}>
 {`print(nilai[0][0])
 print(nilai[1][1])`}  

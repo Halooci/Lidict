@@ -43,6 +43,10 @@ export default function RangkumanList() {
                   langsung oleh pengguna.
                 </p>
 
+                <p style={styles.text}>
+                  <strong>Contoh kode program:</strong>
+                </p>
+
                 <pre style={styles.code}>
 {`buah = ["durian", "nanas", "mangga", "rambutan"]
 print(buah)`}  
@@ -66,6 +70,10 @@ print(buah)`}
                   bila kita ingin mengambil elemen terakhir tanpa mengetahui panjang list.
                 </p>
 
+                <p style={styles.text}>
+                  <strong>Contoh kode program:</strong>
+                </p>
+
                 <pre style={styles.code}>
 {`data = ["durian", "nanas", "mangga", "rambutan"]
 print(data[0])   # durian
@@ -84,6 +92,10 @@ print(data[-1])  # rambutan`}
                   List bersifat mutable, artinya elemen di dalam list dapat
                   diubah, ditambah, atau dihapus tanpa membuat list baru,
                   sifat ini meembuat list sangat fleksibel dalam pengolahan data.
+                </p>
+
+                <p style={styles.text}>
+                  <strong>Contoh kode program:</strong>
                 </p>
 
                 <pre style={styles.code}>
@@ -105,6 +117,10 @@ print(buah)`}
                 <p style={styles.text}>
                   List dapat menyimpan berbagai tipe data dalam satu struktur,
                   seperti string, integer, float, dan boolean.
+                </p>
+
+                <p style={styles.text}>
+                  <strong>Contoh kode program:</strong>
                 </p>
 
                 <pre style={styles.code}>
@@ -129,6 +145,10 @@ print(data)`}
                   dihapus.
                 </p>
 
+                <p style={styles.text}>
+                  <strong>Contoh kode program:</strong>
+                </p>
+
                 <pre style={styles.code}>
 {`angka = [1, 2, 3]
 angka.append(4)
@@ -149,6 +169,10 @@ print(angka)`}
                   atau data dua dimensi, seperti tabel nilai, matriks, atau data kelompok.
                   Setiap elemen dalamn nested list dapat berupa list baru. Nested list 
                   banyak digunakan untuk membuat representasi tabel sederhana.
+                </p>
+
+                <p style={styles.text}>
+                  <strong>Contoh data nilai mahasiswa:</strong>
                 </p>
 
                 <table
@@ -185,6 +209,10 @@ print(angka)`}
                   </tbody>
                 </table>
 
+                <p style={styles.text}>
+                  <strong>Contoh kode program:</strong>
+                </p>
+                
                 <pre style={styles.code}>
 {`nilai = [
   ["Nova", 80, 90],

@@ -60,12 +60,20 @@ export default function OperasiManipulasiList() {
                   tambah (+).
                 </p>
 
+                <p style={styles.text}>
+                  <strong>Contoh kode program:</strong>
+                </p>
+
                 <pre style={styles.code}>
 {`a = [1, 2, 3]
 b = [4, 5, 6]
 c = a + b
 print(c)`}  
                 </pre>
+
+                <p style={styles.text}>
+                  <strong>Output:</strong>
+                </p>
 
                 <pre style={styles.code}>
 {`[1, 2, 3, 4, 5, 6]`}  
@@ -86,10 +94,18 @@ print(c)`}
                   dalam suatu list menggunakan operator tanda bintang (*).
                 </p>
 
+                <p style={styles.text}>
+                  <strong>Contoh kode program:</strong>
+                </p>
+
                 <pre style={styles.code}>
 {`data = [1, 2, 3]
 print(data * 3)`}  
                 </pre>
+
+                <p style={styles.text}>
+                  <strong>Output:</strong>
+                </p>
 
                 <pre style={styles.code}>
 {`[1, 2, 3, 1, 2, 3, 1, 2, 3]`}  
@@ -108,11 +124,19 @@ print(data * 3)`}
                   terdapat di dalam list atau tidak menggunakan operator <code>in</code>.
                 </p>
 
+                <p style={styles.text}>
+                  <strong>Contoh kode program:</strong>
+                </p>
+
                 <pre style={styles.code}>
 {`buah = ["apel", "jeruk", "mangga"]
 print("mangga" in buah)
 print("pisang" in buah)`}  
                 </pre>
+
+                <p style={styles.text}>
+                  <strong>Output:</strong>
+                </p>
 
                 <pre style={styles.code}>
 {`True
@@ -134,11 +158,19 @@ False`}
                   terkecil ke nilai terbesar menggunakan perintah <code>sort()</code>.
                 </p>
 
+                <p style={styles.text}>
+                  <strong>Contoh kode program:</strong>
+                </p>
+
                 <pre style={styles.code}>
 {`angka = [5, 3, 8, 1, 7, 2]
 angka.sort()
 print(angka)`}  
                 </pre>
+
+                <p style={styles.text}>
+                  <strong>Output:</strong>
+                </p>
 
                 <pre style={styles.code}>
 {`[1, 2, 3, 5, 7, 8]`}  
@@ -157,6 +189,10 @@ print(angka)`}
                   cara, salah satunya menggunakan perintah append().
                 </p>
 
+                <p style={styles.text}>
+                  <strong>Contoh kode program:</strong>
+                </p>
+
                 <pre style={styles.code}>
 {`buah = ["durian", "nanas", "mangga", "rambutan"]
 buah.append("alpukat")
@@ -170,6 +206,10 @@ print(buah)`}
 
                 <h3 style={styles.subTitle}>Menambahkan pada Posisi Tertentu</h3>
 
+                <p style={styles.text}>
+                  <strong>Contoh kode program:</strong>
+                </p>
+
                 <pre style={styles.code}>
 {`buah = ["durian", "nanas", "mangga", "rambutan"]
 buah.insert(1, "alpukat")
@@ -182,6 +222,10 @@ print(buah)`}
                 </p>
 
                 <h3 style={styles.subTitle}>Menambahkan Banyak Elemen</h3>
+
+                <p style={styles.text}>
+                  <strong>Contoh kode program:</strong>
+                </p>
 
                 <pre style={styles.code}>
 {`buah = ["durian", "nanas", "mangga", "rambutan"]
@@ -199,6 +243,10 @@ print(buah)`}
                   Menghapus dan Mengganti Elemen
                 </h3>
 
+                <p style={styles.text}>
+                  <strong>Contoh kode program:</strong>
+                </p>
+
                 <pre style={styles.code}>
 {`buah.remove("jeruk")
 print(buah)`}  
@@ -208,6 +256,10 @@ print(buah)`}
                   Elemen "jeruk" dihapus dari list menggunakan perintah remove().
                 </p>
 
+                <p style={styles.text}>
+                  <strong>Contoh kode program:</strong>
+                </p>
+
                 <pre style={styles.code}>
 {`buah.pop(2)
 print(buah)`}  
@@ -215,6 +267,10 @@ print(buah)`}
 
                 <p style={styles.text}>
                   Elemen pada indeks ke-2 dihapus menggunakan perintah pop().
+                </p>
+
+                <p style={styles.text}>
+                  <strong>Contoh kode program:</strong>
                 </p>
 
                 <pre style={styles.code}>
@@ -230,6 +286,10 @@ print(buah)`}
                 {/* LENGTH */}
                 <h3 style={styles.subTitle}>Memeriksa Panjang List</h3>
 
+                <p style={styles.text}>
+                  <strong>Contoh kode program:</strong>
+                </p>
+
                 <pre style={styles.code}>
 {`print(len(buah))`}  
                 </pre>
@@ -244,6 +304,10 @@ print(buah)`}
                   Operasi pada Nested List
                 </h3>
 
+                <p style={styles.text}>
+                  <strong>Contoh kode program:</strong>
+                </p>
+
                 <pre style={styles.code}>
 {`data = [["Nitta", 80], ["Lita", 85]]
 data[1][1] = 90
@@ -257,6 +321,10 @@ print(data)`}
 
                 <h3 style={styles.subTitle}>Menambah Baris Baru</h3>
 
+                <p style={styles.text}>
+                  <strong>Contoh kode program:</strong>
+                </p>
+                
                 <pre style={styles.code}>
 {`data.append(["Citra", 78])
 print(data)`}  
