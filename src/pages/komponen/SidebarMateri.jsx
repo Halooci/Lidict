@@ -43,7 +43,7 @@ export default function SidebarMateri() {
 
       <Accordion
         id="NestedList"
-        title="NestedList"
+        title="Nested List"
         activeAccordion={activeAccordion}
         setActiveAccordion={setActiveAccordion}
       >
