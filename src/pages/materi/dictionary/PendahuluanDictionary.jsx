@@ -15,7 +15,7 @@ export default function PendahuluanDictionary() {
         {/* HEADER MATERI */}
         <div style={styles.header}>
           <div style={styles.headerAccent}></div>
-          <h1 style={styles.headerTitle}>KONSEP DASAR DICTIONARY</h1>
+          <h1 style={styles.headerTitle}>KONSEP DASAR DICTIONARYjnjknj</h1>
         </div>
 
         
