@@ -15,12 +15,12 @@ import OperasiDanManipulasiNestedList from "./pages/materi/NestedList/OperasiDan
 import RangkumanNestedList from "./pages/materi/NestedList/RangkumanNestedList";
 import KuisNestedList from "./pages/materi/NestedList/KuisNestedList";
 
-// import PendahuluanDictionary from "./pages/materi/Dictionary/PendahuluanDictionary";
-import { PendahuluanDiction } from "./pages/materi/Dictionary/PendahuluanDiction";
-import PembuatanAksesElementDictionary from "./pages/materi/Dictionary/PembuatanAksesElementDictionary";
-import ManipulasiDictionary from "./pages/materi/Dictionary/ManipulasiDictionary";
-import RangkumanDictionary from "./pages/materi/Dictionary/RangkumanDictionary";
-import KuisDictionary from "./pages/materi/Dictionary/KuisDictionary";
+import PendahuluanDictionary from "./pages/materi/dictionary/PendahuluanDictionary";
+// import { PendahuluanDiction } from "./pages/materi/dictionary/PendahuluanDiction";
+import PembuatanAksesElementDictionary from "./pages/materi/dictionary/PembuatanAksesElementDictionary";
+import ManipulasiDictionary from "./pages/materi/dictionary/ManipulasiDictionary";
+import RangkumanDictionary from "./pages/materi/dictionary/RangkumanDictionary";
+import KuisDictionary from "./pages/materi/dictionary/KuisDictionary";
 
 import EvaluasiAkhir from "./pages/materi/Evaluasi/EvaluasiAkhir";
 import InformasiPage from "./pages/komponen/informasi/InformasiPage";
@@ -45,7 +45,7 @@ function App() {
         <Route path="/NestedList/RangkumanNestedList" element={<RangkumanNestedList />} />
         <Route path="/NestedList/KuisNestedList" element={<KuisNestedList />} />
 
-        <Route path="/Dictionary/PendahuluanDictionary" element={<PendahuluanDiction />} />
+        <Route path="/Dictionary/PendahuluanDictionary" element={<PendahuluanDictionary />} />
         <Route path="/Dictionary/PembuatanAksesElementDictionary" element={<PembuatanAksesElementDictionary />} />
         <Route path="/Dictionary/ManipulasiDictionary" element={<ManipulasiDictionary />} />
         <Route path="/Dictionary/RangkumanDictionary" element={<RangkumanDictionary />} />
