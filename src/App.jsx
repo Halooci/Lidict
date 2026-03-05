@@ -16,7 +16,7 @@ import RangkumanNestedList from "./pages/materi/NestedList/RangkumanNestedList";
 import KuisNestedList from "./pages/materi/NestedList/KuisNestedList";
 
 // import PendahuluanDictionary from "./pages/materi/Dictionary/PendahuluanDictionary";
-import PendahuluanDictionary from "./pages/materi/Dictionary/PendahuluanDictionary";
+import { PendahuluanDiction } from "./pages/materi/Dictionary/PendahuluanDiction";
 import PembuatanAksesElementDictionary from "./pages/materi/Dictionary/PembuatanAksesElementDictionary";
 import ManipulasiDictionary from "./pages/materi/Dictionary/ManipulasiDictionary";
 import RangkumanDictionary from "./pages/materi/Dictionary/RangkumanDictionary";
@@ -45,7 +45,7 @@ function App() {
         <Route path="/NestedList/RangkumanNestedList" element={<RangkumanNestedList />} />
         <Route path="/NestedList/KuisNestedList" element={<KuisNestedList />} />
 
-        <Route path="/Dictionary/PendahuluanDictionary" element={<PendahuluanDictionary />} />
+        <Route path="/Dictionary/PendahuluanDictionary" element={<PendahuluanDiction />} />
         <Route path="/Dictionary/PembuatanAksesElementDictionary" element={<PembuatanAksesElementDictionary />} />
         <Route path="/Dictionary/ManipulasiDictionary" element={<ManipulasiDictionary />} />
         <Route path="/Dictionary/RangkumanDictionary" element={<RangkumanDictionary />} />
