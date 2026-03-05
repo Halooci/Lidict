@@ -16,7 +16,7 @@ export default function RangkumanList() {
         {/* HEADER MATERI */}
         <div style={styles.header}>
           <div style={styles.headerAccent}></div>
-          <h1 style={styles.headerTitle}>RANGKUMAN MATERI LIST</h1>
+          <h1 style={styles.headerTitle}>RANGKUMAN LIST</h1>
         </div>
 
         {/* MATERI */}

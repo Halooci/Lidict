@@ -15,7 +15,7 @@ export default function ManipulasiDictionary() {
         {/* HEADER MATERI */}
         <div style={styles.header}>
           <div style={styles.headerAccent}></div>
-          <h1 style={styles.headerTitle}>OPERASI DASAR DICTIONARY</h1>
+          <h1 style={styles.headerTitle}>MANIPULASI DICTIONARY</h1>
         </div>
 
         
