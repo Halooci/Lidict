@@ -22,7 +22,7 @@ import ManipulasiDictionary from "./pages/materi/dictionary/ManipulasiDictionary
 import RangkumanDictionary from "./pages/materi/dictionary/RangkumanDictionary";
 import KuisDictionary from "./pages/materi/dictionary/KuisDictionary";
 
-import EvaluasiAkhir from "./pages/materi/Evaluasi/EvaluasiAkhir";
+import EvaluasiAkhir from "./pages/materi/evaluasi/EvaluasiAkhir";
 import InformasiPage from "./pages/komponen/informasi/InformasiPage";
 
 function App() {
