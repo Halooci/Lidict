@@ -15,7 +15,7 @@ import OperasiDanManipulasiNestedList from "./pages/materi/NestedList/OperasiDan
 import RangkumanNestedList from "./pages/materi/NestedList/RangkumanNestedList";
 import KuisNestedList from "./pages/materi/NestedList/KuisNestedList";
 
-import PendahuluanDictionary from "./pages/materi/Dictionary/PendahuluanDictionary";
+import PendahuluanDictionary from "./pages/materi/Dictionary/PendahuluanDictionary"
 import PembuatanAksesElementDictionary from "./pages/materi/Dictionary/PembuatanAksesElementDictionary";
 import ManipulasiDictionary from "./pages/materi/Dictionary/ManipulasiDictionary";
 import RangkumanDictionary from "./pages/materi/Dictionary/RangkumanDictionary";
