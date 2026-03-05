@@ -212,7 +212,7 @@ print(angka)`}
                 <p style={styles.text}>
                   <strong>Contoh kode program:</strong>
                 </p>
-                
+
                 <pre style={styles.code}>
 {`nilai = [
   ["Nova", 80, 90],
@@ -321,4 +321,9 @@ const styles = {
     paddingLeft: "20px",
     lineHeight: "1.8",
   },
+  td: {
+  border: "1px solid #ddd",
+  padding: "10px",
+  textAlign: "center"
+  }
 };
