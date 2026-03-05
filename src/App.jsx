@@ -6,8 +6,8 @@ import Materi2 from "./pages/materi/Materi2";
 import PendahuluanList from "./pages/materi/List/PendahuluanList";
 import PembuatanAksesElement from "./pages/materi/List/PembuatanAksesElement";
 import OperasiDanManipulasi from "./pages/materi/List/OperasiDanManipulasi";
-import Rangkuman from "./pages/materi/List/Rangkuman";
-import Kuis1 from "./pages/materi/List/Kuis1";
+import Rangkuman from "./pages/materi/List/RangkumanList";
+import Kuis1 from "./pages/materi/List/KuisList";
 
 import PendahuluanNestedList from "./pages/materi/NestedList/PendahuluanNestedList";
 import PembuatanAksesNestedList from "./pages/materi/NestedList/PembuatanAksesNestedList";
@@ -15,11 +15,11 @@ import OperasiDanManipulasiNestedList from "./pages/materi/NestedList/OperasiDan
 import RangkumanNestedList from "./pages/materi/NestedList/RangkumanNestedList";
 import KuisNestedList from "./pages/materi/NestedList/KuisNestedList";
 
-import KonsepDasarDictionary from "./pages/materi/Dictionary/KonsepDasarDictionary";
+import KonsepDasarDictionary from "./pages/materi/Dictionary/PendahuluanDictionary";
 import PembuatanAksesElementDictionary from "./pages/materi/Dictionary/PembuatanAksesElementDictionary";
-import OperasiDasarDictionary from "./pages/materi/Dictionary/OperasiDasarDictionary";
+import OperasiDasarDictionary from "./pages/materi/Dictionary/ManipulasiDictionary";
 import RangkumanDictionary from "./pages/materi/Dictionary/RangkumanDictionary";
-import Kuis2 from "./pages/materi/Dictionary/Kuis2";
+import Kuis2 from "./pages/materi/Dictionary/KuisDictionary";
 import EvaluasiAkhir from "./pages/materi/Evaluasi/EvaluasiAkhir";
 import InformasiPage from "./pages/komponen/informasi/InformasiPage";
 

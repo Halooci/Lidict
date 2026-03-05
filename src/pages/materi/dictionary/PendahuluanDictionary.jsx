@@ -1,7 +1,7 @@
 import Navbar from "../../komponen/Navbar";
 import SidebarMateri from "../../komponen/SidebarMateri";
 
-export default function Kuis1() {
+export default function PendahuluanDictionary() {
   return (
     <>
       {/* NAVBAR */}
@@ -15,7 +15,7 @@ export default function Kuis1() {
         {/* HEADER MATERI */}
         <div style={styles.header}>
           <div style={styles.headerAccent}></div>
-          <h1 style={styles.headerTitle}>KUIS LIST</h1>
+          <h1 style={styles.headerTitle}>KONSEP DASAR DICTIONARY</h1>
         </div>
 
         

@@ -5,8 +5,8 @@ export default function SidebarMateri() {
 
   // Tentukan accordion aktif berdasarkan URL
   const getDefaultAccordion = () => {
-    if (currentPath === "/List") return "list";
-    // if (currentPath.startsWith("/List")) return "list";
+    // if (currentPath === "/List") return "list";
+    if (currentPath.startsWith("/List")) return "list";
     if (currentPath.startsWith("/NestedList")) return "NestedList";
     if (currentPath.startsWith("/Dictionary")) return "dictionary";
     if (currentPath.startsWith("/Evaluasi")) return "evaluasi";
@@ -37,8 +37,8 @@ export default function SidebarMateri() {
         <SubItem label="Pendahuluan List" to="/List/PendahuluanList" />
         <SubItem label="Pembuatan dan Akses Element" to="/List/PembuatanAksesElement"/>
         <SubItem label="Operasi dan Manipulasi" to="/List/OperasiDanManipulasi" />
-        <SubItem label="Rangkuman List" to="/List/Rangkuman" />
-        <SubItem label="Kuis List" to="/List/Kuis1" />
+        <SubItem label="Rangkuman List" to="/List/RangkumanList" />
+        <SubItem label="Kuis List" to="/List/KuisList" />
       </Accordion>
 
       <Accordion
@@ -60,11 +60,11 @@ export default function SidebarMateri() {
         activeAccordion={activeAccordion}
         setActiveAccordion={setActiveAccordion}
       >
-        <SubItem label="Konsep Dasar Dictionary" to="/Dictionary/KonsepDasarDictionary" />
+        <SubItem label="Pendahuluan Dictionary" to="/Dictionary/PendahuluanDictionary" />
         <SubItem label="Pembuatan dan Akses Dictionary" to="/Dictionary/PembuatanAksesElementDictionary" />
-        <SubItem label="Operasi Dasar Dictionary" to="/Dictionary/OperasiDasarDictionary" />
+        <SubItem label="Manipulasi Dictionary" to="/Dictionary/ManipulasiDictionary" />
         <SubItem label="Rangkuman Dictionary" to="/Dictionary/RangkumanDictionary" />
-        <SubItem label="Kuis Dictionary" to="/Dictionary/Kuis2" />
+        <SubItem label="Kuis Dictionary" to="/Dictionary/KuisDictionary" />
       </Accordion>
 
       <Accordion

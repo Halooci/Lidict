@@ -1,7 +1,8 @@
 import Navbar from "../../komponen/Navbar";
 import SidebarMateri from "../../komponen/SidebarMateri";
 
-export default function Rangkuman() {
+
+export default function RangkumanList() {
   return (
     <>
       {/* NAVBAR */}

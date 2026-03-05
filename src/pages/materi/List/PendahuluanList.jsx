@@ -97,7 +97,7 @@ const [showEksplorasiJawaban, setShowEksplorasiJawaban] = useState(false);
             {/* ================= HEADER ================= */}
             <div style={styles.header}>
               <div style={styles.headerAccent}></div>
-              <h1 style={styles.headerTitle}> PENDAHULUAN </h1>
+              <h1 style={styles.headerTitle}> PENDAHULUAN LIST </h1>
             </div>
 
             {/* ================= TUJUAN ================= */}
