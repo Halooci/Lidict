@@ -1,7 +1,7 @@
 import Navbar from "../../komponen/Navbar";
 import SidebarMateri from "../../komponen/SidebarMateri";
 
-export default function OperasiManipulasiNestedList() {
+export default function OperasiDanManipulasiNestedList() {
   return (
     <>
       {/* NAVBAR */}

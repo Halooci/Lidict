@@ -11,7 +11,7 @@ import Kuis1 from "./pages/materi/List/Kuis1";
 
 import PendahuluanNestedList from "./pages/materi/NestedList/PendahuluanNestedList";
 import PembuatanAksesNestedList from "./pages/materi/NestedList/PembuatanAksesNestedList";
-import OperasiManipulasiNestedList from "./pages/materi/NestedList/OperasiManipulasiNestedList";
+import OperasiDanManipulasiNestedList from "./pages/materi/NestedList/OperasiDanManipulasiNestedList";
 import RangkumanNestedList from "./pages/materi/NestedList/RangkumanNestedList";
 import KuisNestedList from "./pages/materi/NestedList/KuisNestedList";
 
@@ -39,7 +39,7 @@ function App() {
 
         <Route path="/NestedList/PendahuluanNestedList" element={<PendahuluanNestedList />} />
         <Route path="/NestedList/PembuatanAksesNestedList" element={<PembuatanAksesNestedList />} />
-        <Route path="/NestedList/OperasiManipulasiNestedList" element={<OperasiManipulasiNestedList />} />
+        <Route path="/NestedList/OperasiDanManipulasiNestedList" element={<OperasiDanManipulasiNestedList />} />
         <Route path="/NestedList/RangkumanNestedList" element={<RangkumanNestedList />} />
         <Route path="/NestedList/KuisNestedList" element={<KuisNestedList />} />
 
