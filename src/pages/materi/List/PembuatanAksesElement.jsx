@@ -1,7 +1,128 @@
+import { useState, useEffect, useRef } from "react";
 import Navbar from "../../komponen/Navbar";
 import SidebarMateri from "../../komponen/SidebarMateri";
 
 export default function PembuatanAksesElement() {
+  /* ================= PYODIDE SETUP ================= */
+  const [pyodideReady, setPyodideReady] = useState(false);
+  const pyodideRef = useRef(null);
+  
+  // State untuk output setiap editor kode
+  const [codeOutputs, setCodeOutputs] = useState({});
+  
+  // State untuk menyimpan kode contoh (read-only)
+  const codeExamples = {
+    pembuatan: `buah = ["apel", "jeruk", "mangga"]
+print(buah)`,
+    akses: `buah = ["apel", "jeruk", "mangga"]
+print(buah[0])
+print(buah[1])`,
+    negatif: `buah = ["apel", "jeruk", "mangga"]
+print(buah[-1])
+print(buah[-2])`,
+    slicing: `angka = [1, 2, 3, 4, 5]
+print(angka[1:4])`,
+    nested: `nilai = [
+  ["Ani", 80],
+  ["Budi", 85],
+  ["Citra", 90]
+]
+print(nilai)`,
+    aksesNested: `nilai = [
+  ["Ani", 80],
+  ["Budi", 85],
+  ["Citra", 90]
+]
+print(nilai[0][0])
+print(nilai[1][1])`
+  };
+
+  // Load Pyodide saat komponen mount
+  useEffect(() => {
+    const loadPyodide = async () => {
+      if (!window.loadPyodide) {
+        // Load script Pyodide jika belum ada
+        const script = document.createElement('script');
+        script.src = "https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js";
+        script.async = true;
+        script.onload = async () => {
+          const pyodide = await window.loadPyodide();
+          pyodideRef.current = pyodide;
+          setPyodideReady(true);
+        };
+        document.body.appendChild(script);
+      } else {
+        const pyodide = await window.loadPyodide();
+        pyodideRef.current = pyodide;
+        setPyodideReady(true);
+      }
+    };
+    
+    loadPyodide();
+  }, []);
+
+  // Fungsi untuk menjalankan kode Python
+  const runPythonCode = async (codeKey) => {
+    if (!pyodideReady || !pyodideRef.current) {
+      setCodeOutputs(prev => ({
+        ...prev,
+        [codeKey]: "⏳ Pyodide sedang dimuat, harap tunggu..."
+      }));
+      return;
+    }
+
+    try {
+      const pyodide = pyodideRef.current;
+      
+      // Redirect stdout ke variabel
+      pyodide.setStdout({ batched: (text) => {
+        setCodeOutputs(prev => ({
+          ...prev,
+          [codeKey]: (prev[codeKey] || "") + text
+        }));
+      }});
+      
+      // Clear output sebelumnya
+      setCodeOutputs(prev => ({ ...prev, [codeKey]: "" }));
+      
+      // Jalankan kode
+      await pyodide.runPythonAsync(codeExamples[codeKey]);
+      
+    } catch (error) {
+      setCodeOutputs(prev => ({
+        ...prev,
+        [codeKey]: `❌ Error: ${error.message}`
+      }));
+    }
+  };
+
+  // Komponen reusable untuk editor kode Pyodide - READ ONLY
+  const CodeEditor = ({ codeKey }) => (
+    <div style={styles.codeEditorContainer}>
+      <div style={styles.codeEditorHeader}>
+        <span style={styles.codeEditorTitle}>Contoh Kode Program</span>
+        <button 
+          style={styles.runButton}
+          onClick={() => runPythonCode(codeKey)}
+          disabled={!pyodideReady}
+        >
+          {pyodideReady ? "▶ Jalankan" : "⏳ Memuat..."}
+        </button>
+      </div>
+      <div style={styles.codeInputReadOnly}>
+        <pre style={styles.codePre}>
+          {codeExamples[codeKey]}
+        </pre>
+      </div>
+      <div style={styles.codeOutput}>
+        <div style={styles.outputLabel}>Output:</div>
+        <pre style={styles.outputContent}>
+          {codeOutputs[codeKey] || "(Klik 'Jalankan' untuk melihat hasil)"}
+        </pre>
+      </div>
+    </div>
+  );
+
   return (
     <>
       <Navbar />
@@ -44,14 +165,11 @@ export default function PembuatanAksesElement() {
                   string, integer, float, maupun tipe data lainnya.
                 </p>
 
-                <p style={styles.text}>
+                {/* <p style={styles.text}>
                   <strong>Contoh kode program:</strong>
-                </p>
+                </p> */}
 
-                <pre style={styles.code}>
-{`buah = ["apel", "jeruk", "mangga"]
-print(buah)`}  
-                </pre>
+                <CodeEditor codeKey="pembuatan" />
 
                 <p style={styles.text}>
                   Contoh di atas menunjukkan proses pembuatan sebuah list bernama
@@ -68,15 +186,11 @@ print(buah)`}
                   dimulai dari angka 0 untuk elemen pertama.
                 </p>
 
-                <p style={styles.text}>
+                {/* <p style={styles.text}>
                   <strong>Contoh kode program:</strong>
-                </p>
+                </p> */}
 
-                <pre style={styles.code}>
-{`buah = ["apel", "jeruk", "mangga"]
-print(buah[0])
-print(buah[1])`}  
-                </pre>
+                <CodeEditor codeKey="akses" />
 
                 <p style={styles.text}>
                   Pada contoh di atas, elemen "apel" berada pada indeks ke-0,
@@ -92,15 +206,11 @@ print(buah[1])`}
                   untuk mengakses elemen terakhir.
                 </p>
 
-                <p style={styles.text}>
+                {/* <p style={styles.text}>
                   <strong>Contoh kode program:</strong>
-                </p>
+                </p> */}
 
-                <pre style={styles.code}>
-{`buah = ["apel", "jeruk", "mangga"]
-print(buah[-1])
-print(buah[-2])`}  
-                </pre>
+                <CodeEditor codeKey="negatif" />
 
                 <p style={styles.text}>
                   Elemen terakhir pada list dapat diakses menggunakan indeks -1,
@@ -115,14 +225,11 @@ print(buah[-2])`}
                   Slicing dituliskan dengan format <code>list[awal:akhir]</code>.
                 </p>
 
-                <p style={styles.text}>
+                {/* <p style={styles.text}>
                   <strong>Contoh kode program:</strong>
-                </p>
+                </p> */}
 
-                <pre style={styles.code}>
-{`angka = [1, 2, 3, 4, 5]
-print(angka[1:4])`}  
-                </pre>
+                <CodeEditor codeKey="slicing" />
 
                 <p style={styles.text}>
                   Kode tersebut akan mengambil elemen dari indeks ke-1 sampai
@@ -138,17 +245,11 @@ print(angka[1:4])`}
                   bertingkat atau data berbentuk tabel.
                 </p>
 
-                <p style={styles.text}>
+                {/* <p style={styles.text}>
                   <strong>Contoh kode program:</strong>
-                </p>
+                </p> */}
 
-                <pre style={styles.code}>
-{`nilai = [
-  ["Ani", 80],
-  ["Budi", 85],
-  ["Citra", 90]
-]`}  
-                </pre>
+                <CodeEditor codeKey="nested" />
 
                 <p style={styles.text}>
                   Pada contoh di atas, setiap elemen dalam list utama merupakan
@@ -164,14 +265,11 @@ print(angka[1:4])`}
                   kedua digunakan untuk memilih kolom.
                 </p>
                 
-                <p style={styles.text}>
+                {/* <p style={styles.text}>
                   <strong>Contoh kode program:</strong>
-                </p>
+                </p> */}
                 
-                <pre style={styles.code}>
-{`print(nilai[0][0])
-print(nilai[1][1])`}  
-                </pre>
+                <CodeEditor codeKey="aksesNested" />
 
                 <p style={styles.text}>
                   Kode di atas akan menampilkan nama mahasiswa pertama dan nilai
@@ -275,12 +373,84 @@ const styles = {
   list: { paddingLeft: "20px", lineHeight: "1.8" },
   text: { lineHeight: "1.8", color: "#333" },
   subTitle: { marginTop: "22px", color: "#306998" },
-  code: {
+  // Styles untuk Code Editor Pyodide
+  codeEditorContainer: {
+    border: "2px solid #306998",
+    borderRadius: "10px",
+    overflow: "hidden",
+    marginBottom: "20px",
+    backgroundColor: "#1e1e1e",
+    marginTop: "15px"
+  },
+  codeEditorHeader: {
+    backgroundColor: "#306998",
+    color: "white",
+    padding: "12px 15px",
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center"
+  },
+  codeEditorTitle: {
+    fontWeight: "600",
+    fontSize: "15px",
+    display: "flex",
+    alignItems: "center",
+    gap: "8px"
+  },
+  runButton: {
+    backgroundColor: "#FFD43B",
+    color: "#306998",
+    border: "none",
+    padding: "8px 20px",
+    borderRadius: "6px",
+    cursor: "pointer",
+    fontWeight: "600",
+    fontSize: "14px",
+    transition: "all 0.2s",
+    display: "flex",
+    alignItems: "center",
+    gap: "5px"
+  },
+  // Style untuk area kode yang read-only
+  codeInputReadOnly: {
+    width: "100%",
+    minHeight: "100px",
     backgroundColor: "#272822",
     color: "#f8f8f2",
+    border: "none",
     padding: "15px",
-    borderRadius: "8px",
+    fontFamily: "'Consolas', 'Monaco', 'Courier New', monospace",
     fontSize: "14px",
-    overflowX: "auto",
+    lineHeight: "1.6",
+    overflow: "auto"
   },
+  codePre: {
+    margin: 0,
+    whiteSpace: "pre-wrap",
+    wordWrap: "break-word",
+    fontFamily: "'Consolas', 'Monaco', 'Courier New', monospace"
+  },
+  codeOutput: {
+    backgroundColor: "#1e1e1e",
+    borderTop: "1px solid #444",
+    padding: "15px",
+    minHeight: "60px"
+  },
+  outputLabel: {
+    color: "#888",
+    fontSize: "12px",
+    marginBottom: "8px",
+    textTransform: "uppercase",
+    letterSpacing: "0.5px",
+    fontWeight: "600"
+  },
+  outputContent: {
+    color: "#4af",
+    fontFamily: "'Consolas', 'Monaco', 'Courier New', monospace",
+    fontSize: "14px",
+    margin: 0,
+    whiteSpace: "pre-wrap",
+    wordWrap: "break-word",
+    lineHeight: "1.5"
+  }
 };

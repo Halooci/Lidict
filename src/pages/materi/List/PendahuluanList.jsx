@@ -1,8 +1,115 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Navbar from "../../komponen/Navbar";
 import SidebarMateri from "../../komponen/SidebarMateri";
 
 export default function PendahuluanList() {
+  /* ================= PYODIDE SETUP ================= */
+  const [pyodideReady, setPyodideReady] = useState(false);
+  const pyodideRef = useRef(null);
+  
+  // State untuk setiap editor kode
+  const [codeOutputs, setCodeOutputs] = useState({});
+  const [codeInputs, setCodeInputs] = useState({
+    ordered: `buah = ["durian", "nanas", "mangga", "rambutan"]
+print(buah)`,
+    indexed: `data = ["durian", "nanas", "mangga", "rambutan"]
+print(data[0])   # durian
+print(data[-1])  # rambutan`,
+    mutable: `buah = ["durian", "nanas", "mangga"]
+buah[1] = "semangka"
+print(buah)`,
+    heterogeneous: `data = ["Andi", 20, 175.5, True]
+print(data)`,
+    dynamic: `angka = [1, 2, 3]
+angka.append(4)
+print(angka)`,
+    nested: `nilai = [
+  ["Nova", 80, 90],
+  ["Cindy", 85, 88],
+  ["Sabrina", 78, 92]
+]
+print(nilai)
+print("Baris ke-2:", nilai[1])
+print("Elemen [1][0]:", nilai[1][0])`,
+    latihan: `# Buat list bernama buah berisi "apel", "jeruk", "mangga"
+buah = ["apel", "jeruk", "mangga"]
+
+# Tampilkan elemen pertama
+print(buah[0])
+
+# Ubah elemen kedua menjadi "pisang"
+buah[1] = "pisang"
+
+# Tambahkan "anggur"
+buah.append("anggur")
+
+# Tampilkan seluruh isi list
+print(buah)`
+  });
+
+  // Load Pyodide saat komponen mount
+  useEffect(() => {
+    const loadPyodide = async () => {
+      if (!window.loadPyodide) {
+        // Load script Pyodide jika belum ada
+        const script = document.createElement('script');
+        script.src = "https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js";
+        script.async = true;
+        script.onload = async () => {
+          const pyodide = await window.loadPyodide();
+          pyodideRef.current = pyodide;
+          setPyodideReady(true);
+        };
+        document.body.appendChild(script);
+      } else {
+        const pyodide = await window.loadPyodide();
+        pyodideRef.current = pyodide;
+        setPyodideReady(true);
+      }
+    };
+    
+    loadPyodide();
+  }, []);
+
+  // Fungsi untuk menjalankan kode Python
+  const runPythonCode = async (codeKey) => {
+    if (!pyodideReady || !pyodideRef.current) {
+      setCodeOutputs(prev => ({
+        ...prev,
+        [codeKey]: "⏳ Pyodide sedang dimuat, harap tunggu..."
+      }));
+      return;
+    }
+
+    try {
+      const pyodide = pyodideRef.current;
+      
+      // Redirect stdout ke variabel
+      pyodide.setStdout({ batched: (text) => {
+        setCodeOutputs(prev => ({
+          ...prev,
+          [codeKey]: (prev[codeKey] || "") + text
+        }));
+      }});
+      
+      // Clear output sebelumnya
+      setCodeOutputs(prev => ({ ...prev, [codeKey]: "" }));
+      
+      // Jalankan kode
+      await pyodide.runPythonAsync(codeInputs[codeKey]);
+      
+    } catch (error) {
+      setCodeOutputs(prev => ({
+        ...prev,
+        [codeKey]: `❌ Error: ${error.message}`
+      }));
+    }
+  };
+
+  // Update code input untuk yang editable
+  const updateCodeInput = (key, value) => {
+    setCodeInputs(prev => ({ ...prev, [key]: value }));
+  };
 
   /* ================= QUIZ 5 SOAL ================= */
   const quizQuestions = [
@@ -81,8 +188,73 @@ export default function PendahuluanList() {
   };
 
   /* ================= EKSPLORASI ================= */
-const [showEksplorasiJawaban, setShowEksplorasiJawaban] = useState(false);
+  const [showEksplorasiJawaban, setShowEksplorasiJawaban] = useState(false);
 
+  // Komponen reusable untuk editor kode Pyodide - READ ONLY VERSION
+  const CodeEditor = ({ codeKey, title }) => (
+    <div style={styles.codeEditorContainer}>
+      <div style={styles.codeEditorHeader}>
+        <span style={styles.codeEditorTitle}>{title}</span>
+        <div style={styles.codeEditorButtons}>
+          <button 
+            style={styles.runButton}
+            onClick={() => runPythonCode(codeKey)}
+            disabled={!pyodideReady}
+          >
+            {pyodideReady ? "▶ Jalankan" : "⏳ Memuat..."}
+          </button>
+        </div>
+      </div>
+      <div style={styles.codeInputReadOnly}>
+        <pre style={styles.codePre}>
+          {codeInputs[codeKey]}
+        </pre>
+      </div>
+      {/* Header Output */}
+      <div style={styles.outputHeader}>
+        <span style={styles.outputTitle}>Output</span>
+      </div>
+      <div style={styles.codeOutput}>
+        <pre style={styles.outputContent}>
+          {codeOutputs[codeKey] || "(Klik 'Jalankan' untuk melihat hasil)"}
+        </pre>
+      </div>
+    </div>
+  );
+
+  // Komponen untuk editor kode yang BISA DIEDIT (Latihan Praktik)
+  const CodeEditorEditable = ({ codeKey, title }) => (
+    <div style={styles.codeEditorContainer}>
+      <div style={styles.codeEditorHeader}>
+        <span style={styles.codeEditorTitle}>{title}</span>
+        <div style={styles.codeEditorButtons}>
+          <button 
+            style={styles.runButton}
+            onClick={() => runPythonCode(codeKey)}
+            disabled={!pyodideReady}
+          >
+            {pyodideReady ? "▶ Jalankan" : "⏳ Memuat..."}
+          </button>
+        </div>
+      </div>
+      {/* TEXTAREA untuk input yang bisa diedit */}
+      <textarea
+        style={styles.codeInputEditable}
+        value={codeInputs[codeKey]}
+        onChange={(e) => updateCodeInput(codeKey, e.target.value)}
+        spellCheck={false}
+      />
+      {/* Header Output */}
+      <div style={styles.outputHeader}>
+        <span style={styles.outputTitle}>Output</span>
+      </div>
+      <div style={styles.codeOutput}>
+        <pre style={styles.outputContent}>
+          {codeOutputs[codeKey] || "(Klik 'Jalankan' untuk melihat hasil)"}
+        </pre>
+      </div>
+    </div>
+  );
 
   return (
     <>
@@ -117,7 +289,6 @@ const [showEksplorasiJawaban, setShowEksplorasiJawaban] = useState(false);
               <h2 style={styles.sectionTitle}>
                 🔍 Eksplorasi
               </h2>
-
 
               <div style={styles.card}>
                 <p style={styles.text}>
@@ -158,7 +329,6 @@ const [showEksplorasiJawaban, setShowEksplorasiJawaban] = useState(false);
               </div>
             </section>
 
-
             {/* MATERI */}
             <section style={styles.section}>
               <div style={styles.card}>
@@ -173,8 +343,6 @@ const [showEksplorasiJawaban, setShowEksplorasiJawaban] = useState(false);
                   beberapa karakteristik sebagai berikut.
                 </p>
 
-  
-
                 {/* 1. ORDERED */}
                 <h3 style={styles.subTitle}>1. Ordered (Terurut)</h3>
                 <p style={styles.text}>
@@ -183,14 +351,10 @@ const [showEksplorasiJawaban, setShowEksplorasiJawaban] = useState(false);
                   langsung oleh pengguna.
                 </p>
 
-                <p style={styles.text}>
-                  <strong>Contoh kode program:</strong>
-                </p>
-
-                <pre style={styles.code}>
-{`buah = ["durian", "nanas", "mangga", "rambutan"]
-print(buah)`}  
-                </pre>
+                <CodeEditor 
+                  codeKey="ordered" 
+                  title="Contoh Kode Program"
+                />
 
                 <p style={styles.text}>
                   Penjelasan: Urutan elemen pada list adalah durian, nanas,
@@ -210,15 +374,10 @@ print(buah)`}
                   bila kita ingin mengambil elemen terakhir tanpa mengetahui panjang list.
                 </p>
 
-                <p style={styles.text}>
-                  <strong>Contoh kode program:</strong>
-                </p>
-
-                <pre style={styles.code}>
-{`data = ["durian", "nanas", "mangga", "rambutan"]
-print(data[0])   # durian
-print(data[-1])  # rambutan`}  
-                </pre>
+                <CodeEditor 
+                  codeKey="indexed" 
+                  title="Contoh Kode Program"
+                />
 
                 <p style={styles.text}>
                   Penjelasan: List data memiliki empat elemen. Elemen pertama
@@ -234,15 +393,10 @@ print(data[-1])  # rambutan`}
                   sifat ini meembuat list sangat fleksibel dalam pengolahan data.
                 </p>
 
-                <p style={styles.text}>
-                  <strong>Contoh kode program:</strong>
-                </p>
-
-                <pre style={styles.code}>
-{`buah = ["durian", "nanas", "mangga"]
-buah[1] = "semangka"
-print(buah)`}  
-                </pre>
+                <CodeEditor 
+                  codeKey="mutable" 
+                  title="Contoh Kode Program"
+                />
 
                 <p style={styles.text}>
                   Penjelasan: Elemen dengan indeks ke-1 diubah dari nanas
@@ -258,15 +412,11 @@ print(buah)`}
                   List dapat menyimpan berbagai tipe data dalam satu struktur,
                   seperti string, integer, float, dan boolean.
                 </p>
-
-                <p style={styles.text}>
-                  <strong>Contoh kode program:</strong>
-                </p>
               
-                <pre style={styles.code}>
-{`data = ["Andi", 20, 175.5, True]
-print(data)`}  
-                </pre>
+                <CodeEditor 
+                  codeKey="heterogeneous" 
+                  title="Contoh Kode Program"
+                />
 
                 <p style={styles.text}>
                   Penjelasan: Dalam satu list terdapat berbagai tipe data,
@@ -285,15 +435,10 @@ print(data)`}
                   dihapus.
                 </p>
 
-                <p style={styles.text}>
-                  <strong>Contoh kode program:</strong>
-                </p>
-
-                <pre style={styles.code}>
-{`angka = [1, 2, 3]
-angka.append(4)
-print(angka)`}  
-                </pre>
+                <CodeEditor 
+                  codeKey="dynamic" 
+                  title="Contoh Kode Program"
+                />
 
                 <p style={styles.text}>
                   Penjelasan: Python menyesuaikan ukuran list secara otomatis
@@ -349,18 +494,11 @@ print(angka)`}
                     </tr>
                   </tbody>
                 </table>
-                
-                <p style={styles.text}>
-                  <strong>Contoh kode program:</strong>
-                </p>
 
-                <pre style={styles.code}>
-{`nilai = [
-  ["Nova", 80, 90],
-  ["Cindy", 85, 88],
-  ["Sabrina", 78, 92]
-]`}  
-                </pre>
+                <CodeEditor 
+                  codeKey="nested" 
+                  title="Contoh Kode Program"
+                />
 
                 <p style={styles.text}>
                   Penjelasan: Setiap baris tabel direpresentasikan sebagai satu
@@ -376,7 +514,7 @@ print(angka)`}
               <h2 style={styles.sectionTitle}>Latihan Praktik</h2>
               <div style={styles.card}>
 
-                <p style={styles.text}><strong>Output:</strong></p>
+                <p style={styles.text}><strong>Output yang diharapkan:</strong></p>
 
                 <pre style={styles.code}>
 {`apel
@@ -394,14 +532,11 @@ mangga
                   <li>Tampilkan seluruh isi list.</li>
                 </ol>
 
-                <iframe
-                  src="https://trinket.io/embed/python3"
-                  width="100%"
-                  height="500"
-                  frameBorder="0"
-                  allowFullScreen
-                  title="Latihan List"
-                ></iframe>
+                {/* GUNAKAN CodeEditorEditable untuk latihan */}
+                <CodeEditorEditable 
+                  codeKey="latihan" 
+                  title="Latihan Praktik - Edit & Jalankan"
+                />
 
               </div>
             </section>
@@ -537,7 +672,101 @@ const styles = {
     backgroundColor: "#272822",
     color: "#f8f8f2",
     padding: "15px",
-    borderRadius: "8px"
+    borderRadius: "8px",
+    fontFamily: "monospace",
+    overflow: "auto"
+  },
+  // Styles untuk Code Editor Pyodide
+  codeEditorContainer: {
+    border: "2px solid #306998",
+    borderRadius: "10px",
+    overflow: "hidden",
+    marginBottom: "20px",
+    backgroundColor: "#1e1e1e"
+  },
+  codeEditorHeader: {
+    backgroundColor: "#306998",
+    color: "white",
+    padding: "10px 15px",
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center"
+  },
+  codeEditorTitle: {
+    fontWeight: "600",
+    fontSize: "14px"
+  },
+  codeEditorButtons: {
+    display: "flex",
+    gap: "10px"
+  },
+  runButton: {
+    backgroundColor: "#FFD43B",
+    color: "#306998",
+    border: "none",
+    padding: "6px 16px",
+    borderRadius: "6px",
+    cursor: "pointer",
+    fontWeight: "600",
+    fontSize: "13px",
+    transition: "all 0.2s"
+  },
+  // Style untuk area kode yang read-only
+  codeInputReadOnly: {
+    width: "100%",
+    minHeight: "120px",
+    backgroundColor: "#272822",
+    color: "#f8f8f2",
+    border: "none",
+    padding: "15px",
+    fontFamily: "monospace",
+    fontSize: "14px",
+    lineHeight: "1.5",
+    overflow: "auto"
+  },
+  codePre: {
+    margin: 0,
+    whiteSpace: "pre-wrap",
+    wordWrap: "break-word",
+    fontFamily: "monospace"
+  },
+  // BARU: Style untuk textarea yang bisa diedit
+  codeInputEditable: {
+    width: "100%",
+    minHeight: "200px",
+    backgroundColor: "#272822",
+    color: "#f8f8f2",
+    border: "none",
+    padding: "15px",
+    fontFamily: "monospace",
+    fontSize: "14px",
+    lineHeight: "1.5",
+    resize: "vertical",
+    outline: "none"
+  },
+  // BARU: Header Output
+  outputHeader: {
+    backgroundColor: "#306998",
+    color: "white",
+    padding: "10px 15px",
+    borderTop: "2px solid #1e1e1e"
+  },
+  outputTitle: {
+    fontWeight: "600",
+    fontSize: "14px"
+  },
+  codeOutput: {
+    backgroundColor: "#1e1e1e",
+    padding: "15px",
+    minHeight: "60px"
+  },
+  outputContent: {
+    color: "#4af",
+    fontFamily: "monospace",
+    fontSize: "14px",
+    margin: 0,
+    whiteSpace: "pre-wrap",
+    wordWrap: "break-word"
   },
   quizBox: {
     border: "2px solid #2fa69a",
@@ -595,8 +824,8 @@ const styles = {
     cursor: "pointer"
   },
   td: {
-  border: "1px solid #ddd",
-  padding: "10px",
-  textAlign: "center"
+    border: "1px solid #ddd",
+    padding: "10px",
+    textAlign: "center"
   }
 };
