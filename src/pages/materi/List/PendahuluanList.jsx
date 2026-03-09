@@ -8,13 +8,15 @@ export default function PendahuluanList() {
   const pyodideRef = useRef(null);
   
   // State untuk setiap editor kode
+    // Ref untuk textarea latihan agar auto-focus
+  const latihanTextareaRef = useRef(null);
   const [codeOutputs, setCodeOutputs] = useState({});
   const [codeInputs, setCodeInputs] = useState({
     ordered: `buah = ["durian", "nanas", "mangga", "rambutan"]
 print(buah)`,
     indexed: `data = ["durian", "nanas", "mangga", "rambutan"]
-print(data[0])   # durian
-print(data[-1])  # rambutan`,
+print(data[0])
+print(data[-1])`,
     mutable: `buah = ["durian", "nanas", "mangga"]
 buah[1] = "semangka"
 print(buah)`,
@@ -31,20 +33,10 @@ print(angka)`,
 print(nilai)
 print("Baris ke-2:", nilai[1])
 print("Elemen [1][0]:", nilai[1][0])`,
-    latihan: `# Buat list bernama buah berisi "apel", "jeruk", "mangga"
-buah = ["apel", "jeruk", "mangga"]
+        // LATIHAN KOSONG - hanya instruksi di komentar
+    latihan: `
 
-# Tampilkan elemen pertama
-print(buah[0])
-
-# Ubah elemen kedua menjadi "pisang"
-buah[1] = "pisang"
-
-# Tambahkan "anggur"
-buah.append("anggur")
-
-# Tampilkan seluruh isi list
-print(buah)`
+`
   });
 
   // Load Pyodide saat komponen mount
@@ -70,6 +62,21 @@ print(buah)`
     
     loadPyodide();
   }, []);
+
+    // Auto-focus textarea latihan saat komponen dimuat
+  // useEffect(() => {
+    // Delay sedikit agar DOM sudah siap
+    // const timer = setTimeout(() => {
+    //   if (latihanTextareaRef.current) {
+    //     latihanTextareaRef.current.focus();
+        // Posisikan cursor di akhir text
+  //       const length = latihanTextareaRef.current.value.length;
+  //       latihanTextareaRef.current.setSelectionRange(length, length);
+  //     }
+  //   }, 500);
+    
+  //   return () => clearTimeout(timer);
+  // }, []);
 
   // Fungsi untuk menjalankan kode Python
   const runPythonCode = async (codeKey) => {
@@ -222,7 +229,7 @@ print(buah)`
     </div>
   );
 
-  // Komponen untuk editor kode yang BISA DIEDIT (Latihan Praktik)
+      // Komponen untuk editor kode yang BISA DIEDIT (Latihan Praktik)
   const CodeEditorEditable = ({ codeKey, title }) => (
     <div style={styles.codeEditorContainer}>
       <div style={styles.codeEditorHeader}>
@@ -237,12 +244,14 @@ print(buah)`
           </button>
         </div>
       </div>
-      {/* TEXTAREA untuk input yang bisa diedit */}
+      {/* TEXTAREA - HAPUS autoFocus */}
       <textarea
+        ref={codeKey === 'latihan' ? latihanTextareaRef : null}
         style={styles.codeInputEditable}
         value={codeInputs[codeKey]}
         onChange={(e) => updateCodeInput(codeKey, e.target.value)}
         spellCheck={false}
+        // HAPUS: autoFocus={codeKey === 'latihan'}
       />
       {/* Header Output */}
       <div style={styles.outputHeader}>
@@ -742,7 +751,9 @@ const styles = {
     fontSize: "14px",
     lineHeight: "1.5",
     resize: "vertical",
-    outline: "none"
+    outline: "none",
+    direction: "ltr",        // <-- TAMBAHKAN INI
+    textAlign: "left"
   },
   // BARU: Header Output
   outputHeader: {
