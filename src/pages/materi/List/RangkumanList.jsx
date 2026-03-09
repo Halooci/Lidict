@@ -1,25 +1,344 @@
+import { useState, useEffect, useRef } from "react";
 import Navbar from "../../komponen/Navbar";
 import SidebarMateri from "../../komponen/SidebarMateri";
 
-
 export default function RangkumanList() {
+  /* ================= PYODIDE SETUP ================= */
+  const [pyodideReady, setPyodideReady] = useState(false);
+  const pyodideRef = useRef(null);
+  
+  // State untuk setiap editor kode
+    // Ref untuk textarea latihan agar auto-focus
+  const latihanTextareaRef = useRef(null);
+  const [codeOutputs, setCodeOutputs] = useState({});
+  const [codeInputs, setCodeInputs] = useState({
+    ordered: `buah = ["durian", "nanas", "mangga", "rambutan"]
+print(buah)`,
+    indexed: `data = ["durian", "nanas", "mangga", "rambutan"]
+print(data[0])
+print(data[-1])`,
+    mutable: `buah = ["durian", "nanas", "mangga"]
+buah[1] = "semangka"
+print(buah)`,
+    heterogeneous: `data = ["Andi", 20, 175.5, True]
+print(data)`,
+    dynamic: `angka = [1, 2, 3]
+angka.append(4)
+print(angka)`,
+    nested: `nilai = [
+  ["Nova", 80, 90],
+  ["Cindy", 85, 88],
+  ["Sabrina", 78, 92]
+]
+print(nilai)
+print("Baris ke-2:", nilai[1])
+print("Elemen [1][0]:", nilai[1][0])`,
+        // LATIHAN KOSONG - hanya instruksi di komentar
+    latihan: `
+
+`
+  });
+
+  // Load Pyodide saat komponen mount
+  useEffect(() => {
+    const loadPyodide = async () => {
+      if (!window.loadPyodide) {
+        // Load script Pyodide jika belum ada
+        const script = document.createElement('script');
+        script.src = "https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js";
+        script.async = true;
+        script.onload = async () => {
+          const pyodide = await window.loadPyodide();
+          pyodideRef.current = pyodide;
+          setPyodideReady(true);
+        };
+        document.body.appendChild(script);
+      } else {
+        const pyodide = await window.loadPyodide();
+        pyodideRef.current = pyodide;
+        setPyodideReady(true);
+      }
+    };
+    
+    loadPyodide();
+  }, []);
+
+    // Auto-focus textarea latihan saat komponen dimuat
+  // useEffect(() => {
+    // Delay sedikit agar DOM sudah siap
+    // const timer = setTimeout(() => {
+    //   if (latihanTextareaRef.current) {
+    //     latihanTextareaRef.current.focus();
+        // Posisikan cursor di akhir text
+  //       const length = latihanTextareaRef.current.value.length;
+  //       latihanTextareaRef.current.setSelectionRange(length, length);
+  //     }
+  //   }, 500);
+    
+  //   return () => clearTimeout(timer);
+  // }, []);
+
+  // Fungsi untuk menjalankan kode Python
+  const runPythonCode = async (codeKey) => {
+    if (!pyodideReady || !pyodideRef.current) {
+      setCodeOutputs(prev => ({
+        ...prev,
+        [codeKey]: "⏳ Pyodide sedang dimuat, harap tunggu..."
+      }));
+      return;
+    }
+
+    try {
+      const pyodide = pyodideRef.current;
+      
+      // Redirect stdout ke variabel
+      pyodide.setStdout({ batched: (text) => {
+        setCodeOutputs(prev => ({
+          ...prev,
+          [codeKey]: (prev[codeKey] || "") + text
+        }));
+      }});
+      
+      // Clear output sebelumnya
+      setCodeOutputs(prev => ({ ...prev, [codeKey]: "" }));
+      
+      // Jalankan kode
+      await pyodide.runPythonAsync(codeInputs[codeKey]);
+      
+    } catch (error) {
+      setCodeOutputs(prev => ({
+        ...prev,
+        [codeKey]: `❌ Error: ${error.message}`
+      }));
+    }
+  };
+
+  // Update code input untuk yang editable
+  const updateCodeInput = (key, value) => {
+    setCodeInputs(prev => ({ ...prev, [key]: value }));
+  };
+
+  /* ================= QUIZ 5 SOAL ================= */
+  const quizQuestions = [
+    {
+      question: "Yang termasuk karakteristik list dalam Python adalah…",
+      options: [
+        "Tidak terurut, tidak dapat diubah, dan homogen",
+        "Terurut, dapat diubah, dan dapat menyimpan tipe campuran",
+        "Tidak memiliki indeks, tetapi ukurannya dinamis",
+        "Hanya dapat menyimpan angka dan string"
+      ],
+      answer: 1
+    },
+    {
+      question: "Indeks -1 pada sebuah list digunakan untuk mengakses…",
+      options: [
+        "Elemen pertama",
+        "Elemen kedua",
+        "Elemen terakhir",
+        "Elemen acak"
+      ],
+      answer: 2
+    },
+    {
+      question: "List bersifat heterogen karena dapat menyimpan berbagai tipe data dalam satu wadah.",
+      options: ["Benar", "Salah"],
+      answer: 0
+    },
+    {
+      question:
+        "Jika terdapat nested list berikut:\n\ndata = [[\"Nova\", 20], [\"Sabrina\", 21]]\n\nElemen pada baris ke-2 kolom ke-2 adalah…",
+      options: ["\"Nova\"", "20", "\"Sabrina\"", "21"],
+      answer: 3
+    },
+    {
+      question:
+        "Nested list cocok digunakan untuk merepresentasikan…",
+      options: [
+        "Nilai tunggal",
+        "Array satu dimensi",
+        "Data dua dimensi seperti tabel atau matriks",
+        "Semua operasi matematika"
+      ],
+      answer: 2
+    }
+  ];
+
+  const [quizCurrent, setQuizCurrent] = useState(0);
+  const [quizSelected, setQuizSelected] = useState(null);
+  const [quizFeedback, setQuizFeedback] = useState(null);
+
+  const checkQuizAnswer = () => {
+    if (quizSelected === null) return;
+
+    if (quizSelected === quizQuestions[quizCurrent].answer) {
+      setQuizFeedback("benar");
+    } else {
+      setQuizFeedback("salah");
+    }
+  };
+
+  const nextQuiz = () => {
+    if (quizCurrent < quizQuestions.length - 1) {
+      setQuizCurrent(quizCurrent + 1);
+      setQuizSelected(null);
+      setQuizFeedback(null);
+    }
+  };
+
+  const prevQuiz = () => {
+    if (quizCurrent > 0) {
+      setQuizCurrent(quizCurrent - 1);
+      setQuizSelected(null);
+      setQuizFeedback(null);
+    }
+  };
+
+  /* ================= EKSPLORASI ================= */
+  const [showEksplorasiJawaban, setShowEksplorasiJawaban] = useState(false);
+
+  // Komponen reusable untuk editor kode Pyodide - READ ONLY VERSION
+  const CodeEditor = ({ codeKey, title }) => (
+    <div style={styles.codeEditorContainer}>
+      <div style={styles.codeEditorHeader}>
+        <span style={styles.codeEditorTitle}>{title}</span>
+        <div style={styles.codeEditorButtons}>
+          <button 
+            style={styles.runButton}
+            onClick={() => runPythonCode(codeKey)}
+            disabled={!pyodideReady}
+          >
+            {pyodideReady ? "▶ Jalankan" : "⏳ Memuat..."}
+          </button>
+        </div>
+      </div>
+      <div style={styles.codeInputReadOnly}>
+        <pre style={styles.codePre}>
+          {codeInputs[codeKey]}
+        </pre>
+      </div>
+      {/* Header Output */}
+      <div style={styles.outputHeader}>
+        <span style={styles.outputTitle}>Output</span>
+      </div>
+      <div style={styles.codeOutput}>
+        <pre style={styles.outputContent}>
+          {codeOutputs[codeKey] || "(Klik 'Jalankan' untuk melihat hasil)"}
+        </pre>
+      </div>
+    </div>
+  );
+
+      // Komponen untuk editor kode yang BISA DIEDIT (Latihan Praktik)
+  const CodeEditorEditable = ({ codeKey, title }) => (
+    <div style={styles.codeEditorContainer}>
+      <div style={styles.codeEditorHeader}>
+        <span style={styles.codeEditorTitle}>{title}</span>
+        <div style={styles.codeEditorButtons}>
+          <button 
+            style={styles.runButton}
+            onClick={() => runPythonCode(codeKey)}
+            disabled={!pyodideReady}
+          >
+            {pyodideReady ? "▶ Jalankan" : "⏳ Memuat..."}
+          </button>
+        </div>
+      </div>
+      {/* TEXTAREA - HAPUS autoFocus */}
+      <textarea
+        ref={codeKey === 'latihan' ? latihanTextareaRef : null}
+        style={styles.codeInputEditable}
+        value={codeInputs[codeKey]}
+        onChange={(e) => updateCodeInput(codeKey, e.target.value)}
+        spellCheck={false}
+        // HAPUS: autoFocus={codeKey === 'latihan'}
+      />
+      {/* Header Output */}
+      <div style={styles.outputHeader}>
+        <span style={styles.outputTitle}>Output</span>
+      </div>
+      <div style={styles.codeOutput}>
+        <pre style={styles.outputContent}>
+          {codeOutputs[codeKey] || "(Klik 'Jalankan' untuk melihat hasil)"}
+        </pre>
+      </div>
+    </div>
+  );
+
   return (
     <>
-      {/* NAVBAR */}
       <Navbar />
 
-        <div style={{ marginLeft: "280px" }}>
+      <div style={{ marginLeft: "280px" }}>
+        
         <SidebarMateri />
-        <div style={{ paddingTop: "64px"}}>
-      {/* PAGE CONTENT */}
-      <div style={styles.page}>
-        {/* HEADER MATERI */}
-        <div style={styles.header}>
-          <div style={styles.headerAccent}></div>
-          <h1 style={styles.headerTitle}>RANGKUMAN LIST</h1>
-        </div>
+        <div style={{ paddingTop: "64px" }}>
+          <div style={styles.page}>
 
-        {/* MATERI */}
+            {/* ================= HEADER ================= */}
+            <div style={styles.header}>
+              <div style={styles.headerAccent}></div>
+              <h1 style={styles.headerTitle}> RANGKUMAN LIST </h1>
+            </div>
+
+            {/* ================= TUJUAN ================= */}
+            <section style={styles.section}>
+              <h2 style={styles.sectionTitle}>Tujuan Pembelajaran</h2>
+              <div style={styles.card}>
+                <ol style={styles.list}>
+                  <li>Menjelaskan konsep dasar struktur data list dalam Python.</li>
+                  <li>Mengidentifikasi karakteristik list.</li>
+                  <li>Memahami penggunaan list dalam pengolahan data.</li>
+                </ol>
+              </div>
+            </section>
+
+            {/* ================= EKSPLORASI ================= */}
+            <section style={styles.section}>
+              <h2 style={styles.sectionTitle}>
+                🔍 Eksplorasi
+              </h2>
+
+              <div style={styles.card}>
+                <p style={styles.text}>
+                  Pernahkah kamu menyimpan beberapa data dalam satu variabel?
+                  Misalnya menyimpan daftar nama teman, daftar nilai, atau daftar barang?
+                </p>
+
+                <p style={styles.text}>
+                  Perhatikan contoh berikut:
+                </p>
+
+                <pre style={styles.code}>
+            {`nama1 = "Andi"
+            nama2 = "Budi"
+            nama3 = "Citra"`}
+                </pre>
+
+                <p style={styles.text}>
+                  Jika jumlah data semakin banyak, apakah cara tersebut masih efisien?
+                </p>
+
+                <button
+                  style={styles.primaryButton}
+                  onClick={() => setShowEksplorasiJawaban(!showEksplorasiJawaban)}
+                >
+                  Lihat Refleksi
+                </button>
+
+                {showEksplorasiJawaban && (
+                  <div style={styles.quizSuccess}>
+                    Ketika data semakin banyak, penggunaan variabel terpisah menjadi
+                    tidak efisien dan sulit dikelola. Oleh karena itu, diperlukan
+                    struktur data seperti <strong>List</strong> yang dapat menyimpan
+                    banyak data dalam satu wadah secara terorganisir.
+                  </div>
+                )}
+
+              </div>
+            </section>
+
+            {/* MATERI */}
             <section style={styles.section}>
               <div style={styles.card}>
 
@@ -33,8 +352,6 @@ export default function RangkumanList() {
                   beberapa karakteristik sebagai berikut.
                 </p>
 
-  
-
                 {/* 1. ORDERED */}
                 <h3 style={styles.subTitle}>1. Ordered (Terurut)</h3>
                 <p style={styles.text}>
@@ -43,14 +360,10 @@ export default function RangkumanList() {
                   langsung oleh pengguna.
                 </p>
 
-                <p style={styles.text}>
-                  <strong>Contoh kode program:</strong>
-                </p>
-
-                <pre style={styles.code}>
-{`buah = ["durian", "nanas", "mangga", "rambutan"]
-print(buah)`}  
-                </pre>
+                <CodeEditor 
+                  codeKey="ordered" 
+                  title="Contoh Kode Program"
+                />
 
                 <p style={styles.text}>
                   Penjelasan: Urutan elemen pada list adalah durian, nanas,
@@ -70,15 +383,10 @@ print(buah)`}
                   bila kita ingin mengambil elemen terakhir tanpa mengetahui panjang list.
                 </p>
 
-                <p style={styles.text}>
-                  <strong>Contoh kode program:</strong>
-                </p>
-
-                <pre style={styles.code}>
-{`data = ["durian", "nanas", "mangga", "rambutan"]
-print(data[0])   # durian
-print(data[-1])  # rambutan`}  
-                </pre>
+                <CodeEditor 
+                  codeKey="indexed" 
+                  title="Contoh Kode Program"
+                />
 
                 <p style={styles.text}>
                   Penjelasan: List data memiliki empat elemen. Elemen pertama
@@ -94,15 +402,10 @@ print(data[-1])  # rambutan`}
                   sifat ini meembuat list sangat fleksibel dalam pengolahan data.
                 </p>
 
-                <p style={styles.text}>
-                  <strong>Contoh kode program:</strong>
-                </p>
-
-                <pre style={styles.code}>
-{`buah = ["durian", "nanas", "mangga"]
-buah[1] = "semangka"
-print(buah)`}  
-                </pre>
+                <CodeEditor 
+                  codeKey="mutable" 
+                  title="Contoh Kode Program"
+                />
 
                 <p style={styles.text}>
                   Penjelasan: Elemen dengan indeks ke-1 diubah dari nanas
@@ -118,15 +421,11 @@ print(buah)`}
                   List dapat menyimpan berbagai tipe data dalam satu struktur,
                   seperti string, integer, float, dan boolean.
                 </p>
-
-                <p style={styles.text}>
-                  <strong>Contoh kode program:</strong>
-                </p>
-
-                <pre style={styles.code}>
-{`data = ["Andi", 20, 175.5, True]
-print(data)`}  
-                </pre>
+              
+                <CodeEditor 
+                  codeKey="heterogeneous" 
+                  title="Contoh Kode Program"
+                />
 
                 <p style={styles.text}>
                   Penjelasan: Dalam satu list terdapat berbagai tipe data,
@@ -145,15 +444,10 @@ print(data)`}
                   dihapus.
                 </p>
 
-                <p style={styles.text}>
-                  <strong>Contoh kode program:</strong>
-                </p>
-
-                <pre style={styles.code}>
-{`angka = [1, 2, 3]
-angka.append(4)
-print(angka)`}  
-                </pre>
+                <CodeEditor 
+                  codeKey="dynamic" 
+                  title="Contoh Kode Program"
+                />
 
                 <p style={styles.text}>
                   Penjelasan: Python menyesuaikan ukuran list secara otomatis
@@ -172,7 +466,7 @@ print(angka)`}
                 </p>
 
                 <p style={styles.text}>
-                  <strong>Contoh data nilai mahasiswa:</strong>
+                    <strong>Contoh data nilai mahasiswa:</strong>
                 </p>
 
                 <table
@@ -183,7 +477,8 @@ print(angka)`}
                     marginBottom: "20px",
                   }}
                 >
-                  <thead>
+
+                                    <thead>
                     <tr style={{ backgroundColor: "#306998", color: "white" }}>
                       <th style={styles.td}>Nama</th>
                       <th style={styles.td}>UTS</th>
@@ -209,17 +504,10 @@ print(angka)`}
                   </tbody>
                 </table>
 
-                <p style={styles.text}>
-                  <strong>Contoh kode program:</strong>
-                </p>
-
-                <pre style={styles.code}>
-{`nilai = [
-  ["Nova", 80, 90],
-  ["Cindy", 85, 88],
-  ["Sabrina", 78, 92]
-]`}  
-                </pre>
+                <CodeEditor 
+                  codeKey="nested" 
+                  title="Contoh Kode Program"
+                />
 
                 <p style={styles.text}>
                   Penjelasan: Setiap baris tabel direpresentasikan sebagai satu
@@ -229,101 +517,221 @@ print(angka)`}
               </div>
             
             </section>
-
-      </div>
-      </div>
+          </div>
+        </div>
       </div>
     </>
   );
 }
 
-/* ================== STYLE ================== */
+/* ================= STYLE ================= */
 const styles = {
   page: {
     padding: "30px 40px",
-    paddingTop: "30px",
+    paddingTop: "40px",
     backgroundColor: "#f5f7fa",
-    minHeight: "calc(100vh - 64px)", // ⬅️ tinggi navbar
-    fontFamily: "Poppins, sans-serif",
+    minHeight: "100vh",
+    fontFamily: "Poppins, sans-serif"
   },
-
   header: {
-    backgroundColor: "#306998", // Python Blue (diseragamkan)
+    backgroundColor: "#306998",
     color: "white",
     padding: "18px 24px",
-    position: "relative",
-    marginBottom: "30px",
     borderRadius: "6px",
+    marginBottom: "30px",
+    position: "relative"
   },
-
   headerAccent: {
     position: "absolute",
     left: 0,
     top: 0,
     bottom: 0,
     width: "8px",
-    backgroundColor: "#FFD43B", // Python Yellow
-    borderRadius: "6px 0 0 6px",
+    backgroundColor: "#FFD43B"
   },
-
   headerTitle: {
     margin: 0,
     textAlign: "center",
     fontSize: "28px",
-    fontWeight: "700",
+    fontWeight: "700"
   },
-
-  section: {
-    marginBottom: "40px",
-  },
-
+  section: { marginBottom: "40px" },
   sectionTitle: {
     fontSize: "22px",
     fontWeight: "700",
     marginBottom: "15px",
     borderLeft: "5px solid #306998",
-    paddingLeft: "12px",
+    paddingLeft: "12px"
   },
-
   card: {
     backgroundColor: "white",
     borderRadius: "10px",
-    padding: "25px",
-    boxShadow: "0 5px 15px rgba(0,0,0,0.08)",
+    padding: "20px",
+    boxShadow: "0 5px 15px rgba(0,0,0,0.08)"
   },
-
-  list: {
-    paddingLeft: "20px",
-    lineHeight: "1.8",
-  },
-
-  text: {
-    lineHeight: "1.8",
-    color: "#333",
-  },
-
-  subTitle: {
-    marginTop: "20px",
-    marginBottom: "10px",
-    color: "#306998",
-  },
-
+  list: { paddingLeft: "20px", lineHeight: "1.8" },
+  text: { lineHeight: "1.8", color: "#333" },
+  subTitle: { marginTop: "22px", color: "#306998" },
   code: {
     backgroundColor: "#272822",
     color: "#f8f8f2",
     padding: "15px",
     borderRadius: "8px",
-    fontSize: "14px",
-    overflowX: "auto",
+    fontFamily: "monospace",
+    overflow: "auto"
   },
-
-  textList: {
-    paddingLeft: "20px",
-    lineHeight: "1.8",
+  // Styles untuk Code Editor Pyodide
+  codeEditorContainer: {
+    border: "2px solid #306998",
+    borderRadius: "10px",
+    overflow: "hidden",
+    marginBottom: "20px",
+    backgroundColor: "#1e1e1e"
+  },
+  codeEditorHeader: {
+    backgroundColor: "#306998",
+    color: "white",
+    padding: "10px 15px",
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center"
+  },
+  codeEditorTitle: {
+    fontWeight: "600",
+    fontSize: "14px"
+  },
+  codeEditorButtons: {
+    display: "flex",
+    gap: "10px"
+  },
+  runButton: {
+    backgroundColor: "#FFD43B",
+    color: "#306998",
+    border: "none",
+    padding: "6px 16px",
+    borderRadius: "6px",
+    cursor: "pointer",
+    fontWeight: "600",
+    fontSize: "13px",
+    transition: "all 0.2s"
+  },
+  // Style untuk area kode yang read-only
+  codeInputReadOnly: {
+    width: "100%",
+    minHeight: "120px",
+    backgroundColor: "#272822",
+    color: "#f8f8f2",
+    border: "none",
+    padding: "15px",
+    fontFamily: "monospace",
+    fontSize: "14px",
+    lineHeight: "1.5",
+    overflow: "auto"
+  },
+  codePre: {
+    margin: 0,
+    whiteSpace: "pre-wrap",
+    wordWrap: "break-word",
+    fontFamily: "monospace"
+  },
+  // BARU: Style untuk textarea yang bisa diedit
+  codeInputEditable: {
+    width: "100%",
+    minHeight: "200px",
+    backgroundColor: "#272822",
+    color: "#f8f8f2",
+    border: "none",
+    padding: "15px",
+    fontFamily: "monospace",
+    fontSize: "14px",
+    lineHeight: "1.5",
+    resize: "vertical",
+    outline: "none",
+    direction: "ltr",        // <-- TAMBAHKAN INI
+    textAlign: "left"
+  },
+  // BARU: Header Output
+  outputHeader: {
+    backgroundColor: "#306998",
+    color: "white",
+    padding: "10px 15px",
+    borderTop: "2px solid #1e1e1e"
+  },
+  outputTitle: {
+    fontWeight: "600",
+    fontSize: "14px"
+  },
+  codeOutput: {
+    backgroundColor: "#1e1e1e",
+    padding: "15px",
+    minHeight: "60px"
+  },
+  outputContent: {
+    color: "#4af",
+    fontFamily: "monospace",
+    fontSize: "14px",
+    margin: 0,
+    whiteSpace: "pre-wrap",
+    wordWrap: "break-word"
+  },
+  quizBox: {
+    border: "2px solid #2fa69a",
+    borderRadius: "12px",
+    overflow: "hidden",
+    backgroundColor: "#ffffff"
+  },
+  quizHeader: {
+    backgroundColor: "#cfd8e6",
+    padding: "15px",
+    fontWeight: "600"
+  },
+  quizContent: { padding: "20px" },
+  quizQuestion: { marginBottom: "20px", whiteSpace: "pre-line" },
+  quizOption: {
+    padding: "12px",
+    marginBottom: "10px",
+    borderRadius: "8px",
+    border: "1px solid #2fa69a",
+    cursor: "pointer"
+  },
+  quizError: {
+    marginTop: "15px",
+    backgroundColor: "#f8d7da",
+    color: "#842029",
+    padding: "12px",
+    borderRadius: "8px"
+  },
+  quizSuccess: {
+    marginTop: "15px",
+    backgroundColor: "#d1e7dd",
+    color: "#0f5132",
+    padding: "12px",
+    borderRadius: "8px"
+  },
+  quizFooter: {
+    display: "flex",
+    justifyContent: "space-between",
+    padding: "15px"
+  },
+  primaryButton: {
+    backgroundColor: "#1e63d5",
+    color: "white",
+    border: "none",
+    padding: "8px 18px",
+    borderRadius: "8px",
+    cursor: "pointer"
+  },
+  secondaryButton: {
+    backgroundColor: "#9ca3af",
+    color: "white",
+    border: "none",
+    padding: "8px 18px",
+    borderRadius: "8px",
+    cursor: "pointer"
   },
   td: {
-  border: "1px solid #ddd",
-  padding: "10px",
-  textAlign: "center"
+    border: "1px solid #ddd",
+    padding: "10px",
+    textAlign: "center"
   }
 };

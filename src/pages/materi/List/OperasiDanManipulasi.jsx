@@ -1,7 +1,166 @@
+import { useState, useEffect, useRef } from "react";
 import Navbar from "../../komponen/Navbar";
 import SidebarMateri from "../../komponen/SidebarMateri";
 
 export default function OperasiManipulasiList() {
+  /* ================= PYODIDE SETUP ================= */
+  const [pyodideReady, setPyodideReady] = useState(false);
+  const pyodideRef = useRef(null);
+  
+  // State untuk output setiap editor kode
+  const [codeOutputs, setCodeOutputs] = useState({});
+  
+  // State untuk menyimpan kode contoh (read-only)
+  const codeExamples = {
+    concat: `a = [1, 2, 3]
+b = [4, 5, 6]
+c = a + b
+print(c)`,
+    repeat: `data = [1, 2, 3]
+print(data * 3)`,
+    search: `buah = ["apel", "jeruk", "mangga"]
+print("mangga" in buah)
+print("pisang" in buah)`,
+    sort: `angka = [5, 3, 8, 1, 7, 2]
+angka.sort()
+print(angka)`,
+    append: `buah = ["durian", "nanas", "mangga", "rambutan"]
+buah.append("alpukat")
+print(buah)`,
+    insert: `buah = ["durian", "nanas", "mangga", "rambutan"]
+buah.insert(1, "alpukat")
+print(buah)`,
+    extend: `buah = ["durian", "nanas", "mangga", "rambutan"]
+buah.extend(["salak", "jeruk", "manggis"])
+print(buah)`,
+    remove: `buah = ["durian", "nanas", "mangga", "rambutan", "jeruk"]
+buah.remove("jeruk")
+print(buah)`,
+    pop: `buah = ["durian", "nanas", "mangga", "rambutan"]
+buah.pop(2)
+print(buah)`,
+    change: `buah = ["durian", "nanas", "mangga", "rambutan"]
+buah[3] = "belimbing"
+print(buah)`,
+    length: `buah = ["durian", "nanas", "mangga", "rambutan"]
+print(len(buah))`,
+    nested: `data = [["Nitta", 80], ["Lita", 85]]
+data[1][1] = 90
+print(data)`,
+    appendNested: `data = [["Nitta", 80], ["Lita", 85]]
+data.append(["Citra", 78])
+print(data)`
+  };
+
+  // Load Pyodide saat komponen mount
+  useEffect(() => {
+    const loadPyodide = async () => {
+      if (!window.loadPyodide) {
+        const script = document.createElement('script');
+        script.src = "https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js";
+        script.async = true;
+        script.onload = async () => {
+          const pyodide = await window.loadPyodide();
+          pyodideRef.current = pyodide;
+          setPyodideReady(true);
+        };
+        document.body.appendChild(script);
+      } else {
+        const pyodide = await window.loadPyodide();
+        pyodideRef.current = pyodide;
+        setPyodideReady(true);
+      }
+    };
+    loadPyodide();
+  }, []);
+
+  // Fungsi untuk menjalankan kode Python - VERSI FIX
+  const runPythonCode = async (codeKey) => {
+    if (!pyodideReady || !pyodideRef.current) {
+      setCodeOutputs(prev => ({
+        ...prev,
+        [codeKey]: "⏳ Pyodide sedang dimuat, harap tunggu..."
+      }));
+      return;
+    }
+
+    try {
+      const pyodide = pyodideRef.current;
+      
+      // Clear output sebelumnya
+      setCodeOutputs(prev => ({ ...prev, [codeKey]: "" }));
+      
+      // Escape kode untuk dimasukkan ke dalam template string Python
+      const escapedCode = codeExamples[codeKey]
+        .replace(/\\/g, '\\\\')
+        .replace(/"/g, '\\"')
+        .replace(/\n/g, '\\n');
+      
+      // Jalankan kode dengan StringIO untuk capture output
+      const result = await pyodide.runPythonAsync(`
+import sys
+from io import StringIO
+
+# Simpan stdout asli
+_old_stdout = sys.stdout
+
+# Ganti dengan StringIO
+sys.stdout = _buffer = StringIO()
+
+try:
+    exec("""
+${escapedCode}
+""")
+finally:
+    # Kembalikan stdout asli
+    sys.stdout = _old_stdout
+
+# Return hasil
+_buffer.getvalue()
+      `);
+      
+      setCodeOutputs(prev => ({
+        ...prev,
+        [codeKey]: result
+      }));
+      
+    } catch (error) {
+      setCodeOutputs(prev => ({
+        ...prev,
+        [codeKey]: `❌ Error: ${error.message}`
+      }));
+    }
+  };
+
+  // Komponen reusable untuk editor kode Pyodide - READ ONLY
+  const CodeEditor = ({ codeKey, title }) => (
+    <div style={styles.codeEditorContainer}>
+      <div style={styles.codeEditorHeader}>
+        <span style={styles.codeEditorTitle}>{title}</span>
+        <button 
+          style={styles.runButton}
+          onClick={() => runPythonCode(codeKey)}
+          disabled={!pyodideReady}
+        >
+          {pyodideReady ? "▶ Jalankan" : "⏳ Memuat..."}
+        </button>
+      </div>
+      <div style={styles.codeInputReadOnly}>
+        <pre style={styles.codePre}>
+          {codeExamples[codeKey]}
+        </pre>
+      </div>
+      <div style={styles.outputHeader}>
+        <span style={styles.outputTitle}>Output</span>
+      </div>
+      <div style={styles.codeOutput}>
+        <pre style={styles.outputContent}>
+          {codeOutputs[codeKey] || "(Klik 'Jalankan' untuk melihat hasil)"}
+        </pre>
+      </div>
+    </div>
+  );
+
   return (
     <>
       <Navbar />
@@ -60,24 +219,7 @@ export default function OperasiManipulasiList() {
                   tambah (+).
                 </p>
 
-                <p style={styles.text}>
-                  <strong>Contoh kode program:</strong>
-                </p>
-
-                <pre style={styles.code}>
-{`a = [1, 2, 3]
-b = [4, 5, 6]
-c = a + b
-print(c)`}  
-                </pre>
-
-                <p style={styles.text}>
-                  <strong>Output:</strong>
-                </p>
-
-                <pre style={styles.code}>
-{`[1, 2, 3, 4, 5, 6]`}  
-                </pre>
+                <CodeEditor codeKey="concat" title="Contoh Kode Program" />
 
                 <p style={styles.text}>
                   Dengan menggunakan tanda tambah (+), list a dan b dapat
@@ -94,22 +236,7 @@ print(c)`}
                   dalam suatu list menggunakan operator tanda bintang (*).
                 </p>
 
-                <p style={styles.text}>
-                  <strong>Contoh kode program:</strong>
-                </p>
-
-                <pre style={styles.code}>
-{`data = [1, 2, 3]
-print(data * 3)`}  
-                </pre>
-
-                <p style={styles.text}>
-                  <strong>Output:</strong>
-                </p>
-
-                <pre style={styles.code}>
-{`[1, 2, 3, 1, 2, 3, 1, 2, 3]`}  
-                </pre>
+                <CodeEditor codeKey="repeat" title="Contoh Kode Program" />
 
                 <p style={styles.text}>
                   Dengan tanda bintang (*), elemen list akan diulang sebanyak
@@ -124,24 +251,7 @@ print(data * 3)`}
                   terdapat di dalam list atau tidak menggunakan operator <code>in</code>.
                 </p>
 
-                <p style={styles.text}>
-                  <strong>Contoh kode program:</strong>
-                </p>
-
-                <pre style={styles.code}>
-{`buah = ["apel", "jeruk", "mangga"]
-print("mangga" in buah)
-print("pisang" in buah)`}  
-                </pre>
-
-                <p style={styles.text}>
-                  <strong>Output:</strong>
-                </p>
-
-                <pre style={styles.code}>
-{`True
-False`}  
-                </pre>
+                <CodeEditor codeKey="search" title="Contoh Kode Program" />
 
                 <p style={styles.text}>
                   Nilai "mangga" ditemukan dalam list sehingga menghasilkan True,
@@ -158,23 +268,7 @@ False`}
                   terkecil ke nilai terbesar menggunakan perintah <code>sort()</code>.
                 </p>
 
-                <p style={styles.text}>
-                  <strong>Contoh kode program:</strong>
-                </p>
-
-                <pre style={styles.code}>
-{`angka = [5, 3, 8, 1, 7, 2]
-angka.sort()
-print(angka)`}  
-                </pre>
-
-                <p style={styles.text}>
-                  <strong>Output:</strong>
-                </p>
-
-                <pre style={styles.code}>
-{`[1, 2, 3, 5, 7, 8]`}  
-                </pre>
+                <CodeEditor codeKey="sort" title="Contoh Kode Program" />
 
                 <p style={styles.text}>
                   List yang sebelumnya tidak terurut menjadi terurut setelah
@@ -189,15 +283,7 @@ print(angka)`}
                   cara, salah satunya menggunakan perintah append().
                 </p>
 
-                <p style={styles.text}>
-                  <strong>Contoh kode program:</strong>
-                </p>
-
-                <pre style={styles.code}>
-{`buah = ["durian", "nanas", "mangga", "rambutan"]
-buah.append("alpukat")
-print(buah)`}  
-                </pre>
+                <CodeEditor codeKey="append" title="Contoh Kode Program" />
 
                 <p style={styles.text}>
                   Dengan append(), elemen baru akan ditambahkan pada indeks
@@ -206,15 +292,7 @@ print(buah)`}
 
                 <h3 style={styles.subTitle}>Menambahkan pada Posisi Tertentu</h3>
 
-                <p style={styles.text}>
-                  <strong>Contoh kode program:</strong>
-                </p>
-
-                <pre style={styles.code}>
-{`buah = ["durian", "nanas", "mangga", "rambutan"]
-buah.insert(1, "alpukat")
-print(buah)`}  
-                </pre>
+                <CodeEditor codeKey="insert" title="Contoh Kode Program" />
 
                 <p style={styles.text}>
                   Dengan insert(), elemen baru ditambahkan pada indeks yang
@@ -223,15 +301,7 @@ print(buah)`}
 
                 <h3 style={styles.subTitle}>Menambahkan Banyak Elemen</h3>
 
-                <p style={styles.text}>
-                  <strong>Contoh kode program:</strong>
-                </p>
-
-                <pre style={styles.code}>
-{`buah = ["durian", "nanas", "mangga", "rambutan"]
-buah.extend(["salak", "jeruk", "manggis"])
-print(buah)`}  
-                </pre>
+                <CodeEditor codeKey="extend" title="Contoh Kode Program" />
 
                 <p style={styles.text}>
                   Dengan extend(), banyak elemen dapat ditambahkan sekaligus ke
@@ -243,40 +313,19 @@ print(buah)`}
                   Menghapus dan Mengganti Elemen
                 </h3>
 
-                <p style={styles.text}>
-                  <strong>Contoh kode program:</strong>
-                </p>
-
-                <pre style={styles.code}>
-{`buah.remove("jeruk")
-print(buah)`}  
-                </pre>
+                <CodeEditor codeKey="remove" title="Contoh Kode Program - remove()" />
 
                 <p style={styles.text}>
                   Elemen "jeruk" dihapus dari list menggunakan perintah remove().
                 </p>
 
-                <p style={styles.text}>
-                  <strong>Contoh kode program:</strong>
-                </p>
-
-                <pre style={styles.code}>
-{`buah.pop(2)
-print(buah)`}  
-                </pre>
+                <CodeEditor codeKey="pop" title="Contoh Kode Program - pop()" />
 
                 <p style={styles.text}>
                   Elemen pada indeks ke-2 dihapus menggunakan perintah pop().
                 </p>
 
-                <p style={styles.text}>
-                  <strong>Contoh kode program:</strong>
-                </p>
-
-                <pre style={styles.code}>
-{`buah[3] = "belimbing"
-print(buah)`}  
-                </pre>
+                <CodeEditor codeKey="change" title="Contoh Kode Program - Ubah Elemen" />
 
                 <p style={styles.text}>
                   Elemen pada indeks tertentu dapat diubah dengan mengganti nilai
@@ -286,13 +335,7 @@ print(buah)`}
                 {/* LENGTH */}
                 <h3 style={styles.subTitle}>Memeriksa Panjang List</h3>
 
-                <p style={styles.text}>
-                  <strong>Contoh kode program:</strong>
-                </p>
-
-                <pre style={styles.code}>
-{`print(len(buah))`}  
-                </pre>
+                <CodeEditor codeKey="length" title="Contoh Kode Program" />
 
                 <p style={styles.text}>
                   Perintah len() digunakan untuk mengetahui jumlah elemen di
@@ -304,15 +347,7 @@ print(buah)`}
                   Operasi pada Nested List
                 </h3>
 
-                <p style={styles.text}>
-                  <strong>Contoh kode program:</strong>
-                </p>
-
-                <pre style={styles.code}>
-{`data = [["Nitta", 80], ["Lita", 85]]
-data[1][1] = 90
-print(data)`}  
-                </pre>
+                <CodeEditor codeKey="nested" title="Contoh Kode Program" />
 
                 <p style={styles.text}>
                   Elemen pada nested list dapat diubah menggunakan dua indeks,
@@ -320,15 +355,8 @@ print(data)`}
                 </p>
 
                 <h3 style={styles.subTitle}>Menambah Baris Baru</h3>
-
-                <p style={styles.text}>
-                  <strong>Contoh kode program:</strong>
-                </p>
                 
-                <pre style={styles.code}>
-{`data.append(["Citra", 78])
-print(data)`}  
-                </pre>
+                <CodeEditor codeKey="appendNested" title="Contoh Kode Program" />
 
                 <p style={styles.text}>
                   Baris baru dapat ditambahkan ke dalam nested list menggunakan
@@ -400,4 +428,80 @@ const styles = {
     fontSize: "14px",
     overflowX: "auto",
   },
+  // Styles untuk Code Editor Pyodide
+  codeEditorContainer: {
+    border: "2px solid #306998",
+    borderRadius: "10px",
+    overflow: "hidden",
+    marginBottom: "20px",
+    backgroundColor: "#1e1e1e",
+    marginTop: "15px"
+  },
+  codeEditorHeader: {
+    backgroundColor: "#306998",
+    color: "white",
+    padding: "12px 15px",
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center"
+  },
+  codeEditorTitle: {
+    fontWeight: "600",
+    fontSize: "15px"
+  },
+  runButton: {
+    backgroundColor: "#FFD43B",
+    color: "#306998",
+    border: "none",
+    padding: "8px 20px",
+    borderRadius: "6px",
+    cursor: "pointer",
+    fontWeight: "600",
+    fontSize: "14px",
+    transition: "all 0.2s"
+  },
+  // Style untuk area kode yang read-only
+  codeInputReadOnly: {
+    width: "100%",
+    minHeight: "100px",
+    backgroundColor: "#272822",
+    color: "#f8f8f2",
+    border: "none",
+    padding: "15px",
+    fontFamily: "'Consolas', 'Monaco', 'Courier New', monospace",
+    fontSize: "14px",
+    lineHeight: "1.6",
+    overflow: "auto"
+  },
+  codePre: {
+    margin: 0,
+    whiteSpace: "pre-wrap",
+    wordWrap: "break-word",
+    fontFamily: "'Consolas', 'Monaco', 'Courier New', monospace"
+  },
+  // Header Output
+  outputHeader: {
+    backgroundColor: "#306998",
+    color: "white",
+    padding: "10px 15px",
+    borderTop: "2px solid #1e1e1e"
+  },
+  outputTitle: {
+    fontWeight: "600",
+    fontSize: "15px"
+  },
+  codeOutput: {
+    backgroundColor: "#1e1e1e",
+    padding: "15px",
+    minHeight: "60px"
+  },
+  outputContent: {
+    color: "#4af",
+    fontFamily: "'Consolas', 'Monaco', 'Courier New', monospace",
+    fontSize: "14px",
+    margin: 0,
+    whiteSpace: "pre-wrap",
+    wordWrap: "break-word",
+    lineHeight: "1.5"
+  }
 };
