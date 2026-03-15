@@ -7,11 +7,14 @@ export default function PembuatanAksesElement() {
   const [pyodideReady, setPyodideReady] = useState(false);
   const pyodideRef = useRef(null);
   
+  // Ref untuk textarea latihan
+  const latihanTextareaRef = useRef(null);
+  
   // State untuk output setiap editor kode
   const [codeOutputs, setCodeOutputs] = useState({});
   
-  // State untuk menyimpan kode contoh (read-only)
-  const codeExamples = {
+  // State untuk menyimpan kode contoh (read-only) dan latihan (editable)
+  const [codeInputs, setCodeInputs] = useState({
     pembuatan: `buah = ["apel", "jeruk", "mangga"]
 print(buah)`,
     akses: `buah = ["apel", "jeruk", "mangga"]
@@ -22,26 +25,16 @@ print(buah[-1])
 print(buah[-2])`,
     slicing: `angka = [1, 2, 3, 4, 5]
 print(angka[1:4])`,
-    nested: `nilai = [
-  ["Ani", 80],
-  ["Budi", 85],
-  ["Citra", 90]
-]
-print(nilai)`,
-    aksesNested: `nilai = [
-  ["Ani", 80],
-  ["Budi", 85],
-  ["Citra", 90]
-]
-print(nilai[0][0])
-print(nilai[1][1])`
-  };
+    // LATIHAN KOSONG - hanya instruksi di komentar
+    latihan: `
+
+`
+  });
 
   // Load Pyodide saat komponen mount
   useEffect(() => {
     const loadPyodide = async () => {
       if (!window.loadPyodide) {
-        // Load script Pyodide jika belum ada
         const script = document.createElement('script');
         script.src = "https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js";
         script.async = true;
@@ -57,11 +50,10 @@ print(nilai[1][1])`
         setPyodideReady(true);
       }
     };
-    
     loadPyodide();
   }, []);
 
-  // Fungsi untuk menjalankan kode Python
+  // Fungsi untuk menjalankan kode Python - VERSI FIX dengan StringIO
   const runPythonCode = async (codeKey) => {
     if (!pyodideReady || !pyodideRef.current) {
       setCodeOutputs(prev => ({
@@ -74,19 +66,42 @@ print(nilai[1][1])`
     try {
       const pyodide = pyodideRef.current;
       
-      // Redirect stdout ke variabel
-      pyodide.setStdout({ batched: (text) => {
-        setCodeOutputs(prev => ({
-          ...prev,
-          [codeKey]: (prev[codeKey] || "") + text
-        }));
-      }});
-      
       // Clear output sebelumnya
       setCodeOutputs(prev => ({ ...prev, [codeKey]: "" }));
       
-      // Jalankan kode
-      await pyodide.runPythonAsync(codeExamples[codeKey]);
+      // Escape kode untuk dimasukkan ke dalam template string Python
+      const escapedCode = codeInputs[codeKey]
+        .replace(/\\/g, '\\\\')
+        .replace(/"/g, '\\"')
+        .replace(/\n/g, '\\n');
+      
+      // Jalankan kode dengan StringIO untuk capture output
+      const result = await pyodide.runPythonAsync(`
+import sys
+from io import StringIO
+
+# Simpan stdout asli
+_old_stdout = sys.stdout
+
+# Ganti dengan StringIO
+sys.stdout = _buffer = StringIO()
+
+try:
+    exec("""
+${escapedCode}
+""")
+finally:
+    # Kembalikan stdout asli
+    sys.stdout = _old_stdout
+
+# Return hasil
+_buffer.getvalue()
+      `);
+      
+      setCodeOutputs(prev => ({
+        ...prev,
+        [codeKey]: result
+      }));
       
     } catch (error) {
       setCodeOutputs(prev => ({
@@ -94,6 +109,11 @@ print(nilai[1][1])`
         [codeKey]: `❌ Error: ${error.message}`
       }));
     }
+  };
+
+  // Update code input untuk latihan
+  const updateCodeInput = (key, value) => {
+    setCodeInputs(prev => ({ ...prev, [key]: value }));
   };
 
   // Komponen reusable untuk editor kode Pyodide - READ ONLY
@@ -111,11 +131,45 @@ print(nilai[1][1])`
       </div>
       <div style={styles.codeInputReadOnly}>
         <pre style={styles.codePre}>
-          {codeExamples[codeKey]}
+          {codeInputs[codeKey]}
         </pre>
       </div>
+      <div style={styles.outputHeader}>
+        <span style={styles.outputTitle}>Output</span>
+      </div>
       <div style={styles.codeOutput}>
-        <div style={styles.outputLabel}>Output:</div>
+        <pre style={styles.outputContent}>
+          {codeOutputs[codeKey] || "(Klik 'Jalankan' untuk melihat hasil)"}
+        </pre>
+      </div>
+    </div>
+  );
+
+  // Komponen untuk editor kode yang BISA DIEDIT (Latihan Praktik)
+  const CodeEditorEditable = ({ codeKey, title }) => (
+    <div style={styles.codeEditorContainer}>
+      <div style={styles.codeEditorHeader}>
+        <span style={styles.codeEditorTitle}>{title}</span>
+        <button 
+          style={styles.runButton}
+          onClick={() => runPythonCode(codeKey)}
+          disabled={!pyodideReady}
+        >
+          {pyodideReady ? "▶ Jalankan" : "⏳ Memuat..."}
+        </button>
+      </div>
+      {/* TEXTAREA untuk input yang bisa diedit */}
+      <textarea
+        ref={latihanTextareaRef}
+        style={styles.codeInputEditable}
+        value={codeInputs[codeKey]}
+        onChange={(e) => updateCodeInput(codeKey, e.target.value)}
+        spellCheck={false}
+      />
+      <div style={styles.outputHeader}>
+        <span style={styles.outputTitle}>Output</span>
+      </div>
+      <div style={styles.codeOutput}>
         <pre style={styles.outputContent}>
           {codeOutputs[codeKey] || "(Klik 'Jalankan' untuk melihat hasil)"}
         </pre>
@@ -149,7 +203,7 @@ print(nilai[1][1])`
                   <li>Menjelaskan cara mengakses elemen list menggunakan indeks.</li>
                   <li>Menjelaskan penggunaan indeks positif dan indeks negatif.</li>
                   <li>Menjelaskan konsep slicing pada list.</li>
-                  <li>Menjelaskan konsep nested list dan cara mengakses elemennya.</li>
+                  {/* HAPUS: Tujuan tentang nested list */}
                 </ol>
               </div>
             </section>
@@ -164,10 +218,6 @@ print(nilai[1][1])`
                   dipisahkan menggunakan tanda koma. Elemen list dapat berupa
                   string, integer, float, maupun tipe data lainnya.
                 </p>
-
-                {/* <p style={styles.text}>
-                  <strong>Contoh kode program:</strong>
-                </p> */}
 
                 <CodeEditor codeKey="pembuatan" />
 
@@ -186,10 +236,6 @@ print(nilai[1][1])`
                   dimulai dari angka 0 untuk elemen pertama.
                 </p>
 
-                {/* <p style={styles.text}>
-                  <strong>Contoh kode program:</strong>
-                </p> */}
-
                 <CodeEditor codeKey="akses" />
 
                 <p style={styles.text}>
@@ -206,10 +252,6 @@ print(nilai[1][1])`
                   untuk mengakses elemen terakhir.
                 </p>
 
-                {/* <p style={styles.text}>
-                  <strong>Contoh kode program:</strong>
-                </p> */}
-
                 <CodeEditor codeKey="negatif" />
 
                 <p style={styles.text}>
@@ -225,10 +267,6 @@ print(nilai[1][1])`
                   Slicing dituliskan dengan format <code>list[awal:akhir]</code>.
                 </p>
 
-                {/* <p style={styles.text}>
-                  <strong>Contoh kode program:</strong>
-                </p> */}
-
                 <CodeEditor codeKey="slicing" />
 
                 <p style={styles.text}>
@@ -236,45 +274,8 @@ print(nilai[1][1])`
                   sebelum indeks ke-4, sehingga menghasilkan list baru.
                 </p>
 
-                {/* NESTED LIST */}
-                <h3 style={styles.subTitle}>Nested List</h3>
-
-                <p style={styles.text}>
-                  Nested list adalah list yang berisi list lain di dalamnya.
-                  Struktur ini sering digunakan untuk merepresentasikan data
-                  bertingkat atau data berbentuk tabel.
-                </p>
-
-                {/* <p style={styles.text}>
-                  <strong>Contoh kode program:</strong>
-                </p> */}
-
-                <CodeEditor codeKey="nested" />
-
-                <p style={styles.text}>
-                  Pada contoh di atas, setiap elemen dalam list utama merupakan
-                  list yang berisi nama dan nilai mahasiswa.
-                </p>
-
-                {/* AKSES NESTED LIST */}
-                <h3 style={styles.subTitle}>Akses Elemen Nested List</h3>
-
-                <p style={styles.text}>
-                  Elemen pada nested list dapat diakses menggunakan dua indeks.
-                  Indeks pertama digunakan untuk memilih baris, sedangkan indeks
-                  kedua digunakan untuk memilih kolom.
-                </p>
-                
-                {/* <p style={styles.text}>
-                  <strong>Contoh kode program:</strong>
-                </p> */}
-                
-                <CodeEditor codeKey="aksesNested" />
-
-                <p style={styles.text}>
-                  Kode di atas akan menampilkan nama mahasiswa pertama dan nilai
-                  mahasiswa kedua dari nested list.
-                </p>
+                {/* HAPUS: MATERI NESTED LIST */}
+                {/* Bagian nested list dan aksesNested dihapus */}
 
               </div>
             </section>
@@ -291,30 +292,20 @@ print(nilai[1][1])`
                   <strong>Instruksi Pengerjaan:</strong>
                 </p>
 
+                {/* INSTRUKSI TANPA NESTED LIST */}
                 <ol style={styles.list}>
                   <li>Buatlah list bernama <b>data</b> berisi angka 10, 20, 30, 40, 50.</li>
                   <li>Tampilkan elemen pertama menggunakan indeks positif.</li>
                   <li>Tampilkan elemen terakhir menggunakan indeks negatif.</li>
                   <li>Gunakan slicing untuk menampilkan elemen ke-2 sampai ke-4.</li>
-                  <li>Buat nested list berisi nama dan nilai 2 mahasiswa.</li>
-                  <li>Tampilkan nama mahasiswa pertama dari nested list tersebut.</li>
+                  {/* HAPUS: Instruksi tentang nested list */}
                 </ol>
 
-                <p style={styles.text}>
-                  Ketikkan kode Python Anda pada editor berikut, lalu klik tombol
-                  <b> Run </b> untuk melihat hasilnya.
-                </p>
-
-                <div style={{ marginTop: "20px" }}>
-                  <iframe
-                    src="https://trinket.io/embed/python3"
-                    width="100%"
-                    height="500"
-                    frameBorder="0"
-                    allowFullScreen
-                    title="Latihan Pembuatan dan Akses Elemen"
-                  ></iframe>
-                </div>
+                {/* GANTI: Trinket diganti dengan Pyodide editable */}
+                <CodeEditorEditable 
+                  codeKey="latihan" 
+                  title="Latihan Praktik - Edit & Jalankan"
+                />
 
               </div>
             </section>
@@ -430,19 +421,37 @@ const styles = {
     wordWrap: "break-word",
     fontFamily: "'Consolas', 'Monaco', 'Courier New', monospace"
   },
+  // BARU: Style untuk textarea yang bisa diedit
+  codeInputEditable: {
+    width: "100%",
+    minHeight: "200px",
+    backgroundColor: "#272822",
+    color: "#f8f8f2",
+    border: "none",
+    padding: "15px",
+    fontFamily: "'Consolas', 'Monaco', 'Courier New', monospace",
+    fontSize: "14px",
+    lineHeight: "1.5",
+    resize: "vertical",
+    outline: "none",
+    direction: "ltr",
+    textAlign: "left"
+  },
+  // BARU: Header Output
+  outputHeader: {
+    backgroundColor: "#306998",
+    color: "white",
+    padding: "10px 15px",
+    borderTop: "2px solid #1e1e1e"
+  },
+  outputTitle: {
+    fontWeight: "600",
+    fontSize: "15px"
+  },
   codeOutput: {
     backgroundColor: "#1e1e1e",
-    borderTop: "1px solid #444",
     padding: "15px",
     minHeight: "60px"
-  },
-  outputLabel: {
-    color: "#888",
-    fontSize: "12px",
-    marginBottom: "8px",
-    textTransform: "uppercase",
-    letterSpacing: "0.5px",
-    fontWeight: "600"
   },
   outputContent: {
     color: "#4af",
