@@ -1,20 +1,110 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import Navbar from "../../komponen/Navbar";
 import SidebarMateri from "../../komponen/SidebarMateri";
+
+// KOMPONEN TERPISAH untuk editor yang bisa diedit - MENCEGAH RE-RENDER
+const CodeEditorEditable = ({ codeKey, title, initialCode, pyodideReady, runPythonCode }) => {
+  // State lokal untuk textarea agar tidak trigger re-render parent
+  const [localCode, setLocalCode] = useState(initialCode);
+  const [output, setOutput] = useState("");
+  
+  const handleChange = useCallback((e) => {
+    setLocalCode(e.target.value);
+  }, []);
+
+  const handleRun = useCallback(async () => {
+    if (!pyodideReady) {
+      setOutput("⏳ Pyodide sedang dimuat, harap tunggu...");
+      return;
+    }
+    
+    const result = await runPythonCode(localCode);
+    setOutput(result);
+  }, [pyodideReady, localCode, runPythonCode]);
+
+  return (
+    <div style={styles.codeEditorContainer}>
+      <div style={styles.codeEditorHeader}>
+        <span style={styles.codeEditorTitle}>{title}</span>
+        <button 
+          style={styles.runButton}
+          onClick={handleRun}
+          disabled={!pyodideReady}
+        >
+          {pyodideReady ? "▶ Jalankan" : "⏳ Memuat..."}
+        </button>
+      </div>
+      <textarea
+        style={styles.codeInputEditable}
+        value={localCode}
+        onChange={handleChange}
+        spellCheck={false}
+        autoComplete="off"
+        autoCorrect="off"
+        autoCapitalize="off"
+      />
+      <div style={styles.outputHeader}>
+        <span style={styles.outputTitle}>Output</span>
+      </div>
+      <div style={styles.codeOutput}>
+        <pre style={styles.outputContent}>
+          {output || "(Klik 'Jalankan' untuk melihat hasil)"}
+        </pre>
+      </div>
+    </div>
+  );
+};
+
+// KOMPONEN TERPISAH untuk editor read-only
+const CodeEditor = ({ code, codeKey, pyodideReady, runPythonCode }) => {
+  const [output, setOutput] = useState("");
+
+  const handleRun = useCallback(async () => {
+    if (!pyodideReady) {
+      setOutput("⏳ Pyodide sedang dimuat, harap tunggu...");
+      return;
+    }
+    
+    const result = await runPythonCode(code);
+    setOutput(result);
+  }, [pyodideReady, code, runPythonCode]);
+
+  return (
+    <div style={styles.codeEditorContainer}>
+      <div style={styles.codeEditorHeader}>
+        <span style={styles.codeEditorTitle}>Contoh Kode Program</span>
+        <button 
+          style={styles.runButton}
+          onClick={handleRun}
+          disabled={!pyodideReady}
+        >
+          {pyodideReady ? "▶ Jalankan" : "⏳ Memuat..."}
+        </button>
+      </div>
+      <div style={styles.codeInputReadOnly}>
+        <pre style={styles.codePre}>
+          {code}
+        </pre>
+      </div>
+      <div style={styles.outputHeader}>
+        <span style={styles.outputTitle}>Output</span>
+      </div>
+      <div style={styles.codeOutput}>
+        <pre style={styles.outputContent}>
+          {output || "(Klik 'Jalankan' untuk melihat hasil)"}
+        </pre>
+      </div>
+    </div>
+  );
+};
 
 export default function PembuatanAksesElement() {
   /* ================= PYODIDE SETUP ================= */
   const [pyodideReady, setPyodideReady] = useState(false);
   const pyodideRef = useRef(null);
-  
-  // Ref untuk textarea latihan
-  const latihanTextareaRef = useRef(null);
-  
-  // State untuk output setiap editor kode
-  const [codeOutputs, setCodeOutputs] = useState({});
-  
-  // State untuk menyimpan kode contoh (read-only) dan latihan (editable)
-  const [codeInputs, setCodeInputs] = useState({
+
+  // Kode contoh (read-only)
+  const exampleCodes = {
     pembuatan: `buah = ["apel", "jeruk", "mangga"]
 print(buah)`,
     akses: `buah = ["apel", "jeruk", "mangga"]
@@ -25,11 +115,7 @@ print(buah[-1])
 print(buah[-2])`,
     slicing: `angka = [1, 2, 3, 4, 5]
 print(angka[1:4])`,
-    // LATIHAN KOSONG - hanya instruksi di komentar
-    latihan: `
-
-`
-  });
+  };
 
   // Load Pyodide saat komponen mount
   useEffect(() => {
@@ -54,23 +140,16 @@ print(angka[1:4])`,
   }, []);
 
   // Fungsi untuk menjalankan kode Python - VERSI FIX dengan StringIO
-  const runPythonCode = async (codeKey) => {
-    if (!pyodideReady || !pyodideRef.current) {
-      setCodeOutputs(prev => ({
-        ...prev,
-        [codeKey]: "⏳ Pyodide sedang dimuat, harap tunggu..."
-      }));
-      return;
+  const runPythonCode = useCallback(async (code) => {
+    if (!pyodideRef.current) {
+      return "⏳ Pyodide sedang dimuat, harap tunggu...";
     }
 
     try {
       const pyodide = pyodideRef.current;
       
-      // Clear output sebelumnya
-      setCodeOutputs(prev => ({ ...prev, [codeKey]: "" }));
-      
       // Escape kode untuk dimasukkan ke dalam template string Python
-      const escapedCode = codeInputs[codeKey]
+      const escapedCode = code
         .replace(/\\/g, '\\\\')
         .replace(/"/g, '\\"')
         .replace(/\n/g, '\\n');
@@ -80,10 +159,7 @@ print(angka[1:4])`,
 import sys
 from io import StringIO
 
-# Simpan stdout asli
 _old_stdout = sys.stdout
-
-# Ganti dengan StringIO
 sys.stdout = _buffer = StringIO()
 
 try:
@@ -91,91 +167,17 @@ try:
 ${escapedCode}
 """)
 finally:
-    # Kembalikan stdout asli
     sys.stdout = _old_stdout
 
-# Return hasil
 _buffer.getvalue()
       `);
       
-      setCodeOutputs(prev => ({
-        ...prev,
-        [codeKey]: result
-      }));
+      return result;
       
     } catch (error) {
-      setCodeOutputs(prev => ({
-        ...prev,
-        [codeKey]: `❌ Error: ${error.message}`
-      }));
+      return `❌ Error: ${error.message}`;
     }
-  };
-
-  // Update code input untuk latihan
-  const updateCodeInput = (key, value) => {
-    setCodeInputs(prev => ({ ...prev, [key]: value }));
-  };
-
-  // Komponen reusable untuk editor kode Pyodide - READ ONLY
-  const CodeEditor = ({ codeKey }) => (
-    <div style={styles.codeEditorContainer}>
-      <div style={styles.codeEditorHeader}>
-        <span style={styles.codeEditorTitle}>Contoh Kode Program</span>
-        <button 
-          style={styles.runButton}
-          onClick={() => runPythonCode(codeKey)}
-          disabled={!pyodideReady}
-        >
-          {pyodideReady ? "▶ Jalankan" : "⏳ Memuat..."}
-        </button>
-      </div>
-      <div style={styles.codeInputReadOnly}>
-        <pre style={styles.codePre}>
-          {codeInputs[codeKey]}
-        </pre>
-      </div>
-      <div style={styles.outputHeader}>
-        <span style={styles.outputTitle}>Output</span>
-      </div>
-      <div style={styles.codeOutput}>
-        <pre style={styles.outputContent}>
-          {codeOutputs[codeKey] || "(Klik 'Jalankan' untuk melihat hasil)"}
-        </pre>
-      </div>
-    </div>
-  );
-
-  // Komponen untuk editor kode yang BISA DIEDIT (Latihan Praktik)
-  const CodeEditorEditable = ({ codeKey, title }) => (
-    <div style={styles.codeEditorContainer}>
-      <div style={styles.codeEditorHeader}>
-        <span style={styles.codeEditorTitle}>{title}</span>
-        <button 
-          style={styles.runButton}
-          onClick={() => runPythonCode(codeKey)}
-          disabled={!pyodideReady}
-        >
-          {pyodideReady ? "▶ Jalankan" : "⏳ Memuat..."}
-        </button>
-      </div>
-      {/* TEXTAREA untuk input yang bisa diedit */}
-      <textarea
-        ref={latihanTextareaRef}
-        style={styles.codeInputEditable}
-        value={codeInputs[codeKey]}
-        onChange={(e) => updateCodeInput(codeKey, e.target.value)}
-        spellCheck={false}
-      />
-      <div style={styles.outputHeader}>
-        <span style={styles.outputTitle}>Output</span>
-      </div>
-      <div style={styles.codeOutput}>
-        <pre style={styles.outputContent}>
-          {codeOutputs[codeKey] || "(Klik 'Jalankan' untuk melihat hasil)"}
-        </pre>
-      </div>
-    </div>
-  );
+  }, []);
 
   return (
     <>
@@ -203,7 +205,6 @@ _buffer.getvalue()
                   <li>Menjelaskan cara mengakses elemen list menggunakan indeks.</li>
                   <li>Menjelaskan penggunaan indeks positif dan indeks negatif.</li>
                   <li>Menjelaskan konsep slicing pada list.</li>
-                  {/* HAPUS: Tujuan tentang nested list */}
                 </ol>
               </div>
             </section>
@@ -219,7 +220,12 @@ _buffer.getvalue()
                   string, integer, float, maupun tipe data lainnya.
                 </p>
 
-                <CodeEditor codeKey="pembuatan" />
+                <CodeEditor 
+                  code={exampleCodes.pembuatan} 
+                  codeKey="pembuatan"
+                  pyodideReady={pyodideReady}
+                  runPythonCode={runPythonCode}
+                />
 
                 <p style={styles.text}>
                   Contoh di atas menunjukkan proses pembuatan sebuah list bernama
@@ -236,7 +242,12 @@ _buffer.getvalue()
                   dimulai dari angka 0 untuk elemen pertama.
                 </p>
 
-                <CodeEditor codeKey="akses" />
+                <CodeEditor 
+                  code={exampleCodes.akses} 
+                  codeKey="akses"
+                  pyodideReady={pyodideReady}
+                  runPythonCode={runPythonCode}
+                />
 
                 <p style={styles.text}>
                   Pada contoh di atas, elemen "apel" berada pada indeks ke-0,
@@ -252,7 +263,12 @@ _buffer.getvalue()
                   untuk mengakses elemen terakhir.
                 </p>
 
-                <CodeEditor codeKey="negatif" />
+                <CodeEditor 
+                  code={exampleCodes.negatif} 
+                  codeKey="negatif"
+                  pyodideReady={pyodideReady}
+                  runPythonCode={runPythonCode}
+                />
 
                 <p style={styles.text}>
                   Elemen terakhir pada list dapat diakses menggunakan indeks -1,
@@ -267,15 +283,17 @@ _buffer.getvalue()
                   Slicing dituliskan dengan format <code>list[awal:akhir]</code>.
                 </p>
 
-                <CodeEditor codeKey="slicing" />
+                <CodeEditor 
+                  code={exampleCodes.slicing} 
+                  codeKey="slicing"
+                  pyodideReady={pyodideReady}
+                  runPythonCode={runPythonCode}
+                />
 
                 <p style={styles.text}>
                   Kode tersebut akan mengambil elemen dari indeks ke-1 sampai
                   sebelum indeks ke-4, sehingga menghasilkan list baru.
                 </p>
-
-                {/* HAPUS: MATERI NESTED LIST */}
-                {/* Bagian nested list dan aksesNested dihapus */}
 
               </div>
             </section>
@@ -292,19 +310,23 @@ _buffer.getvalue()
                   <strong>Instruksi Pengerjaan:</strong>
                 </p>
 
-                {/* INSTRUKSI TANPA NESTED LIST */}
                 <ol style={styles.list}>
                   <li>Buatlah list bernama <b>data</b> berisi angka 10, 20, 30, 40, 50.</li>
                   <li>Tampilkan elemen pertama menggunakan indeks positif.</li>
                   <li>Tampilkan elemen terakhir menggunakan indeks negatif.</li>
                   <li>Gunakan slicing untuk menampilkan elemen ke-2 sampai ke-4.</li>
-                  {/* HAPUS: Instruksi tentang nested list */}
                 </ol>
 
-                {/* GANTI: Trinket diganti dengan Pyodide editable */}
                 <CodeEditorEditable 
                   codeKey="latihan" 
                   title="Latihan Praktik - Edit & Jalankan"
+                  initialCode={`# Tulis kode kamu di sini...
+data = [10, 20, 30, 40, 50]
+print(data[0])  # Elemen pertama
+print(data[-1]) # Elemen terakhir
+print(data[1:4]) # Slicing`}
+                  pyodideReady={pyodideReady}
+                  runPythonCode={runPythonCode}
                 />
 
               </div>
@@ -421,7 +443,7 @@ const styles = {
     wordWrap: "break-word",
     fontFamily: "'Consolas', 'Monaco', 'Courier New', monospace"
   },
-  // BARU: Style untuk textarea yang bisa diedit
+  // Style untuk textarea yang bisa diedit
   codeInputEditable: {
     width: "100%",
     minHeight: "200px",
@@ -431,13 +453,14 @@ const styles = {
     padding: "15px",
     fontFamily: "'Consolas', 'Monaco', 'Courier New', monospace",
     fontSize: "14px",
-    lineHeight: "1.5",
+    lineHeight: "1.6",
     resize: "vertical",
     outline: "none",
-    direction: "ltr",
-    textAlign: "left"
+    display: "block",
+    boxSizing: "border-box",
+    tabSize: 4,
   },
-  // BARU: Header Output
+  // Header Output
   outputHeader: {
     backgroundColor: "#306998",
     color: "white",
