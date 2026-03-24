@@ -2,15 +2,108 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import Navbar from "../../komponen/Navbar";
 import SidebarMateri from "../../komponen/SidebarMateri";
 
-// KOMPONEN TERPISAH untuk editor yang bisa diedit - MENCEGAH RE-RENDER
-const CodeEditorEditable = ({ codeKey, title, initialCode, pyodideReady, runPythonCode }) => {
-  // State lokal untuk textarea agar tidak trigger re-render parent
-  const [localCode, setLocalCode] = useState(initialCode);
+// KOMPONEN TERPISAH untuk editor yang bisa diedit dengan VALIDASI KETAT
+const CodeEditorEditable = ({ codeKey, title, expectedAnswer, validationRules, pyodideReady, runPythonCode }) => {
+  const [localCode, setLocalCode] = useState("");
   const [output, setOutput] = useState("");
+  const [error, setError] = useState("");
   
   const handleChange = useCallback((e) => {
     setLocalCode(e.target.value);
+    setError(""); // Clear error saat mengetik
   }, []);
+
+  // Fungsi validasi ketat
+  const validateCode = useCallback((code) => {
+    const trimmedCode = code.trim();
+    
+    // Cek 1: Harus mengandung variabel bernama "data"
+    if (!validationRules.requireVariable) {
+      return { valid: true };
+    }
+    
+    // Cek apakah variabel "data" dibuat
+    const dataVariableRegex = /(\bdata\s*=)/;
+    if (!dataVariableRegex.test(trimmedCode)) {
+      return {
+        valid: false,
+        message: "❌ ERROR: Perhatikan lagi instruksi!"
+      };
+    }
+    
+    // Cek 2: Tidak boleh ada variabel lain selain "data" (kecuali built-in)
+    const variableDeclarations = trimmedCode.match(/\b([a-zA-Z_][a-zA-Z0-9_]*)\s*=/g) || [];
+    const allowedVariables = ['data', 'print', 'len', 'range', 'list', 'str', 'int', 'float'];
+    
+    for (let decl of variableDeclarations) {
+      const varName = decl.replace('=', '').trim();
+      if (!allowedVariables.includes(varName)) {
+        return {
+          valid: false,
+          message: `❌ ERROR: Perhatikan lagi instruksi!.`
+        };
+      }
+    }
+    
+    // Cek 3: Value dari data harus [10, 20, 30, 40, 50]
+    const dataValueRegex = /data\s*=\s*\[\s*10\s*,\s*20\s*,\s*30\s*,\s*40\s*,\s*50\s*\]/;
+    if (!dataValueRegex.test(trimmedCode)) {
+      return {
+        valid: false,
+        message: "❌ ERROR: Perhatikan lagi instruksi!"
+      };
+    }
+    
+    // Cek 4: Harus ada print(data[0]) untuk elemen pertama
+    const printFirstRegex = /print\s*\(\s*data\s*\[\s*0\s*\]\s*\)/;
+    if (!printFirstRegex.test(trimmedCode)) {
+      return {
+        valid: false,
+        message: "❌ ERROR: Perhatikan lagi instruksi!!"
+      };
+    }
+    
+    // Cek 5: Harus ada print(data[-1]) untuk elemen terakhir
+    const printLastRegex = /print\s*\(\s*data\s*\[\s*-\s*1\s*\]\s*\)/;
+    if (!printLastRegex.test(trimmedCode)) {
+      return {
+        valid: false,
+        message: "❌ ERROR: Perhatikan lagi instruksi!!"
+      };
+    }
+    
+    // Cek 6: Harus ada slicing print(data[1:4])
+    const printSlicingRegex = /print\s*\(\s*data\s*\[\s*1\s*:\s*4\s*\]\s*\)/;
+    if (!printSlicingRegex.test(trimmedCode)) {
+      return {
+        valid: false,
+        message: "❌ ERROR: Perhatikan lagi instruksi!"
+      };
+    }
+    
+    // Cek 7: Urutan eksekusi harus benar (data dulu, baru print)
+    const dataIndex = trimmedCode.indexOf('data =');
+    const print0Index = trimmedCode.indexOf('print(data[0])');
+    const printLastIndex = trimmedCode.indexOf('print(data[-1])');
+    const printSliceIndex = trimmedCode.indexOf('print(data[1:4])');
+    
+    if (dataIndex === -1 || print0Index === -1 || printLastIndex === -1 || printSliceIndex === -1) {
+      return {
+        valid: false,
+        message: "❌ ERROR: Struktur kode tidak lengkap!"
+      };
+    }
+    
+    if (print0Index < dataIndex || printLastIndex < dataIndex || printSliceIndex < dataIndex) {
+      return {
+        valid: false,
+        message: "❌ ERROR: Variabel 'data' harus didefinisikan SEBELUM digunakan dalam print()!"
+      };
+    }
+    
+    // Semua validasi lolos
+    return { valid: true };
+  }, [validationRules]);
 
   const handleRun = useCallback(async () => {
     if (!pyodideReady) {
@@ -18,9 +111,35 @@ const CodeEditorEditable = ({ codeKey, title, initialCode, pyodideReady, runPyth
       return;
     }
     
+    // Reset output dan error
+    setOutput("");
+    setError("");
+    
+    // Validasi ketat sebelum dijalankan
+    const validation = validateCode(localCode);
+    if (!validation.valid) {
+      setError(validation.message);
+      return;
+    }
+    
+    // Jika validasi lolos, jalankan kode
     const result = await runPythonCode(localCode);
     setOutput(result);
-  }, [pyodideReady, localCode, runPythonCode]);
+    
+    // Cek apakah output sesuai ekspektasi
+    const expectedLines = ["10", "50", "[20, 30, 40]"];
+    const actualLines = result.trim().split('\n').map(line => line.trim()).filter(line => line !== "");
+    
+    const allCorrect = expectedLines.every((expected, index) => 
+      actualLines[index] === expected
+    );
+    
+    if (allCorrect && actualLines.length === expectedLines.length) {
+      setOutput(result + "\n\n✅ SELAMAT! Jawaban kamu BENAR semua!");
+    } else {
+      setOutput(result + "\n\n⚠️ Output tidak sesuai ekspektasi. Cek kembali kodemu!");
+    }
+  }, [pyodideReady, localCode, runPythonCode, validateCode]);
 
   return (
     <div style={styles.codeEditorContainer}>
@@ -34,10 +153,22 @@ const CodeEditorEditable = ({ codeKey, title, initialCode, pyodideReady, runPyth
           {pyodideReady ? "▶ Jalankan" : "⏳ Memuat..."}
         </button>
       </div>
+      
+      {/* Tampilkan error jika ada */}
+      {error && (
+        <div style={styles.errorBox}>
+          {error}
+        </div>
+      )}
+      
       <textarea
-        style={styles.codeInputEditable}
+        style={{
+          ...styles.codeInputEditable,
+          border: error ? "2px solid #ff4444" : "none",
+        }}
         value={localCode}
         onChange={handleChange}
+        placeholder={`Ketik kode kamu di sini...`}
         spellCheck={false}
         autoComplete="off"
         autoCorrect="off"
@@ -139,7 +270,7 @@ print(angka[1:4])`,
     loadPyodide();
   }, []);
 
-  // Fungsi untuk menjalankan kode Python - VERSI FIX dengan StringIO
+  // Fungsi untuk menjalankan kode Python
   const runPythonCode = useCallback(async (code) => {
     if (!pyodideRef.current) {
       return "⏳ Pyodide sedang dimuat, harap tunggu...";
@@ -148,13 +279,11 @@ print(angka[1:4])`,
     try {
       const pyodide = pyodideRef.current;
       
-      // Escape kode untuk dimasukkan ke dalam template string Python
       const escapedCode = code
         .replace(/\\/g, '\\\\')
         .replace(/"/g, '\\"')
         .replace(/\n/g, '\\n');
       
-      // Jalankan kode dengan StringIO untuk capture output
       const result = await pyodide.runPythonAsync(`
 import sys
 from io import StringIO
@@ -233,7 +362,6 @@ _buffer.getvalue()
                   Ketika program dijalankan, seluruh isi list akan ditampilkan.
                 </p>
 
-                {/* AKSES ELEMEN */}
                 <h3 style={styles.subTitle}>Akses Elemen List</h3>
 
                 <p style={styles.text}>
@@ -254,7 +382,6 @@ _buffer.getvalue()
                   sedangkan elemen "jeruk" berada pada indeks ke-1.
                 </p>
 
-                {/* INDEKS NEGATIF */}
                 <h3 style={styles.subTitle}>Indeks Negatif</h3>
 
                 <p style={styles.text}>
@@ -275,7 +402,6 @@ _buffer.getvalue()
                   sedangkan elemen sebelumnya menggunakan indeks -2.
                 </p>
 
-                {/* SLICING */}
                 <h3 style={styles.subTitle}>Slicing List</h3>
 
                 <p style={styles.text}>
@@ -298,7 +424,7 @@ _buffer.getvalue()
               </div>
             </section>
 
-            {/* ================= LATIHAN PRAKTIK ================= */}
+            {/* LATIHAN PRAKTIK DENGAN VALIDASI KETAT */}
             <section style={styles.section}>
               <h2 style={styles.sectionTitle}>
                 Latihan Praktik
@@ -306,25 +432,29 @@ _buffer.getvalue()
 
               <div style={styles.card}>
 
-                <p style={styles.text}>
-                  <strong>Instruksi Pengerjaan:</strong>
-                </p>
+                <div style={styles.alertBox}>
+                  <strong>⚠️ Perhatian!</strong>
+                  <p style={{ margin: "5px 0" }}>
+                    Kode kamu <strong>WAJIB</strong> mengikuti aturan berikut:
+                  </p>
+                </div>
 
                 <ol style={styles.list}>
-                  <li>Buatlah list bernama <b>data</b> berisi angka 10, 20, 30, 40, 50.</li>
-                  <li>Tampilkan elemen pertama menggunakan indeks positif.</li>
+                  
+                  <li>Buatlah list bernama data berisi angka 10, 20, 30, 40, 50.</li>
+                  <li>Tampilkan elemen pertama menggunakan indeks positif</li>
                   <li>Tampilkan elemen terakhir menggunakan indeks negatif.</li>
                   <li>Gunakan slicing untuk menampilkan elemen ke-2 sampai ke-4.</li>
+
                 </ol>
 
                 <CodeEditorEditable 
                   codeKey="latihan" 
-                  title="Latihan Praktik - Edit & Jalankan"
-                  initialCode={`# Tulis kode kamu di sini...
-data = [10, 20, 30, 40, 50]
-print(data[0])  # Elemen pertama
-print(data[-1]) # Elemen terakhir
-print(data[1:4]) # Slicing`}
+                  title="Latihan Praktik"
+                  validationRules={{
+                    requireVariable: true,
+                    exactMatch: true
+                  }}
                   pyodideReady={pyodideReady}
                   runPythonCode={runPythonCode}
                 />
@@ -386,7 +516,15 @@ const styles = {
   list: { paddingLeft: "20px", lineHeight: "1.8" },
   text: { lineHeight: "1.8", color: "#333" },
   subTitle: { marginTop: "22px", color: "#306998" },
-  // Styles untuk Code Editor Pyodide
+  alertBox: {
+    backgroundColor: "#fff3cd",
+    border: "1px solid #ffc107",
+    borderRadius: "6px",
+    padding: "15px",
+    marginBottom: "15px",
+    color: "#856404",
+  },
+  // Styles untuk Code Editor
   codeEditorContainer: {
     border: "2px solid #306998",
     borderRadius: "10px",
@@ -424,6 +562,15 @@ const styles = {
     alignItems: "center",
     gap: "5px"
   },
+  // Error box
+  errorBox: {
+    backgroundColor: "#ff4444",
+    color: "white",
+    padding: "12px 15px",
+    fontSize: "14px",
+    fontWeight: "500",
+    borderBottom: "2px solid #cc0000",
+  },
   // Style untuk area kode yang read-only
   codeInputReadOnly: {
     width: "100%",
@@ -446,7 +593,7 @@ const styles = {
   // Style untuk textarea yang bisa diedit
   codeInputEditable: {
     width: "100%",
-    minHeight: "200px",
+    minHeight: "250px",
     backgroundColor: "#272822",
     color: "#f8f8f2",
     border: "none",
@@ -474,7 +621,7 @@ const styles = {
   codeOutput: {
     backgroundColor: "#1e1e1e",
     padding: "15px",
-    minHeight: "60px"
+    minHeight: "80px"
   },
   outputContent: {
     color: "#4af",
