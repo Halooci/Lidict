@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { User, Mail, Phone, Lock, Eye, EyeOff } from 'lucide-react';
+import { User, Mail, Lock, Eye, EyeOff, ChevronDown } from 'lucide-react';
 import Navbar from './komponen/Navbar';
 
 // ==================== STYLES ====================
@@ -28,7 +28,6 @@ const styles = `
   position: relative;
 }
 
-/* Container utama - Fixed layout */
 .panels-container {
   display: flex;
   width: 100%;
@@ -38,7 +37,6 @@ const styles = `
   background: white;
 }
 
-/* FORM SECTIONS - Fixed position */
 .form-section {
   width: 50%;
   display: flex;
@@ -54,14 +52,12 @@ const styles = `
   z-index: 5;
 }
 
-/* Login Section - Default di kanan */
 .form-section.login-section {
   right: 0;
   transform: translateX(0);
   opacity: 1;
 }
 
-/* Register Section - Default di kiri (hidden) */
 .form-section.register-section {
   left: 0;
   transform: translateX(-100%);
@@ -69,21 +65,18 @@ const styles = `
   pointer-events: none;
 }
 
-/* Saat mode REGISTER: Login geser ke kanan (hidden) */
 .panels-container.register-active .form-section.login-section {
   transform: translateX(100%);
   opacity: 0;
   pointer-events: none;
 }
 
-/* Saat mode REGISTER: Register masuk dari kiri (visible) */
 .panels-container.register-active .form-section.register-section {
   transform: translateX(0);
   opacity: 1;
   pointer-events: all;
 }
 
-/* SLIDING PANEL - Background berwarna */
 .sliding-panel {
   position: absolute;
   width: 50%;
@@ -101,7 +94,6 @@ const styles = `
   background: linear-gradient(135deg, #1e3a5f 0%, #2c5282 50%, #3182ce 100%);
 }
 
-/* Mode REGISTER: Panel geser ke kanan + ganti warna kuning */
 .panels-container.register-active .sliding-panel {
   left: 50%;
   background: linear-gradient(135deg, #d69e2e 0%, #ecc94b 50%, #f6e05e 100%);
@@ -147,7 +139,6 @@ const styles = `
   transform: scale(1.05);
 }
 
-/* Form Styles */
 .form-container {
   width: 100%;
   max-width: 380px;
@@ -188,6 +179,7 @@ const styles = `
   align-items: center;
   justify-content: center;
   transition: color 0.3s ease;
+  z-index: 2;
 }
 
 .input-group:focus-within .input-icon {
@@ -226,10 +218,73 @@ const styles = `
   align-items: center;
   justify-content: center;
   transition: color 0.3s ease;
+  z-index: 2;
 }
 
 .password-toggle:hover {
   color: #666;
+}
+
+/* Dropdown Styles */
+.select-group {
+  position: relative;
+  margin-bottom: 20px;
+}
+
+.select-icon {
+  position: absolute;
+  left: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #aaa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  pointer-events: none;
+}
+
+.select-arrow {
+  position: absolute;
+  right: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #aaa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.select-field {
+  width: 100%;
+  padding: 15px 50px;
+  border: none;
+  background: #f0f0f0;
+  border-radius: 50px;
+  font-size: 15px;
+  color: #333;
+  outline: none;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+}
+
+.select-field:focus {
+  background: #e8e8e8;
+  box-shadow: 0 0 0 3px rgba(44, 82, 130, 0.1);
+}
+
+.select-field option {
+  padding: 10px;
+  font-size: 15px;
+}
+
+.select-field option:first-child {
+  color: #999;
 }
 
 .submit-btn {
@@ -282,7 +337,6 @@ const styles = `
   text-decoration: underline;
 }
 
-/* Floating shapes */
 .floating-shapes {
   position: absolute;
   width: 100%;
@@ -336,7 +390,6 @@ const styles = `
   }
 }
 
-/* Responsive */
 @media (max-width: 768px) {
   .panels-container {
     flex-direction: column;
@@ -389,14 +442,14 @@ const SlidingPanel = ({ isLogin, onToggle }) => (
       <div className="shape"></div>
     </div>
     <div className="panel-content">
-      <h2>{isLogin ? 'New here ?' : 'One of us ?'}</h2>
+      <h2>{isLogin ? 'Belum Punya Akun ?' : 'Sudah Punya Akun ?'}</h2>
       <p>
         {isLogin 
-          ? 'Then Sign Up and Start Learning Python!' 
-          : 'Then Sign In and Continue Your Journey!'}
+          ? 'Daftar Disini!' 
+          : 'Masuk Disini!'}
       </p>
       <button className="panel-btn" onClick={onToggle}>
-        {isLogin ? 'Sign Up' : 'Sign In'}
+        {isLogin ? 'Daftar' : 'Masuk'}
       </button>
     </div>
   </div>
@@ -412,7 +465,7 @@ const LoginForm = () => {
 
   return (
     <div className="form-container">
-      <h1 className="form-title">Sign in</h1>
+      <h1 className="form-title">Masuk</h1>
       <form onSubmit={handleSubmit}>
         <div className="input-group">
           <div className="input-icon"><Mail size={20} /></div>
@@ -441,7 +494,7 @@ const LoginForm = () => {
         </div>
         
         <button type="submit" className="submit-btn login-btn">
-          Login
+          Masuk
         </button>
         
         <a href="#" className="forgot-link">Forgot Password?</a>
@@ -453,22 +506,23 @@ const LoginForm = () => {
 const RegisterForm = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [role, setRole] = useState('');
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log('Register submitted');
+    console.log('Register submitted with role:', role);
   };
 
   return (
     <div className="form-container">
-      <h1 className="form-title">Sign up</h1>
+      <h1 className="form-title">Daftar</h1>
       <form onSubmit={handleSubmit}>
         <div className="input-group">
           <div className="input-icon"><User size={20} /></div>
           <input 
             type="text" 
             className="input-field" 
-            placeholder="Name" 
+            placeholder="Nama Lengkap" 
             required 
           />
         </div>
@@ -482,16 +536,6 @@ const RegisterForm = () => {
             required 
           />
         </div>
-        
-        {/* <div className="input-group">
-          <div className="input-icon"><Phone size={20} /></div>
-          <input 
-            type="tel" 
-            className="input-field" 
-            placeholder="Contact Number" 
-            required 
-          />
-        </div> */}
         
         <div className="input-group">
           <div className="input-icon"><Lock size={20} /></div>
@@ -514,7 +558,7 @@ const RegisterForm = () => {
           <input 
             type={showConfirmPassword ? "text" : "password"}
             className="input-field" 
-            placeholder="Confirm Password" 
+            placeholder="Konfirmasi Password" 
             required 
           />
           <span 
@@ -524,9 +568,25 @@ const RegisterForm = () => {
             {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
           </span>
         </div>
+
+        {/* Dropdown Daftar Sebagai */}
+        <div className="select-group">
+          <div className="select-icon"><User size={20} /></div>
+          <select 
+            className="select-field" 
+            value={role}
+            onChange={(e) => setRole(e.target.value)}
+            required
+          >
+            <option value="" disabled>Daftar Sebagai</option>
+            <option value="dosen">Dosen</option>
+            <option value="mahasiswa">Mahasiswa</option>
+          </select>
+          <div className="select-arrow"><ChevronDown size={20} /></div>
+        </div>
         
         <button type="submit" className="submit-btn register-btn">
-          Sign Up
+          Daftar
         </button>
       </form>
     </div>
@@ -550,18 +610,15 @@ const LoginRegister = () => {
         <div className="auth-main">
           <div className={`panels-container ${isLogin ? '' : 'register-active'}`}>
             
-            {/* REGISTER FORM - Kiri (Hidden by default) */}
             <div className="form-section register-section">
               <RegisterForm />
             </div>
 
-            {/* SLIDING PANEL - Tengah (bergerak kiri-kanan) */}
             <SlidingPanel 
               isLogin={isLogin} 
               onToggle={toggleMode} 
             />
 
-            {/* LOGIN FORM - Kanan (Visible by default) */}
             <div className="form-section login-section">
               <LoginForm />
             </div>
