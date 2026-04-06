@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import Landing from "./pages/Landing";
+import LoginRegister from "./pages/LoginRegister";
 import Materi1 from "./pages/materi/Materi1";
 import Materi2 from "./pages/materi/Materi2";
 // import Pengantar from "./pages/materi/pendahuluan/Pengantar";
@@ -30,6 +31,8 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Landing />} />
+        <Route path="/loginregister" element={<LoginRegister />} />
+        {/* <Route path="/register" element={<LoginRegister />} /> */}
         <Route path="/Materi1" element={<Materi1 />} />
         <Route path="/Materi2" element={<Materi2 />} />
         {/* <Route path="/Pengantar" element={<Pengantar />} /> */}
