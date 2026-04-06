@@ -483,7 +483,7 @@ const RegisterForm = () => {
           />
         </div>
         
-        <div className="input-group">
+        {/* <div className="input-group">
           <div className="input-icon"><Phone size={20} /></div>
           <input 
             type="tel" 
@@ -491,7 +491,7 @@ const RegisterForm = () => {
             placeholder="Contact Number" 
             required 
           />
-        </div>
+        </div> */}
         
         <div className="input-group">
           <div className="input-icon"><Lock size={20} /></div>
