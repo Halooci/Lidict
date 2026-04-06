@@ -43,7 +43,7 @@ const styles = `
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 60px 40px;
+  padding: 80px 60px 60px 60px;
   background: white;
   position: absolute;
   top: 0;
@@ -143,6 +143,7 @@ const styles = `
   width: 100%;
   max-width: 380px;
   animation: formFadeIn 0.6s ease;
+  margin-top: 20px;
 }
 
 @keyframes formFadeIn {
@@ -225,7 +226,6 @@ const styles = `
   color: #666;
 }
 
-/* Dropdown Styles */
 .select-group {
   position: relative;
   margin-bottom: 20px;
@@ -407,7 +407,7 @@ const styles = `
   .form-section {
     position: relative;
     width: 100%;
-    padding: 30px 20px;
+    padding: 40px 20px 30px 20px;
     transform: none !important;
     opacity: 1 !important;
     pointer-events: all !important;
@@ -428,6 +428,10 @@ const styles = `
   
   .panel-content h2 {
     font-size: 24px;
+  }
+  
+  .form-container {
+    margin-top: 10px;
   }
 }
 `;
@@ -496,8 +500,6 @@ const LoginForm = () => {
         <button type="submit" className="submit-btn login-btn">
           Masuk
         </button>
-        
-        <a href="#" className="forgot-link">Forgot Password?</a>
       </form>
     </div>
   );
@@ -569,7 +571,6 @@ const RegisterForm = () => {
           </span>
         </div>
 
-        {/* Dropdown Daftar Sebagai */}
         <div className="select-group">
           <div className="select-icon"><User size={20} /></div>
           <select 
