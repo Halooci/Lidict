@@ -8,11 +8,19 @@ export default function Landing() {
       {/* HERO */}
       <section style={styles.hero}>
         <h1 style={styles.title}>
-          List & Dictionary Struktur Data Python
+          ListDictionaryLearn: Media Pembelajaran Interaktif
         </h1>
 
-        <p style={styles.subtitle}>
+        <h1 style={styles.title}>
+          List & Dictionary
+        </h1>
+
+        {/* <p style={styles.subtitle}>
           Belajar <strong>List</strong> dan <strong>Dictionary</strong> secara interaktif dan mudah.
+        </p> */}
+
+        <p style={styles.subtitle}>
+          Media pembelajaran yang dibuat untuk membantu mahasiswa memahami 
         </p>
 
         <div style={styles.buttonGroup}>
