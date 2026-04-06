@@ -43,7 +43,7 @@ const styles = `
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 80px 60px 60px 60px;
+  padding: 60px 60px 40px 60px;
   background: white;
   position: absolute;
   top: 0;
