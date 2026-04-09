@@ -50,6 +50,7 @@ export default function SidebarMateri() {
         <SubItem label="Pendahuluan Nested List" to="/NestedList/PendahuluanNestedList" />
         <SubItem label="Pembuatan dan Akses Element Nested List" to="/NestedList/PembuatanAksesNestedList"/>
         <SubItem label="Operasi Nested List" to="/NestedList/OperasiNestedList" />
+        {/* <SubItem key="operasi-nested" label="Operasi Nested List" to="/NestedList/OperasiNestedList" locked={true} /> */}
         <SubItem label="Rangkuman Nested List" to="/NestedList/RangkumanNestedList" />
         <SubItem label="Kuis Nested List" to="/NestedList/KuisNestedList" />
       </Accordion>
