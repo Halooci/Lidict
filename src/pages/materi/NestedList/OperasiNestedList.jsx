@@ -1,7 +1,7 @@
 import Navbar from "../../komponen/Navbar";
 import SidebarMateri from "../../komponen/SidebarMateri";
 
-export default function OperasiDanManipulasiNestedList() {
+export default function OperasiNestedList() {
   return (
     <>
       {/* NAVBAR */}
@@ -15,7 +15,7 @@ export default function OperasiDanManipulasiNestedList() {
         {/* HEADER MATERI */}
         <div style={styles.header}>
           <div style={styles.headerAccent}></div>
-          <h1 style={styles.headerTitle}>OPERASI DAN MANIPULASI NESTED LIST</h1>
+          <h1 style={styles.headerTitle}>OPERASI NESTED LIST</h1>
         </div>
 
         
