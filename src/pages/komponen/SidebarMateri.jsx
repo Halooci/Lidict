@@ -1,11 +1,13 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { Link, useLocation } from "react-router-dom";
 
 export default function SidebarMateri() {
-  const currentPath = window.location.pathname;
+  const location = useLocation();
+  const currentPath = location.pathname;
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   // Tentukan accordion aktif berdasarkan URL
   const getDefaultAccordion = () => {
-    // if (currentPath === "/List") return "list";
     if (currentPath.startsWith("/List")) return "list";
     if (currentPath.startsWith("/NestedList")) return "NestedList";
     if (currentPath.startsWith("/Dictionary")) return "dictionary";
@@ -13,82 +15,124 @@ export default function SidebarMateri() {
     return null;
   };
 
-  const [activeAccordion, setActiveAccordion] = useState(
-    getDefaultAccordion()
-  );
+  const [activeAccordion, setActiveAccordion] = useState(getDefaultAccordion());
+
+  // Efek untuk mengatur margin kiri konten utama saat sidebar terbuka/tutup
+  useEffect(() => {
+    const mainContent = document.querySelector(".main-content");
+    if (mainContent) {
+      mainContent.style.marginLeft = isSidebarOpen ? "280px" : "0";
+      mainContent.style.transition = "margin-left 0.3s ease";
+    }
+    // Atau untuk semua konten di dalam .content-wrapper, sesuaikan sendiri
+    // Alternatif: beri class pada body
+    document.body.style.overflowX = "hidden";
+  }, [isSidebarOpen]);
+
+  const toggleSidebar = () => {
+    setIsSidebarOpen(!isSidebarOpen);
+  };
 
   return (
-    <aside style={styles.sidebar}>
-      {/* <Accordion
-        id="pendahuluan"
-        title="Pendahuluan"
-        activeAccordion={activeAccordion}
-        setActiveAccordion={setActiveAccordion}
-      >
-        <SubItem label="Pengantar" to="/Pengantar" />
-      </Accordion> */}
+    <>
+      {/* Tombol hamburger floating saat sidebar tertutup */}
+      {!isSidebarOpen && (
+        <button onClick={toggleSidebar} style={styles.floatingHamburger}>
+          ☰
+        </button>
+      )}
 
-      <Accordion
-        id="list"
-        title="List"
-        activeAccordion={activeAccordion}
-        setActiveAccordion={setActiveAccordion}
-      >
-        <SubItem label="Pendahuluan List" to="/List/PendahuluanList" />
-        <SubItem label="Pembuatan dan Akses Element" to="/List/PembuatanAksesElement"/>
-        <SubItem label="Operasi dan Manipulasi" to="/List/OperasiDanManipulasi" />
-        <SubItem label="Rangkuman List" to="/List/RangkumanList" />
-        <SubItem label="Kuis List" to="/List/KuisList" />
-      </Accordion>
+      {/* Sidebar */}
+      <aside style={{ ...styles.sidebar, width: isSidebarOpen ? "280px" : "0", padding: isSidebarOpen ? "10px" : "0", overflow: isSidebarOpen ? "auto" : "hidden" }}>
+        {/* Tombol hamburger di dalam sidebar (kiri atas) */}
+        {isSidebarOpen && (
+          <div style={styles.hamburgerInside} onClick={toggleSidebar}>
+            ☰
+          </div>
+        )}
 
-      <Accordion
-        id="NestedList"
-        title="Nested List"
-        activeAccordion={activeAccordion}
-        setActiveAccordion={setActiveAccordion}
-      >
-        <SubItem label="Pendahuluan Nested List" to="/NestedList/PendahuluanNestedList" />
-        <SubItem label="Pembuatan dan Akses Element Nested List" to="/NestedList/PembuatanAksesNestedList"/>
-        <SubItem label="Operasi Nested List" to="/NestedList/OperasiNestedList" />
-        {/* <SubItem key="operasi-nested" label="Operasi Nested List" to="/NestedList/OperasiNestedList" locked={true} /> */}
-        <SubItem label="Rangkuman Nested List" to="/NestedList/RangkumanNestedList" />
-        <SubItem label="Kuis Nested List" to="/NestedList/KuisNestedList" />
-      </Accordion>
+        {/* Menu Peta Konsep (ditambahkan sebelum List) */}
+        <div style={styles.petaKonsepWrapper}>
+          <Link to="/PetaKonsep" style={{ textDecoration: "none" }}>
+            <div
+              style={{
+                ...styles.petaKonsepItem,
+                backgroundColor: currentPath === "/PetaKonsep" ? "#FFD43B" : "transparent",
+                color: currentPath === "/PetaKonsep" ? "#081527" : "#2c7be5",
+                fontWeight: currentPath === "/PetaKonsep" ? "600" : "500",
+              }}
+              onMouseEnter={(e) => {
+                if (currentPath !== "/PetaKonsep") {
+                  e.currentTarget.style.backgroundColor = "#fef9e6";
+                  e.currentTarget.style.color = "#081527";
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (currentPath !== "/PetaKonsep") {
+                  e.currentTarget.style.backgroundColor = "transparent";
+                  e.currentTarget.style.color = "#2c7be5";
+                }
+              }}
+            >
+              🗺️ Peta Konsep
+            </div>
+          </Link>
+        </div>
 
-      <Accordion
-        id="dictionary"
-        title="Dictionary"
-        activeAccordion={activeAccordion}
-        setActiveAccordion={setActiveAccordion}
-      >
-        <SubItem label="Pendahuluan Dictionary" to="/Dictionary/PendahuluanDictionary" />
-        <SubItem label="Pembuatan dan Akses Dictionary" to="/Dictionary/PembuatanAksesElementDictionary" />
-        <SubItem label="Manipulasi Dictionary" to="/Dictionary/ManipulasiDictionary" />
-        <SubItem label="Rangkuman Dictionary" to="/Dictionary/RangkumanDictionary" />
-        <SubItem label="Kuis Dictionary" to="/Dictionary/KuisDictionary" />
-      </Accordion>
+        <Accordion
+          id="list"
+          title="List"
+          activeAccordion={activeAccordion}
+          setActiveAccordion={setActiveAccordion}
+        >
+          <SubItem label="Pendahuluan List" to="/List/PendahuluanList" currentPath={currentPath} />
+          <SubItem label="Pembuatan dan Akses Element" to="/List/PembuatanAksesElement" currentPath={currentPath} />
+          <SubItem label="Operasi dan Manipulasi" to="/List/OperasiDanManipulasi" currentPath={currentPath} />
+          <SubItem label="Rangkuman List" to="/List/RangkumanList" currentPath={currentPath} />
+          <SubItem label="Kuis List" to="/List/KuisList" currentPath={currentPath} />
+        </Accordion>
 
-      <Accordion
-        id="evaluasi"
-        title="Evaluasi"
-        activeAccordion={activeAccordion}
-        setActiveAccordion={setActiveAccordion}
-      >
-        <SubItem label="Evaluasi Akhir"  to="/EvaluasiAkhir" />
-      </Accordion>
-    </aside>
+        <Accordion
+          id="NestedList"
+          title="Nested List"
+          activeAccordion={activeAccordion}
+          setActiveAccordion={setActiveAccordion}
+        >
+          <SubItem label="Pendahuluan Nested List" to="/NestedList/PendahuluanNestedList" currentPath={currentPath} />
+          <SubItem label="Pembuatan dan Akses Element Nested List" to="/NestedList/PembuatanAksesNestedList" currentPath={currentPath} />
+          <SubItem label="Operasi Nested List" to="/NestedList/OperasiNestedList" currentPath={currentPath} />
+          <SubItem label="Rangkuman Nested List" to="/NestedList/RangkumanNestedList" currentPath={currentPath} />
+          <SubItem label="Kuis Nested List" to="/NestedList/KuisNestedList" currentPath={currentPath} />
+        </Accordion>
+
+        <Accordion
+          id="dictionary"
+          title="Dictionary"
+          activeAccordion={activeAccordion}
+          setActiveAccordion={setActiveAccordion}
+        >
+          <SubItem label="Pendahuluan Dictionary" to="/Dictionary/PendahuluanDictionary" currentPath={currentPath} />
+          <SubItem label="Pembuatan dan Akses Dictionary" to="/Dictionary/PembuatanAksesElementDictionary" currentPath={currentPath} />
+          <SubItem label="Manipulasi Dictionary" to="/Dictionary/ManipulasiDictionary" currentPath={currentPath} />
+          <SubItem label="Rangkuman Dictionary" to="/Dictionary/RangkumanDictionary" currentPath={currentPath} />
+          <SubItem label="Kuis Dictionary" to="/Dictionary/KuisDictionary" currentPath={currentPath} />
+        </Accordion>
+
+        <Accordion
+          id="evaluasi"
+          title="Evaluasi"
+          activeAccordion={activeAccordion}
+          setActiveAccordion={setActiveAccordion}
+        >
+          <SubItem label="Evaluasi Akhir" to="/EvaluasiAkhir" currentPath={currentPath} />
+        </Accordion>
+      </aside>
+    </>
   );
 }
 
 /* ================= ACCORDION ================= */
-
-function Accordion({
-  id,
-  title,
-  children,
-  activeAccordion,
-  setActiveAccordion,
-}) {
+function Accordion({ id, title, children, activeAccordion, setActiveAccordion }) {
   const isOpen = activeAccordion === id;
 
   return (
@@ -98,68 +142,119 @@ function Accordion({
           ...styles.accordionHeader,
           backgroundColor: isOpen ? "#e8f1ff" : "#ffffff",
         }}
-        onClick={() =>
-          setActiveAccordion(isOpen ? null : id)
-        }
+        onClick={() => setActiveAccordion(isOpen ? null : id)}
+        onMouseEnter={(e) => {
+          if (!isOpen) e.currentTarget.style.backgroundColor = "#fef9e6";
+        }}
+        onMouseLeave={(e) => {
+          if (!isOpen) e.currentTarget.style.backgroundColor = "#ffffff";
+        }}
       >
         <span>{title}</span>
         <span>{isOpen ? "▲" : "▼"}</span>
       </div>
-
       {isOpen && <div style={styles.accordionContent}>{children}</div>}
     </div>
   );
 }
 
-/* ================= SUB ITEM ================= */
+/* ================= SUB ITEM (dengan outline, hover, active) ================= */
+function SubItem({ label, to, currentPath }) {
+  const isActive = currentPath === to;
 
-function SubItem({ label, locked, to }) {
   return (
-    <div
-      style={{
-        ...styles.subItem,
-        cursor: locked ? "not-allowed" : "pointer",
-        opacity: locked ? 0.6 : 1,
-      }}
-      onClick={() => {
-        if (!locked && to) {
-          window.location.href = to;
-        }
-      }}
-    >
-      <span>{label}</span>
-      {locked && <span style={styles.lock}>🔒</span>}
-    </div>
+    <Link to={to} style={{ textDecoration: "none" }}>
+      <div
+        style={{
+          ...styles.subItem,
+          backgroundColor: isActive ? "#FFD43B" : "transparent",
+          color: isActive ? "#081527" : "#2c7be5",
+          fontWeight: isActive ? "600" : "400",
+          borderLeft: isActive ? "4px solid #081527" : "4px solid transparent",
+        }}
+        onMouseEnter={(e) => {
+          if (!isActive) {
+            e.currentTarget.style.backgroundColor = "#fef9e6";
+            e.currentTarget.style.color = "#081527";
+          }
+        }}
+        onMouseLeave={(e) => {
+          if (!isActive) {
+            e.currentTarget.style.backgroundColor = "transparent";
+            e.currentTarget.style.color = "#2c7be5";
+          }
+        }}
+      >
+        <span>{label}</span>
+      </div>
+    </Link>
   );
 }
 
-/* ================= STYLE ================= */
-
+/* ================= STYLES ================= */
 const styles = {
   sidebar: {
     position: "fixed",
     top: "64px",
     left: 0,
-
-    width: "280px",
     height: "calc(100vh - 64px)",
     backgroundColor: "#ffffff",
     borderRight: "1px solid #e0e0e0",
-
-    padding: "10px",
     fontFamily: "Poppins, sans-serif",
-
     overflowY: "auto",
     overflowX: "hidden",
+    transition: "width 0.3s ease, padding 0.3s ease",
+    zIndex: 1000,
+    boxShadow: "2px 0 5px rgba(0,0,0,0.05)",
   },
-
+  hamburgerInside: {
+    fontSize: "24px",
+    cursor: "pointer",
+    padding: "8px 12px",
+    display: "inline-block",
+    color: "#2c7be5",
+    marginBottom: "10px",
+    width: "fit-content",
+    borderRadius: "8px",
+    transition: "background 0.2s",
+  },
+  floatingHamburger: {
+    position: "fixed",
+    top: "74px",
+    left: "10px",
+    fontSize: "24px",
+    background: "#ffffff",
+    border: "1px solid #e0e0e0",
+    borderRadius: "8px",
+    cursor: "pointer",
+    padding: "6px 12px",
+    zIndex: 1100,
+    color: "#2c7be5",
+    boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
+    transition: "all 0.2s",
+  },
+  petaKonsepWrapper: {
+    marginBottom: "16px",
+    padding: "0 4px",
+  },
+  petaKonsepItem: {
+    padding: "12px 16px",
+    fontSize: "15px",
+    fontWeight: "500",
+    borderRadius: "8px",
+    cursor: "pointer",
+    transition: "all 0.2s ease",
+    borderBottom: "1px solid #e5e7eb",
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+  },
   accordion: {
     marginBottom: "8px",
     borderRadius: "8px",
     overflow: "hidden",
     border: "1px solid #e5e7eb",
   },
-
   accordionHeader: {
     padding: "12px 16px",
     fontWeight: "600",
@@ -167,23 +262,20 @@ const styles = {
     justifyContent: "space-between",
     alignItems: "center",
     cursor: "pointer",
+    transition: "all 0.2s ease",
   },
-
   accordionContent: {
-    padding: "8px 0",
+    padding: "4px 0",
     backgroundColor: "#fafafa",
   },
-
   subItem: {
-    padding: "8px 18px",
+    padding: "10px 16px 10px 28px",
     fontSize: "14px",
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    color: "#2c7be5",
-  },
-
-  lock: {
-    fontSize: "14px",
+    cursor: "pointer",
+    transition: "all 0.2s ease",
+    borderBottom: "1px solid #e5e7eb", // outline tiap opsi
   },
 };
