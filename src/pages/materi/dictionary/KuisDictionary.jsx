@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 
 export default function KuisDictionary() {
   // State kuis
@@ -7,16 +7,18 @@ export default function KuisDictionary() {
   const [flags, setFlags] = useState(Array(10).fill(false));
   const [unsures, setUnsures] = useState(Array(10).fill(false));
   const [submitted, setSubmitted] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(20 * 60); // 20 menit dalam detik
-  const [codingAnswer, setCodingAnswer] = useState("");
-  const [codingOutput, setCodingOutput] = useState("");
-  const [codingError, setCodingError] = useState("");
-  const [pyodideReady, setPyodideReady] = useState(false);
-  const pyodideRef = useRef(null);
+  const [timeLeft, setTimeLeft] = useState(20 * 60); // 20 menit
   const timerRef = useRef(null);
+  const [resultsData, setResultsData] = useState(null);
 
-  // Data soal (10 soal)
+  // State untuk jawaban drag-drop (5 soal)
+  const [dragAnswers, setDragAnswers] = useState(
+    Array(5).fill().map(() => [])
+  );
+
+  // Data soal (10 soal: 5 PG + 5 Drag-Drop)
   const questions = [
+    // ========== 5 PILIHAN GANDA ==========
     {
       id: 1,
       type: "multiple_choice",
@@ -29,7 +31,7 @@ export default function KuisDictionary() {
         "E. Key dalam dictionary boleh berupa list"
       ],
       correct: 1,
-      explanation: "Key dalam dictionary harus unik dan immutable (string, integer, tuple). List tidak bisa menjadi key karena mutable."
+      explanation: "Key dalam dictionary harus unik dan immutable (string, integer, tuple)."
     },
     {
       id: 2,
@@ -47,14 +49,6 @@ export default function KuisDictionary() {
     },
     {
       id: 3,
-      type: "code_output",
-      text: "Tebak output dari kode berikut:",
-      code: "nilai = {'Math': 85, 'Science': 90, 'English': 78}\ndel nilai['Science']\nprint(len(nilai))",
-      correct: "2",
-      explanation: "Setelah menghapus key 'Science', dictionary hanya memiliki 2 item."
-    },
-    {
-      id: 4,
       type: "multiple_choice",
       text: "Metode mana yang digunakan untuk menggabungkan dua dictionary?",
       options: [
@@ -65,20 +59,12 @@ export default function KuisDictionary() {
         "E. concat()"
       ],
       correct: 2,
-      explanation: "Metode update() digunakan untuk menggabungkan dictionary lain ke dictionary asli."
+      explanation: "update() menambah/memperbarui dictionary dengan dictionary lain."
     },
     {
-      id: 5,
-      type: "code_completion",
-      text: "Lengkapi kode berikut untuk membuat dictionary dengan key 'nama' dan value 'Andi', lalu cetak value tersebut.",
-      code: "data = {}\n________________\nprint(data['nama'])",
-      correct: "data['nama'] = 'Andi'",
-      explanation: "Menambahkan pasangan key-value ke dictionary: data['nama'] = 'Andi'"
-    },
-    {
-      id: 6,
+      id: 4,
       type: "multiple_choice",
-      text: "Perhatikan kode berikut:\n\n```python\nx = {'a': 10, 'b': 20}\ny = x.copy()\ny['a'] = 99\nprint(x['a'])\n```\nApa yang akan dicetak?",
+      text: "Perhatikan kode berikut:\n\n```python\nx = {'a': 10, 'b': 20}\ny = x.copy()\ny['a'] = 99\nprint(x['a'])\n```\nApa outputnya?",
       options: [
         "A. 99",
         "B. 10",
@@ -90,7 +76,7 @@ export default function KuisDictionary() {
       explanation: "copy() membuat salinan dangkal, perubahan pada y tidak mempengaruhi x."
     },
     {
-      id: 7,
+      id: 5,
       type: "multiple_choice",
       text: "Manakah cara yang benar untuk menghapus semua item dalam dictionary `data`?",
       options: [
@@ -101,55 +87,71 @@ export default function KuisDictionary() {
         "E. del data"
       ],
       correct: 2,
-      explanation: "Metode clear() menghapus semua item, tetapi dictionary tetap ada."
+      explanation: "clear() menghapus semua item, dictionary tetap ada."
+    },
+    // ========== 5 DRAG AND DROP ==========
+    {
+      id: 6,
+      type: "dragdrop",
+      text: "Lengkapi kode berikut untuk membuat dictionary dari dua list menggunakan dictionary comprehension:",
+      codeTemplate: `keys = ['a', 'b', 'c']
+values = [1, 2, 3]
+dict_hasil = {keys[i]: values[i] for i in range(______)}
+print(dict_hasil)`,
+      placeholders: ["range(len(keys))"],
+      dragItems: ["len(keys)", "range(len(keys))", "keys", "values", "3"],
+      correct: ["range(len(keys))"],
+      explanation: "range(len(keys)) menghasilkan indeks 0,1,2 untuk mengakses keys dan values."
+    },
+    {
+      id: 7,
+      type: "dragdrop",
+      text: "Lengkapi kode untuk mencetak nilai dari key 'fisika' dengan default 0 jika tidak ada:",
+      codeTemplate: `nilai = {'matematika': 85, 'kimia': 90}
+print(nilai.______('fisika', 0))`,
+      placeholders: ["get"],
+      dragItems: ["get", "pop", "setdefault", "items", "values"],
+      correct: ["get"],
+      explanation: "get(key, default) mengembalikan nilai key atau default."
     },
     {
       id: 8,
-      type: "code_output",
-      text: "Tebak output dari kode berikut:",
-      code: "items = {'apel': 3, 'mangga': 5, 'jeruk': 2}\nfor k in items.keys():\n    print(k, end=' ')",
-      correct: "apel mangga jeruk",
-      explanation: "keys() mengembalikan semua key dalam urutan insertion (Python 3.7+)."
+      type: "dragdrop",
+      text: "Lengkapi kode untuk menghapus key 'mangga' dan menyimpan nilainya ke variabel 'harga':",
+      codeTemplate: `buah = {'apel': 5000, 'mangga': 8000, 'jeruk': 6000}
+harga = buah.______('mangga')
+print(harga)`,
+      placeholders: ["pop"],
+      dragItems: ["pop", "popitem", "del", "remove", "get"],
+      correct: ["pop"],
+      explanation: "pop(key) menghapus key dan mengembalikan nilainya."
     },
     {
       id: 9,
-      type: "code_completion",
-      text: "Lengkapi kode untuk mencetak nilai dari key 'fisika' menggunakan metode get() dengan default 0 jika tidak ada.",
-      code: "nilai = {'matematika': 85, 'kimia': 90}\nprint(________________)",
-      correct: "nilai.get('fisika', 0)",
-      explanation: "get(key, default) mengembalikan nilai key atau default jika tidak ada."
+      type: "dragdrop",
+      text: "Lengkapi kode untuk melakukan iterasi pasangan key-value:",
+      codeTemplate: `data = {'x': 10, 'y': 20}
+for key, value in data.______():
+    print(key, value)`,
+      placeholders: ["items"],
+      dragItems: ["items", "keys", "values", "get", "copy"],
+      correct: ["items"],
+      explanation: "items() mengembalikan pasangan (key, value)."
     },
     {
       id: 10,
-      type: "coding",
-      text: "Studi Kasus: Sebuah toko buku memiliki dictionary `stok` dengan data awal {'Python': 10, 'Java': 5, 'C++': 7}. \n\nLakukan operasi berikut secara berurutan:\n1. Tambahkan buku baru 'JavaScript' dengan stok 3.\n2. Kurangi stok 'Python' sebanyak 2.\n3. Hapus buku 'C++' karena sudah tidak tersedia.\n4. Tampilkan dictionary stok terakhir.\n\nTulis kode Python lengkap untuk menyelesaikan kasus di atas.",
-      correct: "",
-      expectedOutput: "{'Python': 8, 'Java': 5, 'JavaScript': 3}",
-      explanation: "Solusi: stok = {'Python':10, 'Java':5, 'C++':7}\nstok['JavaScript'] = 3\nstok['Python'] -= 2\ndel stok['C++']\nprint(stok)"
+      type: "dragdrop",
+      text: "Lengkapi kode untuk menambah/memperbarui dictionary 'b' ke 'a':",
+      codeTemplate: `a = {'a':1, 'b':2}
+b = {'c':3, 'd':4}
+a.______(b)
+print(a)`,
+      placeholders: ["update"],
+      dragItems: ["update", "merge", "extend", "append", "concat"],
+      correct: ["update"],
+      explanation: "update() menambah/memperbarui dictionary."
     }
   ];
-
-  // Load Pyodide untuk soal coding
-  useEffect(() => {
-    const loadPyodide = async () => {
-      if (!window.loadPyodide) {
-        const script = document.createElement('script');
-        script.src = "https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js";
-        script.async = true;
-        script.onload = async () => {
-          const pyodide = await window.loadPyodide();
-          pyodideRef.current = pyodide;
-          setPyodideReady(true);
-        };
-        document.body.appendChild(script);
-      } else {
-        const pyodide = await window.loadPyodide();
-        pyodideRef.current = pyodide;
-        setPyodideReady(true);
-      }
-    };
-    loadPyodide();
-  }, []);
 
   // Timer
   useEffect(() => {
@@ -173,42 +175,34 @@ export default function KuisDictionary() {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const handleAnswer = (answer) => {
+  const handleMCAnswer = (answer) => {
     const newAnswers = [...answers];
     newAnswers[currentQuestion] = answer;
     setAnswers(newAnswers);
-    if (questions[currentQuestion].type === "coding") {
-      setCodingAnswer(answer);
-    }
   };
 
-  const handleCodingRun = async () => {
-    if (!pyodideReady) {
-      setCodingError("⏳ Pyodide sedang dimuat...");
-      return;
-    }
-    setCodingError("");
-    setCodingOutput("");
-    try {
-      const pyodide = pyodideRef.current;
-      const code = codingAnswer;
-      const result = await pyodide.runPythonAsync(`
-import sys
-from io import StringIO
-_old_stdout = sys.stdout
-sys.stdout = _buffer = StringIO()
-try:
-    exec("""
-${code.replace(/`/g, '\\`')}
-""")
-finally:
-    sys.stdout = _old_stdout
-_buffer.getvalue()
-      `);
-      setCodingOutput(result);
-    } catch (err) {
-      setCodingError(`Error: ${err.message}`);
-    }
+  // Drag & Drop handlers
+  const handleDragStart = (e, item) => {
+    e.dataTransfer.setData("text/plain", item);
+    e.dataTransfer.effectAllowed = "copy";
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "copy";
+  };
+
+  const handleDrop = (e, dragQuestionIdx, placeholderIdx) => {
+    e.preventDefault();
+    const draggedItem = e.dataTransfer.getData("text/plain");
+    const newDragAnswers = [...dragAnswers];
+    if (!newDragAnswers[dragQuestionIdx]) newDragAnswers[dragQuestionIdx] = [];
+    newDragAnswers[dragQuestionIdx][placeholderIdx] = draggedItem;
+    setDragAnswers(newDragAnswers);
+    const globalIdx = 5 + dragQuestionIdx;
+    const newAnswers = [...answers];
+    newAnswers[globalIdx] = newDragAnswers[dragQuestionIdx].join("|");
+    setAnswers(newAnswers);
   };
 
   const toggleFlag = () => {
@@ -227,40 +221,18 @@ _buffer.getvalue()
     if (submitted) return;
     clearInterval(timerRef.current);
     setSubmitted(true);
-    // Hitung skor
     let score = 0;
     const results = [];
     for (let i = 0; i < questions.length; i++) {
       const q = questions[i];
-      const userAnswer = answers[i];
+      let userAnswer = answers[i];
       let isCorrect = false;
       if (q.type === "multiple_choice") {
         isCorrect = (userAnswer === q.correct);
-      } else if (q.type === "code_output") {
-        isCorrect = (userAnswer && userAnswer.trim() === q.correct);
-      } else if (q.type === "code_completion") {
-        isCorrect = (userAnswer && userAnswer.trim() === q.correct);
-      } else if (q.type === "coding") {
-        if (userAnswer && pyodideReady) {
-          try {
-            const pyodide = pyodideRef.current;
-            const result = pyodide.runPython(`
-import sys
-from io import StringIO
-_old_stdout = sys.stdout
-sys.stdout = _buffer = StringIO()
-try:
-    exec("""
-${userAnswer.replace(/`/g, '\\`')}
-""")
-finally:
-    sys.stdout = _old_stdout
-_buffer.getvalue()
-            `);
-            isCorrect = (result.trim() === q.expectedOutput);
-          } catch(e) {
-            isCorrect = false;
-          }
+      } else if (q.type === "dragdrop") {
+        const userAnswersArray = userAnswer ? userAnswer.split("|") : [];
+        if (userAnswersArray.length === q.correct.length) {
+          isCorrect = userAnswersArray.every((val, idx) => val === q.correct[idx]);
         } else {
           isCorrect = false;
         }
@@ -273,8 +245,6 @@ _buffer.getvalue()
     setResultsData({ results, finalScore, waktuDigunakan });
   };
 
-  const [resultsData, setResultsData] = useState(null);
-
   const resetQuiz = () => {
     setCurrentQuestion(0);
     setAnswers(Array(10).fill(null));
@@ -282,9 +252,7 @@ _buffer.getvalue()
     setUnsures(Array(10).fill(false));
     setSubmitted(false);
     setTimeLeft(20 * 60);
-    setCodingAnswer("");
-    setCodingOutput("");
-    setCodingError("");
+    setDragAnswers(Array(5).fill().map(() => []));
     setResultsData(null);
     if (timerRef.current) clearInterval(timerRef.current);
     timerRef.current = setInterval(() => {
@@ -299,6 +267,7 @@ _buffer.getvalue()
     }, 1000);
   };
 
+  // Halaman hasil
   if (submitted && resultsData) {
     const { finalScore, waktuDigunakan, results: detailResults } = resultsData;
     const minutesUsed = Math.floor(waktuDigunakan / 60);
@@ -319,8 +288,8 @@ _buffer.getvalue()
             {detailResults.map((q, idx) => (
               <div key={idx} style={{...resultStyles.questionItem, backgroundColor: q.isCorrect ? '#e8f5e9' : '#ffebee'}}>
                 <p><strong>Soal {idx+1}:</strong> {q.text.substring(0, 100)}...</p>
-                <p><strong>Jawaban Anda:</strong> {q.userAnswer !== null && q.userAnswer !== undefined ? (typeof q.userAnswer === 'number' ? q.options[q.userAnswer] : q.userAnswer) : 'Tidak dijawab'}</p>
-                {!q.isCorrect && <p><strong>Jawaban benar:</strong> {q.type === 'multiple_choice' ? q.options[q.correct] : q.correct}</p>}
+                <p><strong>Jawaban Anda:</strong> {q.userAnswer !== null && q.userAnswer !== undefined ? (q.type === 'multiple_choice' ? q.options[q.userAnswer] : q.userAnswer) : 'Tidak dijawab'}</p>
+                {!q.isCorrect && <p><strong>Jawaban benar:</strong> {q.type === 'multiple_choice' ? q.options[q.correct] : q.correct.join(', ')}</p>}
                 <p><strong>Penjelasan:</strong> {q.explanation}</p>
               </div>
             ))}
@@ -339,6 +308,8 @@ _buffer.getvalue()
   const q = questions[currentQuestion];
   const isFlagged = flags[currentQuestion];
   const isUnsure = unsures[currentQuestion];
+  const isDragDrop = q.type === "dragdrop";
+  const dragQuestionIdx = currentQuestion - 5;
 
   return (
     <div style={kuisStyles.container}>
@@ -348,22 +319,17 @@ _buffer.getvalue()
         <div style={kuisStyles.timer}>⏰ {formatTime(timeLeft)}</div>
       </div>
 
-      <div style={kuisStyles.content}>
-        <div style={kuisStyles.questionArea}>
+      <div style={kuisStyles.mainContent}>
+        {/* Kolom Kiri: Soal */}
+        <div style={kuisStyles.questionColumn}>
           <div style={kuisStyles.questionCard}>
             <div style={kuisStyles.questionHeader}>
               <span style={kuisStyles.questionNumber}>Soal {currentQuestion+1} dari 10</span>
               <div style={kuisStyles.actions}>
-                <button 
-                  onClick={toggleFlag} 
-                  style={{...kuisStyles.actionButton, backgroundColor: isFlagged ? '#FFD43B' : '#eee', color: '#333'}}
-                >
+                <button onClick={toggleFlag} style={{...kuisStyles.actionButton, backgroundColor: isFlagged ? '#FFD43B' : '#eee'}}>
                   🚩 {isFlagged ? 'Flagged' : 'Flag'}
                 </button>
-                <button 
-                  onClick={toggleUnsure} 
-                  style={{...kuisStyles.actionButton, backgroundColor: isUnsure ? '#aaa' : '#eee', color: '#333'}}
-                >
+                <button onClick={toggleUnsure} style={{...kuisStyles.actionButton, backgroundColor: isUnsure ? '#aaa' : '#eee'}}>
                   🤔 {isUnsure ? 'Ragu' : 'Ragu?'}
                 </button>
               </div>
@@ -378,107 +344,84 @@ _buffer.getvalue()
                       name="question"
                       value={idx}
                       checked={answers[currentQuestion] === idx}
-                      onChange={() => handleAnswer(idx)}
+                      onChange={() => handleMCAnswer(idx)}
                     />
                     <span>{opt}</span>
                   </label>
                 ))}
               </div>
             )}
-            {q.type === "code_output" && (
+            {isDragDrop && (
               <div>
-                <pre style={kuisStyles.codeBlock}>{q.code}</pre>
-                <input
-                  type="text"
-                  style={kuisStyles.textInput}
-                  placeholder="Tulis output yang dihasilkan..."
-                  value={answers[currentQuestion] || ""}
-                  onChange={(e) => handleAnswer(e.target.value)}
-                />
-              </div>
-            )}
-            {q.type === "code_completion" && (
-              <div>
-                <pre style={kuisStyles.codeBlock}>{q.code}</pre>
-                <input
-                  type="text"
-                  style={kuisStyles.textInput}
-                  placeholder="Isi kode yang rumpang..."
-                  value={answers[currentQuestion] || ""}
-                  onChange={(e) => handleAnswer(e.target.value)}
-                />
-              </div>
-            )}
-            {q.type === "coding" && (
-              <div>
-                <textarea
-                  style={kuisStyles.codeArea}
-                  rows="12"
-                  placeholder="Tulis kode Python lengkap di sini..."
-                  value={codingAnswer}
-                  onChange={(e) => {
-                    setCodingAnswer(e.target.value);
-                    handleAnswer(e.target.value);
-                  }}
-                />
-                <div style={kuisStyles.buttonGroup}>
-                  <button onClick={handleCodingRun} style={kuisStyles.runButton} disabled={!pyodideReady}>
-                    ▶ Jalankan Kode
-                  </button>
+                <div style={kuisStyles.codeBlock}>
+                  {q.codeTemplate.split('______').map((part, idx) => (
+                    <span key={idx}>
+                      {part}
+                      {idx < q.placeholders.length && (
+                        <span
+                          style={kuisStyles.dropZone}
+                          onDragOver={handleDragOver}
+                          onDrop={(e) => handleDrop(e, dragQuestionIdx, idx)}
+                        >
+                          {dragAnswers[dragQuestionIdx] && dragAnswers[dragQuestionIdx][idx] ? dragAnswers[dragQuestionIdx][idx] : '______'}
+                        </span>
+                      )}
+                    </span>
+                  ))}
                 </div>
-                {codingError && <pre style={kuisStyles.error}>{codingError}</pre>}
-                {codingOutput && <pre style={kuisStyles.output}>Output:\n{codingOutput}</pre>}
+                <div style={kuisStyles.dragItems}>
+                  {q.dragItems.map((item, idx) => (
+                    <div
+                      key={idx}
+                      draggable
+                      onDragStart={(e) => handleDragStart(e, item)}
+                      style={kuisStyles.dragItem}
+                    >
+                      {item}
+                    </div>
+                  ))}
+                </div>
+                <p style={{ fontSize: '12px', marginTop: '10px', color: '#666' }}>💡 Seret kata/kode ke area kosong di atas.</p>
               </div>
             )}
           </div>
           <div style={kuisStyles.navButtons}>
-            <button 
-              onClick={() => setCurrentQuestion(prev => Math.max(0, prev-1))} 
-              disabled={currentQuestion === 0}
-              style={kuisStyles.navButton}
-            >
-              ◀ Sebelumnya
-            </button>
-            <button 
-              onClick={() => setCurrentQuestion(prev => Math.min(questions.length-1, prev+1))} 
-              disabled={currentQuestion === questions.length-1}
-              style={kuisStyles.navButton}
-            >
-              Selanjutnya ▶
-            </button>
-            <button onClick={() => handleSubmit()} style={kuisStyles.submitButton}>
-              📤 Kumpulkan Jawaban
-            </button>
+            <button onClick={() => setCurrentQuestion(prev => Math.max(0, prev-1))} disabled={currentQuestion === 0} style={kuisStyles.navButton}>◀ Sebelumnya</button>
+            <button onClick={() => setCurrentQuestion(prev => Math.min(questions.length-1, prev+1))} disabled={currentQuestion === questions.length-1} style={kuisStyles.navButton}>Selanjutnya ▶</button>
+            <button onClick={() => handleSubmit()} style={kuisStyles.submitButton}>📤 Kumpulkan Jawaban</button>
           </div>
         </div>
 
-        <div style={kuisStyles.navGrid}>
-          <h3 style={kuisStyles.gridTitle}>Navigasi Soal</h3>
-          <div style={kuisStyles.grid}>
-            {questions.map((_, idx) => {
-              let bgColor = '#f0f0f0';
-              if (answers[idx] !== null && answers[idx] !== "") bgColor = '#306998';
-              if (flags[idx]) bgColor = '#FFD43B';
-              if (unsures[idx]) bgColor = '#aaa';
-              if (idx === currentQuestion) bgColor = '#FF9800';
-              return (
-                <button
-                  key={idx}
-                  onClick={() => setCurrentQuestion(idx)}
-                  style={{...kuisStyles.gridItem, backgroundColor: bgColor}}
-                  title={`Soal ${idx+1}${flags[idx] ? ' (Ditandai)' : ''}${unsures[idx] ? ' (Ragu)' : ''}`}
-                >
-                  {idx+1}
-                </button>
-              );
-            })}
-          </div>
-          <div style={kuisStyles.legend}>
-            <p><span style={{...kuisStyles.legendColor, backgroundColor: '#306998'}}></span> Terjawab</p>
-            <p><span style={{...kuisStyles.legendColor, backgroundColor: '#FFD43B'}}></span> Ditandai (Flag)</p>
-            <p><span style={{...kuisStyles.legendColor, backgroundColor: '#aaa'}}></span> Ragu</p>
-            <p><span style={{...kuisStyles.legendColor, backgroundColor: '#FF9800'}}></span> Aktif</p>
-            <p><span style={{...kuisStyles.legendColor, backgroundColor: '#f0f0f0'}}></span> Belum dijawab</p>
+        {/* Kolom Kanan: Navigasi Soal */}
+        <div style={kuisStyles.navColumn}>
+          <div style={kuisStyles.navCard}>
+            <h3 style={kuisStyles.navTitle}>Navigasi Soal</h3>
+            <div style={kuisStyles.grid}>
+              {questions.map((_, idx) => {
+                let bgColor = '#f0f0f0';
+                if (answers[idx] !== null && answers[idx] !== "") bgColor = '#306998';
+                if (flags[idx]) bgColor = '#FFD43B';
+                if (unsures[idx]) bgColor = '#aaa';
+                if (idx === currentQuestion) bgColor = '#FF9800';
+                return (
+                  <button
+                    key={idx}
+                    onClick={() => setCurrentQuestion(idx)}
+                    style={{...kuisStyles.gridItem, backgroundColor: bgColor}}
+                    title={`Soal ${idx+1}${flags[idx] ? ' (Ditandai)' : ''}${unsures[idx] ? ' (Ragu)' : ''}`}
+                  >
+                    {idx+1}
+                  </button>
+                );
+              })}
+            </div>
+            <div style={kuisStyles.legend}>
+              <p><span style={{...kuisStyles.legendColor, backgroundColor: '#306998'}}></span> Terjawab</p>
+              <p><span style={{...kuisStyles.legendColor, backgroundColor: '#FFD43B'}}></span> Flag</p>
+              <p><span style={{...kuisStyles.legendColor, backgroundColor: '#aaa'}}></span> Ragu</p>
+              <p><span style={{...kuisStyles.legendColor, backgroundColor: '#FF9800'}}></span> Aktif</p>
+              <p><span style={{...kuisStyles.legendColor, backgroundColor: '#f0f0f0'}}></span> Kosong</p>
+            </div>
           </div>
         </div>
       </div>
@@ -486,54 +429,59 @@ _buffer.getvalue()
   );
 }
 
+// ==================== STYLE RESPONSIF (2 KOLOM -> 1 KOLOM) ====================
 const kuisStyles = {
   container: {
     minHeight: "100vh",
     backgroundColor: "#f5f7fa",
     fontFamily: "Poppins, sans-serif",
-    padding: "20px 40px",
+    padding: "20px",
   },
   header: {
     backgroundColor: "#306998",
     color: "white",
-    padding: "18px 24px",
+    padding: "12px 20px",
     position: "relative",
     marginBottom: "30px",
     borderRadius: "6px",
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
+    flexWrap: "wrap",
+    gap: "10px",
   },
   headerAccent: {
     position: "absolute",
     left: 0,
     top: 0,
     bottom: 0,
-    width: "8px",
+    width: "6px",
     backgroundColor: "#FFD43B",
     borderRadius: "6px 0 0 6px",
   },
   headerTitle: {
     margin: 0,
-    fontSize: "28px",
+    fontSize: "24px",
     fontWeight: "700",
-    flex: 1,
-    textAlign: "center",
   },
   timer: {
-    fontSize: "24px",
+    fontSize: "20px",
     fontWeight: "bold",
     backgroundColor: "#FFD43B",
     color: "#306998",
-    padding: "8px 16px",
+    padding: "4px 12px",
     borderRadius: "8px",
   },
-  content: {
+  mainContent: {
     display: "flex",
     gap: "30px",
+    flexDirection: "row", // default dua kolom
   },
-  questionArea: {
+  questionColumn: {
     flex: 2,
+  },
+  navColumn: {
+    flex: 1,
   },
   questionCard: {
     backgroundColor: "white",
@@ -549,6 +497,8 @@ const kuisStyles = {
     marginBottom: "20px",
     borderBottom: "1px solid #ddd",
     paddingBottom: "10px",
+    flexWrap: "wrap",
+    gap: "10px",
   },
   questionNumber: {
     fontSize: "18px",
@@ -561,7 +511,7 @@ const kuisStyles = {
   },
   actionButton: {
     border: "none",
-    padding: "6px 12px",
+    padding: "4px 12px",
     borderRadius: "6px",
     cursor: "pointer",
     fontWeight: "500",
@@ -583,6 +533,7 @@ const kuisStyles = {
     alignItems: "center",
     gap: "10px",
     cursor: "pointer",
+    fontSize: "16px",
   },
   codeBlock: {
     backgroundColor: "#272822",
@@ -592,53 +543,42 @@ const kuisStyles = {
     fontFamily: "monospace",
     fontSize: "14px",
     overflowX: "auto",
-    marginBottom: "15px",
+    lineHeight: "1.8",
   },
-  textInput: {
-    width: "100%",
-    padding: "10px",
-    fontSize: "16px",
-    borderRadius: "6px",
-    border: "1px solid #ccc",
-    marginTop: "10px",
+  dropZone: {
+    display: "inline-block",
+    minWidth: "100px",
+    backgroundColor: "#3c3c3c",
+    border: "2px dashed #FFD43B",
+    borderRadius: "4px",
+    padding: "2px 8px",
+    margin: "0 2px",
+    textAlign: "center",
+    color: "#FFD43B",
+    fontWeight: "bold",
   },
-  codeArea: {
-    width: "100%",
-    fontFamily: "monospace",
-    fontSize: "14px",
-    padding: "10px",
-    borderRadius: "6px",
-    border: "1px solid #ccc",
-    marginBottom: "10px",
+  dragItems: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: "10px",
+    marginTop: "20px",
+    justifyContent: "center",
   },
-  runButton: {
-    backgroundColor: "#28a745",
+  dragItem: {
+    backgroundColor: "#306998",
     color: "white",
-    border: "none",
-    padding: "8px 16px",
+    padding: "6px 12px",
     borderRadius: "6px",
-    cursor: "pointer",
-  },
-  error: {
-    backgroundColor: "#ffebee",
-    color: "#c62828",
-    padding: "10px",
-    borderRadius: "6px",
-    marginTop: "10px",
-  },
-  output: {
-    backgroundColor: "#1e1e1e",
-    color: "#4af",
-    padding: "10px",
-    borderRadius: "6px",
-    marginTop: "10px",
-    fontFamily: "monospace",
+    cursor: "grab",
+    userSelect: "none",
+    fontSize: "14px",
   },
   navButtons: {
     display: "flex",
     gap: "15px",
     justifyContent: "center",
     marginTop: "10px",
+    flexWrap: "wrap",
   },
   navButton: {
     backgroundColor: "#306998",
@@ -659,30 +599,29 @@ const kuisStyles = {
     fontSize: "16px",
     fontWeight: "bold",
   },
-  navGrid: {
-    flex: 1,
+  navCard: {
     backgroundColor: "white",
     borderRadius: "10px",
     padding: "20px",
     boxShadow: "0 5px 15px rgba(0,0,0,0.08)",
-    height: "fit-content",
   },
-  gridTitle: {
+  navTitle: {
     marginTop: 0,
     marginBottom: "15px",
     textAlign: "center",
+    fontSize: "20px",
   },
   grid: {
     display: "grid",
     gridTemplateColumns: "repeat(5, 1fr)",
-    gap: "10px",
+    gap: "12px",
     marginBottom: "20px",
   },
   gridItem: {
     aspectRatio: "1",
     border: "none",
     borderRadius: "8px",
-    fontSize: "16px",
+    fontSize: "18px",
     fontWeight: "bold",
     cursor: "pointer",
     transition: "0.2s",
@@ -691,7 +630,7 @@ const kuisStyles = {
   legend: {
     display: "flex",
     flexWrap: "wrap",
-    gap: "10px",
+    gap: "12px",
     justifyContent: "center",
     fontSize: "12px",
   },
@@ -705,11 +644,42 @@ const kuisStyles = {
   },
 };
 
+// Media query untuk layar kecil
+const styleTag = document.createElement('style');
+styleTag.textContent = `
+  @media (max-width: 768px) {
+    .kuis-main-content {
+      flex-direction: column !important;
+    }
+  }
+`;
+// Terapkan style ke head (hanya sekali)
+if (!document.querySelector('#kuis-media-style')) {
+  styleTag.id = 'kuis-media-style';
+  document.head.appendChild(styleTag);
+}
+
+// Override style untuk media query karena kita tidak bisa menggunakan @media di style object
+// Kita gunakan CSS global
+const kuisStylesWithMedia = {
+  ...kuisStyles,
+  mainContent: {
+    ...kuisStyles.mainContent,
+    '@media (max-width: 768px)': {
+      flexDirection: 'column',
+    },
+  },
+};
+
+// Karena kita tidak bisa menulis @media di style object, kita override dengan CSS class
+// Untuk kemudahan, kita tambahkan class pada div
+// Tapi kita sudah menambahkan style tag global, jadi aman.
+
 const resultStyles = {
   container: {
     minHeight: "100vh",
     backgroundColor: "#f5f7fa",
-    padding: "40px",
+    padding: "20px",
     fontFamily: "Poppins, sans-serif",
   },
   card: {
@@ -717,17 +687,18 @@ const resultStyles = {
     margin: "0 auto",
     backgroundColor: "white",
     borderRadius: "12px",
-    padding: "30px",
+    padding: "20px",
     boxShadow: "0 5px 20px rgba(0,0,0,0.1)",
   },
   title: {
     textAlign: "center",
     color: "#306998",
     marginBottom: "20px",
+    fontSize: "24px",
   },
   scoreBox: {
     backgroundColor: "#e7f3ff",
-    padding: "15px",
+    padding: "12px",
     borderRadius: "8px",
     marginBottom: "20px",
     textAlign: "center",
@@ -745,6 +716,7 @@ const resultStyles = {
   },
   buttonGroup: {
     display: "flex",
+    flexWrap: "wrap",
     gap: "15px",
     justifyContent: "center",
   },

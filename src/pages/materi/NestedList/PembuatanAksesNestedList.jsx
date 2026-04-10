@@ -279,7 +279,7 @@ print("Nilai siswa 2 mata pelajaran 3:", nilai[1][2])  # output: 79`,
     "][",
     "])  # ingin mencetak 20"
   ];
-  const soal1Placeholders = ["indeks baris", "indeks kolom"];
+  const soal1Placeholders = ["", ""];
   const soal1Expected = ["0", "1"];
 
   const soal2CodeParts = ["matriks = [[1, 2], ", "]\nprint(matriks)"];
@@ -291,7 +291,7 @@ print("Nilai siswa 2 mata pelajaran 3:", nilai[1][2])  # output: 79`,
     "][",
     "])  # ingin mencetak 60"
   ];
-  const soal3Placeholders = ["indeks baris", "indeks kolom"];
+  const soal3Placeholders = ["", ""];
   const soal3Expected = ["2", "1"];
 
   // Load Pyodide
