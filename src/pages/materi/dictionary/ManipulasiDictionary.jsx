@@ -1,26 +1,543 @@
+import { useState, useEffect, useRef, useCallback } from "react";
 import Navbar from "../../komponen/Navbar";
 import SidebarMateri from "../../komponen/SidebarMateri";
 
+// ===================== KOMPONEN EDITOR READ-ONLY (DENGAN PENJELASAN SETELAH DIJALANKAN) =====================
+const CodeEditor = ({ code, codeKey, pyodideReady, runPythonCode, explanations }) => {
+  const [output, setOutput] = useState("");
+  const [hasRun, setHasRun] = useState(false);
+
+  const handleRun = useCallback(async () => {
+    if (!pyodideReady) {
+      setOutput("⏳ Pyodide sedang dimuat, harap tunggu...");
+      return;
+    }
+    const result = await runPythonCode(code);
+    setOutput(result);
+    setHasRun(true);
+  }, [pyodideReady, code, runPythonCode]);
+
+  const codeLines = code.split('\n');
+  const hasExplanations = explanations && explanations.length === codeLines.length;
+
+  return (
+    <div style={styles.codeEditorContainer}>
+      <div style={styles.codeEditorHeader}>
+        <span style={styles.codeEditorTitle}>📘 Contoh Kode Program</span>
+        <button style={styles.runButton} onClick={handleRun} disabled={!pyodideReady}>
+          {pyodideReady ? "▶ Jalankan" : "⏳ Memuat..."}
+        </button>
+      </div>
+      <div style={styles.codeInputReadOnly}>
+        <pre style={styles.codePre}>{code}</pre>
+      </div>
+      <div style={styles.outputHeader}>
+        <span style={styles.outputTitle}>Output</span>
+      </div>
+      <div style={styles.codeOutput}>
+        <pre style={styles.outputContent}>{output || "(Klik 'Jalankan' untuk melihat hasil)"}</pre>
+      </div>
+      {hasRun && hasExplanations && (
+        <div style={styles.explanationsContainer}>
+          <div style={styles.explanationsHeader}>
+            <span style={styles.explanationsTitle}>📖 Penjelasan Kode (per baris)</span>
+          </div>
+          <div style={styles.explanationsContent}>
+            {codeLines.map((line, idx) => {
+              if (line.trim() === "" && !explanations[idx]) return null;
+              return (
+                <div key={idx} style={styles.explanationItem}>
+                  <span style={styles.lineNumber}>Baris {idx+1}:</span>
+                  <code style={styles.lineCode}>{line}</code>
+                  <span style={styles.lineExplanation}>→ {explanations[idx]}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ===================== KOMPONEN LATIHAN PRAKTIK (EDITOR DENGAN VALIDASI) =====================
+const CodeEditorEditable = ({ codeKey, title, validationRules, pyodideReady, runPythonCode, expectedOutput, successMessage }) => {
+  const [localCode, setLocalCode] = useState("");
+  const [output, setOutput] = useState("");
+  const [error, setError] = useState("");
+
+  const handleChange = useCallback((e) => {
+    setLocalCode(e.target.value);
+    setError("");
+  }, []);
+
+  // Validasi sederhana: cek apakah ada dictionary 'inventaris' dan operasi tertentu (update, pop, dll)
+  // Kita buat validasi lebih fleksibel sesuai studi kasus
+  const validateCode = useCallback((code) => {
+    const trimmedCode = code.trim();
+    if (!/\binventaris\s*=\s*\{[^}]*\}/.test(trimmedCode)) {
+      return { valid: false, message: "❌ ERROR: Buatlah dictionary dengan nama 'inventaris'." };
+    }
+    // Cek apakah ada operasi update untuk menambah stok
+    if (!/inventaris\.update\(/.test(trimmedCode)) {
+      return { valid: false, message: "❌ ERROR: Gunakan metode update() untuk menambah stok barang baru." };
+    }
+    // Cek apakah ada pop untuk menghapus item
+    if (!/inventaris\.pop\(/.test(trimmedCode)) {
+      return { valid: false, message: "❌ ERROR: Gunakan metode pop() untuk menghapus barang yang habis." };
+    }
+    // Cek apakah ada print inventaris di akhir
+    if (!/print\s*\(\s*inventaris\s*\)/.test(trimmedCode)) {
+      return { valid: false, message: "❌ ERROR: Tampilkan isi inventaris dengan print(inventaris) di akhir." };
+    }
+    return { valid: true };
+  }, []);
+
+  const handleRun = useCallback(async () => {
+    if (!pyodideReady) {
+      setOutput("⏳ Pyodide sedang dimuat, harap tunggu...");
+      return;
+    }
+    setOutput("");
+    setError("");
+
+    const validation = validateCode(localCode);
+    if (!validation.valid) {
+      setError(validation.message);
+      return;
+    }
+
+    const result = await runPythonCode(localCode);
+    setOutput(result);
+    // Cek output mengandung dictionary yang diharapkan (bisa fleksibel)
+    if (expectedOutput && result.includes(expectedOutput)) {
+      setOutput(result + `\n\n✅ ${successMessage || "SELAMAT! Kode kamu benar!"}`);
+    } else if (expectedOutput) {
+      setOutput(result + "\n\n⚠️ Output tidak sesuai. Cek kembali operasi manipulasi dictionary Anda.");
+    }
+  }, [pyodideReady, localCode, runPythonCode, validateCode, expectedOutput, successMessage]);
+
+  return (
+    <div style={styles.codeEditorContainer}>
+      <div style={styles.codeEditorHeader}>
+        <span style={styles.codeEditorTitle}>{title}</span>
+        <button style={styles.runButton} onClick={handleRun} disabled={!pyodideReady}>
+          {pyodideReady ? "▶ Jalankan" : "⏳ Memuat..."}
+        </button>
+      </div>
+      {error && <div style={styles.errorBox}>{error}</div>}
+      <textarea
+        style={{ ...styles.codeInputEditable, border: error ? "2px solid #ff4444" : "none" }}
+        value={localCode}
+        onChange={handleChange}
+        placeholder="Tulis kode Python untuk memanipulasi dictionary di sini..."
+        spellCheck={false}
+        autoComplete="off"
+      />
+      <div style={styles.outputHeader}>
+        <span style={styles.outputTitle}>Output</span>
+      </div>
+      <div style={styles.codeOutput}>
+        <pre style={styles.outputContent}>{output || "(Klik 'Jalankan' untuk melihat hasil)"}</pre>
+      </div>
+    </div>
+  );
+};
+
+// ===================== KOMPONEN LATIHAN INTERAKTIF (PILIHAN GANDA) =====================
+const MultipleChoiceQuiz = ({ questions, resetTrigger }) => {
+  const [selected, setSelected] = useState({});
+  const [submitted, setSubmitted] = useState(false);
+  const [score, setScore] = useState(0);
+
+  useEffect(() => {
+    setSelected({});
+    setSubmitted(false);
+    setScore(0);
+  }, [resetTrigger]);
+
+  const handleSelect = (qId, optionIndex) => {
+    if (!submitted) {
+      setSelected({ ...selected, [qId]: optionIndex });
+    }
+  };
+
+  const handleSubmit = () => {
+    let correctCount = 0;
+    questions.forEach(q => {
+      if (selected[q.id] === q.correctIndex) correctCount++;
+    });
+    setScore(correctCount);
+    setSubmitted(true);
+  };
+
+  const handleReset = () => {
+    setSelected({});
+    setSubmitted(false);
+    setScore(0);
+  };
+
+  return (
+    <div style={styles.quizContainer}>
+      <h3 style={styles.quizTitle}>📝 Latihan Interaktif: Pilih Kode yang Benar</h3>
+      {questions.map((q, idx) => (
+        <div key={q.id} style={styles.questionCard}>
+          <p style={styles.questionText}>{idx+1}. {q.text}</p>
+          <div style={styles.options}>
+            {q.options.map((opt, optIdx) => (
+              <label key={optIdx} style={styles.optionLabel}>
+                <input
+                  type="radio"
+                  name={`q${q.id}`}
+                  value={optIdx}
+                  checked={selected[q.id] === optIdx}
+                  onChange={() => handleSelect(q.id, optIdx)}
+                  disabled={submitted}
+                  style={styles.radio}
+                />
+                <span style={{ marginLeft: "8px" }}>{opt}</span>
+              </label>
+            ))}
+          </div>
+          {submitted && (
+            <div style={styles.feedback}>
+              {selected[q.id] === q.correctIndex ? "✅ Benar" : `❌ Salah. Jawaban yang benar: ${q.options[q.correctIndex]}`}
+            </div>
+          )}
+        </div>
+      ))}
+      {!submitted ? (
+        <button style={styles.submitButton} onClick={handleSubmit}>Kumpulkan Jawaban</button>
+      ) : (
+        <div>
+          <div style={styles.resultBox}>
+            <strong>Skor Anda: {score} / {questions.length}</strong>
+          </div>
+          <button style={styles.resetQuizButton} onClick={handleReset}>Kerjakan Ulang</button>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ===================== KOMPONEN UTAMA =====================
 export default function ManipulasiDictionary() {
+  const [pyodideReady, setPyodideReady] = useState(false);
+  const pyodideRef = useRef(null);
+  const [resetInteractives, setResetInteractives] = useState(0);
+
+  // Kode contoh untuk materi (tanpa komentar)
+  const exampleCodes = {
+    update: `data = {"a": 1, "b": 2}
+data.update({"c": 3, "d": 4})
+print("Setelah update:", data)`,
+    pop: `data = {"apel": 5000, "mangga": 8000, "jeruk": 6000}
+nilai = data.pop("mangga")
+print("Nilai yang dihapus:", nilai)
+print("Dictionary setelah pop:", data)`,
+    popitem: `data = {"x": 100, "y": 200, "z": 300}
+item = data.popitem()
+print("Item yang dihapus:", item)
+print("Dictionary setelah popitem:", data)`,
+    clear: `data = {"nama": "Andi", "usia": 25, "kota": "Jakarta"}
+data.clear()
+print("Setelah clear:", data)`,
+    copy: `asli = {"a": 1, "b": 2, "c": 3}
+salinan = asli.copy()
+salinan["a"] = 99
+print("Dictionary asli:", asli)
+print("Dictionary salinan:", salinan)`,
+    dictComp: `kuadrat = {x: x**2 for x in range(1, 6)}
+print("Dictionary kuadrat:", kuadrat)`,
+  };
+
+  // Penjelasan per baris untuk setiap contoh
+  const explanations = {
+    update: [
+      "Membuat dictionary 'data' dengan key 'a':1 dan 'b':2.",
+      "Menggunakan metode update() untuk menambah atau mengupdate beberapa key sekaligus. Menambah key 'c':3 dan 'd':4.",
+      "Mencetak teks 'Setelah update:' diikuti isi dictionary 'data'."
+    ],
+    pop: [
+      "Membuat dictionary 'data' berisi harga buah.",
+      "Menghapus key 'mangga' menggunakan pop() dan menyimpan nilainya ke variabel 'nilai'.",
+      "Mencetak teks dan nilai yang dihapus (8000).",
+      "Mencetak dictionary setelah pop, key 'mangga' sudah tidak ada."
+    ],
+    popitem: [
+      "Membuat dictionary 'data' dengan tiga pasangan key-value.",
+      "Menghapus item terakhir (karena Python 3.7+ mempertahankan urutan) menggunakan popitem(), mengembalikan tuple (key, value).",
+      "Mencetak item yang dihapus.",
+      "Mencetak dictionary setelah popitem."
+    ],
+    clear: [
+      "Membuat dictionary 'data' dengan tiga key.",
+      "Menghapus semua item menggunakan metode clear().",
+      "Mencetak dictionary kosong {}."
+    ],
+    copy: [
+      "Membuat dictionary 'asli' dengan tiga key.",
+      "Membuat salinan (shallow copy) menggunakan metode copy().",
+      "Mengubah nilai key 'a' pada dictionary salinan menjadi 99.",
+      "Mencetak dictionary asli (tidak berubah).",
+      "Mencetak dictionary salinan (key 'a' berubah jadi 99)."
+    ],
+    dictComp: [
+      "Dictionary comprehension: membuat dictionary dengan key dari 1 sampai 5 dan nilai berupa kuadrat key.",
+      "Mencetak dictionary yang dihasilkan."
+    ]
+  };
+
+  // Data soal pilihan ganda (5 soal)
+  const quizQuestions = [
+    {
+      id: 1,
+      text: "Manakah kode yang BENAR untuk menambahkan pasangan key-value baru 'kota': 'Bandung' ke dalam dictionary `data` yang sudah ada?",
+      options: [
+        "data.add('kota', 'Bandung')",
+        "data['kota'] = 'Bandung'",
+        "data.insert('kota', 'Bandung')",
+        "data.append('kota', 'Bandung')"
+      ],
+      correctIndex: 1
+    },
+    {
+      id: 2,
+      text: "Perhatikan dictionary: `nilai = {'Matematika': 85, 'Fisika': 90, 'Kimia': 78}`. Kode manakah yang akan menghapus key 'Fisika' beserta nilainya?",
+      options: [
+        "nilai.remove('Fisika')",
+        "del nilai['Fisika']",
+        "nilai.delete('Fisika')",
+        "nilai.popitem('Fisika')"
+      ],
+      correctIndex: 1
+    },
+    {
+      id: 3,
+      text: "Kode manakah yang tepat untuk menggabungkan dictionary `a = {'x':1}` dan `b = {'y':2}` menjadi satu dictionary `c` yang berisi {'x':1, 'y':2}?",
+      options: [
+        "c = a + b",
+        "c = a.update(b)",
+        "c = {**a, **b}",
+        "c = a.concat(b)"
+      ],
+      correctIndex: 2
+    },
+    {
+      id: 4,
+      text: "Fungsi/metode manakah yang digunakan untuk menghapus semua item dalam dictionary?",
+      options: [
+        "delete()",
+        "removeAll()",
+        "clear()",
+        "popall()"
+      ],
+      correctIndex: 2
+    },
+    {
+      id: 5,
+      text: "Perhatikan kode berikut:\n`data = {'a': 10, 'b': 20, 'c': 30}`\n`hasil = data.pop('b')`\nBerapakah nilai dari variabel `hasil` setelah kode dijalankan?",
+      options: ["10", "20", "30", "Error"],
+      correctIndex: 1
+    }
+  ];
+
+  // Load Pyodide
+  useEffect(() => {
+    const loadPyodide = async () => {
+      if (!window.loadPyodide) {
+        const script = document.createElement('script');
+        script.src = "https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js";
+        script.async = true;
+        script.onload = async () => {
+          const pyodide = await window.loadPyodide();
+          pyodideRef.current = pyodide;
+          setPyodideReady(true);
+        };
+        document.body.appendChild(script);
+      } else {
+        const pyodide = await window.loadPyodide();
+        pyodideRef.current = pyodide;
+        setPyodideReady(true);
+      }
+    };
+    loadPyodide();
+  }, []);
+
+  const runPythonCode = useCallback(async (code) => {
+    if (!pyodideRef.current) return "⏳ Pyodide sedang dimuat...";
+    try {
+      const pyodide = pyodideRef.current;
+      const escapedCode = code.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n');
+      const result = await pyodide.runPythonAsync(`
+import sys
+from io import StringIO
+_old_stdout = sys.stdout
+sys.stdout = _buffer = StringIO()
+try:
+    exec("""
+${escapedCode}
+""")
+finally:
+    sys.stdout = _old_stdout
+_buffer.getvalue()
+      `);
+      return result;
+    } catch (error) {
+      return `❌ Error: ${error.message}`;
+    }
+  }, []);
+
+  const resetQuiz = () => {
+    setResetInteractives(prev => prev + 1);
+  };
+
   return (
     <>
-      {/* NAVBAR */}
       <Navbar />
-
-        <div style={{ marginLeft: "280px" }}>
+      <div style={{ marginLeft: "280px" }}>
         <SidebarMateri />
-        <div style={{ paddingTop: "64px"}}>
-      {/* PAGE CONTENT */}
-      <div style={styles.page}>
-        {/* HEADER MATERI */}
-        <div style={styles.header}>
-          <div style={styles.headerAccent}></div>
-          <h1 style={styles.headerTitle}>MANIPULASI DICTIONARY</h1>
-        </div>
+        <div style={{ paddingTop: "64px" }}>
+          <div style={styles.page}>
+            <div style={styles.header}>
+              <div style={styles.headerAccent}></div>
+              <h1 style={styles.headerTitle}>MANIPULASI DICTIONARY</h1>
+            </div>
 
-        
-      </div>
-      </div>
+            {/* TUJUAN PEMBELAJARAN */}
+            <section style={styles.section}>
+              <h2 style={styles.sectionTitle}>🎯 Tujuan Pembelajaran</h2>
+              <div style={styles.card}>
+                <ul style={styles.list}>
+                  <li>Mahasiswa mampu melakukan operasi manipulasi dasar pada dictionary (menambah, mengupdate, menghapus item).</li>
+                  <li>Mahasiswa mampu menggunakan metode-metode penting seperti update(), pop(), popitem(), clear(), copy(), dan dictionary comprehension.</li>
+                  <li>Mahasiswa mampu menerapkan manipulasi dictionary dalam pemecahan masalah nyata (studi kasus).</li>
+                </ul>
+              </div>
+            </section>
+
+            {/* MATERI DENGAN CONTOH KODE */}
+            <section style={styles.section}>
+              <div style={styles.card}>
+                <h3 style={styles.subTitle}>1. Menambah/Mengupdate dengan update()</h3>
+                <p style={styles.text}>
+                  Metode <code>update()</code> digunakan untuk menambah atau memperbarui beberapa pasangan key-value sekaligus.
+                </p>
+                <CodeEditor
+                  code={exampleCodes.update}
+                  codeKey="update"
+                  pyodideReady={pyodideReady}
+                  runPythonCode={runPythonCode}
+                  explanations={explanations.update}
+                />
+
+                <h3 style={styles.subTitle}>2. Menghapus dengan pop()</h3>
+                <p style={styles.text}>
+                  <code>pop(key)</code> menghapus item dengan key tertentu dan mengembalikan nilainya.
+                </p>
+                <CodeEditor
+                  code={exampleCodes.pop}
+                  codeKey="pop"
+                  pyodideReady={pyodideReady}
+                  runPythonCode={runPythonCode}
+                  explanations={explanations.pop}
+                />
+
+                <h3 style={styles.subTitle}>3. Menghapus Item Terakhir dengan popitem()</h3>
+                <p style={styles.text}>
+                  <code>popitem()</code> menghapus item terakhir (berdasarkan urutan penyisipan) dan mengembalikan tuple (key, value).
+                </p>
+                <CodeEditor
+                  code={exampleCodes.popitem}
+                  codeKey="popitem"
+                  pyodideReady={pyodideReady}
+                  runPythonCode={runPythonCode}
+                  explanations={explanations.popitem}
+                />
+
+                <h3 style={styles.subTitle}>4. Menghapus Semua Item dengan clear()</h3>
+                <p style={styles.text}>
+                  <code>clear()</code> menghapus semua item dalam dictionary, menghasilkan dictionary kosong.
+                </p>
+                <CodeEditor
+                  code={exampleCodes.clear}
+                  codeKey="clear"
+                  pyodideReady={pyodideReady}
+                  runPythonCode={runPythonCode}
+                  explanations={explanations.clear}
+                />
+
+                <h3 style={styles.subTitle}>5. Menyalin Dictionary dengan copy()</h3>
+                <p style={styles.text}>
+                  <code>copy()</code> membuat salinan dangkal (shallow copy) dari dictionary.
+                </p>
+                <CodeEditor
+                  code={exampleCodes.copy}
+                  codeKey="copy"
+                  pyodideReady={pyodideReady}
+                  runPythonCode={runPythonCode}
+                  explanations={explanations.copy}
+                />
+
+                <h3 style={styles.subTitle}>6. Dictionary Comprehension</h3>
+                <p style={styles.text}>
+                  Dictionary comprehension adalah cara ringkas membuat dictionary dengan ekspresi dan perulangan.
+                </p>
+                <CodeEditor
+                  code={exampleCodes.dictComp}
+                  codeKey="dictComp"
+                  pyodideReady={pyodideReady}
+                  runPythonCode={runPythonCode}
+                  explanations={explanations.dictComp}
+                />
+              </div>
+            </section>
+
+            {/* LATIHAN PRAKTIK (STUDI KASUS CERITA) */}
+            <section style={styles.section}>
+              <h2 style={styles.sectionTitle}>✏️ Latihan Praktik (Studi Kasus)</h2>
+              <div style={styles.card}>
+                <div style={styles.alertBox}>
+                  <strong>📖 Cerita Kasus: Inventaris Toko Buku</strong>
+                  <p style={{ marginTop: "8px" }}>
+                    Sebuah toko buku memiliki dictionary <code>inventaris</code> yang menyimpan stok buku dengan format <code>{"{'judul buku': jumlah_stok}"}</code>. 
+                    Saat ini inventaris berisi: <code>{"{'Python Dasar': 10, 'Data Science': 5, 'Web Programming': 7}"}</code>.
+                  </p>
+                  <p>
+                    Lakukan operasi berikut secara berurutan:
+                  </p>
+                  <ol style={{ marginLeft: "20px", lineHeight: "1.8" }}>
+                    <li>Buat dictionary <code>inventaris</code> sesuai data awal.</li>
+                    <li>Tambah stok buku baru <code>"Machine Learning"</code> sebanyak 3 eksemplar menggunakan <code>update()</code>.</li>
+                    <li>Buku <code>"Data Science"</code> habis terjual, hapus buku tersebut dari inventaris menggunakan <code>pop()</code>.</li>
+                    <li>Tampilkan isi <code>inventaris</code> terakhir.</li>
+                  </ol>
+                  <p style={{ marginTop: "8px" }}>
+                    <strong>Petunjuk:</strong> Gunakan metode <code>update()</code> untuk menambah, <code>pop()</code> untuk menghapus, dan <code>print(inventaris)</code> di akhir.
+                  </p>
+                </div>
+                <CodeEditorEditable
+                  codeKey="latihan_inventaris"
+                  title="Latihan: Manipulasi Inventaris Toko Buku"
+                  pyodideReady={pyodideReady}
+                  runPythonCode={runPythonCode}
+                  expectedOutput="'Python Dasar': 10, 'Web Programming': 7, 'Machine Learning': 3"  // Cek sebagian
+                  successMessage="Selamat! Anda berhasil memanipulasi dictionary inventaris dengan benar."
+                />
+              </div>
+            </section>
+
+            {/* LATIHAN INTERAKTIF PILIHAN GANDA */}
+            <section style={styles.section}>
+              <h2 style={styles.sectionTitle}>📝 Latihan Interaktif (Pilihan Ganda)</h2>
+              <div style={styles.card}>
+                <p style={styles.text}>Pilihlah jawaban yang paling tepat untuk setiap soal.</p>
+                <button style={styles.resetQuizButton} onClick={resetQuiz}>↻ Reset Jawaban</button>
+                <MultipleChoiceQuiz questions={quizQuestions} resetTrigger={resetInteractives} />
+              </div>
+            </section>
+          </div>
+        </div>
       </div>
     </>
   );
@@ -32,40 +549,33 @@ const styles = {
     padding: "30px 40px",
     paddingTop: "30px",
     backgroundColor: "#f5f7fa",
-    minHeight: "calc(100vh - 64px)", // ⬅️ tinggi navbar
+    minHeight: "calc(100vh - 64px)",
     fontFamily: "Poppins, sans-serif",
   },
-
   header: {
-    backgroundColor: "#306998", // Python Blue (diseragamkan)
+    backgroundColor: "#306998",
     color: "white",
     padding: "18px 24px",
     position: "relative",
     marginBottom: "30px",
     borderRadius: "6px",
   },
-
   headerAccent: {
     position: "absolute",
     left: 0,
     top: 0,
     bottom: 0,
     width: "8px",
-    backgroundColor: "#FFD43B", // Python Yellow
+    backgroundColor: "#FFD43B",
     borderRadius: "6px 0 0 6px",
   },
-
   headerTitle: {
     margin: 0,
     textAlign: "center",
     fontSize: "28px",
     fontWeight: "700",
   },
-
-  section: {
-    marginBottom: "40px",
-  },
-
+  section: { marginBottom: "40px" },
   sectionTitle: {
     fontSize: "22px",
     fontWeight: "700",
@@ -73,41 +583,211 @@ const styles = {
     borderLeft: "5px solid #306998",
     paddingLeft: "12px",
   },
-
   card: {
     backgroundColor: "white",
     borderRadius: "10px",
     padding: "25px",
     boxShadow: "0 5px 15px rgba(0,0,0,0.08)",
   },
-
-  list: {
-    paddingLeft: "20px",
-    lineHeight: "1.8",
+  list: { paddingLeft: "20px", lineHeight: "1.8" },
+  text: { lineHeight: "1.8", color: "#333" },
+  subTitle: { marginTop: "20px", marginBottom: "10px", color: "#306998" },
+  alertBox: {
+    backgroundColor: "#fff3cd",
+    border: "1px solid #ffc107",
+    borderRadius: "6px",
+    padding: "15px",
+    marginBottom: "15px",
+    color: "#856404",
   },
-
-  text: {
-    lineHeight: "1.8",
-    color: "#333",
+  codeEditorContainer: {
+    border: "2px solid #306998",
+    borderRadius: "10px",
+    overflow: "hidden",
+    marginBottom: "20px",
+    backgroundColor: "#1e1e1e",
+    marginTop: "15px"
   },
-
-  subTitle: {
-    marginTop: "20px",
-    marginBottom: "10px",
+  codeEditorHeader: {
+    backgroundColor: "#306998",
+    color: "white",
+    padding: "12px 15px",
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center"
+  },
+  codeEditorTitle: { fontWeight: "600", fontSize: "15px", display: "flex", alignItems: "center", gap: "8px" },
+  runButton: {
+    backgroundColor: "#FFD43B",
     color: "#306998",
+    border: "none",
+    padding: "8px 20px",
+    borderRadius: "6px",
+    cursor: "pointer",
+    fontWeight: "600",
+    fontSize: "14px",
   },
-
-  code: {
+  errorBox: {
+    backgroundColor: "#ff4444",
+    color: "white",
+    padding: "12px 15px",
+    fontSize: "14px",
+    fontWeight: "500",
+    borderBottom: "2px solid #cc0000",
+  },
+  codeInputReadOnly: {
+    width: "100%",
+    minHeight: "100px",
     backgroundColor: "#272822",
     color: "#f8f8f2",
+    border: "none",
     padding: "15px",
-    borderRadius: "8px",
+    fontFamily: "monospace",
     fontSize: "14px",
-    overflowX: "auto",
+    overflow: "auto"
   },
-
-  textList: {
-    paddingLeft: "20px",
-    lineHeight: "1.8",
+  codePre: { margin: 0, whiteSpace: "pre-wrap", wordWrap: "break-word", fontFamily: "monospace" },
+  codeInputEditable: {
+    width: "100%",
+    minHeight: "250px",
+    backgroundColor: "#272822",
+    color: "#f8f8f2",
+    border: "none",
+    padding: "15px",
+    fontFamily: "monospace",
+    fontSize: "14px",
+    resize: "vertical",
+    outline: "none",
+    boxSizing: "border-box",
+    tabSize: 4,
   },
+  outputHeader: {
+    backgroundColor: "#306998",
+    color: "white",
+    padding: "10px 15px",
+    borderTop: "2px solid #1e1e1e"
+  },
+  outputTitle: { fontWeight: "600", fontSize: "15px" },
+  codeOutput: { backgroundColor: "#1e1e1e", padding: "15px", minHeight: "80px" },
+  outputContent: {
+    color: "#4af",
+    fontFamily: "monospace",
+    fontSize: "14px",
+    margin: 0,
+    whiteSpace: "pre-wrap",
+    wordWrap: "break-word",
+    lineHeight: "1.5"
+  },
+  explanationsContainer: {
+    borderTop: "1px solid #444",
+    backgroundColor: "#2d2d2d",
+    marginTop: "0",
+  },
+  explanationsHeader: {
+    backgroundColor: "#306998",
+    color: "white",
+    padding: "10px 15px",
+  },
+  explanationsTitle: {
+    fontWeight: "600",
+    fontSize: "15px",
+  },
+  explanationsContent: {
+    padding: "15px",
+    fontFamily: "monospace",
+    fontSize: "13px",
+    lineHeight: "1.6",
+    color: "#ddd",
+  },
+  explanationItem: {
+    marginBottom: "8px",
+    display: "flex",
+    flexWrap: "wrap",
+    alignItems: "baseline",
+    gap: "8px",
+  },
+  lineNumber: {
+    color: "#FFD43B",
+    fontWeight: "bold",
+    minWidth: "60px",
+  },
+  lineCode: {
+    backgroundColor: "#3c3c3c",
+    padding: "2px 6px",
+    borderRadius: "4px",
+    color: "#f8f8f2",
+    fontFamily: "monospace",
+  },
+  lineExplanation: {
+    color: "#ccc",
+    flex: "1",
+  },
+  // Quiz styles (pilihan ganda)
+  quizContainer: {
+    marginTop: "20px"
+  },
+  quizTitle: {
+    fontSize: "18px",
+    fontWeight: "600",
+    marginBottom: "15px"
+  },
+  questionCard: {
+    backgroundColor: "#f9f9f9",
+    borderRadius: "8px",
+    padding: "15px",
+    marginBottom: "15px",
+    border: "1px solid #ddd"
+  },
+  questionText: {
+    fontWeight: "500",
+    marginBottom: "10px",
+    whiteSpace: "pre-line"
+  },
+  options: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "8px",
+    marginBottom: "10px"
+  },
+  optionLabel: {
+    display: "flex",
+    alignItems: "center",
+    cursor: "pointer"
+  },
+  radio: {
+    marginRight: "5px"
+  },
+  feedback: {
+    marginTop: "8px",
+    fontSize: "14px",
+    fontStyle: "italic"
+  },
+  submitButton: {
+    backgroundColor: "#306998",
+    color: "white",
+    border: "none",
+    padding: "10px 20px",
+    borderRadius: "6px",
+    cursor: "pointer",
+    fontSize: "14px",
+    marginTop: "10px"
+  },
+  resultBox: {
+    marginTop: "15px",
+    padding: "10px",
+    backgroundColor: "#e7f3ff",
+    borderRadius: "6px",
+    textAlign: "center"
+  },
+  resetQuizButton: {
+    backgroundColor: "#6c757d",
+    color: "white",
+    border: "none",
+    padding: "8px 16px",
+    borderRadius: "6px",
+    cursor: "pointer",
+    fontSize: "14px",
+    marginBottom: "20px",
+    marginRight: "10px"
+  }
 };

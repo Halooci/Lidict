@@ -74,7 +74,7 @@ export default function SidebarMateri() {
                 }
               }}
             >
-              🗺️ Peta Konsep
+              Peta Konsep
             </div>
           </Link>
         </div>
