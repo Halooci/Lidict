@@ -19,7 +19,8 @@ import KuisNestedList from "./pages/materi/NestedList/KuisNestedList";
 import PendahuluanDictionary from "./pages/materi/dictionary/PendahuluanDictionary";
 // import { PendahuluanDiction } from "./pages/materi/dictionary/PendahuluanDiction";
 import PembuatanAksesElementDictionary from "./pages/materi/dictionary/PembuatanAksesElementDictionary";
-import ManipulasiDictionary from "./pages/materi/dictionary/ManipulasiDictionary";
+// import ManipulasiDictionary from "./pages/materi/dictionary/ManipulasiDictionary";
+import ManipulasiDictionary from "./pages/materi/Dictionary/ManipulasiDictionary";
 import RangkumanDictionary from "./pages/materi/dictionary/RangkumanDictionary";
 import KuisDictionary from "./pages/materi/dictionary/KuisDictionary";
 
