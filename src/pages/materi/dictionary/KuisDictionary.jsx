@@ -117,7 +117,7 @@ print(nilai.______('fisika', 0))`,
     {
       id: 8,
       type: "dragdrop",
-      text: "Lengkapi kode untuk menghapus key 'mangga' dan menyimpan nilainya ke variabel 'harga':",
+      text: "Lengkapi kode berikut untuk menghapus key 'mangga' dan menyimpan nilainya ke variabel 'harga':",
       codeTemplate: `buah = {'apel': 5000, 'mangga': 8000, 'jeruk': 6000}
 harga = buah.______('mangga')
 print(harga)`,
