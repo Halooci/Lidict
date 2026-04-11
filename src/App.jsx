@@ -3,6 +3,10 @@ import Landing from "./pages/Landing";
 import LoginRegister from "./pages/LoginRegister";
 import Materi1 from "./pages/materi/Materi1";
 import Materi2 from "./pages/materi/Materi2";
+
+import PetaKonsep from "./pages/materi/PetaKonsep/PetaKonsep";
+import Apersepsi from "./pages/materi/PetaKonsep/Apersepsi";
+
 // import Pengantar from "./pages/materi/pendahuluan/Pengantar";
 import PendahuluanList from "./pages/materi/List/PendahuluanList";
 import PembuatanAksesElement from "./pages/materi/List/PembuatanAksesElement";
@@ -34,6 +38,11 @@ function App() {
         {/* <Route path="/register" element={<LoginRegister />} /> */}
         <Route path="/Materi1" element={<Materi1 />} />
         <Route path="/Materi2" element={<Materi2 />} />
+
+        <Route path="/PetaKonsep" element={<PetaKonsep />} />
+        <Route path="/Apersepsi" element={<Apersepsi />} />
+      
+        
         {/* <Route path="/Pengantar" element={<Pengantar />} /> */}
         <Route path="/List/PendahuluanList" element={<PendahuluanList />} />
         <Route path="/List/PembuatanAksesElement" element={<PembuatanAksesElement />} />

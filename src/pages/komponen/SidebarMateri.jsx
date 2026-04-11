@@ -60,13 +60,13 @@ export default function SidebarMateri() {
           {/* Anak 1: Peta Konsep */}
           <SubItem 
             label="Peta Konsep" 
-            to="/PetaKonsep/Materi" 
+            to="/PetaKonsep" 
             currentPath={currentPath} 
           />
           {/* Anak 2: Apersepsi */}
           <SubItem 
             label="Apersepsi" 
-            to="/Apersepsi/Materi" 
+            to="/Apersepsi" 
             currentPath={currentPath} 
           />
         </Accordion>
