@@ -24,7 +24,7 @@ import PendahuluanDictionary from "./pages/materi/dictionary/PendahuluanDictiona
 import PembuatanAksesElementDictionary from "./pages/materi/dictionary/PembuatanAksesElementDictionary";
 import ManipulasiDictionary from "./pages/materi/dictionary/ManipulasiDictionary";
 import RangkumanDictionary from "./pages/materi/dictionary/RangkumanDictionary";
-import KuisDictionary from "./pages/materi/dictionary/KuisDictionary";
+import KuisDictionary from "./pages/materi/Dictionary/KuisDictionary";
 
 import EvaluasiAkhir from "./pages/materi/evaluasi/EvaluasiAkhir";
 import InformasiPage from "./pages/komponen/informasi/InformasiPage";
