@@ -12,6 +12,7 @@ export default function SidebarMateri() {
     if (currentPath.startsWith("/NestedList")) return "NestedList";
     if (currentPath.startsWith("/Dictionary")) return "dictionary";
     if (currentPath.startsWith("/Evaluasi")) return "evaluasi";
+    if (currentPath.startsWith("/PetaKonsep/")) return "petaKonsep";
     return null;
   };
 
@@ -24,8 +25,6 @@ export default function SidebarMateri() {
       mainContent.style.marginLeft = isSidebarOpen ? "280px" : "0";
       mainContent.style.transition = "margin-left 0.3s ease";
     }
-    // Atau untuk semua konten di dalam .content-wrapper, sesuaikan sendiri
-    // Alternatif: beri class pada body
     document.body.style.overflowX = "hidden";
   }, [isSidebarOpen]);
 
@@ -51,34 +50,28 @@ export default function SidebarMateri() {
           </div>
         )}
 
-        {/* Menu Peta Konsep (ditambahkan sebelum List) */}
-        <div style={styles.petaKonsepWrapper}>
-          <Link to="/PetaKonsep" style={{ textDecoration: "none" }}>
-            <div
-              style={{
-                ...styles.petaKonsepItem,
-                backgroundColor: currentPath === "/PetaKonsep" ? "#FFD43B" : "transparent",
-                color: currentPath === "/PetaKonsep" ? "#081527" : "#2c7be5",
-                fontWeight: currentPath === "/PetaKonsep" ? "600" : "500",
-              }}
-              onMouseEnter={(e) => {
-                if (currentPath !== "/PetaKonsep") {
-                  e.currentTarget.style.backgroundColor = "#fef9e6";
-                  e.currentTarget.style.color = "#081527";
-                }
-              }}
-              onMouseLeave={(e) => {
-                if (currentPath !== "/PetaKonsep") {
-                  e.currentTarget.style.backgroundColor = "transparent";
-                  e.currentTarget.style.color = "#2c7be5";
-                }
-              }}
-            >
-              Peta Konsep
-            </div>
-          </Link>
-        </div>
+        {/* ========= ACCORDION PETA KONSEP (induk) dengan 2 anak ========= */}
+        <Accordion
+          id="petaKonsep"
+          title="📖 Peta Konsep"
+          activeAccordion={activeAccordion}
+          setActiveAccordion={setActiveAccordion}
+        >
+          {/* Anak 1: Peta Konsep */}
+          <SubItem 
+            label="Peta Konsep" 
+            to="/PetaKonsep/Materi" 
+            currentPath={currentPath} 
+          />
+          {/* Anak 2: Apersepsi */}
+          <SubItem 
+            label="Apersepsi" 
+            to="/Apersepsi/Materi" 
+            currentPath={currentPath} 
+          />
+        </Accordion>
 
+        {/* ACCORDION List */}
         <Accordion
           id="list"
           title="List"
@@ -233,22 +226,6 @@ const styles = {
     boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
     transition: "all 0.2s",
   },
-  petaKonsepWrapper: {
-    marginBottom: "16px",
-    padding: "0 4px",
-  },
-  petaKonsepItem: {
-    padding: "12px 16px",
-    fontSize: "15px",
-    fontWeight: "500",
-    borderRadius: "8px",
-    cursor: "pointer",
-    transition: "all 0.2s ease",
-    borderBottom: "1px solid #e5e7eb",
-    display: "flex",
-    alignItems: "center",
-    gap: "8px",
-  },
   accordion: {
     marginBottom: "8px",
     borderRadius: "8px",
@@ -276,6 +253,6 @@ const styles = {
     alignItems: "center",
     cursor: "pointer",
     transition: "all 0.2s ease",
-    borderBottom: "1px solid #e5e7eb", // outline tiap opsi
+    borderBottom: "1px solid #e5e7eb",
   },
 };
