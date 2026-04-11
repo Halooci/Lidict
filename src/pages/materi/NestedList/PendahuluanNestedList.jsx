@@ -267,6 +267,7 @@ const QuizNestedList = () => {
 export default function PendahuluanNestedList() {
   const [pyodideReady, setPyodideReady] = useState(false);
   const pyodideRef = useRef(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true); // <-- State untuk buka/tutup sidebar
 
   const exampleCodes = {
     nested: `# Contoh nested list: data nilai siswa dalam 2 mata pelajaran
@@ -329,117 +330,119 @@ _buffer.getvalue()
   return (
     <>
       <Navbar />
-      <div style={{ marginLeft: "280px" }}>
-        <SidebarMateri />
-        <div style={{ paddingTop: "64px" }}>
-          <div style={styles.page}>
-            {/* HEADER */}
-            <div style={styles.header}>
-              <div style={styles.headerAccent}></div>
-              <h1 style={styles.headerTitle}>PENDAHULUAN NESTED LIST</h1>
-            </div>
-
-            {/* TUJUAN PEMBELAJARAN */}
-            <section style={styles.section}>
-              <h2 style={styles.sectionTitle}>Tujuan Pembelajaran</h2>
-              <div style={styles.card}>
-                <ol style={styles.list}>
-                  <li>Memahami konsep dasar struktur data nested list dalam Python.</li>
-                  <li>Membedakan antara list biasa dan nested list serta mengetahui kegunaannya dalam menyimpan data terstruktur.</li>
-                </ol>
-              </div>
-            </section>
-
-            {/* MATERI (diperbanyak) */}
-            <section style={styles.section}>
-              <div style={styles.card}>
-                <h3 style={styles.subTitle}>Apa Itu Nested List?</h3>
-                <p style={styles.text}>
-                  <strong>Nested list</strong> (atau sering disebut list bersarang) adalah sebuah list yang di dalamnya terdapat list lain sebagai elemen. Dengan kata lain, nested list adalah "list di dalam list". Konsep ini memungkinkan kita menyimpan data dalam bentuk yang lebih kompleks, seperti tabel, matriks, atau struktur data bertingkat.
-                </p>
-
-                <div style={styles.infoBox}>
-                  <strong>💡 Ilustrasi Konsep:</strong>
-                  <p>Bayangkan kita memiliki data nilai ujian dari beberapa siswa untuk beberapa mata pelajaran. Dengan list biasa, data akan tercampur dan sulit dibedakan:</p>
-                  <code style={styles.inlineCode}>nilai = [85, 90, 78, 88, 92, 80]</code>
-                  <p>Namun dengan nested list, data dapat dikelompokkan per siswa:</p>
-                  <code style={styles.inlineCode}>nilai = [[85, 90, 78], [88, 92, 80]]</code>
-                  <p>Baris pertama adalah nilai siswa 1, baris kedua adalah nilai siswa 2. Jauh lebih terstruktur!</p>
-                </div>
-
-                <h3 style={styles.subTitle}>Struktur Nested List</h3>
-                <p style={styles.text}>
-                  Secara visual, nested list dapat dipandang sebagai tabel atau matriks. Setiap list di dalamnya mewakili satu baris, dan elemen-elemen dalam baris tersebut mewakili kolom. Indeks pertama digunakan untuk memilih baris, indeks kedua untuk memilih kolom.
-                </p>
-                <p style={styles.text}>
-                  Misalnya, jika kita memiliki nested list <code>data = [[1, 2, 3], [4, 5, 6]]</code>, maka:
-                </p>
-                <ul style={styles.list}>
-                  <li><code>data[0]</code> → [1, 2, 3] (seluruh baris pertama)</li>
-                  <li><code>data[0][0]</code> → 1 (baris 1 kolom 1)</li>
-                  <li><code>data[1][2]</code> → 6 (baris 2 kolom 3)</li>
-                </ul>
-
-                <CodeEditor
-                  code={exampleCodes.nested}
-                  codeKey="nested"
-                  pyodideReady={pyodideReady}
-                  runPythonCode={runPythonCode}
-                />
-
-                <p style={styles.text}>
-                  Pada contoh di atas, <code>nilai_siswa</code> adalah sebuah nested list yang terdiri dari dua list (baris). Baris pertama berisi nilai untuk tiga mata pelajaran (kolom), baris kedua juga berisi tiga nilai. Dengan struktur ini, kita dapat dengan mudah mengetahui nilai siswa pertama dan kedua secara terpisah.
-                </p>
-
-                <h3 style={styles.subTitle}>Mengapa Menggunakan Nested List?</h3>
-                <ul style={styles.list}>
-                  <li><strong>Data Terstruktur</strong>: Memudahkan representasi data seperti tabel, matriks, atau grid.</li>
-                  <li><strong>Pengelompokan</strong>: Mengelompokkan data yang berhubungan dalam satu variabel, sehingga lebih mudah dikelola.</li>
-                  <li><strong>Fleksibilitas</strong>: Setiap list di dalam nested list bisa memiliki panjang yang berbeda (ragged array), memberikan fleksibilitas dalam menyimpan data.</li>
-                  <li><strong>Dasar untuk Struktur Data Lanjutan</strong>: Nested list menjadi fondasi untuk struktur data multidimensi seperti matriks dalam komputasi numerik.</li>
-                </ul>
-
-                <h3 style={styles.subTitle}>Contoh Penggunaan dalam Kehidupan Nyata</h3>
-                <ul style={styles.list}>
-                  <li><strong>Data Nilai Siswa</strong>: Baris mewakili siswa, kolom mewakili mata pelajaran.</li>
-                  <li><strong>Papan Permainan</strong>: Game seperti Tic-Tac-Toe atau Catur dapat direpresentasikan dengan nested list 3x3 atau 8x8.</li>
-                  <li><strong>Citra Digital</strong>: Gambar hitam-putih dapat direpresentasikan sebagai nested list di mana setiap elemen adalah nilai intensitas pixel.</li>
-                  <li><strong>Koordinat</strong>: Menyimpan titik-titik koordinat (x, y) dalam bentuk list of lists.</li>
-                </ul>
-              </div>
-            </section>
-
-            {/* LATIHAN PRAKTIK */}
-            <section style={styles.section}>
-              <h2 style={styles.sectionTitle}>Latihan Praktik</h2>
-              <div style={styles.card}>
-                <div style={styles.alertBox}>
-                  <strong>⚠️ Instruksi Latihan:</strong>
-                  <ul style={{ marginTop: "5px", paddingLeft: "20px" }}>
-                    <li>Buatlah nested list dengan nama <code>data</code> yang berisi dua list di dalamnya.</li>
-                    <li>List pertama: [1, 2, 3]</li>
-                    <li>List kedua: [4, 5, 6]</li>
-                    <li>Tampilkan nested list tersebut menggunakan <code>print(data)</code>.</li>
-                  </ul>
-                </div>
-                <CodeEditorEditable
-                  codeKey="latihan"
-                  title="Latihan Nested List"
-                  validationRules={{}}
-                  pyodideReady={pyodideReady}
-                  runPythonCode={runPythonCode}
-                />
-              </div>
-            </section>
-
-            {/* LATIHAN INTERAKTIF (KUIS) */}
-            <section style={styles.section}>
-              <h2 style={styles.sectionTitle}>Latihan Interaktif</h2>
-              <div style={styles.card}>
-                <QuizNestedList />
-              </div>
-            </section>
+      <SidebarMateri isOpen={isSidebarOpen} onToggle={() => setIsSidebarOpen(!isSidebarOpen)} />
+      <div style={{ 
+        marginLeft: isSidebarOpen ? "280px" : "0",
+        transition: "margin-left 0.3s ease",
+        paddingTop: "64px"
+      }}>
+        <div style={styles.page}>
+          {/* HEADER */}
+          <div style={styles.header}>
+            <div style={styles.headerAccent}></div>
+            <h1 style={styles.headerTitle}>PENDAHULUAN NESTED LIST</h1>
           </div>
+
+          {/* TUJUAN PEMBELAJARAN */}
+          <section style={styles.section}>
+            <h2 style={styles.sectionTitle}>Tujuan Pembelajaran</h2>
+            <div style={styles.card}>
+              <ol style={styles.list}>
+                <li>Memahami konsep dasar struktur data nested list dalam Python.</li>
+                <li>Membedakan antara list biasa dan nested list serta mengetahui kegunaannya dalam menyimpan data terstruktur.</li>
+              </ol>
+            </div>
+          </section>
+
+          {/* MATERI (diperbanyak) */}
+          <section style={styles.section}>
+            <div style={styles.card}>
+              <h3 style={styles.subTitle}>Apa Itu Nested List?</h3>
+              <p style={styles.text}>
+                <strong>Nested list</strong> (atau sering disebut list bersarang) adalah sebuah list yang di dalamnya terdapat list lain sebagai elemen. Dengan kata lain, nested list adalah "list di dalam list". Konsep ini memungkinkan kita menyimpan data dalam bentuk yang lebih kompleks, seperti tabel, matriks, atau struktur data bertingkat.
+              </p>
+
+              <div style={styles.infoBox}>
+                <strong>💡 Ilustrasi Konsep:</strong>
+                <p>Bayangkan kita memiliki data nilai ujian dari beberapa siswa untuk beberapa mata pelajaran. Dengan list biasa, data akan tercampur dan sulit dibedakan:</p>
+                <code style={styles.inlineCode}>nilai = [85, 90, 78, 88, 92, 80]</code>
+                <p>Namun dengan nested list, data dapat dikelompokkan per siswa:</p>
+                <code style={styles.inlineCode}>nilai = [[85, 90, 78], [88, 92, 80]]</code>
+                <p>Baris pertama adalah nilai siswa 1, baris kedua adalah nilai siswa 2. Jauh lebih terstruktur!</p>
+              </div>
+
+              <h3 style={styles.subTitle}>Struktur Nested List</h3>
+              <p style={styles.text}>
+                Secara visual, nested list dapat dipandang sebagai tabel atau matriks. Setiap list di dalamnya mewakili satu baris, dan elemen-elemen dalam baris tersebut mewakili kolom. Indeks pertama digunakan untuk memilih baris, indeks kedua untuk memilih kolom.
+              </p>
+              <p style={styles.text}>
+                Misalnya, jika kita memiliki nested list <code>data = [[1, 2, 3], [4, 5, 6]]</code>, maka:
+              </p>
+              <ul style={styles.list}>
+                <li><code>data[0]</code> → [1, 2, 3] (seluruh baris pertama)</li>
+                <li><code>data[0][0]</code> → 1 (baris 1 kolom 1)</li>
+                <li><code>data[1][2]</code> → 6 (baris 2 kolom 3)</li>
+              </ul>
+
+              <CodeEditor
+                code={exampleCodes.nested}
+                codeKey="nested"
+                pyodideReady={pyodideReady}
+                runPythonCode={runPythonCode}
+              />
+
+              <p style={styles.text}>
+                Pada contoh di atas, <code>nilai_siswa</code> adalah sebuah nested list yang terdiri dari dua list (baris). Baris pertama berisi nilai untuk tiga mata pelajaran (kolom), baris kedua juga berisi tiga nilai. Dengan struktur ini, kita dapat dengan mudah mengetahui nilai siswa pertama dan kedua secara terpisah.
+              </p>
+
+              <h3 style={styles.subTitle}>Mengapa Menggunakan Nested List?</h3>
+              <ul style={styles.list}>
+                <li><strong>Data Terstruktur</strong>: Memudahkan representasi data seperti tabel, matriks, atau grid.</li>
+                <li><strong>Pengelompokan</strong>: Mengelompokkan data yang berhubungan dalam satu variabel, sehingga lebih mudah dikelola.</li>
+                <li><strong>Fleksibilitas</strong>: Setiap list di dalam nested list bisa memiliki panjang yang berbeda (ragged array), memberikan fleksibilitas dalam menyimpan data.</li>
+                <li><strong>Dasar untuk Struktur Data Lanjutan</strong>: Nested list menjadi fondasi untuk struktur data multidimensi seperti matriks dalam komputasi numerik.</li>
+              </ul>
+
+              <h3 style={styles.subTitle}>Contoh Penggunaan dalam Kehidupan Nyata</h3>
+              <ul style={styles.list}>
+                <li><strong>Data Nilai Siswa</strong>: Baris mewakili siswa, kolom mewakili mata pelajaran.</li>
+                <li><strong>Papan Permainan</strong>: Game seperti Tic-Tac-Toe atau Catur dapat direpresentasikan dengan nested list 3x3 atau 8x8.</li>
+                <li><strong>Citra Digital</strong>: Gambar hitam-putih dapat direpresentasikan sebagai nested list di mana setiap elemen adalah nilai intensitas pixel.</li>
+                <li><strong>Koordinat</strong>: Menyimpan titik-titik koordinat (x, y) dalam bentuk list of lists.</li>
+              </ul>
+            </div>
+          </section>
+
+          {/* LATIHAN PRAKTIK */}
+          <section style={styles.section}>
+            <h2 style={styles.sectionTitle}>Latihan Praktik</h2>
+            <div style={styles.card}>
+              <div style={styles.alertBox}>
+                <strong>⚠️ Instruksi Latihan:</strong>
+                <ul style={{ marginTop: "5px", paddingLeft: "20px" }}>
+                  <li>Buatlah nested list dengan nama <code>data</code> yang berisi dua list di dalamnya.</li>
+                  <li>List pertama: [1, 2, 3]</li>
+                  <li>List kedua: [4, 5, 6]</li>
+                  <li>Tampilkan nested list tersebut menggunakan <code>print(data)</code>.</li>
+                </ul>
+              </div>
+              <CodeEditorEditable
+                codeKey="latihan"
+                title="Latihan Nested List"
+                validationRules={{}}
+                pyodideReady={pyodideReady}
+                runPythonCode={runPythonCode}
+              />
+            </div>
+          </section>
+
+          {/* LATIHAN INTERAKTIF (KUIS) */}
+          <section style={styles.section}>
+            <h2 style={styles.sectionTitle}>Latihan Interaktif</h2>
+            <div style={styles.card}>
+              <QuizNestedList />
+            </div>
+          </section>
         </div>
       </div>
     </>
