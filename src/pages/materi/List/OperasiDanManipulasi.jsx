@@ -281,17 +281,24 @@ const styles = {
 };
 
 // ================= KOMPONEN VISUALISASI LIST SATU KOLOM =================
-const SingleListVisualization = ({ data, title, hoverContext = {}, highlightIndex = null, changedIndices = [], explanation = "", extraBadge = null }) => {
+const SingleListVisualization = ({ data, title, hoverContext = {}, highlightIndex = null, highlightPair = [], changedIndices = [], explanation = "", extraBadge = null }) => {
   const [hoveredIndex, setHoveredIndex] = useState(null);
   const negativeIndices = data.map((_, i) => -(data.length - i));
 
   const getHoverExplanation = (idx, item) => {
+    if (highlightPair.includes(idx) && explanation) {
+      return `📖 ${explanation}`;
+    }
+    if (idx === highlightIndex && explanation) {
+      return `📖 ${explanation}`;
+    }
     const customMsg = hoverContext[idx];
     if (customMsg) return customMsg;
     return `📌 Elemen: "${item}"\n✅ Indeks positif: ${idx} → data[${idx}]\n✅ Indeks negatif: ${negativeIndices[idx]} → data[${negativeIndices[idx]}]`;
   };
 
   const getBgColor = (idx) => {
+    if (highlightPair.includes(idx)) return "#FFD43B";
     if (highlightIndex === idx) return "#FFD43B";
     if (changedIndices.includes(idx)) return "#28a745";
     if (hoveredIndex === idx) return "#FFA500";
@@ -299,7 +306,7 @@ const SingleListVisualization = ({ data, title, hoverContext = {}, highlightInde
   };
 
   const getTextColor = (idx) => {
-    if (highlightIndex === idx || changedIndices.includes(idx) || hoveredIndex === idx) return "#1f2937";
+    if (highlightPair.includes(idx) || highlightIndex === idx || changedIndices.includes(idx) || hoveredIndex === idx) return "#1f2937";
     return "white";
   };
 
@@ -341,7 +348,7 @@ const SingleListVisualization = ({ data, title, hoverContext = {}, highlightInde
               fontSize: "13px",
               backgroundColor: getBgColor(idx),
               color: getTextColor(idx),
-              transform: (highlightIndex === idx || changedIndices.includes(idx) || hoveredIndex === idx) ? "scale(1.05)" : "scale(1)",
+              transform: (highlightPair.includes(idx) || highlightIndex === idx || changedIndices.includes(idx) || hoveredIndex === idx) ? "scale(1.05)" : "scale(1)",
               transition: "all 0.3s ease",
               cursor: "pointer",
               border: changedIndices.includes(idx) ? "2px solid #ffc107" : "none",
@@ -384,7 +391,7 @@ const SingleListVisualization = ({ data, title, hoverContext = {}, highlightInde
           {getHoverExplanation(hoveredIndex, data[hoveredIndex])}
         </div>
       )}
-      {explanation && (
+      {explanation && highlightIndex === null && highlightPair.length === 0 && (
         <div style={{
           backgroundColor: "#e8f1ff",
           padding: "10px",
@@ -415,15 +422,58 @@ const SingleListVisualization = ({ data, title, hoverContext = {}, highlightInde
   );
 };
 
+// ================= KOMPONEN UNTUK MENAMPILKAN DUA LIST SEBELUM (CONCAT) =================
+const DoubleBeforeVisualization = ({ dataA, dataB, titleA, titleB, hoverContextA, hoverContextB, highlightIndexA, highlightIndexB, highlightPairA, highlightPairB, changedIndicesA, changedIndicesB, explanation }) => {
+  return (
+    <div style={styles.visualWrapper}>
+      <div style={styles.visualColumn}>
+        <SingleListVisualization
+          data={dataA}
+          title={titleA}
+          hoverContext={hoverContextA}
+          highlightIndex={highlightIndexA}
+          highlightPair={highlightPairA}
+          changedIndices={changedIndicesA}
+          explanation={explanation}
+        />
+      </div>
+      <div style={styles.visualColumn}>
+        <SingleListVisualization
+          data={dataB}
+          title={titleB}
+          hoverContext={hoverContextB}
+          highlightIndex={highlightIndexB}
+          highlightPair={highlightPairB}
+          changedIndices={changedIndicesB}
+          explanation={explanation}
+        />
+      </div>
+    </div>
+  );
+};
+
 // ================= KOMPONEN UTAMA DENGAN ANIMASI =================
-const AnimatedVisualization = ({ beforeData, afterData, beforeTitle, afterTitle, hoverContextBefore, hoverContextAfter, animationSteps, operationName, extraAfterBadge = null }) => {
+const AnimatedVisualization = ({ beforeData, afterData, beforeTitle, afterTitle, hoverContextBefore, hoverContextAfter, animationSteps, operationName, extraAfterBadge = null, beforeDataDouble = null }) => {
   const [currentHighlight, setCurrentHighlight] = useState(null);
+  const [currentHighlightPair, setCurrentHighlightPair] = useState([]);
   const [currentExplanation, setCurrentExplanation] = useState("");
   const [showDiff, setShowDiff] = useState(false);
-  const [stepIndex, setStepIndex] = useState(0);
-  const [animationFinished, setAnimationFinished] = useState(false);
+  
+  // Untuk double before (concat)
+  const [highlightA, setHighlightA] = useState(null);
+  const [highlightB, setHighlightB] = useState(null);
+  const [highlightPairA, setHighlightPairA] = useState([]);
+  const [highlightPairB, setHighlightPairB] = useState([]);
+  
+  // Untuk slicing, sort, reverse
+  const [highlightBefore, setHighlightBefore] = useState(null);
+  const [highlightAfter, setHighlightAfter] = useState(null);
+  const [highlightBeforePair, setHighlightBeforePair] = useState([]);
+  const [highlightAfterPair, setHighlightAfterPair] = useState([]);
 
+  // Hitung indeks yang berubah
   const changedIndicesBefore = (() => {
+    if (!beforeData) return [];
     const changed = [];
     const maxLen = Math.max(beforeData.length, afterData.length);
     for (let i = 0; i < maxLen; i++) {
@@ -436,49 +486,127 @@ const AnimatedVisualization = ({ beforeData, afterData, beforeTitle, afterTitle,
   })();
   const changedIndicesAfter = changedIndicesBefore;
 
+  const shouldShowDiff = () => {
+    if (operationName === 'concat') return false;
+    if (operationName === 'repeat') return false;
+    if (operationName === 'slicing') return false;
+    if (operationName === 'sort') return false;
+    if (operationName === 'reverse') return false;
+    return true;
+  };
+
   useEffect(() => {
     if (!animationSteps || animationSteps.length === 0) return;
-    let idx = 0;
+    let stepIdx = 0;
     setShowDiff(false);
-    setAnimationFinished(false);
+    setHighlightBeforePair([]);
+    setHighlightAfterPair([]);
     const interval = setInterval(() => {
-      if (idx < animationSteps.length) {
-        setCurrentHighlight(animationSteps[idx].highlightIndex);
-        setCurrentExplanation(animationSteps[idx].explanation);
-        setStepIndex(idx);
-        idx++;
+      if (stepIdx < animationSteps.length) {
+        const step = animationSteps[stepIdx];
+        // Untuk slicing
+        if (operationName === 'slicing') {
+          setHighlightBefore(step.highlightIndex + 1);
+          setHighlightAfter(step.highlightIndex);
+          setCurrentHighlight(null);
+        } 
+        // Untuk sort
+        else if (operationName === 'sort') {
+          setHighlightBefore(step.highlightIndex);
+          const targetValue = beforeData[step.highlightIndex];
+          const afterIndex = afterData.findIndex(val => val === targetValue);
+          setHighlightAfter(afterIndex);
+          setCurrentHighlight(null);
+        }
+        // Untuk reverse
+        else if (operationName === 'reverse') {
+          if (step.pair) {
+            setHighlightBeforePair(step.pair);
+            setHighlightAfterPair(step.pair);
+            setCurrentHighlight(null);
+          }
+        }
+        // Untuk concat dengan double before
+        else if (beforeDataDouble) {
+          if (step.highlightIndex < 3) {
+            setHighlightA(step.highlightIndex);
+            setHighlightB(null);
+          } else {
+            setHighlightA(null);
+            setHighlightB(step.highlightIndex - 3);
+          }
+          setCurrentHighlight(null);
+        }
+        // Default: highlight sama untuk kedua kolom
+        else {
+          setCurrentHighlight(step.highlightIndex);
+          setHighlightBefore(null);
+          setHighlightAfter(null);
+        }
+        setCurrentExplanation(step.explanation);
+        stepIdx++;
       } else {
         clearInterval(interval);
         setTimeout(() => {
           setCurrentHighlight(null);
+          setCurrentHighlightPair([]);
+          setHighlightBefore(null);
+          setHighlightAfter(null);
+          setHighlightBeforePair([]);
+          setHighlightAfterPair([]);
+          setHighlightA(null);
+          setHighlightB(null);
+          setHighlightPairA([]);
+          setHighlightPairB([]);
           setCurrentExplanation("");
-          setShowDiff(true);
-          setAnimationFinished(true);
+          if (shouldShowDiff()) {
+            setShowDiff(true);
+          }
         }, 500);
       }
-    }, 1500);
+    }, 3000);
     return () => clearInterval(interval);
-  }, [animationSteps]);
+  }, [animationSteps, beforeDataDouble, operationName, beforeData, afterData]);
 
   return (
     <div>
       <div style={styles.visualWrapper}>
         <div style={styles.visualColumn}>
-          <SingleListVisualization
-            data={beforeData}
-            title={beforeTitle}
-            hoverContext={hoverContextBefore}
-            highlightIndex={currentHighlight}
-            changedIndices={showDiff ? changedIndicesBefore : []}
-            explanation={stepIndex === 0 && currentExplanation ? currentExplanation : ""}
-          />
+          {beforeDataDouble ? (
+            <DoubleBeforeVisualization
+              dataA={beforeDataDouble.dataA}
+              dataB={beforeDataDouble.dataB}
+              titleA={beforeDataDouble.titleA}
+              titleB={beforeDataDouble.titleB}
+              hoverContextA={beforeDataDouble.hoverContextA}
+              hoverContextB={beforeDataDouble.hoverContextB}
+              highlightIndexA={highlightA}
+              highlightIndexB={highlightB}
+              highlightPairA={highlightPairA}
+              highlightPairB={highlightPairB}
+              changedIndicesA={showDiff ? changedIndicesBefore : []}
+              changedIndicesB={showDiff ? changedIndicesBefore : []}
+              explanation={currentExplanation}
+            />
+          ) : (
+            <SingleListVisualization
+              data={beforeData}
+              title={beforeTitle}
+              hoverContext={hoverContextBefore}
+              highlightIndex={operationName === 'slicing' ? highlightBefore : (operationName === 'sort' ? highlightBefore : (operationName === 'reverse' ? null : currentHighlight))}
+              highlightPair={operationName === 'reverse' ? highlightBeforePair : []}
+              changedIndices={showDiff ? changedIndicesBefore : []}
+              explanation={currentExplanation}
+            />
+          )}
         </div>
         <div style={styles.visualColumn}>
           <SingleListVisualization
             data={afterData}
             title={afterTitle}
             hoverContext={hoverContextAfter}
-            highlightIndex={currentHighlight}
+            highlightIndex={operationName === 'slicing' ? highlightAfter : (operationName === 'sort' ? highlightAfter : (operationName === 'reverse' ? null : currentHighlight))}
+            highlightPair={operationName === 'reverse' ? highlightAfterPair : []}
             changedIndices={showDiff ? changedIndicesAfter : []}
             explanation={currentExplanation}
             extraBadge={extraAfterBadge && showDiff ? extraAfterBadge : null}
@@ -531,6 +659,7 @@ const CodeEditorWithVisual = ({
   animationSteps,
   operationName,
   extraAfterBadge = null,
+  beforeDataDouble = null,
 }) => {
   const [output, setOutput] = useState("");
   const [isRunning, setIsRunning] = useState(false);
@@ -576,12 +705,13 @@ const CodeEditorWithVisual = ({
             animationSteps={animationSteps}
             operationName={operationName}
             extraAfterBadge={extraAfterBadge}
+            beforeDataDouble={beforeDataDouble}
           />
         ) : (
           <div style={styles.visualPlaceholder}>(Klik 'Jalankan' untuk melihat hasil)</div>
         )}
       </div>
-      <div style={styles.outputHeader}><span style={styles.outputTitle}>Output Program</span></div>
+      <div style={styles.outputHeader}><span style={styles.outputTitle}>Output</span></div>
       <div style={styles.codeOutput}>
         <pre style={styles.outputContent}>{output || "(Klik 'Jalankan' untuk melihat hasil)"}</pre>
       </div>
@@ -589,7 +719,7 @@ const CodeEditorWithVisual = ({
   );
 };
 
-// ================= KOMPONEN UNTUK LATIHAN PRAKTIK CODING (sama) =================
+// ================= KOMPONEN UNTUK LATIHAN PRAKTIK CODING =================
 const CodeEditorEditable = ({ title, pyodideReady, runPythonCode }) => {
   const [localCode, setLocalCode] = useState("");
   const [output, setOutput] = useState("");
@@ -664,7 +794,7 @@ const CodeEditorEditable = ({ title, pyodideReady, runPythonCode }) => {
   );
 };
 
-// ================= KOMPONEN DRAG-N-DROP MATCHING (sama) =================
+// ================= KOMPONEN DRAG-N-DROP MATCHING =================
 const DragDropMatching = ({ items, resetTrigger }) => {
   const [functions, setFunctions] = useState(() => items.map((item, idx) => ({ id: idx, text: item.func, matched: false })));
   const [descriptions, setDescriptions] = useState(() => items.map((item, idx) => ({ id: idx, text: item.desc, matched: false })));
@@ -722,7 +852,7 @@ export default function OperasiManipulasiList() {
   const pyodideRef = useRef(null);
   const [resetMatching, setResetMatching] = useState(0);
 
-  // State eksplorasi
+  // State eksplorasi (sama seperti sebelumnya)
   const [eksplorasiTempAnswers, setEksplorasiTempAnswers] = useState([null, null]);
   const [eksplorasiSavedAnswers, setEksplorasiSavedAnswers] = useState([null, null]);
   const [eksplorasiFeedback, setEksplorasiFeedback] = useState(["", ""]);
@@ -802,7 +932,12 @@ export default function OperasiManipulasiList() {
   const concatHoverBeforeB = { 0:"b:4",1:"b:5",2:"b:6" };
   const concatHoverAfter = { 0:"1",1:"2",2:"3",3:"4",4:"5",5:"6" };
   const repeatHoverBefore = { 0:"1",1:"2",2:"3" };
-  const repeatHoverAfter = { 0:"1",1:"2",2:"3",3:"1",4:"2",5:"3",6:"1",7:"2",8:"3" };
+  const repeatHoverAfter = {};
+  for (let i = 0; i < 9; i++) {
+    repeatHoverAfter[i] = i < 3 ? `Elemen ${repeatAfter[i]} (salinan ke-1)` :
+                         (i < 6 ? `Elemen ${repeatAfter[i]} (salinan ke-2)` :
+                                  `Elemen ${repeatAfter[i]} (salinan ke-3)`);
+  }
   const searchHoverBefore = { 0:"apel",1:"jeruk",2:"mangga" };
   const searchHoverAfter = {};
   const sortHoverBefore = { 0:"5",1:"3",2:"8",3:"1",4:"7",5:"2" };
@@ -841,14 +976,20 @@ export default function OperasiManipulasiList() {
     { highlightIndex: 0, explanation: "Mengambil elemen pertama dari a (1)" },
     { highlightIndex: 1, explanation: "Mengambil elemen kedua dari a (2)" },
     { highlightIndex: 2, explanation: "Mengambil elemen ketiga dari a (3)" },
-    { highlightIndex: 0, explanation: "Menambahkan elemen pertama dari b (4)" },
-    { highlightIndex: 1, explanation: "Menambahkan elemen kedua dari b (5)" },
-    { highlightIndex: 2, explanation: "Menambahkan elemen ketiga dari b (6) → hasil akhir [1,2,3,4,5,6]" },
+    { highlightIndex: 3, explanation: "Menambahkan elemen pertama dari b (4)" },
+    { highlightIndex: 4, explanation: "Menambahkan elemen kedua dari b (5)" },
+    { highlightIndex: 5, explanation: "Menambahkan elemen ketiga dari b (6) → hasil akhir [1,2,3,4,5,6]" },
   ];
   const repeatSteps = [
-    { highlightIndex: 0, explanation: "Mengulang elemen 1 ke posisi 1,4,7" },
-    { highlightIndex: 1, explanation: "Mengulang elemen 2 ke posisi 2,5,8" },
-    { highlightIndex: 2, explanation: "Mengulang elemen 3 ke posisi 3,6,9 → hasil [1,2,3,1,2,3,1,2,3]" },
+    { highlightIndex: 0, explanation: "Mengulang elemen 1 (salinan ke-1) ke indeks 0" },
+    { highlightIndex: 1, explanation: "Mengulang elemen 2 (salinan ke-1) ke indeks 1" },
+    { highlightIndex: 2, explanation: "Mengulang elemen 3 (salinan ke-1) ke indeks 2" },
+    { highlightIndex: 3, explanation: "Mengulang elemen 1 (salinan ke-2) ke indeks 3" },
+    { highlightIndex: 4, explanation: "Mengulang elemen 2 (salinan ke-2) ke indeks 4" },
+    { highlightIndex: 5, explanation: "Mengulang elemen 3 (salinan ke-2) ke indeks 5" },
+    { highlightIndex: 6, explanation: "Mengulang elemen 1 (salinan ke-3) ke indeks 6" },
+    { highlightIndex: 7, explanation: "Mengulang elemen 2 (salinan ke-3) ke indeks 7" },
+    { highlightIndex: 8, explanation: "Mengulang elemen 3 (salinan ke-3) ke indeks 8 → hasil [1,2,3,1,2,3,1,2,3]" },
   ];
   const searchSteps = [
     { highlightIndex: 0, explanation: "Cek 'apel' = 'mangga'? Tidak" },
@@ -856,17 +997,15 @@ export default function OperasiManipulasiList() {
     { highlightIndex: 2, explanation: "Cek 'mangga' = 'mangga'? Ya → True" },
   ];
   const sortSteps = [
-    { highlightIndex: 3, explanation: "Mencari nilai terkecil (1) -> pindah ke indeks 0" },
-    { highlightIndex: 0, explanation: "Sekarang 1 sudah di awal" },
-    { highlightIndex: 4, explanation: "Mencari nilai 2 -> indeks 1" },
-    { highlightIndex: 1, explanation: "2 sudah di indeks 1" },
-    { highlightIndex: 0, explanation: "Mencari 3 -> indeks 2" },
-    { highlightIndex: 1, explanation: "Mencari 5 -> indeks 3" },
-    { highlightIndex: 5, explanation: "Mencari 7 -> indeks 4" },
-    { highlightIndex: 2, explanation: "Mencari 8 -> indeks 5 → hasil [1,2,3,5,7,8]" },
+    { highlightIndex: 3, explanation: "Langkah 1: Mencari nilai terkecil (1) di indeks 3. Pindahkan ke indeks 0." },
+    { highlightIndex: 5, explanation: "Langkah 2: Mencari nilai terkecil berikutnya (2) di indeks 5. Pindahkan ke indeks 1." },
+    { highlightIndex: 1, explanation: "Langkah 3: Mencari nilai terkecil berikutnya (3) di indeks 1. Pindahkan ke indeks 2." },
+    { highlightIndex: 0, explanation: "Langkah 4: Mencari nilai 5 (sekarang di indeks 3 setelah penukaran)." },
+    { highlightIndex: 4, explanation: "Langkah 5: Mencari nilai 7 di indeks 4." },
+    { highlightIndex: 2, explanation: "Langkah 6: Mencari nilai 8 di indeks 2. List menjadi terurut [1,2,3,5,7,8]." },
   ];
   const appendSteps = [
-    { highlightIndex: 4, explanation: "append('alpukat') menambahkan 'alpukat' di akhir" },
+    { highlightIndex: 4, explanation: "append('alpukat') menambahkan 'alpukat' di indeks terakhir (4)." },
   ];
   const insertSteps = [
     { highlightIndex: 1, explanation: "insert(1,'alpukat') menyisip di indeks 1, elemen bergeser" },
@@ -886,9 +1025,8 @@ export default function OperasiManipulasiList() {
     { highlightIndex: 3, explanation: "buah[3] = 'belimbing' mengubah indeks 3 menjadi 'belimbing'" },
   ];
   const reverseSteps = [
-    { highlightIndex: 0, explanation: "Menukar indeks 0 (1) dengan indeks 3 (4)" },
-    { highlightIndex: 1, explanation: "Menukar indeks 1 (2) dengan indeks 2 (3)" },
-    { highlightIndex: 2, explanation: "Hasil pembalikan: [4,3,2,1]" },
+    { pair: [0, 3], explanation: "Langkah 1: Menukar elemen indeks 0 (1) dengan indeks 3 (4)." },
+    { pair: [1, 2], explanation: "Langkah 2: Menukar elemen indeks 1 (2) dengan indeks 2 (3). Hasil akhir [4,3,2,1]." },
   ];
   const clearSteps = [
     { highlightIndex: 0, explanation: "clear() menghapus semua elemen" },
@@ -903,9 +1041,9 @@ export default function OperasiManipulasiList() {
     { highlightIndex: 1, explanation: "index(20) mencari nilai 20 pertama di indeks 1" },
   ];
   const slicingSteps = [
-    { highlightIndex: 1, explanation: "Mengambil elemen indeks 1 (20)" },
-    { highlightIndex: 2, explanation: "Mengambil elemen indeks 2 (30)" },
-    { highlightIndex: 3, explanation: "Mengambil elemen indeks 3 (40) → hasil [20,30,40]" },
+    { highlightIndex: 0, explanation: "Mengambil elemen indeks 1 dari list awal (20)" },
+    { highlightIndex: 1, explanation: "Mengambil elemen indeks 2 dari list awal (30)" },
+    { highlightIndex: 2, explanation: "Mengambil elemen indeks 3 dari list awal (40) → hasil slicing [20,30,40]" },
   ];
   const delSteps = [
     { highlightIndex: 1, explanation: "Menghapus indeks 1 (20)" },
@@ -1007,12 +1145,7 @@ export default function OperasiManipulasiList() {
           <section style={styles.section}>
             <h2 style={styles.sectionTitle}>🎯 Tujuan Pembelajaran</h2>
             <div style={styles.card}>
-              <ol style={styles.list}>
-                <li>Memahami berbagai operasi dasar list (concatenation, repetition, slicing, keanggotaan).</li>
-                <li>Menguasai method manipulasi list (append, insert, extend, remove, pop, sort, reverse, clear, copy, count, index).</li>
-                <li>Mampu mengubah, menghapus, dan mengakses elemen list dengan indeks dan slicing.</li>
-                <li>Menerapkan operasi pada nested list dan menggunakan fungsi len().</li>
-              </ol>
+              <p style={styles.text}>Mahasiswa mampu menerapkan operasi dan manipulasi list dalam pengolahan data.</p>
             </div>
           </section>
 
@@ -1049,24 +1182,32 @@ export default function OperasiManipulasiList() {
                   <p>Operasi <code>+</code> menggabungkan dua list menjadi satu list baru. Semua elemen list kiri diikuti semua elemen list kanan.</p>
                   <CodeEditorWithVisual
                     code={codeExamples.concat}
-                    title="Contoh: Penggabungan List"
-                    beforeData={[...concatBeforeA, ...concatBeforeB]} // gabung untuk tampilan sebelum
+                    title="Contoh Kode Program"
+                    beforeData={null}
                     afterData={concatAfter}
-                    beforeTitle="Sebelum (a dan b terpisah)"
+                    beforeTitle=""
                     afterTitle="Setelah (a + b)"
-                    hoverContextBefore={{ ...concatHoverBeforeA, ...concatHoverBeforeB }}
+                    hoverContextBefore={{}}
                     hoverContextAfter={concatHoverAfter}
                     pyodideReady={pyodideReady}
                     runPythonCode={runPythonCode}
                     animationSteps={concatSteps}
                     operationName="concat"
+                    beforeDataDouble={{
+                      dataA: concatBeforeA,
+                      dataB: concatBeforeB,
+                      titleA: "List a",
+                      titleB: "List b",
+                      hoverContextA: concatHoverBeforeA,
+                      hoverContextB: concatHoverBeforeB,
+                    }}
                   />
 
                   <h3>2. Repetition (*) – Mengulang List</h3>
                   <p>Operator <code>*</code> mengulang isi list sebanyak n kali, menghasilkan list baru dengan elemen berulang.</p>
                   <CodeEditorWithVisual
                     code={codeExamples.repeat}
-                    title="Contoh: Pengulangan List"
+                    title="Contoh Kode Program"
                     beforeData={repeatBefore}
                     afterData={repeatAfter}
                     beforeTitle="List awal"
@@ -1080,10 +1221,10 @@ export default function OperasiManipulasiList() {
                   />
 
                   <h3>3. Slicing (:) – Mengambil Sebagian Elemen</h3>
-                  <p>Slicing <code>list[awal:akhir]</code> mengambil elemen dari indeks <code>awal</code> hingga sebelum <code>akhir</code>. Contoh <code>angka[1:4]</code> mengambil indeks 1,2,3.</p>
+                  <p>Slicing <code>list[awal:akhir]</code> mengambil elemen dari indeks <code>awal</code> hingga sebelum <code>akhir</code>. Contoh <code>angka[1:4]</code> mengambil indeks 1,2,3 (20,30,40).</p>
                   <CodeEditorWithVisual
                     code={codeExamples.slicing}
-                    title="Contoh: Slicing [1:4]"
+                    title="Contoh Kode Program"
                     beforeData={slicingBefore}
                     afterData={slicingAfter}
                     beforeTitle="List awal"
@@ -1100,7 +1241,7 @@ export default function OperasiManipulasiList() {
                   <p>Operator <code>in</code> mengembalikan <code>True</code> jika nilai ditemukan dalam list, <code>False</code> jika tidak.</p>
                   <CodeEditorWithVisual
                     code={codeExamples.search}
-                    title="Contoh: Operator in"
+                    title="Contoh Kode Program"
                     beforeData={searchBefore}
                     afterData={searchAfter}
                     beforeTitle="List buah"
@@ -1118,7 +1259,7 @@ export default function OperasiManipulasiList() {
                   <p>Method <code>sort()</code> mengurutkan list secara ascending (kecil ke besar) secara permanen. Prosesnya membandingkan dan menukar elemen hingga terurut.</p>
                   <CodeEditorWithVisual
                     code={codeExamples.sort}
-                    title="Contoh: sort()"
+                    title="Contoh Kode Program"
                     beforeData={sortBefore}
                     afterData={sortAfter}
                     beforeTitle="Sebelum diurutkan"
@@ -1135,7 +1276,7 @@ export default function OperasiManipulasiList() {
                   <p>Method <code>reverse()</code> membalik urutan elemen dalam list secara permanen.</p>
                   <CodeEditorWithVisual
                     code={codeExamples.reverse}
-                    title="Contoh: reverse()"
+                    title="Contoh Kode Program"
                     beforeData={reverseBefore}
                     afterData={reverseAfter}
                     beforeTitle="Sebelum reverse"
@@ -1157,7 +1298,7 @@ export default function OperasiManipulasiList() {
                   <p>Method <code>append()</code> menambahkan satu elemen baru di akhir list.</p>
                   <CodeEditorWithVisual
                     code={codeExamples.append}
-                    title="append()"
+                    title="Contoh Kode Program"
                     beforeData={appendBefore}
                     afterData={appendAfter}
                     beforeTitle="List awal"
@@ -1168,13 +1309,14 @@ export default function OperasiManipulasiList() {
                     runPythonCode={runPythonCode}
                     animationSteps={appendSteps}
                     operationName="append"
+                    extraAfterBadge="✅ 'alpukat' berhasil ditambahkan di indeks terakhir (indeks 4)"
                   />
 
                   <h3>insert() – Menyisipkan Elemen di Posisi Tertentu</h3>
                   <p><code>insert(posisi, elemen)</code> menyisipkan elemen pada indeks yang ditentukan, elemen lain bergeser ke kanan.</p>
                   <CodeEditorWithVisual
                     code={codeExamples.insert}
-                    title="insert()"
+                    title="Contoh Kode Program"
                     beforeData={insertBefore}
                     afterData={insertAfter}
                     beforeTitle="List awal"
@@ -1191,7 +1333,7 @@ export default function OperasiManipulasiList() {
                   <p><code>extend([elemen1, elemen2, ...])</code> menambahkan semua elemen dari list lain ke akhir list.</p>
                   <CodeEditorWithVisual
                     code={codeExamples.extend}
-                    title="extend()"
+                    title="Contoh Kode Program"
                     beforeData={extendBefore}
                     afterData={extendAfter}
                     beforeTitle="List awal"
@@ -1208,7 +1350,7 @@ export default function OperasiManipulasiList() {
                   <p><code>remove(nilai)</code> menghapus elemen pertama yang nilainya cocok dengan nilai yang diberikan.</p>
                   <CodeEditorWithVisual
                     code={codeExamples.remove}
-                    title="remove()"
+                    title="Contoh Kode Program"
                     beforeData={removeBefore}
                     afterData={removeAfter}
                     beforeTitle="List awal"
@@ -1225,7 +1367,7 @@ export default function OperasiManipulasiList() {
                   <p><code>pop(indeks)</code> menghapus elemen pada indeks tertentu dan mengembalikannya. Jika indeks tidak diberikan, menghapus elemen terakhir.</p>
                   <CodeEditorWithVisual
                     code={codeExamples.pop}
-                    title="pop()"
+                    title="Contoh Kode Program"
                     beforeData={popBefore}
                     afterData={popAfter}
                     beforeTitle="List awal"
@@ -1242,7 +1384,7 @@ export default function OperasiManipulasiList() {
                   <p>Kita bisa mengubah nilai elemen dengan mengakses indeksnya: <code>list[indeks] = nilai_baru</code>.</p>
                   <CodeEditorWithVisual
                     code={codeExamples.change}
-                    title="Ubah Elemen"
+                    title="Contoh Kode Program"
                     beforeData={changeBefore}
                     afterData={changeAfter}
                     beforeTitle="List awal"
@@ -1259,7 +1401,7 @@ export default function OperasiManipulasiList() {
                   <p>Keyword <code>del</code> dapat digunakan untuk menghapus elemen berdasarkan indeks atau slice, misalnya <code>del list[1:3]</code>.</p>
                   <CodeEditorWithVisual
                     code={codeExamples.del_example}
-                    title="del"
+                    title="Contoh Kode Program"
                     beforeData={delBefore}
                     afterData={delAfter}
                     beforeTitle="List awal"
@@ -1276,7 +1418,7 @@ export default function OperasiManipulasiList() {
                   <p><code>clear()</code> mengosongkan list (menghapus semua elemen).</p>
                   <CodeEditorWithVisual
                     code={codeExamples.clear}
-                    title="clear()"
+                    title="Contoh Kode Program"
                     beforeData={clearBefore}
                     afterData={clearAfter}
                     beforeTitle="List awal"
@@ -1293,7 +1435,7 @@ export default function OperasiManipulasiList() {
                   <p><code>copy()</code> membuat salinan dangkal (shallow copy) dari list.</p>
                   <CodeEditorWithVisual
                     code={codeExamples.copy}
-                    title="copy()"
+                    title="Contoh Kode Program"
                     beforeData={copyBefore}
                     afterData={copyAfter}
                     beforeTitle="List asli"
@@ -1310,7 +1452,7 @@ export default function OperasiManipulasiList() {
                   <p><code>count(nilai)</code> mengembalikan jumlah kemunculan nilai dalam list.</p>
                   <CodeEditorWithVisual
                     code={codeExamples.count}
-                    title="count()"
+                    title="Contoh Kode Program"
                     beforeData={countBefore}
                     afterData={countAfter}
                     beforeTitle="List"
@@ -1327,7 +1469,7 @@ export default function OperasiManipulasiList() {
                   <p><code>index(nilai)</code> mengembalikan indeks pertama di mana nilai ditemukan.</p>
                   <CodeEditorWithVisual
                     code={codeExamples.index}
-                    title="index()"
+                    title="Contoh Kode Program"
                     beforeData={indexBefore}
                     afterData={indexAfter}
                     beforeTitle="List"
@@ -1344,7 +1486,7 @@ export default function OperasiManipulasiList() {
                   <p>Fungsi <code>len()</code> mengembalikan jumlah elemen dalam list.</p>
                   <CodeEditorWithVisual
                     code={codeExamples.length}
-                    title="len()"
+                    title="Contoh Kode Program"
                     beforeData={lengthBefore}
                     afterData={lengthAfter}
                     beforeTitle="List"
