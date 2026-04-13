@@ -228,45 +228,193 @@ const styles = {
   },
 };
 
-// ================= KOMPONEN CODE EDITOR READ-ONLY =================
-const CodeEditor = ({ code, title, pyodideReady, runPythonCode }) => {
+// ================= KOMPONEN VISUALISASI LIST DENGAN PENJELASAN PROSES =================
+const ListVisualization = ({ data, title, highlightSequence, processExplanation }) => {
+  const [currentHighlight, setCurrentHighlight] = useState(null);
+  const [stepIndex, setStepIndex] = useState(-1);
+  const [explanationText, setExplanationText] = useState("");
+
+  useEffect(() => {
+    if (!highlightSequence || highlightSequence.length === 0) return;
+    setStepIndex(0);
+    let idx = 0;
+    const interval = setInterval(() => {
+      if (idx < highlightSequence.length) {
+        setCurrentHighlight(highlightSequence[idx].index);
+        if (processExplanation) {
+          setExplanationText(processExplanation[idx]);
+        }
+        idx++;
+      } else {
+        clearInterval(interval);
+        setTimeout(() => {
+          setCurrentHighlight(null);
+          setExplanationText("");
+          setStepIndex(-1);
+        }, 500);
+      }
+    }, 1800);
+    return () => clearInterval(interval);
+  }, [highlightSequence, processExplanation]);
+
+  // Hitung indeks negatif untuk ditampilkan
+  const negativeIndices = data.map((_, i) => -(data.length - i));
+
+  return (
+    <div style={visStyles.container}>
+      <p style={visStyles.title}>{title}</p>
+      <div style={visStyles.listWrapper}>
+        {data.map((item, idx) => (
+          <div key={idx} style={visStyles.itemCard}>
+            <div
+              style={{
+                ...visStyles.item,
+                backgroundColor: currentHighlight === idx ? "#FFD43B" : "#306998",
+                color: currentHighlight === idx ? "#1f2937" : "white",
+                transform: currentHighlight === idx ? "scale(1.05)" : "scale(1)",
+                transition: "all 0.3s ease",
+              }}
+            >
+              <div style={visStyles.value}>{String(item)}</div>
+            </div>
+            <div style={visStyles.indexLabel}>Indeks +{idx}</div>
+            <div style={visStyles.indexLabelNeg}>Indeks {negativeIndices[idx]}</div>
+          </div>
+        ))}
+      </div>
+      {explanationText && (
+        <div style={visStyles.explanationBox}>
+          <strong>📖 Proses:</strong> {explanationText}
+        </div>
+      )}
+      <div style={visStyles.note}>
+        💡 <strong>Penjelasan:</strong> Setiap elemen list memiliki dua alamat: indeks positif (mulai 0) dan indeks negatif (mulai -1 dari akhir). Klik "Jalankan" untuk melihat simulasi akses.
+      </div>
+    </div>
+  );
+};
+
+const visStyles = {
+  container: {
+    backgroundColor: "#f8f9fa",
+    borderRadius: "12px",
+    padding: "15px",
+    margin: "15px 0",
+    border: "1px solid #dee2e6",
+  },
+  title: {
+    fontSize: "16px",
+    fontWeight: "bold",
+    marginBottom: "15px",
+    color: "#306998",
+    textAlign: "center",
+  },
+  listWrapper: {
+    display: "flex",
+    justifyContent: "center",
+    gap: "20px",
+    flexWrap: "wrap",
+    marginBottom: "15px",
+  },
+  itemCard: {
+    textAlign: "center",
+  },
+  item: {
+    width: "80px",
+    padding: "12px 8px",
+    borderRadius: "10px",
+    fontWeight: "500",
+    transition: "all 0.3s ease",
+    marginBottom: "5px",
+  },
+  value: {
+    fontSize: "14px",
+  },
+  indexLabel: {
+    fontSize: "11px",
+    color: "#555",
+    marginTop: "4px",
+  },
+  indexLabelNeg: {
+    fontSize: "11px",
+    color: "#888",
+  },
+  explanationBox: {
+    backgroundColor: "#e8f1ff",
+    padding: "12px",
+    borderRadius: "8px",
+    marginTop: "10px",
+    fontSize: "14px",
+    color: "#1f2937",
+    borderLeft: "4px solid #306998",
+  },
+  note: {
+    fontSize: "12px",
+    color: "#666",
+    marginTop: "10px",
+    textAlign: "center",
+  },
+};
+
+// ================= KOMPONEN CODE EDITOR READ-ONLY DENGAN VISUALISASI INFORMATIF =================
+const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, highlightMapping, processSteps, pyodideReady, runPythonCode }) => {
   const [output, setOutput] = useState("");
   const [isRunning, setIsRunning] = useState(false);
+  const [highlightSequence, setHighlightSequence] = useState([]);
+  const [explanationSteps, setExplanationSteps] = useState([]);
 
   const handleRun = useCallback(async () => {
     if (!pyodideReady) {
-      setOutput("⏳ Pyodide sedang dimuat, harap tunggu...");
+      setOutput("⏳ Pyodide sedang dimuat...");
       return;
     }
     setIsRunning(true);
     const result = await runPythonCode(code);
     setOutput(result);
     setIsRunning(false);
-  }, [pyodideReady, code, runPythonCode]);
+
+    if (highlightMapping) {
+      const { indices, explanations } = highlightMapping();
+      setHighlightSequence(indices.map((idx) => ({ index: idx })));
+      setExplanationSteps(explanations);
+      setTimeout(() => {
+        setHighlightSequence([]);
+        setExplanationSteps([]);
+      }, 5000);
+    }
+  }, [pyodideReady, code, runPythonCode, highlightMapping]);
 
   return (
     <div style={styles.codeEditorContainer}>
       <div style={styles.codeEditorHeader}>
-        <span style={styles.codeEditorTitle}>{title || "Contoh Kode"}</span>
+        <span style={styles.codeEditorTitle}>{title}</span>
         <button style={styles.runButton} onClick={handleRun} disabled={!pyodideReady || isRunning}>
-          {isRunning ? "⏳ Menjalankan..." : pyodideReady ? "▶ Jalankan" : "⏳ Memuat..."}
+          {isRunning ? "⏳ Menjalankan..." : pyodideReady ? "▶ Jalankan & Lihat Proses" : "⏳ Memuat..."}
         </button>
       </div>
       <div style={styles.codeInputReadOnly}>
         <pre style={styles.codePre}>{code}</pre>
       </div>
+      {visualData && (
+        <ListVisualization
+          data={visualData}
+          title={visualTitle}
+          highlightSequence={highlightSequence}
+          processExplanation={explanationSteps}
+        />
+      )}
       <div style={styles.outputHeader}>
-        <span style={styles.outputTitle}>Output</span>
+        <span style={styles.outputTitle}>Output Program</span>
       </div>
       <div style={styles.codeOutput}>
-        <pre style={styles.outputContent}>{output || "(Klik 'Jalankan' untuk melihat hasil)"}</pre>
+        <pre style={styles.outputContent}>{output || "(Klik 'Jalankan & Lihat Proses' untuk menjalankan kode dan melihat simulasi)"}</pre>
       </div>
     </div>
   );
 };
 
-// ================= KOMPONEN CODE EDITOR DENGAN VALIDASI UNTUK LATIHAN =================
-const CodeEditorEditable = ({ title, validationRules, pyodideReady, runPythonCode }) => {
+// ================= KOMPONEN CODE EDITOR UNTUK LATIHAN PRAKTIK =================
+const CodeEditorEditable = ({ title, pyodideReady, runPythonCode }) => {
   const [localCode, setLocalCode] = useState("");
   const [output, setOutput] = useState("");
   const [error, setError] = useState("");
@@ -277,70 +425,53 @@ const CodeEditorEditable = ({ title, validationRules, pyodideReady, runPythonCod
     setError("");
   }, []);
 
-  const validateCode = useCallback((code) => {
-    const trimmedCode = code.trim();
-    // Cek 1: Harus ada variabel "belanja"
-    if (!trimmedCode.includes("belanja =")) {
-      return { valid: false, message: "❌ ERROR: Kamu harus membuat variabel bernama 'belanja'." };
-    }
-    // Cek 2: Isi list harus ["apel", "jeruk", "mangga"]
-    const regexList = /belanja\s*=\s*\[\s*["']apel["']\s*,\s*["']jeruk["']\s*,\s*["']mangga["']\s*\]/;
-    if (!regexList.test(trimmedCode)) {
-      return { valid: false, message: "❌ ERROR: Isi list 'belanja' harus ['apel', 'jeruk', 'mangga']." };
-    }
-    // Cek 3: Harus ada print(belanja[0])
-    if (!/print\s*\(\s*belanja\s*\[\s*0\s*\]\s*\)/.test(trimmedCode)) {
-      return { valid: false, message: "❌ ERROR: Kamu harus menampilkan elemen pertama (indeks 0) dengan print(belanja[0])." };
-    }
-    // Cek 4: Harus ada print(belanja[-1])
-    if (!/print\s*\(\s*belanja\s*\[\s*-\s*1\s*\]\s*\)/.test(trimmedCode)) {
-      return { valid: false, message: "❌ ERROR: Kamu harus menampilkan elemen terakhir dengan print(belanja[-1])." };
-    }
-    // Cek 5: Urutan: variabel dulu baru print
-    const varIndex = trimmedCode.indexOf("belanja =");
-    const printFirst = trimmedCode.indexOf("print(belanja[0])");
-    const printLast = trimmedCode.indexOf("print(belanja[-1])");
-    if (printFirst < varIndex || printLast < varIndex) {
-      return { valid: false, message: "❌ ERROR: Variabel 'belanja' harus didefinisikan SEBELUM digunakan." };
-    }
-    return { valid: true };
-  }, []);
-
-  const handleRun = useCallback(async () => {
+  const validateAndRun = useCallback(async () => {
     if (!pyodideReady) {
-      setOutput("⏳ Pyodide sedang dimuat, harap tunggu...");
+      setOutput("⏳ Pyodide sedang dimuat...");
       return;
     }
     setOutput("");
     setError("");
     setIsRunning(true);
 
-    const validation = validateCode(localCode);
-    if (!validation.valid) {
-      setError(validation.message);
+    const trimmed = localCode.trim();
+    if (!trimmed.includes("belanja =")) {
+      setError("❌ ERROR: Kamu harus membuat variabel 'belanja'.");
+      setIsRunning(false);
+      return;
+    }
+    const regex = /belanja\s*=\s*\[\s*["']apel["']\s*,\s*["']jeruk["']\s*,\s*["']mangga["']\s*\]/;
+    if (!regex.test(trimmed)) {
+      setError("❌ ERROR: Isi list harus ['apel', 'jeruk', 'mangga'].");
+      setIsRunning(false);
+      return;
+    }
+    if (!/print\s*\(\s*belanja\s*\[\s*0\s*\]\s*\)/.test(trimmed)) {
+      setError("❌ ERROR: Kamu harus mencetak elemen pertama dengan print(belanja[0]).");
+      setIsRunning(false);
+      return;
+    }
+    if (!/print\s*\(\s*belanja\s*\[\s*-\s*1\s*\]\s*\)/.test(trimmed)) {
+      setError("❌ ERROR: Kamu harus mencetak elemen terakhir dengan print(belanja[-1]).");
       setIsRunning(false);
       return;
     }
 
     const result = await runPythonCode(localCode);
     setOutput(result);
-
-    // Cek output: harus berisi "apel" dan "mangga"
-    const expectedFirst = "apel";
-    const expectedLast = "mangga";
-    if (result.includes(expectedFirst) && result.includes(expectedLast)) {
+    if (result.includes("apel") && result.includes("mangga")) {
       setOutput(result + "\n\n✅ SELAMAT! Jawaban kamu BENAR!");
     } else {
-      setOutput(result + "\n\n⚠️ Output tidak sesuai. Pastikan kamu mencetak elemen pertama dan terakhir dengan benar.");
+      setOutput(result + "\n\n⚠️ Output tidak sesuai. Pastikan kamu mencetak elemen pertama dan terakhir.");
     }
     setIsRunning(false);
-  }, [pyodideReady, localCode, runPythonCode, validateCode]);
+  }, [localCode, pyodideReady, runPythonCode]);
 
   return (
     <div style={styles.codeEditorContainer}>
       <div style={styles.codeEditorHeader}>
         <span style={styles.codeEditorTitle}>{title}</span>
-        <button style={styles.runButton} onClick={handleRun} disabled={!pyodideReady || isRunning}>
+        <button style={styles.runButton} onClick={validateAndRun} disabled={!pyodideReady || isRunning}>
           {isRunning ? "⏳ Menjalankan..." : pyodideReady ? "▶ Jalankan" : "⏳ Memuat..."}
         </button>
       </div>
@@ -433,7 +564,11 @@ export default function PembuatanAksesElement() {
     });
   };
 
-  // Contoh kode untuk materi
+  // Data visual
+  const buahData = ["apel", "jeruk", "mangga"];
+  const angkaData = [10, 20, 30, 40, 50];
+
+  // Contoh kode
   const exampleCodes = {
     pembuatan: `# Membuat list
 buah = ["apel", "jeruk", "mangga"]
@@ -450,6 +585,38 @@ print("Elemen kedua dari belakang:", buah[-2])`,
 angka = [10, 20, 30, 40, 50]
 print("Indeks 1 sampai 3:", angka[1:4])  # [20, 30, 40]`,
   };
+
+  // Fungsi mapping untuk visualisasi dengan penjelasan langkah
+  const highlightPembuatan = () => ({
+    indices: [0, 1, 2],
+    explanations: [
+      "👉 Mengakses elemen indeks 0: 'apel' → akan dicetak bersama seluruh list.",
+      "👉 Mengakses elemen indeks 1: 'jeruk' → termasuk dalam output.",
+      "👉 Mengakses elemen indeks 2: 'mangga' → termasuk dalam output. Hasil akhir: ['apel','jeruk','mangga']"
+    ]
+  });
+  const highlightAkses = () => ({
+    indices: [0, 1],
+    explanations: [
+      "📌 Perintah `buah[0]` → Python mengambil elemen pada indeks positif 0, yaitu 'apel'.",
+      "📌 Perintah `buah[1]` → Python mengambil elemen pada indeks positif 1, yaitu 'jeruk'. Kedua nilai dicetak."
+    ]
+  });
+  const highlightNegatif = () => ({
+    indices: [2, 1],
+    explanations: [
+      "🔹 `buah[-1]` → indeks negatif -1 merujuk ke elemen terakhir (indeks positif 2), yaitu 'mangga'.",
+      "🔹 `buah[-2]` → indeks negatif -2 merujuk ke elemen kedua dari belakang (indeks positif 1), yaitu 'jeruk'."
+    ]
+  });
+  const highlightSlicing = () => ({
+    indices: [1, 2, 3],
+    explanations: [
+      "✂️ Slicing `angka[1:4]` → mulai dari indeks 1 (nilai 20), berhenti SEBELUM indeks 4 (nilai 50 tidak termasuk).",
+      "✂️ Mengambil indeks 2 (nilai 30).",
+      "✂️ Mengambil indeks 3 (nilai 40). Hasil slicing adalah list baru [20,30,40]."
+    ]
+  });
 
   // Load Pyodide
   useEffect(() => {
@@ -626,9 +793,17 @@ sys.stdout = StringIO()
                 <h2 style={styles.sectionTitle}>📝 Membuat List</h2>
                 <div style={styles.card}>
                   <p style={styles.text}>
-                    List dibuat dengan tanda kurung siku <code>[]</code> dan elemen dipisahkan koma. List dapat berisi berbagai tipe data (string, integer, float, boolean, bahkan list lain).
+                    List dibuat dengan tanda kurung siku <code>[]</code> dan elemen dipisahkan koma. List dapat berisi berbagai tipe data.
                   </p>
-                  <CodeEditor code={exampleCodes.pembuatan} title="Contoh: Membuat List" pyodideReady={pyodideReady} runPythonCode={runPythonCode} />
+                  <CodeEditorWithVisual
+                    code={exampleCodes.pembuatan}
+                    title="Contoh: Membuat List"
+                    visualData={buahData}
+                    visualTitle="Visualisasi List 'buah'"
+                    highlightMapping={highlightPembuatan}
+                    pyodideReady={pyodideReady}
+                    runPythonCode={runPythonCode}
+                  />
                   <div style={styles.infoBox}>
                     <strong>📌 Catatan:</strong> List bersifat <strong>mutable</strong> (dapat diubah) dan <strong>ordered</strong> (mempertahankan urutan).
                   </div>
@@ -642,7 +817,15 @@ sys.stdout = StringIO()
                   <p style={styles.text}>
                     Setiap elemen dalam list memiliki indeks numerik. Indeks <strong>dimulai dari 0</strong> untuk elemen pertama, 1 untuk kedua, dan seterusnya.
                   </p>
-                  <CodeEditor code={exampleCodes.akses} title="Contoh: Akses dengan Indeks Positif" pyodideReady={pyodideReady} runPythonCode={runPythonCode} />
+                  <CodeEditorWithVisual
+                    code={exampleCodes.akses}
+                    title="Contoh: Akses dengan Indeks Positif"
+                    visualData={buahData}
+                    visualTitle="Visualisasi List 'buah'"
+                    highlightMapping={highlightAkses}
+                    pyodideReady={pyodideReady}
+                    runPythonCode={runPythonCode}
+                  />
                 </div>
               </section>
 
@@ -653,7 +836,15 @@ sys.stdout = StringIO()
                   <p style={styles.text}>
                     Python juga mendukung indeks negatif untuk mengakses elemen dari belakang. <strong>-1</strong> untuk elemen terakhir, <strong>-2</strong> untuk kedua terakhir, dst.
                   </p>
-                  <CodeEditor code={exampleCodes.negatif} title="Contoh: Akses dengan Indeks Negatif" pyodideReady={pyodideReady} runPythonCode={runPythonCode} />
+                  <CodeEditorWithVisual
+                    code={exampleCodes.negatif}
+                    title="Contoh: Akses dengan Indeks Negatif"
+                    visualData={buahData}
+                    visualTitle="Visualisasi List 'buah'"
+                    highlightMapping={highlightNegatif}
+                    pyodideReady={pyodideReady}
+                    runPythonCode={runPythonCode}
+                  />
                 </div>
               </section>
 
@@ -664,14 +855,22 @@ sys.stdout = StringIO()
                   <p style={styles.text}>
                     Slicing digunakan untuk mengambil sub-list (bagian dari list) dengan format <code>list[awal:akhir]</code>. Elemen pada indeks <strong>akhir tidak diikutsertakan</strong>.
                   </p>
-                  <CodeEditor code={exampleCodes.slicing} title="Contoh: Slicing" pyodideReady={pyodideReady} runPythonCode={runPythonCode} />
+                  <CodeEditorWithVisual
+                    code={exampleCodes.slicing}
+                    title="Contoh: Slicing"
+                    visualData={angkaData}
+                    visualTitle="Visualisasi List 'angka'"
+                    highlightMapping={highlightSlicing}
+                    pyodideReady={pyodideReady}
+                    runPythonCode={runPythonCode}
+                  />
                   <div style={styles.highlightBox}>
                     <strong>💡 Tips:</strong> <code>list[:3]</code> mengambil 3 elemen pertama, <code>list[2:]</code> mengambil dari indeks 2 sampai akhir.
                   </div>
                 </div>
               </section>
 
-              {/* LATIHAN PRAKTIK (STUDI KASUS) */}
+              {/* LATIHAN PRAKTIK */}
               <section style={styles.section}>
                 <h2 style={styles.sectionTitle}>💻 Latihan Praktik</h2>
                 <div style={styles.card}>
@@ -684,10 +883,8 @@ sys.stdout = StringIO()
                     <li>Menampilkan elemen <strong>pertama</strong> (apel) menggunakan indeks positif.</li>
                     <li>Menampilkan elemen <strong>terakhir</strong> (mangga) menggunakan indeks negatif.</li>
                   </ol>
-                  <p style={styles.text}>Tulis kode Python di editor di bawah, lalu klik "Jalankan".</p>
                   <CodeEditorEditable
                     title="Latihan: Daftar Belanja"
-                    validationRules={{}}
                     pyodideReady={pyodideReady}
                     runPythonCode={runPythonCode}
                   />
