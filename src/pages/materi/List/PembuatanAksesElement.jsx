@@ -214,34 +214,104 @@ const styles = {
   },
   codeInputEditable: {
     width: "100%",
-    minHeight: "250px",
+    minHeight: "200px",
     backgroundColor: "#272822",
     color: "#f8f8f2",
     border: "none",
     padding: "15px",
-    fontFamily: "'Consolas', 'Monaco', 'Courier New', monospace",
+    fontFamily: "monospace",
     fontSize: "14px",
-    lineHeight: "1.6",
     resize: "vertical",
     outline: "none",
     boxSizing: "border-box",
   },
+  questionCard: {
+    backgroundColor: "#f9f9f9",
+    borderRadius: "8px",
+    padding: "15px",
+    marginBottom: "20px",
+    border: "1px solid #ddd",
+  },
+  questionText: { fontWeight: "500", marginBottom: "10px" },
+  codeTemplate: {
+    backgroundColor: "#272822",
+    color: "#f8f8f2",
+    padding: "10px",
+    borderRadius: "6px",
+    fontFamily: "monospace",
+    fontSize: "14px",
+    overflowX: "auto",
+    marginBottom: "10px",
+  },
+  codeTemplateInline: {
+    backgroundColor: "#272822",
+    color: "#f8f8f2",
+    padding: "10px",
+    borderRadius: "6px",
+    fontFamily: "monospace",
+    fontSize: "14px",
+    overflowX: "auto",
+    whiteSpace: "pre-wrap",
+    wordBreak: "break-word",
+    marginBottom: "10px",
+  },
+  inlineInput: {
+    backgroundColor: "#fff",
+    color: "#000",
+    border: "1px solid #ccc",
+    borderRadius: "4px",
+    padding: "2px 6px",
+    margin: "0 2px",
+    fontFamily: "monospace",
+    fontSize: "14px",
+    textAlign: "center",
+    outline: "none",
+  },
+  fillInput: {
+    width: "100%",
+    padding: "10px",
+    fontSize: "14px",
+    borderRadius: "6px",
+    border: "1px solid #ccc",
+    marginBottom: "10px",
+    boxSizing: "border-box",
+  },
+  checkButton: {
+    backgroundColor: "#28a745",
+    color: "white",
+    border: "none",
+    padding: "8px 16px",
+    borderRadius: "6px",
+    cursor: "pointer",
+    fontSize: "14px",
+    marginRight: "10px",
+  },
+  resetButton: {
+    backgroundColor: "#6c757d",
+    color: "white",
+    border: "none",
+    padding: "8px 16px",
+    borderRadius: "6px",
+    cursor: "pointer",
+    fontSize: "14px",
+    marginBottom: "20px",
+  },
+  feedback: { marginTop: "8px", fontSize: "14px", fontStyle: "italic", color: "#333" },
 };
 
-// ================= KOMPONEN VISUALISASI LIST DENGAN PENJELASAN PROSES =================
+// ================= KOMPONEN VISUALISASI LIST DENGAN HOVER INTERAKTIF =================
 const ListVisualization = ({ data, title, highlightSequence, processExplanation }) => {
   const [currentHighlight, setCurrentHighlight] = useState(null);
-  const [stepIndex, setStepIndex] = useState(-1);
   const [explanationText, setExplanationText] = useState("");
+  const [hoveredIndex, setHoveredIndex] = useState(null);
 
   useEffect(() => {
     if (!highlightSequence || highlightSequence.length === 0) return;
-    setStepIndex(0);
     let idx = 0;
     const interval = setInterval(() => {
       if (idx < highlightSequence.length) {
         setCurrentHighlight(highlightSequence[idx].index);
-        if (processExplanation) {
+        if (processExplanation && processExplanation[idx]) {
           setExplanationText(processExplanation[idx]);
         }
         idx++;
@@ -250,29 +320,42 @@ const ListVisualization = ({ data, title, highlightSequence, processExplanation 
         setTimeout(() => {
           setCurrentHighlight(null);
           setExplanationText("");
-          setStepIndex(-1);
         }, 500);
       }
     }, 1800);
     return () => clearInterval(interval);
   }, [highlightSequence, processExplanation]);
 
-  // Hitung indeks negatif untuk ditampilkan
   const negativeIndices = data.map((_, i) => -(data.length - i));
+
+  const getHoverExplanation = (idx, item) => {
+    const posIdx = idx;
+    const negIdx = negativeIndices[idx];
+    return `📌 Elemen: "${item}"
+✅ Indeks positif: ${posIdx} → akses dengan data[${posIdx}]
+✅ Indeks negatif: ${negIdx} → akses dengan data[${negIdx}]
+💡 Tip: Indeks negatif dihitung dari akhir list, -1 = elemen terakhir.`;
+  };
 
   return (
     <div style={visStyles.container}>
       <p style={visStyles.title}>{title}</p>
       <div style={visStyles.listWrapper}>
         {data.map((item, idx) => (
-          <div key={idx} style={visStyles.itemCard}>
+          <div
+            key={idx}
+            style={visStyles.itemCard}
+            onMouseEnter={() => setHoveredIndex(idx)}
+            onMouseLeave={() => setHoveredIndex(null)}
+          >
             <div
               style={{
                 ...visStyles.item,
-                backgroundColor: currentHighlight === idx ? "#FFD43B" : "#306998",
-                color: currentHighlight === idx ? "#1f2937" : "white",
-                transform: currentHighlight === idx ? "scale(1.05)" : "scale(1)",
+                backgroundColor: currentHighlight === idx ? "#FFD43B" : (hoveredIndex === idx ? "#FFA500" : "#306998"),
+                color: (currentHighlight === idx || hoveredIndex === idx) ? "#1f2937" : "white",
+                transform: (currentHighlight === idx || hoveredIndex === idx) ? "scale(1.05)" : "scale(1)",
                 transition: "all 0.3s ease",
+                cursor: "pointer",
               }}
             >
               <div style={visStyles.value}>{String(item)}</div>
@@ -282,13 +365,18 @@ const ListVisualization = ({ data, title, highlightSequence, processExplanation 
           </div>
         ))}
       </div>
+      {hoveredIndex !== null && (
+        <div style={visStyles.hoverExplanationBox}>
+          {getHoverExplanation(hoveredIndex, data[hoveredIndex])}
+        </div>
+      )}
       {explanationText && (
         <div style={visStyles.explanationBox}>
-          <strong>📖 Proses:</strong> {explanationText}
+          <strong>📖 Proses animasi:</strong> {explanationText}
         </div>
       )}
       <div style={visStyles.note}>
-        💡 <strong>Penjelasan:</strong> Setiap elemen list memiliki dua alamat: indeks positif (mulai 0) dan indeks negatif (mulai -1 dari akhir). Klik "Jalankan" untuk melihat simulasi akses.
+        💡 <strong>Petunjuk:</strong> Arahkan kursor ke kotak untuk melihat detail indeks. Klik "Jalankan & Lihat Proses" untuk simulasi akses list.
       </div>
     </div>
   );
@@ -302,42 +390,22 @@ const visStyles = {
     margin: "15px 0",
     border: "1px solid #dee2e6",
   },
-  title: {
-    fontSize: "16px",
-    fontWeight: "bold",
-    marginBottom: "15px",
-    color: "#306998",
-    textAlign: "center",
-  },
-  listWrapper: {
-    display: "flex",
-    justifyContent: "center",
-    gap: "20px",
-    flexWrap: "wrap",
-    marginBottom: "15px",
-  },
-  itemCard: {
-    textAlign: "center",
-  },
-  item: {
-    width: "80px",
-    padding: "12px 8px",
-    borderRadius: "10px",
-    fontWeight: "500",
-    transition: "all 0.3s ease",
-    marginBottom: "5px",
-  },
-  value: {
+  title: { fontSize: "16px", fontWeight: "bold", marginBottom: "15px", color: "#306998", textAlign: "center" },
+  listWrapper: { display: "flex", justifyContent: "center", gap: "20px", flexWrap: "wrap", marginBottom: "15px" },
+  itemCard: { textAlign: "center" },
+  item: { width: "80px", padding: "12px 8px", borderRadius: "10px", fontWeight: "500", marginBottom: "5px" },
+  value: { fontSize: "14px" },
+  indexLabel: { fontSize: "11px", color: "#555", marginTop: "4px" },
+  indexLabelNeg: { fontSize: "11px", color: "#888" },
+  hoverExplanationBox: {
+    backgroundColor: "#fff3cd",
+    padding: "12px",
+    borderRadius: "8px",
+    marginTop: "10px",
     fontSize: "14px",
-  },
-  indexLabel: {
-    fontSize: "11px",
-    color: "#555",
-    marginTop: "4px",
-  },
-  indexLabelNeg: {
-    fontSize: "11px",
-    color: "#888",
+    color: "#856404",
+    borderLeft: "4px solid #ffc107",
+    whiteSpace: "pre-line",
   },
   explanationBox: {
     backgroundColor: "#e8f1ff",
@@ -348,16 +416,11 @@ const visStyles = {
     color: "#1f2937",
     borderLeft: "4px solid #306998",
   },
-  note: {
-    fontSize: "12px",
-    color: "#666",
-    marginTop: "10px",
-    textAlign: "center",
-  },
+  note: { fontSize: "12px", color: "#666", marginTop: "10px", textAlign: "center" },
 };
 
-// ================= KOMPONEN CODE EDITOR READ-ONLY DENGAN VISUALISASI INFORMATIF =================
-const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, highlightMapping, processSteps, pyodideReady, runPythonCode }) => {
+// ================= KOMPONEN CODE EDITOR READ-ONLY DENGAN VISUALISASI =================
+const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, highlightMapping, pyodideReady, runPythonCode }) => {
   const [output, setOutput] = useState("");
   const [isRunning, setIsRunning] = useState(false);
   const [highlightSequence, setHighlightSequence] = useState([]);
@@ -375,12 +438,12 @@ const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, highlightM
 
     if (highlightMapping) {
       const { indices, explanations } = highlightMapping();
-      setHighlightSequence(indices.map((idx) => ({ index: idx })));
+      setHighlightSequence(indices.map((i) => ({ index: i })));
       setExplanationSteps(explanations);
       setTimeout(() => {
         setHighlightSequence([]);
         setExplanationSteps([]);
-      }, 5000);
+      }, 6000);
     }
   }, [pyodideReady, code, runPythonCode, highlightMapping]);
 
@@ -407,13 +470,13 @@ const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, highlightM
         <span style={styles.outputTitle}>Output Program</span>
       </div>
       <div style={styles.codeOutput}>
-        <pre style={styles.outputContent}>{output || "(Klik 'Jalankan & Lihat Proses' untuk menjalankan kode dan melihat simulasi)"}</pre>
+        <pre style={styles.outputContent}>{output || "(Klik tombol di atas untuk menjalankan kode dan melihat simulasi)"}</pre>
       </div>
     </div>
   );
 };
 
-// ================= KOMPONEN CODE EDITOR UNTUK LATIHAN PRAKTIK =================
+// ================= KOMPONEN UNTUK LATIHAN PRAKTIK CODING =================
 const CodeEditorEditable = ({ title, pyodideReady, runPythonCode }) => {
   const [localCode, setLocalCode] = useState("");
   const [output, setOutput] = useState("");
@@ -493,10 +556,118 @@ const CodeEditorEditable = ({ title, pyodideReady, runPythonCode }) => {
   );
 };
 
+// ================= KOMPONEN SOAL MELENGKAPI KODE =================
+const CodeCompletionQuestion = ({ question, codeParts, placeholders, expectedAnswers, resetTrigger }) => {
+  const [answers, setAnswers] = useState(placeholders.map(() => ""));
+  const [feedback, setFeedback] = useState("");
+  const [checked, setChecked] = useState(false);
+
+  useEffect(() => {
+    setAnswers(placeholders.map(() => ""));
+    setFeedback("");
+    setChecked(false);
+  }, [resetTrigger, placeholders]);
+
+  const handleAnswerChange = (idx, value) => {
+    const newAnswers = [...answers];
+    newAnswers[idx] = value;
+    setAnswers(newAnswers);
+  };
+
+  const handleCheck = () => {
+    let allCorrect = true;
+    for (let i = 0; i < expectedAnswers.length; i++) {
+      if (answers[i].trim() !== expectedAnswers[i]) {
+        allCorrect = false;
+        break;
+      }
+    }
+    setChecked(true);
+    if (allCorrect) {
+      setFeedback("✅ Benar!");
+    } else {
+      const expectedStr = expectedAnswers.join(", ");
+      setFeedback(`❌ Salah. Jawaban yang benar: ${expectedStr}`);
+    }
+  };
+
+  const renderCodeWithInputs = () => {
+    const result = [];
+    for (let i = 0; i < codeParts.length; i++) {
+      result.push(<span key={`text-${i}`}>{codeParts[i]}</span>);
+      if (i < placeholders.length) {
+        result.push(
+          <input
+            key={`input-${i}`}
+            type="text"
+            size={placeholders[i]?.length || 10}
+            style={styles.inlineInput}
+            value={answers[i]}
+            onChange={(e) => handleAnswerChange(i, e.target.value)}
+            disabled={checked}
+            placeholder={placeholders[i] || "..."}
+          />
+        );
+      }
+    }
+    return result;
+  };
+
+  return (
+    <div style={styles.questionCard}>
+      <p style={styles.questionText}>{question}</p>
+      <pre style={styles.codeTemplateInline}>{renderCodeWithInputs()}</pre>
+      <button style={styles.checkButton} onClick={handleCheck} disabled={checked}>
+        Periksa
+      </button>
+      {feedback && <div style={styles.feedback}>{feedback}</div>}
+    </div>
+  );
+};
+
+// ================= KOMPONEN SOAL MENENTUKAN OUTPUT =================
+const GuessOutputQuestion = ({ question, codeSnippet, expectedOutput, resetTrigger }) => {
+  const [userAnswer, setUserAnswer] = useState("");
+  const [feedback, setFeedback] = useState("");
+  const [checked, setChecked] = useState(false);
+
+  useEffect(() => {
+    setUserAnswer("");
+    setFeedback("");
+    setChecked(false);
+  }, [resetTrigger]);
+
+  const handleCheck = () => {
+    const isCorrect = userAnswer.trim() === expectedOutput;
+    setChecked(true);
+    setFeedback(isCorrect ? "✅ Benar!" : `❌ Salah. Output yang benar: ${expectedOutput}`);
+  };
+
+  return (
+    <div style={styles.questionCard}>
+      <p style={styles.questionText}>{question}</p>
+      <pre style={styles.codeTemplate}>{codeSnippet}</pre>
+      <input
+        type="text"
+        style={styles.fillInput}
+        value={userAnswer}
+        onChange={(e) => setUserAnswer(e.target.value)}
+        placeholder="Ketik output yang dihasilkan..."
+        disabled={checked}
+      />
+      <button style={styles.checkButton} onClick={handleCheck} disabled={checked}>
+        Periksa
+      </button>
+      {feedback && <div style={styles.feedback}>{feedback}</div>}
+    </div>
+  );
+};
+
 // ================= KOMPONEN UTAMA =================
 export default function PembuatanAksesElement() {
   const [pyodideReady, setPyodideReady] = useState(false);
   const pyodideRef = useRef(null);
+  const [resetInteractives, setResetInteractives] = useState(0);
 
   // State untuk eksplorasi
   const [eksplorasiTempAnswers, setEksplorasiTempAnswers] = useState([null, null]);
@@ -586,27 +757,27 @@ angka = [10, 20, 30, 40, 50]
 print("Indeks 1 sampai 3:", angka[1:4])  # [20, 30, 40]`,
   };
 
-  // Fungsi mapping untuk visualisasi dengan penjelasan langkah
+  // Fungsi mapping untuk visualisasi
   const highlightPembuatan = () => ({
     indices: [0, 1, 2],
     explanations: [
-      "👉 Mengakses elemen indeks 0: 'apel' → akan dicetak bersama seluruh list.",
-      "👉 Mengakses elemen indeks 1: 'jeruk' → termasuk dalam output.",
-      "👉 Mengakses elemen indeks 2: 'mangga' → termasuk dalam output. Hasil akhir: ['apel','jeruk','mangga']"
+      "👉 Python membaca list dari kiri ke kanan. Indeks 0: 'apel' → disimpan di memori.",
+      "👉 Indeks 1: 'jeruk' → disimpan setelah 'apel'.",
+      "👉 Indeks 2: 'mangga' → disimpan setelah 'jeruk'. Kemudian print(buah) menampilkan seluruh list."
     ]
   });
   const highlightAkses = () => ({
     indices: [0, 1],
     explanations: [
-      "📌 Perintah `buah[0]` → Python mengambil elemen pada indeks positif 0, yaitu 'apel'.",
-      "📌 Perintah `buah[1]` → Python mengambil elemen pada indeks positif 1, yaitu 'jeruk'. Kedua nilai dicetak."
+      "📌 Perintah `buah[0]` → Python langsung mengambil elemen pada indeks 0, yaitu 'apel', lalu mencetaknya.",
+      "📌 Perintah `buah[1]` → Python mengambil elemen pada indeks 1, yaitu 'jeruk', lalu mencetaknya."
     ]
   });
   const highlightNegatif = () => ({
     indices: [2, 1],
     explanations: [
-      "🔹 `buah[-1]` → indeks negatif -1 merujuk ke elemen terakhir (indeks positif 2), yaitu 'mangga'.",
-      "🔹 `buah[-2]` → indeks negatif -2 merujuk ke elemen kedua dari belakang (indeks positif 1), yaitu 'jeruk'."
+      "🔹 `buah[-1]` → indeks negatif -1 diubah menjadi indeks positif (len-1 = 2), yaitu 'mangga'. Dicetak.",
+      "🔹 `buah[-2]` → indeks -2 diubah menjadi indeks positif 1, yaitu 'jeruk'. Dicetak."
     ]
   });
   const highlightSlicing = () => ({
@@ -617,6 +788,24 @@ print("Indeks 1 sampai 3:", angka[1:4])  # [20, 30, 40]`,
       "✂️ Mengambil indeks 3 (nilai 40). Hasil slicing adalah list baru [20,30,40]."
     ]
   });
+
+  // Soal interaktif
+  const soal1CodeParts = ["buah = [\"apel\", \"jeruk\", \"mangga\"]\nprint(buah[", "])  # ingin mencetak 'jeruk'"];
+  const soal1Placeholders = [""];
+  const soal1Expected = ["1"];
+
+  const soal2CodeParts = ["nilai = [10, 20, 30, 40]\nprint(nilai[", "])  # ingin mencetak 30"];
+  const soal2Placeholders = [""];
+  const soal2Expected = ["2"];
+
+  const soal3CodeParts = ["data = [5, 10, 15, 20]\nprint(data[", "])  # menggunakan indeks negatif untuk mencetak 15"];
+  const soal3Placeholders = [""];
+  const soal3Expected = ["-2"];
+
+  const soal4Code = `buah = ["apel", "jeruk", "mangga"]
+print(buah[1])`;
+  const soal5Code = `angka = [100, 200, 300]
+print(angka[-2])`;
 
   // Load Pyodide
   useEffect(() => {
@@ -658,61 +847,8 @@ sys.stdout = StringIO()
     }
   }, []);
 
-  // Quiz 5 soal
-  const quizQuestions = [
-    {
-      question: "Bagaimana cara mengakses elemen ketiga dari list `data = [5, 10, 15, 20]`?",
-      options: ["data[2]", "data[3]", "data[-2]", "data[1]"],
-      answer: 0,
-    },
-    {
-      question: "Apa output dari `print([1,2,3,4][1:3])`?",
-      options: ["[2,3]", "[2,3,4]", "[1,2]", "[1,2,3]"],
-      answer: 0,
-    },
-    {
-      question: "Indeks negatif -1 pada list merujuk ke elemen...",
-      options: ["Pertama", "Kedua", "Terakhir", "Tengah"],
-      answer: 2,
-    },
-    {
-      question: "Manakah pernyataan yang benar tentang slicing `list[awal:akhir]`?",
-      options: ["Elemen pada indeks 'akhir' ikut diambil", "Elemen pada indeks 'akhir' TIDAK diambil", "Hanya elemen pertama yang diambil", "Mengambil semua elemen"],
-      answer: 1,
-    },
-    {
-      question: "Apa kode yang tepat untuk membuat list kosong?",
-      options: ["list = ()", "list = []", "list = {}", "list = ' '"],
-      answer: 1,
-    },
-  ];
-
-  const [quizCurrent, setQuizCurrent] = useState(0);
-  const [quizSelected, setQuizSelected] = useState(null);
-  const [quizFeedback, setQuizFeedback] = useState(null);
-  const [hoverPrev, setHoverPrev] = useState(false);
-  const [hoverCheck, setHoverCheck] = useState(false);
-  const [hoverNext, setHoverNext] = useState(false);
-
-  const checkQuizAnswer = () => {
-    if (quizSelected === null) return;
-    setQuizFeedback(quizSelected === quizQuestions[quizCurrent].answer ? "benar" : "salah");
-  };
-
-  const nextQuiz = () => {
-    if (quizCurrent < quizQuestions.length - 1) {
-      setQuizCurrent(quizCurrent + 1);
-      setQuizSelected(null);
-      setQuizFeedback(null);
-    }
-  };
-
-  const prevQuiz = () => {
-    if (quizCurrent > 0) {
-      setQuizCurrent(quizCurrent - 1);
-      setQuizSelected(null);
-      setQuizFeedback(null);
-    }
+  const resetInteractiveQuestions = () => {
+    setResetInteractives(prev => prev + 1);
   };
 
   return (
@@ -793,7 +929,7 @@ sys.stdout = StringIO()
                 <h2 style={styles.sectionTitle}>📝 Membuat List</h2>
                 <div style={styles.card}>
                   <p style={styles.text}>
-                    List dibuat dengan tanda kurung siku <code>[]</code> dan elemen dipisahkan koma. List dapat berisi berbagai tipe data.
+                    List dibuat dengan tanda kurung siku <code>[]</code> dan elemen dipisahkan koma.
                   </p>
                   <CodeEditorWithVisual
                     code={exampleCodes.pembuatan}
@@ -810,12 +946,12 @@ sys.stdout = StringIO()
                 </div>
               </section>
 
-              {/* AKSES ELEMEN DENGAN INDEKS POSITIF */}
+              {/* AKSES POSITIF */}
               <section style={styles.section}>
                 <h2 style={styles.sectionTitle}>🔍 Akses Elemen (Indeks Positif)</h2>
                 <div style={styles.card}>
                   <p style={styles.text}>
-                    Setiap elemen dalam list memiliki indeks numerik. Indeks <strong>dimulai dari 0</strong> untuk elemen pertama, 1 untuk kedua, dan seterusnya.
+                    Indeks dimulai dari <strong>0</strong> untuk elemen pertama.
                   </p>
                   <CodeEditorWithVisual
                     code={exampleCodes.akses}
@@ -829,12 +965,12 @@ sys.stdout = StringIO()
                 </div>
               </section>
 
-              {/* AKSES ELEMEN DENGAN INDEKS NEGATIF */}
+              {/* AKSES NEGATIF */}
               <section style={styles.section}>
                 <h2 style={styles.sectionTitle}>🔍 Akses Elemen (Indeks Negatif)</h2>
                 <div style={styles.card}>
                   <p style={styles.text}>
-                    Python juga mendukung indeks negatif untuk mengakses elemen dari belakang. <strong>-1</strong> untuk elemen terakhir, <strong>-2</strong> untuk kedua terakhir, dst.
+                    Indeks negatif: <strong>-1</strong> untuk elemen terakhir, <strong>-2</strong> untuk kedua terakhir.
                   </p>
                   <CodeEditorWithVisual
                     code={exampleCodes.negatif}
@@ -848,12 +984,12 @@ sys.stdout = StringIO()
                 </div>
               </section>
 
-              {/* SLICING LIST */}
+              {/* SLICING */}
               <section style={styles.section}>
                 <h2 style={styles.sectionTitle}>✂️ Slicing List</h2>
                 <div style={styles.card}>
                   <p style={styles.text}>
-                    Slicing digunakan untuk mengambil sub-list (bagian dari list) dengan format <code>list[awal:akhir]</code>. Elemen pada indeks <strong>akhir tidak diikutsertakan</strong>.
+                    Slicing <code>list[awal:akhir]</code> mengambil elemen dari indeks `awal` hingga sebelum `akhir`.
                   </p>
                   <CodeEditorWithVisual
                     code={exampleCodes.slicing}
@@ -865,12 +1001,12 @@ sys.stdout = StringIO()
                     runPythonCode={runPythonCode}
                   />
                   <div style={styles.highlightBox}>
-                    <strong>💡 Tips:</strong> <code>list[:3]</code> mengambil 3 elemen pertama, <code>list[2:]</code> mengambil dari indeks 2 sampai akhir.
+                    <strong>💡 Tips:</strong> <code>list[:3]</code> mengambil 3 elemen pertama, <code>list[2:]</code> dari indeks 2 sampai akhir.
                   </div>
                 </div>
               </section>
 
-              {/* LATIHAN PRAKTIK */}
+              {/* LATIHAN PRAKTIK CODING */}
               <section style={styles.section}>
                 <h2 style={styles.sectionTitle}>💻 Latihan Praktik</h2>
                 <div style={styles.card}>
@@ -891,70 +1027,50 @@ sys.stdout = StringIO()
                 </div>
               </section>
 
-              {/* QUIZ PEMAHAMAN */}
+              {/* LATIHAN INTERAKTIF */}
               <section style={styles.section}>
-                <h2 style={styles.sectionTitle}>📝 Latihan Pemahaman</h2>
-                <div style={styles.quizBox}>
-                  <div style={styles.quizHeader}>Soal {quizCurrent + 1} dari {quizQuestions.length}</div>
-                  <div style={styles.quizContent}>
-                    <p style={styles.quizQuestion}>{quizQuestions[quizCurrent].question}</p>
-                    {quizQuestions[quizCurrent].options.map((opt, idx) => (
-                      <div
-                        key={idx}
-                        onClick={() => setQuizSelected(idx)}
-                        style={{
-                          ...styles.quizOption,
-                          backgroundColor: quizSelected === idx ? "#2fa69a" : "#ffffff",
-                          color: quizSelected === idx ? "white" : "#1f2937",
-                        }}
-                      >
-                        {String.fromCharCode(65 + idx)}. {opt}
-                      </div>
-                    ))}
-                    {quizFeedback === "salah" && <div style={styles.quizError}>❌ Salah! Coba periksa kembali.</div>}
-                    {quizFeedback === "benar" && <div style={styles.quizSuccess}>✅ Benar! Jawaban tepat.</div>}
-                  </div>
-                  <div style={styles.quizFooter}>
-                    <button
-                      style={{
-                        ...styles.quizNavButton,
-                        backgroundColor: hoverPrev ? "#FFD43B" : "#9ca3af",
-                        color: hoverPrev ? "#306998" : "white",
-                      }}
-                      onClick={prevQuiz}
-                      disabled={quizCurrent === 0}
-                      onMouseEnter={() => setHoverPrev(true)}
-                      onMouseLeave={() => setHoverPrev(false)}
-                    >
-                      Sebelumnya
-                    </button>
-                    <button
-                      style={{
-                        ...styles.quizNavButton,
-                        backgroundColor: "#1e63d5",
-                        color: "white",
-                        ...(hoverCheck && { backgroundColor: "#FFD43B", color: "#306998" }),
-                      }}
-                      onClick={checkQuizAnswer}
-                      onMouseEnter={() => setHoverCheck(true)}
-                      onMouseLeave={() => setHoverCheck(false)}
-                    >
-                      Periksa Jawaban
-                    </button>
-                    <button
-                      style={{
-                        ...styles.quizNavButton,
-                        backgroundColor: hoverNext ? "#FFD43B" : "#9ca3af",
-                        color: hoverNext ? "#306998" : "white",
-                      }}
-                      onClick={nextQuiz}
-                      disabled={quizCurrent === quizQuestions.length - 1}
-                      onMouseEnter={() => setHoverNext(true)}
-                      onMouseLeave={() => setHoverNext(false)}
-                    >
-                      Selanjutnya
-                    </button>
-                  </div>
+                <h2 style={styles.sectionTitle}>🧩 Latihan Interaktif</h2>
+                <div style={styles.card}>
+                  <p style={styles.text}>Isilah bagian yang kosong pada kode di bawah ini dengan mengetikkan jawaban pada kotak yang tersedia.</p>
+                  <button style={styles.resetButton} onClick={resetInteractiveQuestions}>↻ Reset Jawaban</button>
+
+                  <CodeCompletionQuestion
+                    question="1. Lengkapi kode untuk mencetak 'jeruk' dari list berikut:"
+                    codeParts={soal1CodeParts}
+                    placeholders={soal1Placeholders}
+                    expectedAnswers={soal1Expected}
+                    resetTrigger={resetInteractives}
+                  />
+
+                  <CodeCompletionQuestion
+                    question="2. Lengkapi kode untuk mencetak angka 30 dari list nilai:"
+                    codeParts={soal2CodeParts}
+                    placeholders={soal2Placeholders}
+                    expectedAnswers={soal2Expected}
+                    resetTrigger={resetInteractives}
+                  />
+
+                  <CodeCompletionQuestion
+                    question="3. Lengkapi kode (gunakan indeks negatif) untuk mencetak 15 dari list data:"
+                    codeParts={soal3CodeParts}
+                    placeholders={soal3Placeholders}
+                    expectedAnswers={soal3Expected}
+                    resetTrigger={resetInteractives}
+                  />
+
+                  <GuessOutputQuestion
+                    question="4. Apa output dari kode berikut?"
+                    codeSnippet={soal4Code}
+                    expectedOutput="jeruk"
+                    resetTrigger={resetInteractives}
+                  />
+
+                  <GuessOutputQuestion
+                    question="5. Jika kita menjalankan kode berikut, apa yang akan tercetak?"
+                    codeSnippet={soal5Code}
+                    expectedOutput="200"
+                    resetTrigger={resetInteractives}
+                  />
                 </div>
               </section>
             </>
