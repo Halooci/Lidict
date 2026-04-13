@@ -281,7 +281,7 @@ const styles = {
 };
 
 // ================= KOMPONEN VISUALISASI LIST SATU KOLOM =================
-const SingleListVisualization = ({ data, title, hoverContext = {}, highlightIndex = null }) => {
+const SingleListVisualization = ({ data, title, hoverContext = {}, highlightIndex = null, changedIndices = [], explanation = "", extraBadge = null }) => {
   const [hoveredIndex, setHoveredIndex] = useState(null);
   const negativeIndices = data.map((_, i) => -(data.length - i));
 
@@ -289,6 +289,18 @@ const SingleListVisualization = ({ data, title, hoverContext = {}, highlightInde
     const customMsg = hoverContext[idx];
     if (customMsg) return customMsg;
     return `📌 Elemen: "${item}"\n✅ Indeks positif: ${idx} → data[${idx}]\n✅ Indeks negatif: ${negativeIndices[idx]} → data[${negativeIndices[idx]}]`;
+  };
+
+  const getBgColor = (idx) => {
+    if (highlightIndex === idx) return "#FFD43B";
+    if (changedIndices.includes(idx)) return "#28a745";
+    if (hoveredIndex === idx) return "#FFA500";
+    return "#306998";
+  };
+
+  const getTextColor = (idx) => {
+    if (highlightIndex === idx || changedIndices.includes(idx) || hoveredIndex === idx) return "#1f2937";
+    return "white";
   };
 
   return (
@@ -316,7 +328,7 @@ const SingleListVisualization = ({ data, title, hoverContext = {}, highlightInde
         {data.map((item, idx) => (
           <div
             key={idx}
-            style={{ textAlign: "center" }}
+            style={{ textAlign: "center", position: "relative" }}
             onMouseEnter={() => setHoveredIndex(idx)}
             onMouseLeave={() => setHoveredIndex(null)}
           >
@@ -327,18 +339,34 @@ const SingleListVisualization = ({ data, title, hoverContext = {}, highlightInde
               fontWeight: "500",
               marginBottom: "5px",
               fontSize: "13px",
-              backgroundColor: highlightIndex === idx
-                ? "#FFD43B"
-                : (hoveredIndex === idx ? "#FFA500" : "#306998"),
-              color: (highlightIndex === idx || hoveredIndex === idx) ? "#1f2937" : "white",
-              transform: (highlightIndex === idx || hoveredIndex === idx) ? "scale(1.05)" : "scale(1)",
+              backgroundColor: getBgColor(idx),
+              color: getTextColor(idx),
+              transform: (highlightIndex === idx || changedIndices.includes(idx) || hoveredIndex === idx) ? "scale(1.05)" : "scale(1)",
               transition: "all 0.3s ease",
               cursor: "pointer",
+              border: changedIndices.includes(idx) ? "2px solid #ffc107" : "none",
             }}>
               <div>{String(item)}</div>
             </div>
             <div style={{ fontSize: "10px", color: "#555" }}>Indeks +{idx}</div>
             <div style={{ fontSize: "10px", color: "#888" }}>Indeks {negativeIndices[idx]}</div>
+            {changedIndices.includes(idx) && (
+              <div style={{
+                position: "absolute",
+                top: "-8px",
+                right: "-8px",
+                backgroundColor: "#28a745",
+                color: "white",
+                borderRadius: "50%",
+                width: "20px",
+                height: "20px",
+                fontSize: "12px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontWeight: "bold",
+              }}>✓</div>
+            )}
           </div>
         ))}
       </div>
@@ -356,42 +384,81 @@ const SingleListVisualization = ({ data, title, hoverContext = {}, highlightInde
           {getHoverExplanation(hoveredIndex, data[hoveredIndex])}
         </div>
       )}
+      {explanation && (
+        <div style={{
+          backgroundColor: "#e8f1ff",
+          padding: "10px",
+          borderRadius: "8px",
+          marginTop: "10px",
+          fontSize: "13px",
+          color: "#1f2937",
+          borderLeft: "4px solid #306998",
+        }}>
+          {explanation}
+        </div>
+      )}
+      {extraBadge && (
+        <div style={{
+          backgroundColor: "#d4edda",
+          padding: "8px",
+          borderRadius: "8px",
+          marginTop: "10px",
+          fontSize: "13px",
+          textAlign: "center",
+          color: "#155724",
+          fontWeight: "bold",
+        }}>
+          {extraBadge}
+        </div>
+      )}
     </div>
   );
 };
 
-// ================= KOMPONEN VISUALISASI SEBELUM & SESUDAH =================
-const BeforeAfterVisualization = ({
-  beforeData,
-  afterData,
-  beforeTitle,
-  afterTitle,
-  hoverContextBefore = {},
-  hoverContextAfter = {},
-  highlightSequence = [],
-  processExplanation = "",
-}) => {
+// ================= KOMPONEN UTAMA DENGAN ANIMASI =================
+const AnimatedVisualization = ({ beforeData, afterData, beforeTitle, afterTitle, hoverContextBefore, hoverContextAfter, animationSteps, operationName, extraAfterBadge = null }) => {
   const [currentHighlight, setCurrentHighlight] = useState(null);
-  const [explanationText, setExplanationText] = useState("");
+  const [currentExplanation, setCurrentExplanation] = useState("");
+  const [showDiff, setShowDiff] = useState(false);
+  const [stepIndex, setStepIndex] = useState(0);
+  const [animationFinished, setAnimationFinished] = useState(false);
+
+  const changedIndicesBefore = (() => {
+    const changed = [];
+    const maxLen = Math.max(beforeData.length, afterData.length);
+    for (let i = 0; i < maxLen; i++) {
+      if (beforeData[i] !== afterData[i]) changed.push(i);
+    }
+    if (afterData.length > beforeData.length) {
+      for (let i = beforeData.length; i < afterData.length; i++) changed.push(i);
+    }
+    return changed;
+  })();
+  const changedIndicesAfter = changedIndicesBefore;
 
   useEffect(() => {
-    if (!highlightSequence || highlightSequence.length === 0) return;
+    if (!animationSteps || animationSteps.length === 0) return;
     let idx = 0;
+    setShowDiff(false);
+    setAnimationFinished(false);
     const interval = setInterval(() => {
-      if (idx < highlightSequence.length) {
-        setCurrentHighlight(highlightSequence[idx].index);
-        if (processExplanation) setExplanationText(processExplanation);
+      if (idx < animationSteps.length) {
+        setCurrentHighlight(animationSteps[idx].highlightIndex);
+        setCurrentExplanation(animationSteps[idx].explanation);
+        setStepIndex(idx);
         idx++;
       } else {
         clearInterval(interval);
         setTimeout(() => {
           setCurrentHighlight(null);
-          setExplanationText("");
+          setCurrentExplanation("");
+          setShowDiff(true);
+          setAnimationFinished(true);
         }, 500);
       }
-    }, 1800);
+    }, 1500);
     return () => clearInterval(interval);
-  }, [highlightSequence, processExplanation]);
+  }, [animationSteps]);
 
   return (
     <div>
@@ -402,6 +469,8 @@ const BeforeAfterVisualization = ({
             title={beforeTitle}
             hoverContext={hoverContextBefore}
             highlightIndex={currentHighlight}
+            changedIndices={showDiff ? changedIndicesBefore : []}
+            explanation={stepIndex === 0 && currentExplanation ? currentExplanation : ""}
           />
         </div>
         <div style={styles.visualColumn}>
@@ -410,10 +479,13 @@ const BeforeAfterVisualization = ({
             title={afterTitle}
             hoverContext={hoverContextAfter}
             highlightIndex={currentHighlight}
+            changedIndices={showDiff ? changedIndicesAfter : []}
+            explanation={currentExplanation}
+            extraBadge={extraAfterBadge && showDiff ? extraAfterBadge : null}
           />
         </div>
       </div>
-      {explanationText && (
+      {!showDiff && currentExplanation && (
         <div style={{
           width: "100%",
           marginTop: "10px",
@@ -423,14 +495,28 @@ const BeforeAfterVisualization = ({
           fontSize: "13px",
           borderLeft: "4px solid #306998",
         }}>
-          <strong>📖 Proses animasi:</strong> {explanationText}
+          <strong>📖 Proses animasi:</strong> {currentExplanation}
+        </div>
+      )}
+      {showDiff && (
+        <div style={{
+          width: "100%",
+          marginTop: "10px",
+          backgroundColor: "#d4edda",
+          padding: "10px",
+          borderRadius: "8px",
+          fontSize: "13px",
+          borderLeft: "4px solid #28a745",
+          textAlign: "center",
+        }}>
+          ✅ <strong>Perubahan selesai!</strong> Elemen yang berubah ditandai dengan warna hijau dan tanda centang.
         </div>
       )}
     </div>
   );
 };
 
-// ================= KOMPONEN CODE EDITOR DENGAN VISUALISASI =================
+// ================= KOMPONEN CODE EDITOR DENGAN ANIMASI =================
 const CodeEditorWithVisual = ({
   code,
   title,
@@ -442,12 +528,14 @@ const CodeEditorWithVisual = ({
   hoverContextAfter,
   pyodideReady,
   runPythonCode,
-  explanationText = "",
+  animationSteps,
+  operationName,
+  extraAfterBadge = null,
 }) => {
   const [output, setOutput] = useState("");
   const [isRunning, setIsRunning] = useState(false);
   const [showVisual, setShowVisual] = useState(false);
-  const [highlightSequence, setHighlightSequence] = useState([]);
+  const [triggerAnimation, setTriggerAnimation] = useState(0);
 
   const handleRun = useCallback(async () => {
     if (!pyodideReady) {
@@ -460,72 +548,48 @@ const CodeEditorWithVisual = ({
     setOutput(result);
     setIsRunning(false);
     setShowVisual(true);
-    const indices = afterData.map((_, i) => i);
-    setHighlightSequence(indices.map(i => ({ index: i })));
-    setTimeout(() => setHighlightSequence([]), 3000);
-  }, [pyodideReady, code, runPythonCode, afterData]);
+    setTriggerAnimation(prev => prev + 1);
+  }, [pyodideReady, code, runPythonCode]);
 
   return (
     <div style={styles.codeEditorContainer}>
-      {/* Header: Contoh Kode Program */}
       <div style={styles.codeEditorHeader}>
         <span style={styles.codeEditorTitle}>{title}</span>
-        <button
-          style={styles.runButton}
-          onClick={handleRun}
-          disabled={!pyodideReady || isRunning}
-        >
-          {isRunning
-            ? "⏳ Menjalankan..."
-            : pyodideReady
-            ? "▶ Jalankan"
-            : "⏳ Memuat..."}
+        <button style={styles.runButton} onClick={handleRun} disabled={!pyodideReady || isRunning}>
+          {isRunning ? "⏳ Menjalankan..." : pyodideReady ? "▶ Jalankan" : "⏳ Memuat..."}
         </button>
       </div>
-      {/* Area kode program */}
       <div style={styles.codeInputReadOnly}>
         <pre style={styles.codePre}>{code}</pre>
       </div>
-
-      {/* Bar pemisah Visualisasi Kode Program */}
-      <div style={styles.visualHeader}>
-        📊 Visualisasi Kode Program
-      </div>
-      {/* Area visualisasi (seperti area output) */}
+      <div style={styles.visualHeader}>📊 Visualisasi Kode Program</div>
       <div style={styles.visualArea}>
         {showVisual ? (
-          <BeforeAfterVisualization
+          <AnimatedVisualization
+            key={triggerAnimation}
             beforeData={beforeData}
             afterData={afterData}
             beforeTitle={beforeTitle}
             afterTitle={afterTitle}
             hoverContextBefore={hoverContextBefore}
             hoverContextAfter={hoverContextAfter}
-            highlightSequence={highlightSequence}
-            processExplanation={explanationText}
+            animationSteps={animationSteps}
+            operationName={operationName}
+            extraAfterBadge={extraAfterBadge}
           />
         ) : (
-          <div style={styles.visualPlaceholder}>
-            (Klik 'Jalankan' untuk melihat hasil)
-          </div>
+          <div style={styles.visualPlaceholder}>(Klik 'Jalankan' untuk melihat hasil)</div>
         )}
       </div>
-
-      {/* Bar Output Program */}
-      <div style={styles.outputHeader}>
-        <span style={styles.outputTitle}>Output Program</span>
-      </div>
-      {/* Area output program */}
+      <div style={styles.outputHeader}><span style={styles.outputTitle}>Output Program</span></div>
       <div style={styles.codeOutput}>
-        <pre style={styles.outputContent}>
-          {output || "(Klik 'Jalankan' untuk melihat hasil)"}
-        </pre>
+        <pre style={styles.outputContent}>{output || "(Klik 'Jalankan' untuk melihat hasil)"}</pre>
       </div>
     </div>
   );
 };
 
-// ================= KOMPONEN UNTUK LATIHAN PRAKTIK CODING =================
+// ================= KOMPONEN UNTUK LATIHAN PRAKTIK CODING (sama) =================
 const CodeEditorEditable = ({ title, pyodideReady, runPythonCode }) => {
   const [localCode, setLocalCode] = useState("");
   const [output, setOutput] = useState("");
@@ -545,7 +609,6 @@ const CodeEditorEditable = ({ title, pyodideReady, runPythonCode }) => {
     setOutput("");
     setError("");
     setIsRunning(true);
-
     const trimmed = localCode.trim();
     if (!trimmed.includes("belanja =")) {
       setError("❌ ERROR: Buat variabel 'belanja' dengan isi ['apel','jeruk','mangga'].");
@@ -573,20 +636,12 @@ const CodeEditorEditable = ({ title, pyodideReady, runPythonCode }) => {
       setIsRunning(false);
       return;
     }
-
     const result = await runPythonCode(localCode);
     setOutput(result);
-    if (
-      result.includes("apel") &&
-      result.includes("mangga") &&
-      result.includes("pisang") &&
-      !result.includes("jeruk")
-    ) {
+    if (result.includes("apel") && result.includes("mangga") && result.includes("pisang") && !result.includes("jeruk")) {
       setOutput(result + "\n\n✅ SELAMAT! Jawaban kamu BENAR!");
     } else {
-      setOutput(
-        result + "\n\n⚠️ Output tidak sesuai. Pastikan list berisi ['apel','mangga','pisang']."
-      );
+      setOutput(result + "\n\n⚠️ Output tidak sesuai. Pastikan list berisi ['apel','mangga','pisang'].");
     }
     setIsRunning(false);
   }, [localCode, pyodideReady, runPythonCode]);
@@ -595,147 +650,68 @@ const CodeEditorEditable = ({ title, pyodideReady, runPythonCode }) => {
     <div style={styles.codeEditorContainer}>
       <div style={styles.codeEditorHeader}>
         <span style={styles.codeEditorTitle}>{title}</span>
-        <button
-          style={styles.runButton}
-          onClick={validateAndRun}
-          disabled={!pyodideReady || isRunning}
-        >
-          {isRunning
-            ? "⏳ Menjalankan..."
-            : pyodideReady
-            ? "▶ Jalankan"
-            : "⏳ Memuat..."}
+        <button style={styles.runButton} onClick={validateAndRun} disabled={!pyodideReady || isRunning}>
+          {isRunning ? "⏳ Menjalankan..." : pyodideReady ? "▶ Jalankan" : "⏳ Memuat..."}
         </button>
       </div>
       {error && <div style={styles.errorBox}>{error}</div>}
-      <textarea
-        style={styles.codeInputEditable}
-        value={localCode}
-        onChange={handleChange}
-        placeholder="Tulis kode Python di sini..."
-        spellCheck={false}
-      />
-      <div style={styles.outputHeader}>
-        <span style={styles.outputTitle}>Output</span>
-      </div>
+      <textarea style={styles.codeInputEditable} value={localCode} onChange={handleChange} placeholder="Tulis kode Python di sini..." spellCheck={false} />
+      <div style={styles.outputHeader}><span style={styles.outputTitle}>Output</span></div>
       <div style={styles.codeOutput}>
-        <pre style={styles.outputContent}>
-          {output || "(Klik 'Jalankan' untuk melihat hasil)"}
-        </pre>
+        <pre style={styles.outputContent}>{output || "(Klik 'Jalankan' untuk melihat hasil)"}</pre>
       </div>
     </div>
   );
 };
 
-// ================= KOMPONEN DRAG-N-DROP MATCHING =================
+// ================= KOMPONEN DRAG-N-DROP MATCHING (sama) =================
 const DragDropMatching = ({ items, resetTrigger }) => {
-  const [functions, setFunctions] = useState(() =>
-    items.map((item, idx) => ({ id: idx, text: item.func, matched: false }))
-  );
-  const [descriptions, setDescriptions] = useState(() =>
-    items.map((item, idx) => ({ id: idx, text: item.desc, matched: false }))
-  );
+  const [functions, setFunctions] = useState(() => items.map((item, idx) => ({ id: idx, text: item.func, matched: false })));
+  const [descriptions, setDescriptions] = useState(() => items.map((item, idx) => ({ id: idx, text: item.desc, matched: false })));
   const [feedback, setFeedback] = useState("");
-
   useEffect(() => {
-    setFunctions(
-      items.map((item, idx) => ({ id: idx, text: item.func, matched: false }))
-    );
-    setDescriptions(
-      items.map((item, idx) => ({ id: idx, text: item.desc, matched: false }))
-    );
+    setFunctions(items.map((item, idx) => ({ id: idx, text: item.func, matched: false })));
+    setDescriptions(items.map((item, idx) => ({ id: idx, text: item.desc, matched: false })));
     setFeedback("");
   }, [resetTrigger, items]);
-
-  const handleDragStart = (e, funcId) => {
-    e.dataTransfer.setData("text/plain", funcId);
-    e.dataTransfer.effectAllowed = "copy";
-  };
-
+  const handleDragStart = (e, funcId) => e.dataTransfer.setData("text/plain", funcId);
   const handleDrop = (e, descId) => {
     e.preventDefault();
     const funcId = parseInt(e.dataTransfer.getData("text/plain"));
-    const func = functions.find((f) => f.id === funcId);
-    const desc = descriptions.find((d) => d.id === descId);
+    const func = functions.find(f => f.id === funcId);
+    const desc = descriptions.find(d => d.id === descId);
     if (!func || !desc || func.matched || desc.matched) {
       setFeedback("❌ Salah satu sudah dipasangkan!");
       return;
     }
     if (func.id === desc.id) {
-      setFunctions((prev) =>
-        prev.map((f) => (f.id === funcId ? { ...f, matched: true } : f))
-      );
-      setDescriptions((prev) =>
-        prev.map((d) => (d.id === descId ? { ...d, matched: true } : d))
-      );
+      setFunctions(prev => prev.map(f => f.id === funcId ? { ...f, matched: true } : f));
+      setDescriptions(prev => prev.map(d => d.id === descId ? { ...d, matched: true } : d));
       setFeedback("");
     } else {
-      setFeedback(
-        `❌ Salah! '${func.text}' tidak cocok dengan '${desc.text}'. Coba lagi.`
-      );
+      setFeedback(`❌ Salah! '${func.text}' tidak cocok dengan '${desc.text}'. Coba lagi.`);
     }
   };
-
-  const handleDragOver = (e) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = "copy";
-  };
-
-  const allMatched = functions.every((f) => f.matched);
-
+  const handleDragOver = (e) => e.preventDefault();
+  const allMatched = functions.every(f => f.matched);
   return (
     <div>
       <div style={styles.matchingContainer}>
         <div style={styles.matchingColumn}>
           <div style={styles.matchingTitle}>📌 Fungsi/Method List</div>
-          {functions.map((func) => (
-            <div
-              key={func.id}
-              draggable={!func.matched}
-              onDragStart={(e) => handleDragStart(e, func.id)}
-              style={{
-                ...styles.dragItem,
-                backgroundColor: func.matched ? "#6c757d" : "#306998",
-                opacity: func.matched ? 0.6 : 1,
-              }}
-            >
-              {func.text}
-            </div>
+          {functions.map(func => (
+            <div key={func.id} draggable={!func.matched} onDragStart={(e) => handleDragStart(e, func.id)} style={{ ...styles.dragItem, backgroundColor: func.matched ? "#6c757d" : "#306998", opacity: func.matched ? 0.6 : 1 }}>{func.text}</div>
           ))}
         </div>
         <div style={styles.matchingColumn}>
           <div style={styles.matchingTitle}>🎯 Kegunaan</div>
-          {descriptions.map((desc) => (
-            <div
-              key={desc.id}
-              onDrop={(e) => handleDrop(e, desc.id)}
-              onDragOver={handleDragOver}
-              style={{
-                ...styles.dropZone,
-                ...(desc.matched ? styles.dropZoneFilled : {}),
-                backgroundColor: desc.matched ? "#d1e7dd" : "#e9ecef",
-              }}
-            >
-              {desc.matched ? `✅ ${desc.text}` : desc.text}
-            </div>
+          {descriptions.map(desc => (
+            <div key={desc.id} onDrop={(e) => handleDrop(e, desc.id)} onDragOver={handleDragOver} style={{ ...styles.dropZone, ...(desc.matched ? styles.dropZoneFilled : {}), backgroundColor: desc.matched ? "#d1e7dd" : "#e9ecef" }}>{desc.matched ? `✅ ${desc.text}` : desc.text}</div>
           ))}
         </div>
       </div>
       {feedback && <div style={styles.feedback}>{feedback}</div>}
-      {allMatched && (
-        <div
-          style={{
-            ...styles.feedback,
-            backgroundColor: "#d1e7dd",
-            color: "#0f5132",
-            padding: "10px",
-            borderRadius: "8px",
-            textAlign: "center",
-          }}
-        >
-          🎉 Selamat! Semua jawaban benar!
-        </div>
-      )}
+      {allMatched && <div style={{ ...styles.feedback, backgroundColor: "#d1e7dd", color: "#0f5132", padding: "10px", borderRadius: "8px", textAlign: "center" }}>🎉 Selamat! Semua jawaban benar!</div>}
     </div>
   );
 };
@@ -753,210 +729,194 @@ export default function OperasiManipulasiList() {
   const [isEksplorasiCompleted, setIsEksplorasiCompleted] = useState(false);
 
   const eksplorasiQuestions = [
-    {
-      text: "Method apa yang digunakan untuk menambahkan elemen di akhir list?",
-      options: ["insert()", "append()", "extend()", "add()"],
-      correct: 1,
-    },
-    {
-      text: "Apa fungsi dari method `remove()` pada list?",
-      options: [
-        "Menghapus elemen berdasarkan indeks",
-        "Menghapus elemen berdasarkan nilai pertama yang cocok",
-        "Menghapus semua elemen",
-        "Menghapus elemen terakhir",
-      ],
-      correct: 1,
-    },
+    { text: "Method apa yang digunakan untuk menambahkan elemen di akhir list?", options: ["insert()", "append()", "extend()", "add()"], correct: 1 },
+    { text: "Apa fungsi dari method `remove()` pada list?", options: ["Menghapus elemen berdasarkan indeks", "Menghapus elemen berdasarkan nilai pertama yang cocok", "Menghapus semua elemen", "Menghapus elemen terakhir"], correct: 1 },
   ];
 
   const checkEksplorasiAnswer = (questionIdx) => {
     const selected = eksplorasiTempAnswers[questionIdx];
     if (selected === null) {
-      setEksplorasiFeedback((prev) => {
-        const newF = [...prev];
-        newF[questionIdx] = "❌ Pilih jawaban terlebih dahulu!";
-        return newF;
-      });
+      setEksplorasiFeedback(prev => { const newF = [...prev]; newF[questionIdx] = "❌ Pilih jawaban terlebih dahulu!"; return newF; });
       return;
     }
     const isCorrect = selected === eksplorasiQuestions[questionIdx].correct;
     if (isCorrect) {
-      const newSaved = [...eksplorasiSavedAnswers];
-      newSaved[questionIdx] = selected;
-      setEksplorasiSavedAnswers(newSaved);
-      setEksplorasiFeedback((prev) => {
-        const newF = [...prev];
-        newF[questionIdx] = "✅ Benar! Jawaban tersimpan.";
-        return newF;
-      });
+      const newSaved = [...eksplorasiSavedAnswers]; newSaved[questionIdx] = selected; setEksplorasiSavedAnswers(newSaved);
+      setEksplorasiFeedback(prev => { const newF = [...prev]; newF[questionIdx] = "✅ Benar! Jawaban tersimpan."; return newF; });
     } else {
-      setEksplorasiFeedback((prev) => {
-        const newF = [...prev];
-        newF[questionIdx] = "❌ Salah. Coba lagi!";
-        return newF;
-      });
+      setEksplorasiFeedback(prev => { const newF = [...prev]; newF[questionIdx] = "❌ Salah. Coba lagi!"; return newF; });
     }
   };
 
   useEffect(() => {
-    const allCorrect = eksplorasiSavedAnswers.every(
-      (ans, idx) => ans !== null && ans === eksplorasiQuestions[idx].correct
-    );
+    const allCorrect = eksplorasiSavedAnswers.every((ans, idx) => ans !== null && ans === eksplorasiQuestions[idx].correct);
     setIsEksplorasiCompleted(allCorrect);
   }, [eksplorasiSavedAnswers]);
 
   const handleTempAnswer = (questionIdx, optionIdx) => {
-    const newTemp = [...eksplorasiTempAnswers];
-    newTemp[questionIdx] = optionIdx;
-    setEksplorasiTempAnswers(newTemp);
-    setEksplorasiFeedback((prev) => {
-      const newF = [...prev];
-      newF[questionIdx] = "";
-      return newF;
-    });
+    const newTemp = [...eksplorasiTempAnswers]; newTemp[questionIdx] = optionIdx; setEksplorasiTempAnswers(newTemp);
+    setEksplorasiFeedback(prev => { const newF = [...prev]; newF[questionIdx] = ""; return newF; });
   };
 
   // ================= DATA UNTUK VISUALISASI =================
-  const concatBefore = [1, 2, 3];
-  const concatAfter = [1, 2, 3, 4, 5, 6];
-  const repeatBefore = [1, 2, 3];
-  const repeatAfter = [1, 2, 3, 1, 2, 3, 1, 2, 3];
-  const searchBefore = ["apel", "jeruk", "mangga"];
-  const searchAfter = ["apel", "jeruk", "mangga"];
-  const sortBefore = [5, 3, 8, 1, 7, 2];
-  const sortAfter = [1, 2, 3, 5, 7, 8];
-  const appendBefore = ["durian", "nanas", "mangga", "rambutan"];
-  const appendAfter = ["durian", "nanas", "mangga", "rambutan", "alpukat"];
-  const insertBefore = ["durian", "nanas", "mangga", "rambutan"];
-  const insertAfter = ["durian", "alpukat", "nanas", "mangga", "rambutan"];
-  const extendBefore = ["durian", "nanas", "mangga", "rambutan"];
-  const extendAfter = [
-    "durian",
-    "nanas",
-    "mangga",
-    "rambutan",
-    "salak",
-    "jeruk",
-    "manggis",
-  ];
-  const removeBefore = ["durian", "nanas", "mangga", "rambutan", "jeruk"];
-  const removeAfter = ["durian", "nanas", "mangga", "rambutan"];
-  const popBefore = ["durian", "nanas", "mangga", "rambutan"];
-  const popAfter = ["durian", "nanas", "rambutan"];
-  const changeBefore = ["durian", "nanas", "mangga", "rambutan"];
-  const changeAfter = ["durian", "nanas", "mangga", "belimbing"];
-  const reverseBefore = [1, 2, 3, 4];
-  const reverseAfter = [4, 3, 2, 1];
-  const clearBefore = [1, 2, 3];
+  const concatBeforeA = [1,2,3];
+  const concatBeforeB = [4,5,6];
+  const concatAfter = [1,2,3,4,5,6];
+  const repeatBefore = [1,2,3];
+  const repeatAfter = [1,2,3,1,2,3,1,2,3];
+  const searchBefore = ["apel","jeruk","mangga"];
+  const searchAfter = ["apel","jeruk","mangga"];
+  const sortBefore = [5,3,8,1,7,2];
+  const sortAfter = [1,2,3,5,7,8];
+  const appendBefore = ["durian","nanas","mangga","rambutan"];
+  const appendAfter = ["durian","nanas","mangga","rambutan","alpukat"];
+  const insertBefore = ["durian","nanas","mangga","rambutan"];
+  const insertAfter = ["durian","alpukat","nanas","mangga","rambutan"];
+  const extendBefore = ["durian","nanas","mangga","rambutan"];
+  const extendAfter = ["durian","nanas","mangga","rambutan","salak","jeruk","manggis"];
+  const removeBefore = ["durian","nanas","mangga","rambutan","jeruk"];
+  const removeAfter = ["durian","nanas","mangga","rambutan"];
+  const popBefore = ["durian","nanas","mangga","rambutan"];
+  const popAfter = ["durian","nanas","rambutan"];
+  const changeBefore = ["durian","nanas","mangga","rambutan"];
+  const changeAfter = ["durian","nanas","mangga","belimbing"];
+  const reverseBefore = [1,2,3,4];
+  const reverseAfter = [4,3,2,1];
+  const clearBefore = [1,2,3];
   const clearAfter = [];
-  const copyBefore = [1, 2, 3];
-  const copyAfter = [1, 2, 3];
-  const countBefore = [1, 2, 2, 3];
-  const countAfter = [1, 2, 2, 3];
-  const indexBefore = [10, 20, 30, 20];
-  const indexAfter = [10, 20, 30, 20];
-  const slicingBefore = [10, 20, 30, 40, 50];
-  const slicingAfter = [20, 30, 40];
-  const delBefore = [10, 20, 30, 40];
-  const delAfter = [10, 40];
-  const lengthBefore = [1, 2, 3, 4];
-  const lengthAfter = [1, 2, 3, 4];
+  const copyBefore = [1,2,3];
+  const copyAfter = [1,2,3];
+  const countBefore = [1,2,2,3];
+  const countAfter = [1,2,2,3];
+  const indexBefore = [10,20,30,20];
+  const indexAfter = [10,20,30,20];
+  const slicingBefore = [10,20,30,40,50];
+  const slicingAfter = [20,30,40];
+  const delBefore = [10,20,30,40];
+  const delAfter = [10,40];
+  const lengthBefore = [1,2,3,4];
+  const lengthAfter = [1,2,3,4];
 
   // Hover context
-  const concatHoverBefore = { 0: "Elemen 1 dari a", 1: "Elemen 2", 2: "Elemen 3" };
-  const concatHoverAfter = {
-    0: "Dari a",
-    1: "Dari a",
-    2: "Dari a",
-    3: "Dari b (4)",
-    4: "Dari b (5)",
-    5: "Dari b (6)",
-  };
-  const repeatHoverBefore = { 0: "1", 1: "2", 2: "3" };
-  const repeatHoverAfter = {
-    0: "ulangan1",
-    1: "ulangan1",
-    2: "ulangan1",
-    3: "ulangan2",
-    4: "ulangan2",
-    5: "ulangan2",
-    6: "ulangan3",
-    7: "ulangan3",
-    8: "ulangan3",
-  };
-  const searchHoverBefore = {
-    0: "🔎 'apel' bukan 'mangga'",
-    1: "🔎 'jeruk' bukan",
-    2: "🔎 'mangga' ditemukan → True",
-  };
+  const concatHoverBeforeA = { 0:"a:1",1:"a:2",2:"a:3" };
+  const concatHoverBeforeB = { 0:"b:4",1:"b:5",2:"b:6" };
+  const concatHoverAfter = { 0:"1",1:"2",2:"3",3:"4",4:"5",5:"6" };
+  const repeatHoverBefore = { 0:"1",1:"2",2:"3" };
+  const repeatHoverAfter = { 0:"1",1:"2",2:"3",3:"1",4:"2",5:"3",6:"1",7:"2",8:"3" };
+  const searchHoverBefore = { 0:"apel",1:"jeruk",2:"mangga" };
   const searchHoverAfter = {};
-  const sortHoverBefore = { 0: "5", 1: "3", 2: "8", 3: "1", 4: "7", 5: "2" };
-  const sortHoverAfter = { 0: "terkecil 1", 1: "2", 2: "3", 3: "5", 4: "7", 5: "8" };
-  const appendHoverBefore = { 0: "durian", 1: "nanas", 2: "mangga", 3: "rambutan" };
-  const appendHoverAfter = {
-    0: "durian",
-    1: "nanas",
-    2: "mangga",
-    3: "rambutan",
-    4: "alpukat (baru)",
-  };
-  const insertHoverBefore = { 0: "durian", 1: "nanas", 2: "mangga", 3: "rambutan" };
-  const insertHoverAfter = {
-    0: "durian",
-    1: "alpukat (disisip)",
-    2: "nanas",
-    3: "mangga",
-    4: "rambutan",
-  };
-  const extendHoverBefore = { 0: "durian", 1: "nanas", 2: "mangga", 3: "rambutan" };
-  const extendHoverAfter = {
-    0: "durian",
-    1: "nanas",
-    2: "mangga",
-    3: "rambutan",
-    4: "salak",
-    5: "jeruk",
-    6: "manggis",
-  };
-  const removeHoverBefore = {
-    0: "durian",
-    1: "nanas",
-    2: "mangga",
-    3: "rambutan",
-    4: "jeruk (akan dihapus)",
-  };
-  const removeHoverAfter = { 0: "durian", 1: "nanas", 2: "mangga", 3: "rambutan" };
-  const popHoverBefore = {
-    0: "durian",
-    1: "nanas",
-    2: "mangga (akan dihapus)",
-    3: "rambutan",
-  };
-  const popHoverAfter = { 0: "durian", 1: "nanas", 2: "rambutan" };
-  const changeHoverBefore = {
-    0: "durian",
-    1: "nanas",
-    2: "mangga",
-    3: "rambutan (akan diubah)",
-  };
-  const changeHoverAfter = { 0: "durian", 1: "nanas", 2: "mangga", 3: "belimbing" };
-  const reverseHoverBefore = { 0: "1", 1: "2", 2: "3", 3: "4" };
-  const reverseHoverAfter = { 0: "4", 1: "3", 2: "2", 3: "1" };
-  const clearHoverBefore = { 0: "1", 1: "2", 2: "3" };
+  const sortHoverBefore = { 0:"5",1:"3",2:"8",3:"1",4:"7",5:"2" };
+  const sortHoverAfter = { 0:"1",1:"2",2:"3",3:"5",4:"7",5:"8" };
+  const appendHoverBefore = { 0:"durian",1:"nanas",2:"mangga",3:"rambutan" };
+  const appendHoverAfter = { 0:"durian",1:"nanas",2:"mangga",3:"rambutan",4:"alpukat" };
+  const insertHoverBefore = { 0:"durian",1:"nanas",2:"mangga",3:"rambutan" };
+  const insertHoverAfter = { 0:"durian",1:"alpukat",2:"nanas",3:"mangga",4:"rambutan" };
+  const extendHoverBefore = { 0:"durian",1:"nanas",2:"mangga",3:"rambutan" };
+  const extendHoverAfter = { 0:"durian",1:"nanas",2:"mangga",3:"rambutan",4:"salak",5:"jeruk",6:"manggis" };
+  const removeHoverBefore = { 0:"durian",1:"nanas",2:"mangga",3:"rambutan",4:"jeruk" };
+  const removeHoverAfter = { 0:"durian",1:"nanas",2:"mangga",3:"rambutan" };
+  const popHoverBefore = { 0:"durian",1:"nanas",2:"mangga",3:"rambutan" };
+  const popHoverAfter = { 0:"durian",1:"nanas",2:"rambutan" };
+  const changeHoverBefore = { 0:"durian",1:"nanas",2:"mangga",3:"rambutan" };
+  const changeHoverAfter = { 0:"durian",1:"nanas",2:"mangga",3:"belimbing" };
+  const reverseHoverBefore = { 0:"1",1:"2",2:"3",3:"4" };
+  const reverseHoverAfter = { 0:"4",1:"3",2:"2",3:"1" };
+  const clearHoverBefore = { 0:"1",1:"2",2:"3" };
   const clearHoverAfter = {};
-  const copyHoverBefore = { 0: "1", 1: "2", 2: "3" };
-  const copyHoverAfter = { 0: "1 (salinan)", 1: "2 (salinan)", 2: "3 (salinan)" };
-  const countHoverBefore = { 0: "1", 1: "2", 2: "2", 3: "3" };
-  const countHoverAfter = { 0: "1", 1: "2", 2: "2", 3: "3" };
-  const indexHoverBefore = { 0: "10", 1: "20", 2: "30", 3: "20" };
-  const indexHoverAfter = { 0: "10", 1: "20", 2: "30", 3: "20" };
-  const slicingHoverBefore = { 0: "10", 1: "20", 2: "30", 3: "40", 4: "50" };
-  const slicingHoverAfter = { 0: "20 (indeks 1)", 1: "30 (indeks 2)", 2: "40 (indeks 3)" };
-  const delHoverBefore = { 0: "10", 1: "20 (akan dihapus)", 2: "30 (akan dihapus)", 3: "40" };
-  const delHoverAfter = { 0: "10", 1: "40" };
-  const lengthHoverBefore = { 0: "1", 1: "2", 2: "3", 3: "4" };
-  const lengthHoverAfter = { 0: "1", 1: "2", 2: "3", 3: "4" };
+  const copyHoverBefore = { 0:"1",1:"2",2:"3" };
+  const copyHoverAfter = { 0:"1",1:"2",2:"3" };
+  const countHoverBefore = { 0:"1",1:"2",2:"2",3:"3" };
+  const countHoverAfter = { 0:"1",1:"2",2:"2",3:"3" };
+  const indexHoverBefore = { 0:"10",1:"20",2:"30",3:"20" };
+  const indexHoverAfter = { 0:"10",1:"20",2:"30",3:"20" };
+  const slicingHoverBefore = { 0:"10",1:"20",2:"30",3:"40",4:"50" };
+  const slicingHoverAfter = { 0:"20",1:"30",2:"40" };
+  const delHoverBefore = { 0:"10",1:"20",2:"30",3:"40" };
+  const delHoverAfter = { 0:"10",1:"40" };
+  const lengthHoverBefore = { 0:"1",1:"2",2:"3",3:"4" };
+  const lengthHoverAfter = { 0:"1",1:"2",2:"3",3:"4" };
+
+  // ================= ANIMATION STEPS =================
+  const concatSteps = [
+    { highlightIndex: 0, explanation: "Mengambil elemen pertama dari a (1)" },
+    { highlightIndex: 1, explanation: "Mengambil elemen kedua dari a (2)" },
+    { highlightIndex: 2, explanation: "Mengambil elemen ketiga dari a (3)" },
+    { highlightIndex: 0, explanation: "Menambahkan elemen pertama dari b (4)" },
+    { highlightIndex: 1, explanation: "Menambahkan elemen kedua dari b (5)" },
+    { highlightIndex: 2, explanation: "Menambahkan elemen ketiga dari b (6) → hasil akhir [1,2,3,4,5,6]" },
+  ];
+  const repeatSteps = [
+    { highlightIndex: 0, explanation: "Mengulang elemen 1 ke posisi 1,4,7" },
+    { highlightIndex: 1, explanation: "Mengulang elemen 2 ke posisi 2,5,8" },
+    { highlightIndex: 2, explanation: "Mengulang elemen 3 ke posisi 3,6,9 → hasil [1,2,3,1,2,3,1,2,3]" },
+  ];
+  const searchSteps = [
+    { highlightIndex: 0, explanation: "Cek 'apel' = 'mangga'? Tidak" },
+    { highlightIndex: 1, explanation: "Cek 'jeruk' = 'mangga'? Tidak" },
+    { highlightIndex: 2, explanation: "Cek 'mangga' = 'mangga'? Ya → True" },
+  ];
+  const sortSteps = [
+    { highlightIndex: 3, explanation: "Mencari nilai terkecil (1) -> pindah ke indeks 0" },
+    { highlightIndex: 0, explanation: "Sekarang 1 sudah di awal" },
+    { highlightIndex: 4, explanation: "Mencari nilai 2 -> indeks 1" },
+    { highlightIndex: 1, explanation: "2 sudah di indeks 1" },
+    { highlightIndex: 0, explanation: "Mencari 3 -> indeks 2" },
+    { highlightIndex: 1, explanation: "Mencari 5 -> indeks 3" },
+    { highlightIndex: 5, explanation: "Mencari 7 -> indeks 4" },
+    { highlightIndex: 2, explanation: "Mencari 8 -> indeks 5 → hasil [1,2,3,5,7,8]" },
+  ];
+  const appendSteps = [
+    { highlightIndex: 4, explanation: "append('alpukat') menambahkan 'alpukat' di akhir" },
+  ];
+  const insertSteps = [
+    { highlightIndex: 1, explanation: "insert(1,'alpukat') menyisip di indeks 1, elemen bergeser" },
+  ];
+  const extendSteps = [
+    { highlightIndex: 4, explanation: "Menambah 'salak' di indeks 4" },
+    { highlightIndex: 5, explanation: "Menambah 'jeruk' di indeks 5" },
+    { highlightIndex: 6, explanation: "Menambah 'manggis' di indeks 6" },
+  ];
+  const removeSteps = [
+    { highlightIndex: 4, explanation: "remove('jeruk') menghapus elemen bernilai 'jeruk' di indeks 4" },
+  ];
+  const popSteps = [
+    { highlightIndex: 2, explanation: "pop(2) menghapus elemen indeks 2 ('mangga')" },
+  ];
+  const changeSteps = [
+    { highlightIndex: 3, explanation: "buah[3] = 'belimbing' mengubah indeks 3 menjadi 'belimbing'" },
+  ];
+  const reverseSteps = [
+    { highlightIndex: 0, explanation: "Menukar indeks 0 (1) dengan indeks 3 (4)" },
+    { highlightIndex: 1, explanation: "Menukar indeks 1 (2) dengan indeks 2 (3)" },
+    { highlightIndex: 2, explanation: "Hasil pembalikan: [4,3,2,1]" },
+  ];
+  const clearSteps = [
+    { highlightIndex: 0, explanation: "clear() menghapus semua elemen" },
+  ];
+  const copySteps = [
+    { highlightIndex: 0, explanation: "copy() membuat salinan list asli" },
+  ];
+  const countSteps = [
+    { highlightIndex: 1, explanation: "count(2) menghitung kemunculan 2 → ada 2 kali" },
+  ];
+  const indexSteps = [
+    { highlightIndex: 1, explanation: "index(20) mencari nilai 20 pertama di indeks 1" },
+  ];
+  const slicingSteps = [
+    { highlightIndex: 1, explanation: "Mengambil elemen indeks 1 (20)" },
+    { highlightIndex: 2, explanation: "Mengambil elemen indeks 2 (30)" },
+    { highlightIndex: 3, explanation: "Mengambil elemen indeks 3 (40) → hasil [20,30,40]" },
+  ];
+  const delSteps = [
+    { highlightIndex: 1, explanation: "Menghapus indeks 1 (20)" },
+    { highlightIndex: 2, explanation: "Menghapus indeks 2 (30) → hasil [10,40]" },
+  ];
+  const lengthSteps = [
+    { highlightIndex: 0, explanation: "Menghitung elemen ke-1" },
+    { highlightIndex: 1, explanation: "Menghitung elemen ke-2" },
+    { highlightIndex: 2, explanation: "Menghitung elemen ke-3" },
+    { highlightIndex: 3, explanation: "Menghitung elemen ke-4 → panjang = 4" },
+  ];
 
   // Kode contoh
   const codeExamples = {
@@ -1006,11 +966,7 @@ export default function OperasiManipulasiList() {
     if (!pyodideRef.current) return "⏳ Pyodide sedang dimuat...";
     try {
       const pyodide = pyodideRef.current;
-      await pyodide.runPythonAsync(`
-import sys
-from io import StringIO
-sys.stdout = StringIO()
-      `);
+      await pyodide.runPythonAsync(`import sys\nfrom io import StringIO\nsys.stdout = StringIO()`);
       await pyodide.runPythonAsync(code);
       const output = await pyodide.runPythonAsync("sys.stdout.getvalue()");
       await pyodide.runPythonAsync("sys.stdout = sys.__stdout__");
@@ -1034,7 +990,7 @@ sys.stdout = StringIO()
     { func: "index()", desc: "Mencari indeks pertama dari nilai" },
   ];
 
-  const resetMatchingGame = () => setResetMatching((prev) => prev + 1);
+  const resetMatchingGame = () => setResetMatching(prev => prev + 1);
 
   return (
     <>
@@ -1045,30 +1001,17 @@ sys.stdout = StringIO()
           <div style={styles.header}>
             <div style={styles.headerAccent}></div>
             <h1 style={styles.headerTitle}>OPERASI DAN MANIPULASI LIST</h1>
-            <p style={styles.headerSubtitle}>
-              Belajar Mengubah, Menambah, Menghapus, dan Mengelola Data dalam List
-            </p>
+            <p style={styles.headerSubtitle}>Belajar Mengubah, Menambah, Menghapus, dan Mengelola Data dalam List</p>
           </div>
 
           <section style={styles.section}>
             <h2 style={styles.sectionTitle}>🎯 Tujuan Pembelajaran</h2>
             <div style={styles.card}>
               <ol style={styles.list}>
-                <li>
-                  Memahami berbagai operasi dasar list (concatenation, repetition,
-                  slicing, keanggotaan).
-                </li>
-                <li>
-                  Menguasai method manipulasi list (append, insert, extend, remove,
-                  pop, sort, reverse, clear, copy, count, index).
-                </li>
-                <li>
-                  Mampu mengubah, menghapus, dan mengakses elemen list dengan indeks
-                  dan slicing.
-                </li>
-                <li>
-                  Menerapkan operasi pada nested list dan menggunakan fungsi len().
-                </li>
+                <li>Memahami berbagai operasi dasar list (concatenation, repetition, slicing, keanggotaan).</li>
+                <li>Menguasai method manipulasi list (append, insert, extend, remove, pop, sort, reverse, clear, copy, count, index).</li>
+                <li>Mampu mengubah, menghapus, dan mengakses elemen list dengan indeks dan slicing.</li>
+                <li>Menerapkan operasi pada nested list dan menggunakan fungsi len().</li>
               </ol>
             </div>
           </section>
@@ -1077,69 +1020,22 @@ sys.stdout = StringIO()
           <section style={styles.section}>
             <h2 style={styles.sectionTitle}>🔍 Eksplorasi Awal</h2>
             <div style={styles.card}>
-              <p style={styles.text}>
-                Sebelum belajar lebih dalam, jawab pertanyaan berikut. Pilih jawaban,
-                lalu klik "Periksa Jawaban".{" "}
-                <strong style={{ color: "#d9534f" }}>
-                  {" "}
-                  Materi akan terbuka setelah kedua jawaban benar.
-                </strong>
-              </p>
+              <p style={styles.text}>Jawab pertanyaan berikut. Pilih jawaban, lalu klik "Periksa Jawaban". <strong style={{ color: "#d9534f" }}> Materi akan terbuka setelah kedua jawaban benar.</strong></p>
               {eksplorasiQuestions.map((q, idx) => (
-                <div
-                  key={idx}
-                  style={{
-                    marginBottom: "30px",
-                    borderBottom: "1px solid #e0e0e0",
-                    paddingBottom: "20px",
-                  }}
-                >
-                  <p style={{ fontWeight: "600", marginBottom: "12px" }}>
-                    {idx + 1}. {q.text}
-                  </p>
+                <div key={idx} style={{ marginBottom: "30px", borderBottom: "1px solid #e0e0e0", paddingBottom: "20px" }}>
+                  <p style={{ fontWeight: "600", marginBottom: "12px" }}>{idx + 1}. {q.text}</p>
                   <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                     {q.options.map((opt, optIdx) => (
-                      <div
-                        key={optIdx}
-                        onClick={() => handleTempAnswer(idx, optIdx)}
-                        style={{
-                          ...styles.eksplorasiOption,
-                          backgroundColor:
-                            eksplorasiTempAnswers[idx] === optIdx ? "#2fa69a" : "#f9f9f9",
-                          color: eksplorasiTempAnswers[idx] === optIdx ? "white" : "#1f2937",
-                        }}
-                      >
+                      <div key={optIdx} onClick={() => handleTempAnswer(idx, optIdx)} style={{ ...styles.eksplorasiOption, backgroundColor: eksplorasiTempAnswers[idx] === optIdx ? "#2fa69a" : "#f9f9f9", color: eksplorasiTempAnswers[idx] === optIdx ? "white" : "#1f2937" }}>
                         {String.fromCharCode(65 + optIdx)}. {opt}
                       </div>
                     ))}
                   </div>
-                  <button
-                    style={styles.checkEksplorasiButton}
-                    onClick={() => checkEksplorasiAnswer(idx)}
-                  >
-                    Periksa Jawaban
-                  </button>
-                  {eksplorasiFeedback[idx] && (
-                    <div
-                      style={{
-                        marginTop: "12px",
-                        padding: "10px",
-                        borderRadius: "8px",
-                        backgroundColor: eksplorasiFeedback[idx].includes("Benar")
-                          ? "#d1e7dd"
-                          : "#f8d7da",
-                      }}
-                    >
-                      {eksplorasiFeedback[idx]}
-                    </div>
-                  )}
+                  <button style={styles.checkEksplorasiButton} onClick={() => checkEksplorasiAnswer(idx)}>Periksa Jawaban</button>
+                  {eksplorasiFeedback[idx] && <div style={{ marginTop: "12px", padding: "10px", borderRadius: "8px", backgroundColor: eksplorasiFeedback[idx].includes("Benar") ? "#d1e7dd" : "#f8d7da" }}>{eksplorasiFeedback[idx]}</div>}
                 </div>
               ))}
-              {!isEksplorasiCompleted && (
-                <div style={styles.lockMessage}>
-                  🔒 Materi terkunci. Jawab kedua pertanyaan dengan benar.
-                </div>
-              )}
+              {!isEksplorasiCompleted && <div style={styles.lockMessage}>🔒 Materi terkunci. Jawab kedua pertanyaan dengan benar.</div>}
             </div>
           </section>
 
@@ -1149,24 +1045,25 @@ sys.stdout = StringIO()
               <section style={styles.section}>
                 <h2 style={styles.sectionTitle}>📊 Operasi Dasar List</h2>
                 <div style={styles.card}>
-                  <h3>1. Concatenation (+)</h3>
-                  <p>Menggabungkan dua list menjadi list baru.</p>
+                  <h3>1. Concatenation (+) – Menggabungkan List</h3>
+                  <p>Operasi <code>+</code> menggabungkan dua list menjadi satu list baru. Semua elemen list kiri diikuti semua elemen list kanan.</p>
                   <CodeEditorWithVisual
                     code={codeExamples.concat}
                     title="Contoh: Penggabungan List"
-                    beforeData={concatBefore}
+                    beforeData={[...concatBeforeA, ...concatBeforeB]} // gabung untuk tampilan sebelum
                     afterData={concatAfter}
-                    beforeTitle="Sebelum (a dan b)"
-                    afterTitle="Setelah (a+b)"
-                    hoverContextBefore={concatHoverBefore}
+                    beforeTitle="Sebelum (a dan b terpisah)"
+                    afterTitle="Setelah (a + b)"
+                    hoverContextBefore={{ ...concatHoverBeforeA, ...concatHoverBeforeB }}
                     hoverContextAfter={concatHoverAfter}
                     pyodideReady={pyodideReady}
                     runPythonCode={runPythonCode}
-                    explanationText="➕ a + b menggabungkan semua elemen a lalu b."
+                    animationSteps={concatSteps}
+                    operationName="concat"
                   />
 
-                  <h3>2. Repetition (*)</h3>
-                  <p>Mengulang list sebanyak n kali.</p>
+                  <h3>2. Repetition (*) – Mengulang List</h3>
+                  <p>Operator <code>*</code> mengulang isi list sebanyak n kali, menghasilkan list baru dengan elemen berulang.</p>
                   <CodeEditorWithVisual
                     code={codeExamples.repeat}
                     title="Contoh: Pengulangan List"
@@ -1178,11 +1075,12 @@ sys.stdout = StringIO()
                     hoverContextAfter={repeatHoverAfter}
                     pyodideReady={pyodideReady}
                     runPythonCode={runPythonCode}
-                    explanationText="🔄 data * 3 menghasilkan list baru dengan tiga salinan."
+                    animationSteps={repeatSteps}
+                    operationName="repeat"
                   />
 
-                  <h3>3. Slicing (:)</h3>
-                  <p>Mengambil sebagian elemen list.</p>
+                  <h3>3. Slicing (:) – Mengambil Sebagian Elemen</h3>
+                  <p>Slicing <code>list[awal:akhir]</code> mengambil elemen dari indeks <code>awal</code> hingga sebelum <code>akhir</code>. Contoh <code>angka[1:4]</code> mengambil indeks 1,2,3.</p>
                   <CodeEditorWithVisual
                     code={codeExamples.slicing}
                     title="Contoh: Slicing [1:4]"
@@ -1194,27 +1092,30 @@ sys.stdout = StringIO()
                     hoverContextAfter={slicingHoverAfter}
                     pyodideReady={pyodideReady}
                     runPythonCode={runPythonCode}
-                    explanationText="✂️ Slicing [1:4] mengambil indeks 1,2,3 (20,30,40)."
+                    animationSteps={slicingSteps}
+                    operationName="slicing"
                   />
 
-                  <h3>4. Pencarian (in)</h3>
-                  <p>Memeriksa keberadaan elemen dalam list.</p>
+                  <h3>4. Pencarian (in) – Mengecek Keberadaan Elemen</h3>
+                  <p>Operator <code>in</code> mengembalikan <code>True</code> jika nilai ditemukan dalam list, <code>False</code> jika tidak.</p>
                   <CodeEditorWithVisual
                     code={codeExamples.search}
                     title="Contoh: Operator in"
                     beforeData={searchBefore}
                     afterData={searchAfter}
                     beforeTitle="List buah"
-                    afterTitle="List (tetap)"
+                    afterTitle="Hasil pengecekan"
                     hoverContextBefore={searchHoverBefore}
                     hoverContextAfter={searchHoverAfter}
                     pyodideReady={pyodideReady}
                     runPythonCode={runPythonCode}
-                    explanationText="🔍 'mangga' in buah → True, 'pisang' → False."
+                    animationSteps={searchSteps}
+                    operationName="search"
+                    extraAfterBadge="✅ Hasil: 'mangga' ditemukan → True"
                   />
 
-                  <h3>5. Pengurutan (sort())</h3>
-                  <p>Mengurutkan list secara ascending (permanen).</p>
+                  <h3>5. Pengurutan (sort()) – Mengurutkan List</h3>
+                  <p>Method <code>sort()</code> mengurutkan list secara ascending (kecil ke besar) secara permanen. Prosesnya membandingkan dan menukar elemen hingga terurut.</p>
                   <CodeEditorWithVisual
                     code={codeExamples.sort}
                     title="Contoh: sort()"
@@ -1226,11 +1127,12 @@ sys.stdout = StringIO()
                     hoverContextAfter={sortHoverAfter}
                     pyodideReady={pyodideReady}
                     runPythonCode={runPythonCode}
-                    explanationText="📊 sort() mengurutkan list menjadi [1,2,3,5,7,8]."
+                    animationSteps={sortSteps}
+                    operationName="sort"
                   />
 
-                  <h3>6. Pembalikan (reverse())</h3>
-                  <p>Membalik urutan list.</p>
+                  <h3>6. Pembalikan (reverse()) – Membalik Urutan List</h3>
+                  <p>Method <code>reverse()</code> membalik urutan elemen dalam list secara permanen.</p>
                   <CodeEditorWithVisual
                     code={codeExamples.reverse}
                     title="Contoh: reverse()"
@@ -1242,17 +1144,17 @@ sys.stdout = StringIO()
                     hoverContextAfter={reverseHoverAfter}
                     pyodideReady={pyodideReady}
                     runPythonCode={runPythonCode}
-                    explanationText="🔄 reverse() membalik urutan list."
+                    animationSteps={reverseSteps}
+                    operationName="reverse"
                   />
                 </div>
               </section>
 
               <section style={styles.section}>
-                <h2 style={styles.sectionTitle}>
-                  ✏️ Manipulasi List (Menambah, Menghapus, Mengubah)
-                </h2>
+                <h2 style={styles.sectionTitle}>✏️ Manipulasi List (Menambah, Menghapus, Mengubah)</h2>
                 <div style={styles.card}>
-                  <h3>append() – Tambah di akhir</h3>
+                  <h3>append() – Menambah Elemen di Akhir</h3>
+                  <p>Method <code>append()</code> menambahkan satu elemen baru di akhir list.</p>
                   <CodeEditorWithVisual
                     code={codeExamples.append}
                     title="append()"
@@ -1264,10 +1166,12 @@ sys.stdout = StringIO()
                     hoverContextAfter={appendHoverAfter}
                     pyodideReady={pyodideReady}
                     runPythonCode={runPythonCode}
-                    explanationText="➕ append('alpukat') menambah di indeks terakhir."
+                    animationSteps={appendSteps}
+                    operationName="append"
                   />
 
-                  <h3>insert() – Sisip di posisi tertentu</h3>
+                  <h3>insert() – Menyisipkan Elemen di Posisi Tertentu</h3>
+                  <p><code>insert(posisi, elemen)</code> menyisipkan elemen pada indeks yang ditentukan, elemen lain bergeser ke kanan.</p>
                   <CodeEditorWithVisual
                     code={codeExamples.insert}
                     title="insert()"
@@ -1279,10 +1183,12 @@ sys.stdout = StringIO()
                     hoverContextAfter={insertHoverAfter}
                     pyodideReady={pyodideReady}
                     runPythonCode={runPythonCode}
-                    explanationText="📍 insert(1,'alpukat') menyisip di indeks 1."
+                    animationSteps={insertSteps}
+                    operationName="insert"
                   />
 
-                  <h3>extend() – Tambah banyak elemen</h3>
+                  <h3>extend() – Menambah Banyak Elemen Sekaligus</h3>
+                  <p><code>extend([elemen1, elemen2, ...])</code> menambahkan semua elemen dari list lain ke akhir list.</p>
                   <CodeEditorWithVisual
                     code={codeExamples.extend}
                     title="extend()"
@@ -1294,10 +1200,12 @@ sys.stdout = StringIO()
                     hoverContextAfter={extendHoverAfter}
                     pyodideReady={pyodideReady}
                     runPythonCode={runPythonCode}
-                    explanationText="🔗 extend(['salak','jeruk','manggis']) menambah tiga elemen di akhir."
+                    animationSteps={extendSteps}
+                    operationName="extend"
                   />
 
-                  <h3>remove() – Hapus berdasarkan nilai</h3>
+                  <h3>remove() – Menghapus Elemen Berdasarkan Nilai</h3>
+                  <p><code>remove(nilai)</code> menghapus elemen pertama yang nilainya cocok dengan nilai yang diberikan.</p>
                   <CodeEditorWithVisual
                     code={codeExamples.remove}
                     title="remove()"
@@ -1309,10 +1217,12 @@ sys.stdout = StringIO()
                     hoverContextAfter={removeHoverAfter}
                     pyodideReady={pyodideReady}
                     runPythonCode={runPythonCode}
-                    explanationText="✂️ remove('jeruk') menghapus elemen bernilai 'jeruk' pertama."
+                    animationSteps={removeSteps}
+                    operationName="remove"
                   />
 
-                  <h3>pop() – Hapus berdasarkan indeks</h3>
+                  <h3>pop() – Menghapus Elemen Berdasarkan Indeks</h3>
+                  <p><code>pop(indeks)</code> menghapus elemen pada indeks tertentu dan mengembalikannya. Jika indeks tidak diberikan, menghapus elemen terakhir.</p>
                   <CodeEditorWithVisual
                     code={codeExamples.pop}
                     title="pop()"
@@ -1324,10 +1234,12 @@ sys.stdout = StringIO()
                     hoverContextAfter={popHoverAfter}
                     pyodideReady={pyodideReady}
                     runPythonCode={runPythonCode}
-                    explanationText="🗑️ pop(2) menghapus elemen indeks 2 ('mangga')."
+                    animationSteps={popSteps}
+                    operationName="pop"
                   />
 
-                  <h3>Mengubah elemen dengan indeks</h3>
+                  <h3>Mengubah Elemen dengan Indeks</h3>
+                  <p>Kita bisa mengubah nilai elemen dengan mengakses indeksnya: <code>list[indeks] = nilai_baru</code>.</p>
                   <CodeEditorWithVisual
                     code={codeExamples.change}
                     title="Ubah Elemen"
@@ -1339,10 +1251,12 @@ sys.stdout = StringIO()
                     hoverContextAfter={changeHoverAfter}
                     pyodideReady={pyodideReady}
                     runPythonCode={runPythonCode}
-                    explanationText="✏️ buah[3] = 'belimbing' mengubah nilai indeks 3."
+                    animationSteps={changeSteps}
+                    operationName="change"
                   />
 
-                  <h3>del – Hapus dengan slicing</h3>
+                  <h3>del – Menghapus dengan Slicing</h3>
+                  <p>Keyword <code>del</code> dapat digunakan untuk menghapus elemen berdasarkan indeks atau slice, misalnya <code>del list[1:3]</code>.</p>
                   <CodeEditorWithVisual
                     code={codeExamples.del_example}
                     title="del"
@@ -1354,10 +1268,12 @@ sys.stdout = StringIO()
                     hoverContextAfter={delHoverAfter}
                     pyodideReady={pyodideReady}
                     runPythonCode={runPythonCode}
-                    explanationText="❌ del angka[1:3] menghapus indeks 1 dan 2."
+                    animationSteps={delSteps}
+                    operationName="del"
                   />
 
-                  <h3>clear() – Hapus semua elemen</h3>
+                  <h3>clear() – Menghapus Semua Elemen</h3>
+                  <p><code>clear()</code> mengosongkan list (menghapus semua elemen).</p>
                   <CodeEditorWithVisual
                     code={codeExamples.clear}
                     title="clear()"
@@ -1369,10 +1285,12 @@ sys.stdout = StringIO()
                     hoverContextAfter={clearHoverAfter}
                     pyodideReady={pyodideReady}
                     runPythonCode={runPythonCode}
-                    explanationText="🧹 clear() menghapus semua elemen."
+                    animationSteps={clearSteps}
+                    operationName="clear"
                   />
 
-                  <h3>copy() – Membuat salinan</h3>
+                  <h3>copy() – Membuat Salinan List</h3>
+                  <p><code>copy()</code> membuat salinan dangkal (shallow copy) dari list.</p>
                   <CodeEditorWithVisual
                     code={codeExamples.copy}
                     title="copy()"
@@ -1384,10 +1302,12 @@ sys.stdout = StringIO()
                     hoverContextAfter={copyHoverAfter}
                     pyodideReady={pyodideReady}
                     runPythonCode={runPythonCode}
-                    explanationText="📑 copy() membuat salinan list baru."
+                    animationSteps={copySteps}
+                    operationName="copy"
                   />
 
-                  <h3>count() – Menghitung kemunculan nilai</h3>
+                  <h3>count() – Menghitung Kemunculan Nilai</h3>
+                  <p><code>count(nilai)</code> mengembalikan jumlah kemunculan nilai dalam list.</p>
                   <CodeEditorWithVisual
                     code={codeExamples.count}
                     title="count()"
@@ -1399,10 +1319,12 @@ sys.stdout = StringIO()
                     hoverContextAfter={countHoverAfter}
                     pyodideReady={pyodideReady}
                     runPythonCode={runPythonCode}
-                    explanationText="🔢 count(2) mengembalikan jumlah kemunculan 2."
+                    animationSteps={countSteps}
+                    operationName="count"
                   />
 
-                  <h3>index() – Mencari indeks pertama</h3>
+                  <h3>index() – Mencari Indeks Pertama</h3>
+                  <p><code>index(nilai)</code> mengembalikan indeks pertama di mana nilai ditemukan.</p>
                   <CodeEditorWithVisual
                     code={codeExamples.index}
                     title="index()"
@@ -1414,10 +1336,12 @@ sys.stdout = StringIO()
                     hoverContextAfter={indexHoverAfter}
                     pyodideReady={pyodideReady}
                     runPythonCode={runPythonCode}
-                    explanationText="🔍 index(20) mengembalikan indeks pertama nilai 20."
+                    animationSteps={indexSteps}
+                    operationName="index"
                   />
 
-                  <h3>len() – Panjang list</h3>
+                  <h3>len() – Panjang List</h3>
+                  <p>Fungsi <code>len()</code> mengembalikan jumlah elemen dalam list.</p>
                   <CodeEditorWithVisual
                     code={codeExamples.length}
                     title="len()"
@@ -1429,7 +1353,8 @@ sys.stdout = StringIO()
                     hoverContextAfter={lengthHoverAfter}
                     pyodideReady={pyodideReady}
                     runPythonCode={runPythonCode}
-                    explanationText="📏 len() mengembalikan jumlah elemen."
+                    animationSteps={lengthSteps}
+                    operationName="length"
                   />
                 </div>
               </section>
@@ -1437,33 +1362,23 @@ sys.stdout = StringIO()
               <section style={styles.section}>
                 <h2 style={styles.sectionTitle}>💻 Latihan Praktik</h2>
                 <div style={styles.card}>
-                  <p>
-                    <strong>Studi Kasus: Manajemen Daftar Belanja</strong>
-                  </p>
+                  <p><strong>Studi Kasus: Manajemen Daftar Belanja</strong></p>
                   <ol>
                     <li>Buat list <code>belanja = ["apel", "jeruk", "mangga"]</code>.</li>
                     <li>Tambahkan "pisang" di akhir.</li>
                     <li>Hapus "jeruk".</li>
                     <li>Cetak list akhir.</li>
                   </ol>
-                  <CodeEditorEditable
-                    title="Latihan Daftar Belanja"
-                    pyodideReady={pyodideReady}
-                    runPythonCode={runPythonCode}
-                  />
+                  <CodeEditorEditable title="Latihan Daftar Belanja" pyodideReady={pyodideReady} runPythonCode={runPythonCode} />
                 </div>
               </section>
 
               <section style={styles.section}>
-                <h2 style={styles.sectionTitle}>
-                  🧩 Latihan Interaktif: Drag & Drop Matching
-                </h2>
+                <h2 style={styles.sectionTitle}>🧩 Latihan Interaktif: Drag & Drop Matching</h2>
                 <div style={styles.card}>
                   <p>Seret fungsi/method list ke kegunaan yang sesuai.</p>
                   <DragDropMatching items={matchingItems} resetTrigger={resetMatching} />
-                  <button style={styles.resetMatchingButton} onClick={resetMatchingGame}>
-                    ↻ Reset Matching
-                  </button>
+                  <button style={styles.resetMatchingButton} onClick={resetMatchingGame}>↻ Reset Matching</button>
                 </div>
               </section>
             </>
