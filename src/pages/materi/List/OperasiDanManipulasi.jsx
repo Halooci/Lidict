@@ -455,24 +455,20 @@ const DoubleBeforeVisualization = ({ dataA, dataB, titleA, titleB, hoverContextA
 // ================= KOMPONEN UTAMA DENGAN ANIMASI =================
 const AnimatedVisualization = ({ beforeData, afterData, beforeTitle, afterTitle, hoverContextBefore, hoverContextAfter, animationSteps, operationName, extraAfterBadge = null, beforeDataDouble = null }) => {
   const [currentHighlight, setCurrentHighlight] = useState(null);
-  const [currentHighlightPair, setCurrentHighlightPair] = useState([]);
   const [currentExplanation, setCurrentExplanation] = useState("");
   const [showDiff, setShowDiff] = useState(false);
+  const [showExtraBadge, setShowExtraBadge] = useState(false);
   
-  // Untuk double before (concat)
   const [highlightA, setHighlightA] = useState(null);
   const [highlightB, setHighlightB] = useState(null);
   const [highlightPairA, setHighlightPairA] = useState([]);
   const [highlightPairB, setHighlightPairB] = useState([]);
-  
-  // Untuk slicing, sort, reverse
   const [highlightBefore, setHighlightBefore] = useState(null);
   const [highlightAfter, setHighlightAfter] = useState(null);
   const [highlightBeforePair, setHighlightBeforePair] = useState([]);
   const [highlightAfterPair, setHighlightAfterPair] = useState([]);
 
-  // Hitung indeks yang berubah
-  const changedIndicesBefore = (() => {
+  const defaultChangedIndicesBefore = (() => {
     if (!beforeData) return [];
     const changed = [];
     const maxLen = Math.max(beforeData.length, afterData.length);
@@ -484,7 +480,17 @@ const AnimatedVisualization = ({ beforeData, afterData, beforeTitle, afterTitle,
     }
     return changed;
   })();
-  const changedIndicesAfter = changedIndicesBefore;
+  const defaultChangedIndicesAfter = defaultChangedIndicesBefore;
+
+  let changedIndicesBefore = defaultChangedIndicesBefore;
+  let changedIndicesAfter = defaultChangedIndicesAfter;
+  if (operationName === 'insert') {
+    changedIndicesAfter = [1];
+    changedIndicesBefore = [];
+  } else if (operationName === 'pop' || operationName === 'remove' || operationName === 'change' || operationName === 'del' || operationName === 'clear' || operationName === 'count' || operationName === 'index' || operationName === 'length' || operationName === 'search') {
+    changedIndicesAfter = [];
+    changedIndicesBefore = [];
+  }
 
   const shouldShowDiff = () => {
     if (operationName === 'concat') return false;
@@ -492,6 +498,15 @@ const AnimatedVisualization = ({ beforeData, afterData, beforeTitle, afterTitle,
     if (operationName === 'slicing') return false;
     if (operationName === 'sort') return false;
     if (operationName === 'reverse') return false;
+    if (operationName === 'pop') return false;
+    if (operationName === 'remove') return false;
+    if (operationName === 'change') return false;
+    if (operationName === 'del') return false;
+    if (operationName === 'clear') return false;
+    if (operationName === 'count') return false;
+    if (operationName === 'index') return false;
+    if (operationName === 'length') return false;
+    if (operationName === 'search') return false;
     return true;
   };
 
@@ -499,18 +514,17 @@ const AnimatedVisualization = ({ beforeData, afterData, beforeTitle, afterTitle,
     if (!animationSteps || animationSteps.length === 0) return;
     let stepIdx = 0;
     setShowDiff(false);
+    setShowExtraBadge(false);
     setHighlightBeforePair([]);
     setHighlightAfterPair([]);
     const interval = setInterval(() => {
       if (stepIdx < animationSteps.length) {
         const step = animationSteps[stepIdx];
-        // Untuk slicing
         if (operationName === 'slicing') {
           setHighlightBefore(step.highlightIndex + 1);
           setHighlightAfter(step.highlightIndex);
           setCurrentHighlight(null);
         } 
-        // Untuk sort
         else if (operationName === 'sort') {
           setHighlightBefore(step.highlightIndex);
           const targetValue = beforeData[step.highlightIndex];
@@ -518,7 +532,6 @@ const AnimatedVisualization = ({ beforeData, afterData, beforeTitle, afterTitle,
           setHighlightAfter(afterIndex);
           setCurrentHighlight(null);
         }
-        // Untuk reverse
         else if (operationName === 'reverse') {
           if (step.pair) {
             setHighlightBeforePair(step.pair);
@@ -526,7 +539,11 @@ const AnimatedVisualization = ({ beforeData, afterData, beforeTitle, afterTitle,
             setCurrentHighlight(null);
           }
         }
-        // Untuk concat dengan double before
+        else if (operationName === 'del') {
+          setCurrentHighlight(step.highlightIndex);
+          setHighlightBefore(null);
+          setHighlightAfter(null);
+        }
         else if (beforeDataDouble) {
           if (step.highlightIndex < 3) {
             setHighlightA(step.highlightIndex);
@@ -537,7 +554,6 @@ const AnimatedVisualization = ({ beforeData, afterData, beforeTitle, afterTitle,
           }
           setCurrentHighlight(null);
         }
-        // Default: highlight sama untuk kedua kolom
         else {
           setCurrentHighlight(step.highlightIndex);
           setHighlightBefore(null);
@@ -549,7 +565,6 @@ const AnimatedVisualization = ({ beforeData, afterData, beforeTitle, afterTitle,
         clearInterval(interval);
         setTimeout(() => {
           setCurrentHighlight(null);
-          setCurrentHighlightPair([]);
           setHighlightBefore(null);
           setHighlightAfter(null);
           setHighlightBeforePair([]);
@@ -562,11 +577,14 @@ const AnimatedVisualization = ({ beforeData, afterData, beforeTitle, afterTitle,
           if (shouldShowDiff()) {
             setShowDiff(true);
           }
+          if (extraAfterBadge) {
+            setShowExtraBadge(true);
+          }
         }, 500);
       }
     }, 3000);
     return () => clearInterval(interval);
-  }, [animationSteps, beforeDataDouble, operationName, beforeData, afterData]);
+  }, [animationSteps, beforeDataDouble, operationName, beforeData, afterData, extraAfterBadge]);
 
   return (
     <div>
@@ -609,7 +627,7 @@ const AnimatedVisualization = ({ beforeData, afterData, beforeTitle, afterTitle,
             highlightPair={operationName === 'reverse' ? highlightAfterPair : []}
             changedIndices={showDiff ? changedIndicesAfter : []}
             explanation={currentExplanation}
-            extraBadge={extraAfterBadge && showDiff ? extraAfterBadge : null}
+            extraBadge={showExtraBadge ? extraAfterBadge : null}
           />
         </div>
       </div>
@@ -852,7 +870,6 @@ export default function OperasiManipulasiList() {
   const pyodideRef = useRef(null);
   const [resetMatching, setResetMatching] = useState(0);
 
-  // State eksplorasi (sama seperti sebelumnya)
   const [eksplorasiTempAnswers, setEksplorasiTempAnswers] = useState([null, null]);
   const [eksplorasiSavedAnswers, setEksplorasiSavedAnswers] = useState([null, null]);
   const [eksplorasiFeedback, setEksplorasiFeedback] = useState(["", ""]);
@@ -914,18 +931,16 @@ export default function OperasiManipulasiList() {
   const reverseAfter = [4,3,2,1];
   const clearBefore = [1,2,3];
   const clearAfter = [];
-  const copyBefore = [1,2,3];
-  const copyAfter = [1,2,3];
   const countBefore = [1,2,2,3];
-  const countAfter = [1,2,2,3];
+  const countAfter = [2];
   const indexBefore = [10,20,30,20];
-  const indexAfter = [10,20,30,20];
+  const indexAfter = [1];
   const slicingBefore = [10,20,30,40,50];
   const slicingAfter = [20,30,40];
   const delBefore = [10,20,30,40];
   const delAfter = [10,40];
   const lengthBefore = [1,2,3,4];
-  const lengthAfter = [1,2,3,4];
+  const lengthAfter = [4];
 
   // Hover context
   const concatHoverBeforeA = { 0:"a:1",1:"a:2",2:"a:3" };
@@ -958,18 +973,16 @@ export default function OperasiManipulasiList() {
   const reverseHoverAfter = { 0:"4",1:"3",2:"2",3:"1" };
   const clearHoverBefore = { 0:"1",1:"2",2:"3" };
   const clearHoverAfter = {};
-  const copyHoverBefore = { 0:"1",1:"2",2:"3" };
-  const copyHoverAfter = { 0:"1",1:"2",2:"3" };
   const countHoverBefore = { 0:"1",1:"2",2:"2",3:"3" };
-  const countHoverAfter = { 0:"1",1:"2",2:"2",3:"3" };
+  const countHoverAfter = {};
   const indexHoverBefore = { 0:"10",1:"20",2:"30",3:"20" };
-  const indexHoverAfter = { 0:"10",1:"20",2:"30",3:"20" };
+  const indexHoverAfter = {};
   const slicingHoverBefore = { 0:"10",1:"20",2:"30",3:"40",4:"50" };
   const slicingHoverAfter = { 0:"20",1:"30",2:"40" };
   const delHoverBefore = { 0:"10",1:"20",2:"30",3:"40" };
   const delHoverAfter = { 0:"10",1:"40" };
   const lengthHoverBefore = { 0:"1",1:"2",2:"3",3:"4" };
-  const lengthHoverAfter = { 0:"1",1:"2",2:"3",3:"4" };
+  const lengthHoverAfter = {};
 
   // ================= ANIMATION STEPS =================
   const concatSteps = [
@@ -1008,7 +1021,7 @@ export default function OperasiManipulasiList() {
     { highlightIndex: 4, explanation: "append('alpukat') menambahkan 'alpukat' di indeks terakhir (4)." },
   ];
   const insertSteps = [
-    { highlightIndex: 1, explanation: "insert(1,'alpukat') menyisip di indeks 1, elemen bergeser" },
+    { highlightIndex: 1, explanation: "insert(1,'alpukat') menyisipkan 'alpukat' di indeks 1, elemen lain bergeser ke kanan." },
   ];
   const extendSteps = [
     { highlightIndex: 4, explanation: "Menambah 'salak' di indeks 4" },
@@ -1022,23 +1035,20 @@ export default function OperasiManipulasiList() {
     { highlightIndex: 2, explanation: "pop(2) menghapus elemen indeks 2 ('mangga')" },
   ];
   const changeSteps = [
-    { highlightIndex: 3, explanation: "buah[3] = 'belimbing' mengubah indeks 3 menjadi 'belimbing'" },
+    { highlightIndex: 3, explanation: "buah[3] = 'belimbing' mengubah nilai indeks 3 dari 'rambutan' menjadi 'belimbing'" },
   ];
   const reverseSteps = [
     { pair: [0, 3], explanation: "Langkah 1: Menukar elemen indeks 0 (1) dengan indeks 3 (4)." },
     { pair: [1, 2], explanation: "Langkah 2: Menukar elemen indeks 1 (2) dengan indeks 2 (3). Hasil akhir [4,3,2,1]." },
   ];
   const clearSteps = [
-    { highlightIndex: 0, explanation: "clear() menghapus semua elemen" },
-  ];
-  const copySteps = [
-    { highlightIndex: 0, explanation: "copy() membuat salinan list asli" },
+    { highlightIndex: 0, explanation: "clear() menghapus semua elemen dari list." },
   ];
   const countSteps = [
-    { highlightIndex: 1, explanation: "count(2) menghitung kemunculan 2 → ada 2 kali" },
+    { highlightIndex: 1, explanation: "count(2) menghitung jumlah kemunculan angka 2 dalam list → ada 2 kali." },
   ];
   const indexSteps = [
-    { highlightIndex: 1, explanation: "index(20) mencari nilai 20 pertama di indeks 1" },
+    { highlightIndex: 1, explanation: "index(20) mencari nilai 20 pertama kali → ditemukan di indeks 1." },
   ];
   const slicingSteps = [
     { highlightIndex: 0, explanation: "Mengambil elemen indeks 1 dari list awal (20)" },
@@ -1046,17 +1056,16 @@ export default function OperasiManipulasiList() {
     { highlightIndex: 2, explanation: "Mengambil elemen indeks 3 dari list awal (40) → hasil slicing [20,30,40]" },
   ];
   const delSteps = [
-    { highlightIndex: 1, explanation: "Menghapus indeks 1 (20)" },
-    { highlightIndex: 2, explanation: "Menghapus indeks 2 (30) → hasil [10,40]" },
+    { highlightIndex: 1, explanation: "Menghapus elemen indeks 1 (20)" },
+    { highlightIndex: 2, explanation: "Menghapus elemen indeks 2 (30) → hasil [10,40]" },
   ];
   const lengthSteps = [
-    { highlightIndex: 0, explanation: "Menghitung elemen ke-1" },
-    { highlightIndex: 1, explanation: "Menghitung elemen ke-2" },
-    { highlightIndex: 2, explanation: "Menghitung elemen ke-3" },
-    { highlightIndex: 3, explanation: "Menghitung elemen ke-4 → panjang = 4" },
+    { highlightIndex: 0, explanation: "Menghitung elemen ke-1 (durian)" },
+    { highlightIndex: 1, explanation: "Menghitung elemen ke-2 (nanas)" },
+    { highlightIndex: 2, explanation: "Menghitung elemen ke-3 (mangga)" },
+    { highlightIndex: 3, explanation: "Menghitung elemen ke-4 (rambutan) → panjang = 4" },
   ];
 
-  // Kode contoh
   const codeExamples = {
     concat: `a = [1, 2, 3]\nb = [4, 5, 6]\nc = a + b\nprint(c)`,
     repeat: `data = [1, 2, 3]\nprint(data * 3)`,
@@ -1070,7 +1079,6 @@ export default function OperasiManipulasiList() {
     change: `buah = ["durian", "nanas", "mangga", "rambutan"]\nbuah[3] = "belimbing"\nprint(buah)`,
     reverse: `angka = [1, 2, 3, 4]\nangka.reverse()\nprint(angka)`,
     clear: `data = [1, 2, 3]\ndata.clear()\nprint(data)`,
-    copy: `asli = [1, 2, 3]\nsalinan = asli.copy()\nprint(salinan)`,
     count: `data = [1, 2, 2, 3]\nprint(data.count(2))`,
     index: `data = [10, 20, 30, 20]\nprint(data.index(20))`,
     slicing: `angka = [10, 20, 30, 40, 50]\nprint(angka[1:4])`,
@@ -1123,7 +1131,6 @@ export default function OperasiManipulasiList() {
     { func: "sort()", desc: "Mengurutkan list secara ascending" },
     { func: "reverse()", desc: "Membalik urutan list" },
     { func: "clear()", desc: "Menghapus semua elemen" },
-    { func: "copy()", desc: "Membuat salinan list" },
     { func: "count()", desc: "Menghitung jumlah kemunculan nilai" },
     { func: "index()", desc: "Mencari indeks pertama dari nilai" },
   ];
@@ -1252,7 +1259,12 @@ export default function OperasiManipulasiList() {
                     runPythonCode={runPythonCode}
                     animationSteps={searchSteps}
                     operationName="search"
-                    extraAfterBadge="✅ Hasil: 'mangga' ditemukan → True"
+                    extraAfterBadge={
+                      <>
+                        ✅ Hasil: 'mangga' ditemukan → True<br />
+                        ❌ Hasil: 'pisang' tidak ditemukan → False
+                      </>
+                    }
                   />
 
                   <h3>5. Pengurutan (sort()) – Mengurutkan List</h3>
@@ -1327,6 +1339,7 @@ export default function OperasiManipulasiList() {
                     runPythonCode={runPythonCode}
                     animationSteps={insertSteps}
                     operationName="insert"
+                    extraAfterBadge="✅ 'alpukat' berhasil ditambahkan di indeks 1 dan menggeser posisi elemen pada indeks 1 sebelumnya"
                   />
 
                   <h3>extend() – Menambah Banyak Elemen Sekaligus</h3>
@@ -1344,6 +1357,7 @@ export default function OperasiManipulasiList() {
                     runPythonCode={runPythonCode}
                     animationSteps={extendSteps}
                     operationName="extend"
+                    extraAfterBadge="✅ 'salak', 'jeruk', 'manggis' berhasil ditambahkan ke dalam list"
                   />
 
                   <h3>remove() – Menghapus Elemen Berdasarkan Nilai</h3>
@@ -1361,6 +1375,7 @@ export default function OperasiManipulasiList() {
                     runPythonCode={runPythonCode}
                     animationSteps={removeSteps}
                     operationName="remove"
+                    extraAfterBadge="✅ 'jeruk' berhasil dihapus dari list"
                   />
 
                   <h3>pop() – Menghapus Elemen Berdasarkan Indeks</h3>
@@ -1378,6 +1393,7 @@ export default function OperasiManipulasiList() {
                     runPythonCode={runPythonCode}
                     animationSteps={popSteps}
                     operationName="pop"
+                    extraAfterBadge="✅ 'mangga' berhasil dihapus dari list"
                   />
 
                   <h3>Mengubah Elemen dengan Indeks</h3>
@@ -1395,6 +1411,7 @@ export default function OperasiManipulasiList() {
                     runPythonCode={runPythonCode}
                     animationSteps={changeSteps}
                     operationName="change"
+                    extraAfterBadge="✅ indeks 3 dari variabel buah berhasil diubah menjadi 'belimbing'"
                   />
 
                   <h3>del – Menghapus dengan Slicing</h3>
@@ -1412,6 +1429,7 @@ export default function OperasiManipulasiList() {
                     runPythonCode={runPythonCode}
                     animationSteps={delSteps}
                     operationName="del"
+                    extraAfterBadge="✅ indeks 1 sampai 3-1 sudah dihapus"
                   />
 
                   <h3>clear() – Menghapus Semua Elemen</h3>
@@ -1429,23 +1447,7 @@ export default function OperasiManipulasiList() {
                     runPythonCode={runPythonCode}
                     animationSteps={clearSteps}
                     operationName="clear"
-                  />
-
-                  <h3>copy() – Membuat Salinan List</h3>
-                  <p><code>copy()</code> membuat salinan dangkal (shallow copy) dari list.</p>
-                  <CodeEditorWithVisual
-                    code={codeExamples.copy}
-                    title="Contoh Kode Program"
-                    beforeData={copyBefore}
-                    afterData={copyAfter}
-                    beforeTitle="List asli"
-                    afterTitle="Salinan (copy)"
-                    hoverContextBefore={copyHoverBefore}
-                    hoverContextAfter={copyHoverAfter}
-                    pyodideReady={pyodideReady}
-                    runPythonCode={runPythonCode}
-                    animationSteps={copySteps}
-                    operationName="copy"
+                    extraAfterBadge="✅ Semua elemen list telah dihapus (clear)"
                   />
 
                   <h3>count() – Menghitung Kemunculan Nilai</h3>
@@ -1456,13 +1458,14 @@ export default function OperasiManipulasiList() {
                     beforeData={countBefore}
                     afterData={countAfter}
                     beforeTitle="List"
-                    afterTitle="List (sama)"
+                    afterTitle="Jumlah kemunculan 2"
                     hoverContextBefore={countHoverBefore}
                     hoverContextAfter={countHoverAfter}
                     pyodideReady={pyodideReady}
                     runPythonCode={runPythonCode}
                     animationSteps={countSteps}
                     operationName="count"
+                    extraAfterBadge="✅ Angka 2 muncul sebanyak 2 kali dalam list"
                   />
 
                   <h3>index() – Mencari Indeks Pertama</h3>
@@ -1473,13 +1476,14 @@ export default function OperasiManipulasiList() {
                     beforeData={indexBefore}
                     afterData={indexAfter}
                     beforeTitle="List"
-                    afterTitle="List (sama)"
+                    afterTitle="Indeks pertama nilai 20"
                     hoverContextBefore={indexHoverBefore}
                     hoverContextAfter={indexHoverAfter}
                     pyodideReady={pyodideReady}
                     runPythonCode={runPythonCode}
                     animationSteps={indexSteps}
                     operationName="index"
+                    extraAfterBadge="✅ Nilai 20 pertama kali ditemukan di indeks 1"
                   />
 
                   <h3>len() – Panjang List</h3>
@@ -1490,13 +1494,14 @@ export default function OperasiManipulasiList() {
                     beforeData={lengthBefore}
                     afterData={lengthAfter}
                     beforeTitle="List"
-                    afterTitle="List (sama)"
+                    afterTitle="Panjang list"
                     hoverContextBefore={lengthHoverBefore}
                     hoverContextAfter={lengthHoverAfter}
                     pyodideReady={pyodideReady}
                     runPythonCode={runPythonCode}
                     animationSteps={lengthSteps}
                     operationName="length"
+                    extraAfterBadge="✅ Panjang list buah adalah 4 (durian, nanas, mangga, rambutan)"
                   />
                 </div>
               </section>
