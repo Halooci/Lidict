@@ -233,8 +233,24 @@ const styles = {
     border: "2px solid #198754",
     color: "#0f5132",
   },
+  dropZoneWrong: {
+    backgroundColor: "#f8d7da",
+    border: "2px solid #dc3545",
+    color: "#721c24",
+  },
   resetMatchingButton: {
     backgroundColor: "#6c757d",
+    color: "white",
+    border: "none",
+    padding: "8px 16px",
+    borderRadius: "6px",
+    cursor: "pointer",
+    fontSize: "14px",
+    marginTop: "15px",
+    marginRight: "10px",
+  },
+  checkMatchingButton: {
+    backgroundColor: "#28a745",
     color: "white",
     border: "none",
     padding: "8px 16px",
@@ -812,54 +828,168 @@ const CodeEditorEditable = ({ title, pyodideReady, runPythonCode }) => {
   );
 };
 
-// ================= KOMPONEN DRAG-N-DROP MATCHING =================
+// ================= KOMPONEN DRAG-N-DROP MATCHING DENGAN TOMBOL PERIKSA =================
 const DragDropMatching = ({ items, resetTrigger }) => {
-  const [functions, setFunctions] = useState(() => items.map((item, idx) => ({ id: idx, text: item.func, matched: false })));
-  const [descriptions, setDescriptions] = useState(() => items.map((item, idx) => ({ id: idx, text: item.desc, matched: false })));
-  const [feedback, setFeedback] = useState("");
+  const shuffleArray = (arr) => {
+    const shuffled = [...arr];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+  };
+
+  const [functions, setFunctions] = useState(() => 
+    shuffleArray(items.map((item, idx) => ({ id: idx, text: item.func, matchedDescId: null })))
+  );
+  const [descriptions, setDescriptions] = useState(() => 
+    shuffleArray(items.map((item, idx) => ({ id: idx, text: item.desc, matchedFuncId: null })))
+  );
+  const [checked, setChecked] = useState(false);
+  const [allCorrect, setAllCorrect] = useState(false);
+  const [feedbackMsg, setFeedbackMsg] = useState("");
+
   useEffect(() => {
-    setFunctions(items.map((item, idx) => ({ id: idx, text: item.func, matched: false })));
-    setDescriptions(items.map((item, idx) => ({ id: idx, text: item.desc, matched: false })));
-    setFeedback("");
+    setFunctions(shuffleArray(items.map((item, idx) => ({ id: idx, text: item.func, matchedDescId: null }))));
+    setDescriptions(shuffleArray(items.map((item, idx) => ({ id: idx, text: item.desc, matchedFuncId: null }))));
+    setChecked(false);
+    setAllCorrect(false);
+    setFeedbackMsg("");
   }, [resetTrigger, items]);
-  const handleDragStart = (e, funcId) => e.dataTransfer.setData("text/plain", funcId);
+
+  const handleDragStart = (e, funcId) => {
+    e.dataTransfer.setData("text/plain", funcId);
+    e.dataTransfer.effectAllowed = "copy";
+  };
+
   const handleDrop = (e, descId) => {
     e.preventDefault();
+    if (checked) {
+      setFeedbackMsg("Silahkan reset jika ingin mengubah pasangan setelah diperiksa.");
+      return;
+    }
     const funcId = parseInt(e.dataTransfer.getData("text/plain"));
     const func = functions.find(f => f.id === funcId);
     const desc = descriptions.find(d => d.id === descId);
-    if (!func || !desc || func.matched || desc.matched) {
-      setFeedback("❌ Salah satu sudah dipasangkan!");
+    if (!func || !desc) return;
+
+    if (func.matchedDescId !== null) {
+      const oldDescId = func.matchedDescId;
+      setDescriptions(prev => prev.map(d => d.id === oldDescId ? { ...d, matchedFuncId: null } : d));
+    }
+    if (desc.matchedFuncId !== null) {
+      const oldFuncId = desc.matchedFuncId;
+      setFunctions(prev => prev.map(f => f.id === oldFuncId ? { ...f, matchedDescId: null } : f));
+    }
+    setFunctions(prev => prev.map(f => f.id === funcId ? { ...f, matchedDescId: descId } : f));
+    setDescriptions(prev => prev.map(d => d.id === descId ? { ...d, matchedFuncId: funcId } : d));
+  };
+
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "copy";
+  };
+
+  const handleCheck = () => {
+    let correctCount = 0;
+    for (const func of functions) {
+      if (func.matchedDescId !== null) {
+        const matchedDesc = descriptions.find(d => d.id === func.matchedDescId);
+        if (matchedDesc && func.id === matchedDesc.id) {
+          correctCount++;
+        }
+      }
+    }
+    const totalMatched = functions.filter(f => f.matchedDescId !== null).length;
+    if (totalMatched !== items.length) {
+      setFeedbackMsg(`❌ Belum semua fungsi dipasangkan. (${totalMatched}/${items.length})`);
+      setChecked(true);
+      setAllCorrect(false);
       return;
     }
-    if (func.id === desc.id) {
-      setFunctions(prev => prev.map(f => f.id === funcId ? { ...f, matched: true } : f));
-      setDescriptions(prev => prev.map(d => d.id === descId ? { ...d, matched: true } : d));
-      setFeedback("");
+    if (correctCount === items.length) {
+      setFeedbackMsg("🎉 Selamat! Semua jawaban benar!");
+      setAllCorrect(true);
     } else {
-      setFeedback(`❌ Salah! '${func.text}' tidak cocok dengan '${desc.text}'. Coba lagi.`);
+      setFeedbackMsg(`❌ Masih ada ${items.length - correctCount} pasangan yang salah. Coba lagi!`);
+      setAllCorrect(false);
     }
+    setChecked(true);
   };
-  const handleDragOver = (e) => e.preventDefault();
-  const allMatched = functions.every(f => f.matched);
+
+  const isDescMatchedToCorrectFunc = (desc) => {
+    if (!checked) return false;
+    if (desc.matchedFuncId === null) return false;
+    const matchedFunc = functions.find(f => f.id === desc.matchedFuncId);
+    return matchedFunc && matchedFunc.id === desc.id;
+  };
+
+  const isFuncMatchedToCorrectDesc = (func) => {
+    if (!checked) return false;
+    if (func.matchedDescId === null) return false;
+    const matchedDesc = descriptions.find(d => d.id === func.matchedDescId);
+    return matchedDesc && matchedDesc.id === func.id;
+  };
+
   return (
     <div>
       <div style={styles.matchingContainer}>
         <div style={styles.matchingColumn}>
           <div style={styles.matchingTitle}>📌 Fungsi/Method List</div>
           {functions.map(func => (
-            <div key={func.id} draggable={!func.matched} onDragStart={(e) => handleDragStart(e, func.id)} style={{ ...styles.dragItem, backgroundColor: func.matched ? "#6c757d" : "#306998", opacity: func.matched ? 0.6 : 1 }}>{func.text}</div>
+            <div
+              key={func.id}
+              draggable={!checked}
+              onDragStart={(e) => handleDragStart(e, func.id)}
+              style={{
+                ...styles.dragItem,
+                backgroundColor: (checked && isFuncMatchedToCorrectDesc(func)) ? "#28a745" : (checked && func.matchedDescId !== null && !isFuncMatchedToCorrectDesc(func)) ? "#dc3545" : (func.matchedDescId !== null ? "#17a2b8" : "#306998"),
+                opacity: (checked && func.matchedDescId !== null) ? 0.8 : 1,
+                cursor: checked ? "default" : "grab",
+              }}
+            >
+              {func.text}
+              {checked && isFuncMatchedToCorrectDesc(func) && " ✅"}
+              {checked && func.matchedDescId !== null && !isFuncMatchedToCorrectDesc(func) && " ❌"}
+            </div>
           ))}
         </div>
         <div style={styles.matchingColumn}>
           <div style={styles.matchingTitle}>🎯 Kegunaan</div>
           {descriptions.map(desc => (
-            <div key={desc.id} onDrop={(e) => handleDrop(e, desc.id)} onDragOver={handleDragOver} style={{ ...styles.dropZone, ...(desc.matched ? styles.dropZoneFilled : {}), backgroundColor: desc.matched ? "#d1e7dd" : "#e9ecef" }}>{desc.matched ? `✅ ${desc.text}` : desc.text}</div>
+            <div
+              key={desc.id}
+              onDrop={(e) => handleDrop(e, desc.id)}
+              onDragOver={handleDragOver}
+              style={{
+                ...styles.dropZone,
+                ...(checked && isDescMatchedToCorrectFunc(desc) ? styles.dropZoneFilled : {}),
+                backgroundColor: (checked && isDescMatchedToCorrectFunc(desc)) ? "#d1e7dd" : (checked && desc.matchedFuncId !== null && !isDescMatchedToCorrectFunc(desc)) ? "#f8d7da" : (desc.matchedFuncId !== null ? "#cfe2ff" : "#e9ecef"),
+                border: (checked && desc.matchedFuncId !== null && !isDescMatchedToCorrectFunc(desc)) ? "2px solid #dc3545" : (desc.matchedFuncId !== null ? "2px solid #17a2b8" : "2px dashed #6c757d"),
+              }}
+            >
+              {desc.matchedFuncId !== null ? (
+                <>
+                  {desc.text}
+                  {checked && isDescMatchedToCorrectFunc(desc) && " ✅"}
+                  {checked && desc.matchedFuncId !== null && !isDescMatchedToCorrectFunc(desc) && " ❌"}
+                </>
+              ) : (
+                desc.text
+              )}
+            </div>
           ))}
         </div>
       </div>
-      {feedback && <div style={styles.feedback}>{feedback}</div>}
-      {allMatched && <div style={{ ...styles.feedback, backgroundColor: "#d1e7dd", color: "#0f5132", padding: "10px", borderRadius: "8px", textAlign: "center" }}>🎉 Selamat! Semua jawaban benar!</div>}
+      {feedbackMsg && <div style={styles.feedback}>{feedbackMsg}</div>}
+      <div>
+        <button style={styles.checkMatchingButton} onClick={handleCheck} disabled={checked && allCorrect}>
+          {checked && allCorrect ? "✅ Semua Benar" : "🔍 Periksa Jawaban"}
+        </button>
+        <button style={styles.resetMatchingButton} onClick={() => window.dispatchEvent(new Event('resetMatching'))}>
+          ↻ Reset Matching
+        </button>
+      </div>
     </div>
   );
 };
@@ -1135,7 +1265,19 @@ export default function OperasiManipulasiList() {
     { func: "index()", desc: "Mencari indeks pertama dari nilai" },
   ];
 
-  const resetMatchingGame = () => setResetMatching(prev => prev + 1);
+  const resetMatchingGame = () => {
+    setResetMatching(prev => prev + 1);
+    // Trigger custom event untuk reset matching di komponen DragDropMatching
+    window.dispatchEvent(new Event('resetMatching'));
+  };
+
+  useEffect(() => {
+    const handleReset = () => {
+      setResetMatching(prev => prev + 1);
+    };
+    window.addEventListener('resetMatching', handleReset);
+    return () => window.removeEventListener('resetMatching', handleReset);
+  }, []);
 
   return (
     <>
