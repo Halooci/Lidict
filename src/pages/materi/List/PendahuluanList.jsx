@@ -452,7 +452,7 @@ sys.stdout = StringIO()
           <div style={styles.header}>
             <div style={styles.headerAccent}></div>
             <h1 style={styles.headerTitle}>PENDAHULUAN LIST</h1>
-            <p style={styles.headerSubtitle}>Memahami Konsep Dasar List dalam Struktur Data</p>
+            {/* <p style={styles.headerSubtitle}>Memahami Konsep Dasar List dalam Struktur Data</p> */}
           </div>
 
           {/* TUJUAN PEMBELAJARAN */}
@@ -464,9 +464,9 @@ sys.stdout = StringIO()
                 <li>Mahasiswa mampu mengidentifikasi fungsi dan keunggulan list dibandingkan variabel tunggal.</li>
                 <li>Mahasiswa memahami konsep dasar list (indeks, mutable, tipe data campuran).</li>
               </ol>
-              <p style={{ ...styles.text, fontSize: "14px", marginTop: "10px", fontStyle: "italic" }}>
+              {/* <p style={{ ...styles.text, fontSize: "14px", marginTop: "10px", fontStyle: "italic" }}>
                 🎯 <strong>Kaitan dengan CPMK:</strong> Materi ini mendukung CPMK 1 dan 4 (kemampuan menuliskan kode Python untuk menyelesaikan masalah data sederhana).
-              </p>
+              </p> */}
             </div>
           </section>
 

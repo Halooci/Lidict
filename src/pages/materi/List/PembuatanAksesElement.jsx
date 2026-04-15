@@ -900,7 +900,7 @@ sys.stdout = StringIO()
           <div style={styles.header}>
             <div style={styles.headerAccent}></div>
             <h1 style={styles.headerTitle}>PEMBUATAN DAN AKSES ELEMEN LIST</h1>
-            <p style={styles.headerSubtitle}>Belajar Membuat dan Mengakses Data dalam List</p>
+            {/* <p style={styles.headerSubtitle}>Belajar Membuat dan Mengakses Data dalam List</p> */}
           </div>
 
           {/* TUJUAN PEMBELAJARAN */}
@@ -911,9 +911,9 @@ sys.stdout = StringIO()
                 <li>Mahasiswa mampu membuat list dalam Python.</li>
                 <li>Mahasiswa mampu mengambil elemen list menggunakan indeks positif, negatif, dan slicing.</li>
               </ol>
-              <p style={{ ...styles.text, fontSize: "14px", marginTop: "10px", fontStyle: "italic" }}>
+              {/* <p style={{ ...styles.text, fontSize: "14px", marginTop: "10px", fontStyle: "italic" }}>
                 🎯 <strong>Kaitan dengan CPMK:</strong> Materi ini mendukung CPMK 1 dan 4 (kemampuan menuliskan kode Python untuk menyelesaikan masalah data sederhana).
-              </p>
+              </p> */}
             </div>
           </section>
 

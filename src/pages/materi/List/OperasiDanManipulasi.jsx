@@ -1344,7 +1344,7 @@ export default function OperasiManipulasiList() {
           <section style={styles.section}>
             <h2 style={styles.sectionTitle}>🎯 Tujuan Pembelajaran</h2>
             <div style={styles.card}>
-              <p style={styles.text}>Mahasiswa mampu menerapkan operasi dan manipulasi list dalam pengolahan data.</p>
+              <p style={styles.text}>1. Mahasiswa mampu menerapkan operasi dan manipulasi list dalam pengolahan data.</p>
             </div>
           </section>
 
