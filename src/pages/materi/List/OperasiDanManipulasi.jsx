@@ -297,11 +297,12 @@ const styles = {
 };
 
 // ================= KOMPONEN VISUALISASI LIST SATU KOLOM =================
-const SingleListVisualization = ({ data, title, hoverContext = {}, highlightIndex = null, highlightPair = [], changedIndices = [], explanation = "", extraBadge = null }) => {
+const SingleListVisualization = ({ data, title, hoverContext = {}, highlightIndex = null, highlightPair = [], changedIndices = [], explanation = "", extraBadge = null, hideIndices = false, disableHover = false }) => {
   const [hoveredIndex, setHoveredIndex] = useState(null);
   const negativeIndices = data.map((_, i) => -(data.length - i));
 
   const getHoverExplanation = (idx, item) => {
+    if (disableHover) return null;
     if (highlightPair.includes(idx) && explanation) {
       return `📖 ${explanation}`;
     }
@@ -317,12 +318,12 @@ const SingleListVisualization = ({ data, title, hoverContext = {}, highlightInde
     if (highlightPair.includes(idx)) return "#FFD43B";
     if (highlightIndex === idx) return "#FFD43B";
     if (changedIndices.includes(idx)) return "#28a745";
-    if (hoveredIndex === idx) return "#FFA500";
+    if (hoveredIndex === idx && !disableHover) return "#FFA500";
     return "#306998";
   };
 
   const getTextColor = (idx) => {
-    if (highlightPair.includes(idx) || highlightIndex === idx || changedIndices.includes(idx) || hoveredIndex === idx) return "#1f2937";
+    if (highlightPair.includes(idx) || highlightIndex === idx || changedIndices.includes(idx) || (hoveredIndex === idx && !disableHover)) return "#1f2937";
     return "white";
   };
 
@@ -352,8 +353,8 @@ const SingleListVisualization = ({ data, title, hoverContext = {}, highlightInde
           <div
             key={idx}
             style={{ textAlign: "center", position: "relative" }}
-            onMouseEnter={() => setHoveredIndex(idx)}
-            onMouseLeave={() => setHoveredIndex(null)}
+            onMouseEnter={() => !disableHover && setHoveredIndex(idx)}
+            onMouseLeave={() => !disableHover && setHoveredIndex(null)}
           >
             <div style={{
               width: "70px",
@@ -364,15 +365,19 @@ const SingleListVisualization = ({ data, title, hoverContext = {}, highlightInde
               fontSize: "13px",
               backgroundColor: getBgColor(idx),
               color: getTextColor(idx),
-              transform: (highlightPair.includes(idx) || highlightIndex === idx || changedIndices.includes(idx) || hoveredIndex === idx) ? "scale(1.05)" : "scale(1)",
+              transform: (highlightPair.includes(idx) || highlightIndex === idx || changedIndices.includes(idx) || (hoveredIndex === idx && !disableHover)) ? "scale(1.05)" : "scale(1)",
               transition: "all 0.3s ease",
-              cursor: "pointer",
+              cursor: !disableHover ? "pointer" : "default",
               border: changedIndices.includes(idx) ? "2px solid #ffc107" : "none",
             }}>
               <div>{String(item)}</div>
             </div>
-            <div style={{ fontSize: "10px", color: "#555" }}>Indeks +{idx}</div>
-            <div style={{ fontSize: "10px", color: "#888" }}>Indeks {negativeIndices[idx]}</div>
+            {!hideIndices && (
+              <>
+                <div style={{ fontSize: "10px", color: "#555" }}>Indeks +{idx}</div>
+                <div style={{ fontSize: "10px", color: "#888" }}>Indeks {negativeIndices[idx]}</div>
+              </>
+            )}
             {changedIndices.includes(idx) && (
               <div style={{
                 position: "absolute",
@@ -393,7 +398,7 @@ const SingleListVisualization = ({ data, title, hoverContext = {}, highlightInde
           </div>
         ))}
       </div>
-      {hoveredIndex !== null && (
+      {!disableHover && hoveredIndex !== null && (
         <div style={{
           backgroundColor: "#fff3cd",
           padding: "10px",
@@ -407,7 +412,7 @@ const SingleListVisualization = ({ data, title, hoverContext = {}, highlightInde
           {getHoverExplanation(hoveredIndex, data[hoveredIndex])}
         </div>
       )}
-      {explanation && highlightIndex === null && highlightPair.length === 0 && (
+      {explanation && highlightIndex === null && highlightPair.length === 0 && !disableHover && (
         <div style={{
           backgroundColor: "#e8f1ff",
           padding: "10px",
@@ -471,6 +476,7 @@ const DoubleBeforeVisualization = ({ dataA, dataB, titleA, titleB, hoverContextA
 // ================= KOMPONEN UTAMA DENGAN ANIMASI =================
 const AnimatedVisualization = ({ beforeData, afterData, beforeTitle, afterTitle, hoverContextBefore, hoverContextAfter, animationSteps, operationName, extraAfterBadge = null, beforeDataDouble = null }) => {
   const [currentHighlight, setCurrentHighlight] = useState(null);
+  const [currentHighlightPair, setCurrentHighlightPair] = useState([]);
   const [currentExplanation, setCurrentExplanation] = useState("");
   const [showDiff, setShowDiff] = useState(false);
   const [showExtraBadge, setShowExtraBadge] = useState(false);
@@ -560,6 +566,11 @@ const AnimatedVisualization = ({ beforeData, afterData, beforeTitle, afterTitle,
           setHighlightBefore(null);
           setHighlightAfter(null);
         }
+        else if (operationName === 'count') {
+          setCurrentHighlight(step.highlightIndex);
+          setHighlightBefore(null);
+          setHighlightAfter(null);
+        }
         else if (beforeDataDouble) {
           if (step.highlightIndex < 3) {
             setHighlightA(step.highlightIndex);
@@ -602,6 +613,30 @@ const AnimatedVisualization = ({ beforeData, afterData, beforeTitle, afterTitle,
     return () => clearInterval(interval);
   }, [animationSteps, beforeDataDouble, operationName, beforeData, afterData, extraAfterBadge]);
 
+  // Tentukan highlightIndex untuk kolom kanan (setelah)
+  let rightHighlightIndex = null;
+  let rightHighlightPair = [];
+  let rightHideIndices = false;
+  let rightDisableHover = false;
+
+  if (operationName === 'slicing') {
+    rightHighlightIndex = highlightAfter;
+  } else if (operationName === 'sort') {
+    rightHighlightIndex = highlightAfter;
+  } else if (operationName === 'reverse') {
+    rightHighlightPair = highlightAfterPair;
+  } else if (operationName === 'pop' || operationName === 'del') {
+    rightHighlightIndex = null;
+    rightHighlightPair = [];
+  } else if (operationName === 'count' || operationName === 'index' || operationName === 'length') {
+    rightHighlightIndex = null;
+    rightHighlightPair = [];
+    rightHideIndices = true;
+    rightDisableHover = true;
+  } else {
+    rightHighlightIndex = currentHighlight;
+  }
+
   return (
     <div>
       <div style={styles.visualWrapper}>
@@ -639,11 +674,13 @@ const AnimatedVisualization = ({ beforeData, afterData, beforeTitle, afterTitle,
             data={afterData}
             title={afterTitle}
             hoverContext={hoverContextAfter}
-            highlightIndex={operationName === 'slicing' ? highlightAfter : (operationName === 'sort' ? highlightAfter : (operationName === 'reverse' ? null : currentHighlight))}
-            highlightPair={operationName === 'reverse' ? highlightAfterPair : []}
+            highlightIndex={rightHighlightIndex}
+            highlightPair={rightHighlightPair}
             changedIndices={showDiff ? changedIndicesAfter : []}
             explanation={currentExplanation}
             extraBadge={showExtraBadge ? extraAfterBadge : null}
+            hideIndices={rightHideIndices}
+            disableHover={rightDisableHover}
           />
         </div>
       </div>
@@ -774,32 +811,39 @@ const CodeEditorEditable = ({ title, pyodideReady, runPythonCode }) => {
     setError("");
     setIsRunning(true);
     const trimmed = localCode.trim();
+    
     if (!trimmed.includes("belanja =")) {
       setError("❌ ERROR: Buat variabel 'belanja' dengan isi ['apel','jeruk','mangga'].");
       setIsRunning(false);
       return;
     }
-    const regex = /belanja\s*=\s*\[\s*["']apel["']\s*,\s*["']jeruk["']\s*,\s*["']mangga["']\s*\]/;
-    if (!regex.test(trimmed)) {
+    const regexCreate = /belanja\s*=\s*\[\s*["']apel["']\s*,\s*["']jeruk["']\s*,\s*["']mangga["']\s*\]/;
+    if (!regexCreate.test(trimmed)) {
       setError("❌ ERROR: Isi list harus ['apel', 'jeruk', 'mangga'].");
       setIsRunning(false);
       return;
     }
+    
     if (!/belanja\.append\s*\(\s*["']pisang["']\s*\)/.test(trimmed)) {
       setError("❌ ERROR: Tambahkan 'pisang' dengan belanja.append('pisang').");
       setIsRunning(false);
       return;
     }
-    if (!/belanja\.remove\s*\(\s*["']jeruk["']\s*\)/.test(trimmed)) {
-      setError("❌ ERROR: Hapus 'jeruk' dengan belanja.remove('jeruk').");
+    
+    const removeByValue = /belanja\.remove\s*\(\s*["']jeruk["']\s*\)/.test(trimmed);
+    const removeByIndex = /belanja\.pop\s*\(\s*1\s*\)/.test(trimmed);
+    if (!removeByValue && !removeByIndex) {
+      setError("❌ ERROR: Hapus 'jeruk' dengan belanja.remove('jeruk') atau belanja.pop(1).");
       setIsRunning(false);
       return;
     }
+    
     if (!/print\s*\(\s*belanja\s*\)/.test(trimmed)) {
       setError("❌ ERROR: Cetak list akhir dengan print(belanja).");
       setIsRunning(false);
       return;
     }
+    
     const result = await runPythonCode(localCode);
     setOutput(result);
     if (result.includes("apel") && result.includes("mangga") && result.includes("pisang") && !result.includes("jeruk")) {
@@ -828,7 +872,7 @@ const CodeEditorEditable = ({ title, pyodideReady, runPythonCode }) => {
   );
 };
 
-// ================= KOMPONEN DRAG-N-DROP MATCHING DENGAN TOMBOL PERIKSA =================
+// ================= KOMPONEN DRAG-N-DROP MATCHING DENGAN SATU TOMBOL RESET =================
 const DragDropMatching = ({ items, resetTrigger }) => {
   const shuffleArray = (arr) => {
     const shuffled = [...arr];
@@ -891,6 +935,13 @@ const DragDropMatching = ({ items, resetTrigger }) => {
   };
 
   const handleCheck = () => {
+    const totalMatched = functions.filter(f => f.matchedDescId !== null).length;
+    if (totalMatched !== items.length) {
+      setFeedbackMsg(`❌ Belum semua fungsi dipasangkan. (${totalMatched}/${items.length}) Silakan lengkapi semua pasangan terlebih dahulu.`);
+      setChecked(false);
+      setAllCorrect(false);
+      return;
+    }
     let correctCount = 0;
     for (const func of functions) {
       if (func.matchedDescId !== null) {
@@ -900,13 +951,7 @@ const DragDropMatching = ({ items, resetTrigger }) => {
         }
       }
     }
-    const totalMatched = functions.filter(f => f.matchedDescId !== null).length;
-    if (totalMatched !== items.length) {
-      setFeedbackMsg(`❌ Belum semua fungsi dipasangkan. (${totalMatched}/${items.length})`);
-      setChecked(true);
-      setAllCorrect(false);
-      return;
-    }
+    setChecked(true);
     if (correctCount === items.length) {
       setFeedbackMsg("🎉 Selamat! Semua jawaban benar!");
       setAllCorrect(true);
@@ -914,7 +959,6 @@ const DragDropMatching = ({ items, resetTrigger }) => {
       setFeedbackMsg(`❌ Masih ada ${items.length - correctCount} pasangan yang salah. Coba lagi!`);
       setAllCorrect(false);
     }
-    setChecked(true);
   };
 
   const isDescMatchedToCorrectFunc = (desc) => {
@@ -930,6 +974,8 @@ const DragDropMatching = ({ items, resetTrigger }) => {
     const matchedDesc = descriptions.find(d => d.id === func.matchedDescId);
     return matchedDesc && matchedDesc.id === func.id;
   };
+
+  const allMatched = functions.every(f => f.matchedDescId !== null);
 
   return (
     <div>
@@ -983,7 +1029,11 @@ const DragDropMatching = ({ items, resetTrigger }) => {
       </div>
       {feedbackMsg && <div style={styles.feedback}>{feedbackMsg}</div>}
       <div>
-        <button style={styles.checkMatchingButton} onClick={handleCheck} disabled={checked && allCorrect}>
+        <button 
+          style={styles.checkMatchingButton} 
+          onClick={handleCheck} 
+          disabled={checked && allCorrect}
+        >
           {checked && allCorrect ? "✅ Semua Benar" : "🔍 Periksa Jawaban"}
         </button>
         <button style={styles.resetMatchingButton} onClick={() => window.dispatchEvent(new Event('resetMatching'))}>
@@ -1175,7 +1225,8 @@ export default function OperasiManipulasiList() {
     { highlightIndex: 0, explanation: "clear() menghapus semua elemen dari list." },
   ];
   const countSteps = [
-    { highlightIndex: 1, explanation: "count(2) menghitung jumlah kemunculan angka 2 dalam list → ada 2 kali." },
+    { highlightIndex: 1, explanation: "Menemukan angka 2 pertama di indeks 1." },
+    { highlightIndex: 2, explanation: "Menemukan angka 2 kedua di indeks 2. Total ada 2 kali." },
   ];
   const indexSteps = [
     { highlightIndex: 1, explanation: "index(20) mencari nilai 20 pertama kali → ditemukan di indeks 1." },
@@ -1267,7 +1318,6 @@ export default function OperasiManipulasiList() {
 
   const resetMatchingGame = () => {
     setResetMatching(prev => prev + 1);
-    // Trigger custom event untuk reset matching di komponen DragDropMatching
     window.dispatchEvent(new Event('resetMatching'));
   };
 
@@ -1651,13 +1701,16 @@ export default function OperasiManipulasiList() {
               <section style={styles.section}>
                 <h2 style={styles.sectionTitle}>💻 Latihan Praktik</h2>
                 <div style={styles.card}>
-                  <p><strong>Studi Kasus: Manajemen Daftar Belanja</strong></p>
-                  <ol>
-                    <li>Buat list <code>belanja = ["apel", "jeruk", "mangga"]</code>.</li>
-                    <li>Tambahkan "pisang" di akhir.</li>
-                    <li>Hapus "jeruk".</li>
-                    <li>Cetak list akhir.</li>
-                  </ol>
+                  <p style={styles.text}>
+                    <strong>📖 Cerita: Manajemen Daftar Belanja</strong><br />
+                    Andi pergi ke pasar untuk membeli buah. Ia ingin membeli apel, jeruk, dan mangga. 
+                    Karena lupa membawa catatan, ia menyimpan daftar belanjanya dalam sebuah list Python bernama <code>belanja</code>.
+                    Sesampainya di pasar, ia melihat pisang yang segar dan memutuskan untuk menambahkannya ke dalam daftar belanja di akhir.
+                    Kemudian, karena jeruk sedang tidak ada, ia memutuskan untuk menghapus jeruk dari daftar belanja. 
+                    (Petunjuk: Kamu bisa menghapus berdasarkan nilai <code>remove('jeruk')</code> atau berdasarkan indeks <code>pop(1)</code> karena jeruk berada di indeks 1).
+                    Terakhir, ia ingin melihat isi daftar belanjanya yang sudah diperbarui.
+                  </p>
+                  <p style={styles.text}>Buatlah program Python sesuai cerita di atas!</p>
                   <CodeEditorEditable title="Latihan Daftar Belanja" pyodideReady={pyodideReady} runPythonCode={runPythonCode} />
                 </div>
               </section>
@@ -1665,9 +1718,8 @@ export default function OperasiManipulasiList() {
               <section style={styles.section}>
                 <h2 style={styles.sectionTitle}>🧩 Latihan Interaktif: Drag & Drop Matching</h2>
                 <div style={styles.card}>
-                  <p>Seret fungsi/method list ke kegunaan yang sesuai.</p>
+                  <p>Seret fungsi/method list ke kegunaan yang sesuai. Setelah semua terisi, klik "Periksa Jawaban".</p>
                   <DragDropMatching items={matchingItems} resetTrigger={resetMatching} />
-                  <button style={styles.resetMatchingButton} onClick={resetMatchingGame}>↻ Reset Matching</button>
                 </div>
               </section>
             </>
