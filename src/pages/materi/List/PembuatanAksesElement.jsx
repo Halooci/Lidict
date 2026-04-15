@@ -1082,7 +1082,7 @@ nilai3 = 78
 
               {/* AYO PRAKTIK */}
               <section style={styles.section}>
-                <h2 style={styles.sectionTitle}>💻 Ayo Praktik</h2>
+                <h2 style={styles.sectionTitle}>💻 Ayo Praktik!</h2>
                 <div style={styles.card}>
                   <p style={styles.text}>
                     <strong>Studi Kasus: Daftar Belanja</strong><br />
@@ -1103,7 +1103,7 @@ nilai3 = 78
 
               {/* LATIHAN INTERAKTIF */}
               <section style={styles.section}>
-                <h2 style={styles.sectionTitle}>🧩 Latihan Interaktif</h2>
+                <h2 style={styles.sectionTitle}>🧩 Latihan</h2>
                 <div style={styles.card}>
                   <p style={styles.text}>Isilah bagian yang kosong pada kode di bawah ini dengan mengetikkan jawaban pada kotak yang tersedia.</p>
                   <button style={styles.resetButton} onClick={resetInteractiveQuestions}>↻ Reset Jawaban</button>

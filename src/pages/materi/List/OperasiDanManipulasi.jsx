@@ -1338,7 +1338,7 @@ export default function OperasiManipulasiList() {
           <div style={styles.header}>
             <div style={styles.headerAccent}></div>
             <h1 style={styles.headerTitle}>OPERASI DAN MANIPULASI LIST</h1>
-            <p style={styles.headerSubtitle}>Belajar Mengubah, Menambah, Menghapus, dan Mengelola Data dalam List</p>
+            {/* <p style={styles.headerSubtitle}>Belajar Mengubah, Menambah, Menghapus, dan Mengelola Data dalam List</p> */}
           </div>
 
           <section style={styles.section}>
@@ -1496,7 +1496,7 @@ export default function OperasiManipulasiList() {
               </section>
 
               <section style={styles.section}>
-                <h2 style={styles.sectionTitle}>✏️ Manipulasi List (Menambah, Menghapus, Mengubah)</h2>
+                <h2 style={styles.sectionTitle}>✏️ Manipulasi List </h2>
                 <div style={styles.card}>
                   <h3>append() – Menambah Elemen di Akhir</h3>
                   <p>Method <code>append()</code> menambahkan satu elemen baru di akhir list.</p>

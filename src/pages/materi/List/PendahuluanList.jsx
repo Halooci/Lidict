@@ -537,7 +537,7 @@ sys.stdout = StringIO()
                   </div>
                   <CodeEditor 
                     code={exampleCodes.listSederhana} 
-                    title="Contoh: Membuat List" 
+                    title="Contoh Kode Program" 
                     pyodideReady={pyodideReady} 
                     runPythonCode={runPythonCode} 
                   />
@@ -588,7 +588,7 @@ nilai3 = 78
                   </ul>
                   <CodeEditor 
                     code={exampleCodes.aksesElemen} 
-                    title="Contoh: Akses Elemen dengan Indeks" 
+                    title="Contoh Kode Program" 
                     pyodideReady={pyodideReady} 
                     runPythonCode={runPythonCode} 
                   />
@@ -598,9 +598,9 @@ nilai3 = 78
                 </div>
               </section>
 
-              {/* LATIHAN PEMAHAMAN (QUIZ) */}
+              {/* LATIHAN (QUIZ) */}
               <section style={styles.section}>
-                <h2 style={styles.sectionTitle}>📝 Latihan Pemahaman</h2>
+                <h2 style={styles.sectionTitle}>📝 Latihan</h2>
                 <div style={styles.quizBox}>
                   <div style={styles.quizHeader}>Soal {quizCurrent+1} dari {quizQuestions.length}</div>
                   <div style={styles.quizContent}>
