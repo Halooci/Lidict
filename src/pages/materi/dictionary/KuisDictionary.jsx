@@ -1,6 +1,9 @@
 import { useState, useEffect, useRef } from "react";
 
 export default function KuisDictionary() {
+  // State untuk menampilkan halaman petunjuk
+  const [quizStarted, setQuizStarted] = useState(false);
+
   // State kuis
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState(Array(10).fill(null));
@@ -153,9 +156,9 @@ print(a)`,
     }
   ];
 
-  // Timer
+  // Timer hanya berjalan jika kuis sudah dimulai dan belum disubmit
   useEffect(() => {
-    if (submitted) return;
+    if (!quizStarted || submitted) return;
     timerRef.current = setInterval(() => {
       setTimeLeft(prev => {
         if (prev <= 1) {
@@ -167,7 +170,7 @@ print(a)`,
       });
     }, 1000);
     return () => clearInterval(timerRef.current);
-  }, [submitted]);
+  }, [quizStarted, submitted]);
 
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
@@ -246,6 +249,7 @@ print(a)`,
   };
 
   const resetQuiz = () => {
+    setQuizStarted(false); // Kembali ke halaman petunjuk
     setCurrentQuestion(0);
     setAnswers(Array(10).fill(null));
     setFlags(Array(10).fill(false));
@@ -255,16 +259,20 @@ print(a)`,
     setDragAnswers(Array(5).fill().map(() => []));
     setResultsData(null);
     if (timerRef.current) clearInterval(timerRef.current);
-    timerRef.current = setInterval(() => {
-      setTimeLeft(prev => {
-        if (prev <= 1) {
-          clearInterval(timerRef.current);
-          handleSubmit(true);
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
+  };
+
+  // Fungsi untuk memulai kuis
+  const startQuiz = () => {
+    setQuizStarted(true);
+    setTimeLeft(20 * 60);
+    setSubmitted(false);
+    setCurrentQuestion(0);
+    setAnswers(Array(10).fill(null));
+    setFlags(Array(10).fill(false));
+    setUnsures(Array(10).fill(false));
+    setDragAnswers(Array(5).fill().map(() => []));
+    setResultsData(null);
+    if (timerRef.current) clearInterval(timerRef.current);
   };
 
   // Halaman hasil
@@ -305,6 +313,41 @@ print(a)`,
     );
   }
 
+  // Halaman petunjuk (sebelum kuis dimulai)
+  if (!quizStarted) {
+    return (
+      <div style={instructionStyles.container}>
+        <div style={instructionStyles.card}>
+          <h1 style={instructionStyles.title}>📋 Kuis Dictionary</h1>
+          <div style={instructionStyles.infoBox}>
+            <p>⏱️ Durasi: <strong>20 Menit</strong></p>
+            <p>📝 Jumlah Soal: <strong>10 Butir</strong></p>
+            <p>🎯 Nilai Maksimal: <strong>100</strong></p>
+            <p>✅ Nilai Kelulusan Minimum: <strong>70</strong></p>
+          </div>
+          <div style={instructionStyles.petunjuk}>
+            <h3>📖 Petunjuk Pengerjaan</h3>
+            <ol>
+              <li>Aktivitas ini terdiri dari <strong>10 butir soal</strong>.</li>
+              <li>Tekan tombol <strong>MULAI</strong> di bawah untuk masuk ke halaman kuis.</li>
+              <li>Waktu pengerjaan akan <strong>dihitung mundur otomatis</strong> begitu Anda menekan tombol mulai.</li>
+              <li>Pastikan perangkat terhubung dengan <strong>koneksi internet yang stabil</strong>.</li>
+              <li>Kerjakan soal dengan teliti dan jujur.</li>
+              <li>Periksa kembali jawaban sebelum mengirimkan.</li>
+              <li>Jika waktu habis, jawaban yang sudah terisi akan <strong>tersimpan dan terkirim secara otomatis</strong>.</li>
+              <li>Anda dapat menandai soal dengan <strong>Flag</strong> (🚩) atau <strong>Ragu</strong> (🤔) untuk memudahkan navigasi.</li>
+            </ol>
+          </div>
+          <div style={instructionStyles.buttonGroup}>
+            <button onClick={startQuiz} style={instructionStyles.startButton}>Mulai</button>
+            <button onClick={() => window.history.back()} style={instructionStyles.cancelButton}>Batal & Kembali</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ================== Halaman Kuis (setelah mulai) ==================
   const q = questions[currentQuestion];
   const isFlagged = flags[currentQuestion];
   const isUnsure = unsures[currentQuestion];
@@ -429,7 +472,76 @@ print(a)`,
   );
 }
 
-// ==================== STYLE RESPONSIF (2 KOLOM -> 1 KOLOM) ====================
+// ==================== STYLE UNTUK HALAMAN PETUNJUK ====================
+const instructionStyles = {
+  container: {
+    minHeight: "100vh",
+    backgroundColor: "#f5f7fa",
+    fontFamily: "Poppins, sans-serif",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    padding: "20px",
+  },
+  card: {
+    maxWidth: "800px",
+    width: "100%",
+    backgroundColor: "white",
+    borderRadius: "12px",
+    padding: "30px",
+    boxShadow: "0 10px 30px rgba(0,0,0,0.1)",
+  },
+  title: {
+    textAlign: "center",
+    color: "#306998",
+    marginBottom: "20px",
+    fontSize: "28px",
+    fontWeight: "700",
+  },
+  infoBox: {
+    backgroundColor: "#e3f2fd",
+    padding: "15px",
+    borderRadius: "8px",
+    marginBottom: "25px",
+    display: "flex",
+    justifyContent: "space-around",
+    flexWrap: "wrap",
+    gap: "15px",
+    textAlign: "center",
+  },
+  petunjuk: {
+    marginBottom: "30px",
+  },
+  buttonGroup: {
+    display: "flex",
+    gap: "20px",
+    justifyContent: "center",
+  },
+  startButton: {
+    backgroundColor: "#28a745",
+    color: "white",
+    border: "none",
+    padding: "12px 30px",
+    borderRadius: "8px",
+    fontSize: "18px",
+    fontWeight: "bold",
+    cursor: "pointer",
+    transition: "0.2s",
+  },
+  cancelButton: {
+    backgroundColor: "#6c757d",
+    color: "white",
+    border: "none",
+    padding: "12px 30px",
+    borderRadius: "8px",
+    fontSize: "18px",
+    fontWeight: "bold",
+    cursor: "pointer",
+    transition: "0.2s",
+  },
+};
+
+// ==================== STYLE KUIS ====================
 const kuisStyles = {
   container: {
     minHeight: "100vh",
@@ -475,7 +587,7 @@ const kuisStyles = {
   mainContent: {
     display: "flex",
     gap: "30px",
-    flexDirection: "row", // default dua kolom
+    flexDirection: "row",
   },
   questionColumn: {
     flex: 2,
@@ -644,37 +756,6 @@ const kuisStyles = {
   },
 };
 
-// Media query untuk layar kecil
-const styleTag = document.createElement('style');
-styleTag.textContent = `
-  @media (max-width: 768px) {
-    .kuis-main-content {
-      flex-direction: column !important;
-    }
-  }
-`;
-// Terapkan style ke head (hanya sekali)
-if (!document.querySelector('#kuis-media-style')) {
-  styleTag.id = 'kuis-media-style';
-  document.head.appendChild(styleTag);
-}
-
-// Override style untuk media query karena kita tidak bisa menggunakan @media di style object
-// Kita gunakan CSS global
-const kuisStylesWithMedia = {
-  ...kuisStyles,
-  mainContent: {
-    ...kuisStyles.mainContent,
-    '@media (max-width: 768px)': {
-      flexDirection: 'column',
-    },
-  },
-};
-
-// Karena kita tidak bisa menulis @media di style object, kita override dengan CSS class
-// Untuk kemudahan, kita tambahkan class pada div
-// Tapi kita sudah menambahkan style tag global, jadi aman.
-
 const resultStyles = {
   container: {
     minHeight: "100vh",
@@ -730,3 +811,19 @@ const resultStyles = {
     fontSize: "16px",
   },
 };
+
+// CSS global untuk responsive
+if (typeof document !== 'undefined') {
+  const styleTag = document.createElement('style');
+  styleTag.textContent = `
+    @media (max-width: 768px) {
+      .kuis-main-content {
+        flex-direction: column !important;
+      }
+    }
+  `;
+  if (!document.querySelector('#kuis-media-style-dictionary')) {
+    styleTag.id = 'kuis-media-style-dictionary';
+    document.head.appendChild(styleTag);
+  }
+}

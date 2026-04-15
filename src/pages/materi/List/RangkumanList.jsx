@@ -8,10 +8,9 @@ export default function RangkumanList() {
   const pyodideRef = useRef(null);
   
   // State untuk setiap editor kode
-    // Ref untuk textarea latihan agar auto-focus
-  const latihanTextareaRef = useRef(null);
   const [codeOutputs, setCodeOutputs] = useState({});
   const [codeInputs, setCodeInputs] = useState({
+    // Karakteristik List (tanpa nested)
     ordered: `buah = ["durian", "nanas", "mangga", "rambutan"]
 print(buah)`,
     indexed: `data = ["durian", "nanas", "mangga", "rambutan"]
@@ -25,25 +24,90 @@ print(data)`,
     dynamic: `angka = [1, 2, 3]
 angka.append(4)
 print(angka)`,
-    nested: `nilai = [
-  ["Nova", 80, 90],
-  ["Cindy", 85, 88],
-  ["Sabrina", 78, 92]
-]
-print(nilai)
-print("Baris ke-2:", nilai[1])
-print("Elemen [1][0]:", nilai[1][0])`,
-        // LATIHAN KOSONG - hanya instruksi di komentar
-    latihan: `
+    
+    // Membuat List
+    createList: `# List kosong
+kosong = []
 
-`
+# List dengan nilai
+buah = ["apel", "jeruk", "mangga"]
+angka = [10, 20, 30]
+campuran = ["teks", 100, True, 3.14]
+
+print("buah:", buah)
+print("angka:", angka)
+print("campuran:", campuran)`,
+
+    // Akses Indeks Positif & Negatif
+    aksesPositif: `data = ["apel", 100, True, 3.14]
+print("data[0]:", data[0])
+print("data[1]:", data[1])
+print("data[2]:", data[2])
+print("data[3]:", data[3])`,
+    aksesNegatif: `data = ["apel", 100, True, 3.14]
+print("data[-1]:", data[-1])
+print("data[-2]:", data[-2])
+print("data[-3]:", data[-3])
+print("data[-4]:", data[-4])`,
+    slicing: `angka = [10, 20, 30, 40, 50]
+print("angka[1:4]:", angka[1:4])   # indeks 1,2,3
+print("angka[:3]:", angka[:3])     # 3 elemen pertama
+print("angka[2:]:", angka[2:])     # dari indeks 2 sampai akhir`,
+
+    // Operasi Dasar
+    concat: `a = [1, 2, 3]
+b = [4, 5, 6]
+c = a + b
+print("a + b =", c)`,
+    repeat: `data = [1, 2, 3]
+print("data * 3 =", data * 3)`,
+    keanggotaan: `buah = ["apel", "jeruk", "mangga"]
+print("apel" in buah)
+print("pisang" in buah)`,
+    panjang: `buah = ["apel", "jeruk", "mangga"]
+print("len(buah) =", len(buah))`,
+
+    // Manipulasi List
+    append: `buah = ["durian", "nanas", "mangga"]
+buah.append("rambutan")
+print(buah)`,
+    insert: `buah = ["durian", "nanas", "mangga"]
+buah.insert(1, "alpukat")
+print(buah)`,
+    extend: `buah = ["durian", "nanas"]
+buah.extend(["mangga", "rambutan"])
+print(buah)`,
+    remove: `buah = ["durian", "nanas", "mangga", "jeruk"]
+buah.remove("jeruk")
+print(buah)`,
+    pop: `buah = ["durian", "nanas", "mangga"]
+buah.pop(1)
+print(buah)`,
+    ubah: `buah = ["durian", "nanas", "mangga"]
+buah[2] = "semangka"
+print(buah)`,
+    sort: `angka = [5, 3, 8, 1, 7, 2]
+angka.sort()
+print(angka)`,
+    reverse: `angka = [1, 2, 3, 4]
+angka.reverse()
+print(angka)`,
+    clear: `buah = ["apel", "jeruk", "mangga"]
+buah.clear()
+print(buah)`,
+    count: `data = [1, 2, 2, 3]
+print("Jumlah angka 2:", data.count(2))`,
+    index: `data = [10, 20, 30, 20]
+print("Indeks pertama 20:", data.index(20))`,
+    del_slice: `angka = [10, 20, 30, 40, 50]
+del angka[1:4]
+print(angka)`,
   });
 
-  // Load Pyodide saat komponen mount
+  // Load Pyodide
   useEffect(() => {
     const loadPyodide = async () => {
       if (!window.loadPyodide) {
-        // Load script Pyodide jika belum ada
         const script = document.createElement('script');
         script.src = "https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js";
         script.async = true;
@@ -59,26 +123,10 @@ print("Elemen [1][0]:", nilai[1][0])`,
         setPyodideReady(true);
       }
     };
-    
     loadPyodide();
   }, []);
 
-    // Auto-focus textarea latihan saat komponen dimuat
-  // useEffect(() => {
-    // Delay sedikit agar DOM sudah siap
-    // const timer = setTimeout(() => {
-    //   if (latihanTextareaRef.current) {
-    //     latihanTextareaRef.current.focus();
-        // Posisikan cursor di akhir text
-  //       const length = latihanTextareaRef.current.value.length;
-  //       latihanTextareaRef.current.setSelectionRange(length, length);
-  //     }
-  //   }, 500);
-    
-  //   return () => clearTimeout(timer);
-  // }, []);
-
-  // Fungsi untuk menjalankan kode Python
+  // Fungsi menjalankan kode Python dengan metode StringIO (agar newline tetap terjaga)
   const runPythonCode = async (codeKey) => {
     if (!pyodideReady || !pyodideRef.current) {
       setCodeOutputs(prev => ({
@@ -90,21 +138,17 @@ print("Elemen [1][0]:", nilai[1][0])`,
 
     try {
       const pyodide = pyodideRef.current;
-      
-      // Redirect stdout ke variabel
-      pyodide.setStdout({ batched: (text) => {
-        setCodeOutputs(prev => ({
-          ...prev,
-          [codeKey]: (prev[codeKey] || "") + text
-        }));
-      }});
-      
-      // Clear output sebelumnya
-      setCodeOutputs(prev => ({ ...prev, [codeKey]: "" }));
-      
-      // Jalankan kode
+      // Redirect stdout ke StringIO
+      await pyodide.runPythonAsync(`
+import sys
+from io import StringIO
+sys.stdout = StringIO()
+      `);
       await pyodide.runPythonAsync(codeInputs[codeKey]);
-      
+      const output = await pyodide.runPythonAsync("sys.stdout.getvalue()");
+      // Kembalikan stdout ke default
+      await pyodide.runPythonAsync("sys.stdout = sys.__stdout__");
+      setCodeOutputs(prev => ({ ...prev, [codeKey]: output || "(Tidak ada output)" }));
     } catch (error) {
       setCodeOutputs(prev => ({
         ...prev,
@@ -113,68 +157,22 @@ print("Elemen [1][0]:", nilai[1][0])`,
     }
   };
 
-  // Update code input untuk yang editable
-  const updateCodeInput = (key, value) => {
-    setCodeInputs(prev => ({ ...prev, [key]: value }));
-  };
-
-  // Komponen reusable untuk editor kode Pyodide - READ ONLY VERSION
+  // Komponen editor read-only
   const CodeEditor = ({ codeKey, title }) => (
     <div style={styles.codeEditorContainer}>
       <div style={styles.codeEditorHeader}>
         <span style={styles.codeEditorTitle}>{title}</span>
-        <div style={styles.codeEditorButtons}>
-          <button 
-            style={styles.runButton}
-            onClick={() => runPythonCode(codeKey)}
-            disabled={!pyodideReady}
-          >
-            {pyodideReady ? "▶ Jalankan" : "⏳ Memuat..."}
-          </button>
-        </div>
+        <button 
+          style={styles.runButton}
+          onClick={() => runPythonCode(codeKey)}
+          disabled={!pyodideReady}
+        >
+          {pyodideReady ? "▶ Jalankan" : "⏳ Memuat..."}
+        </button>
       </div>
       <div style={styles.codeInputReadOnly}>
-        <pre style={styles.codePre}>
-          {codeInputs[codeKey]}
-        </pre>
+        <pre style={styles.codePre}>{codeInputs[codeKey]}</pre>
       </div>
-      {/* Header Output */}
-      <div style={styles.outputHeader}>
-        <span style={styles.outputTitle}>Output</span>
-      </div>
-      <div style={styles.codeOutput}>
-        <pre style={styles.outputContent}>
-          {codeOutputs[codeKey] || "(Klik 'Jalankan' untuk melihat hasil)"}
-        </pre>
-      </div>
-    </div>
-  );
-
-      // Komponen untuk editor kode yang BISA DIEDIT (Latihan Praktik)
-  const CodeEditorEditable = ({ codeKey, title }) => (
-    <div style={styles.codeEditorContainer}>
-      <div style={styles.codeEditorHeader}>
-        <span style={styles.codeEditorTitle}>{title}</span>
-        <div style={styles.codeEditorButtons}>
-          <button 
-            style={styles.runButton}
-            onClick={() => runPythonCode(codeKey)}
-            disabled={!pyodideReady}
-          >
-            {pyodideReady ? "▶ Jalankan" : "⏳ Memuat..."}
-          </button>
-        </div>
-      </div>
-      {/* TEXTAREA - HAPUS autoFocus */}
-      <textarea
-        ref={codeKey === 'latihan' ? latihanTextareaRef : null}
-        style={styles.codeInputEditable}
-        value={codeInputs[codeKey]}
-        onChange={(e) => updateCodeInput(codeKey, e.target.value)}
-        spellCheck={false}
-        // HAPUS: autoFocus={codeKey === 'latihan'}
-      />
-      {/* Header Output */}
       <div style={styles.outputHeader}>
         <span style={styles.outputTitle}>Output</span>
       </div>
@@ -189,197 +187,123 @@ print("Elemen [1][0]:", nilai[1][0])`,
   return (
     <>
       <Navbar />
-
       <div style={{ marginLeft: "280px" }}>
-        
         <SidebarMateri />
         <div style={{ paddingTop: "64px" }}>
           <div style={styles.page}>
-
-            {/* ================= HEADER ================= */}
+            {/* HEADER */}
             <div style={styles.header}>
               <div style={styles.headerAccent}></div>
-              <h1 style={styles.headerTitle}> RANGKUMAN LIST </h1>
+              <h1 style={styles.headerTitle}>RANGKUMAN LIST</h1>
             </div>
 
-            {/* MATERI */}
             <section style={styles.section}>
               <div style={styles.card}>
-
                 <p style={styles.text}>
-                  List adalah salah satu struktur data linier di Python yang
-                  digunakan untuk menyimpan sekumpulan elemen dalam satu variabel.
-                  Dikatakan linier karena elemen-elemen di dalamnya disusun secara
-                  berurutan dan dapat diakses menggunakan indeks. Python mengimplementasikan
-                  list sebagai array dinamis. Dalam Python, list ditulis menggunakan tanda 
-                  kurung siku [ ], dan setiap elemen dipisahkan dengan tanda koma. List memiliki
-                  beberapa karakteristik sebagai berikut.
+                  <strong>List</strong> adalah struktur data bawaan Python yang bersifat <strong>linier</strong>, 
+                  <strong>ordered</strong>, <strong>mutable</strong>, dan dapat menyimpan <strong>tipe data campuran</strong>. 
+                  Elemen list diakses menggunakan <strong>indeks</strong> (positif dari kiri, negatif dari kanan). 
+                  List sangat fleksibel karena ukurannya dapat berubah secara dinamis.
                 </p>
 
-                {/* 1. ORDERED */}
-                <h3 style={styles.subTitle}>1. Ordered (Terurut)</h3>
+                {/* ========== 1. KARAKTERISTIK LIST ========== */}
+                <h3 style={styles.subTitle}>1. Karakteristik List</h3>
+                <ul style={styles.list}>
+                  <li><strong>Ordered (Terurut):</strong> Urutan elemen sesuai saat dibuat.</li>
+                  <li><strong>Indexed (Memiliki Indeks):</strong> Indeks positif (0,1,2,...) dan negatif (-1,-2,...).</li>
+                  <li><strong>Mutable (Dapat Diubah):</strong> Elemen dapat ditambah, dihapus, atau diubah.</li>
+                  <li><strong>Heterogeneous (Tipe Campuran):</strong> Bisa berisi integer, string, boolean, float, dll.</li>
+                  <li><strong>Dynamic Size (Ukuran Dinamis):</strong> Ukuran otomatis bertambah saat ditambah elemen.</li>
+                </ul>
+
+                <CodeEditor codeKey="ordered" title="Contoh Ordered" />
+                <CodeEditor codeKey="indexed" title="Contoh Indeks Positif & Negatif" />
+                <CodeEditor codeKey="mutable" title="Contoh Mutable (Ubah Elemen)" />
+                <CodeEditor codeKey="heterogeneous" title="Contoh Tipe Data Campuran" />
+                <CodeEditor codeKey="dynamic" title="Contoh Ukuran Dinamis (append)" />
+
+                {/* ========== 2. MEMBUAT LIST ========== */}
+                <h3 style={styles.subTitle}>2. Membuat List</h3>
                 <p style={styles.text}>
-                  Elemen di dalam list tersusun sesuai urutan saat list dibuat.
-                  Urutan ini akan tetap sama kecuali dilakukan perubahan secara
-                  langsung oleh pengguna.
+                  List dibuat dengan tanda kurung siku <code>[]</code>, elemen dipisahkan koma. 
+                  Dapat berupa list kosong, list dengan satu tipe data, atau campuran.
                 </p>
+                <CodeEditor codeKey="createList" title="Berbagai Cara Membuat List" />
 
-                <CodeEditor 
-                  codeKey="ordered" 
-                  title="Contoh Kode Program"
-                />
-
+                {/* ========== 3. AKSES ELEMEN LIST ========== */}
+                <h3 style={styles.subTitle}>3. Akses Elemen List</h3>
                 <p style={styles.text}>
-                  Penjelasan: Urutan elemen pada list adalah durian, nanas,
-                  mangga, dan rambutan. Urutan ini tidak akan berubah selama
-                  tidak dilakukan pengubahan pada list tersebut.
+                  <strong>Indeks positif:</strong> dimulai dari 0 (elemen pertama).<br />
+                  <strong>Indeks negatif:</strong> dimulai dari -1 (elemen terakhir).<br />
+                  <strong>Slicing:</strong> <code>list[awal:akhir]</code> mengambil elemen dari indeks <code>awal</code> hingga sebelum <code>akhir</code>.
                 </p>
+                <CodeEditor codeKey="aksesPositif" title="Akses dengan Indeks Positif" />
+                <CodeEditor codeKey="aksesNegatif" title="Akses dengan Indeks Negatif" />
+                <CodeEditor codeKey="slicing" title="Slicing List" />
 
-                {/* 2. INDEXED */}
-                <h3 style={styles.subTitle}>2. Indexed (Memiliki Indeks)</h3>
-                <p style={styles.text}>
-                  Setiap elemen pada list memiliki indeks yang digunakan untuk
-                  mengakses elemen berdasarkan posisinya. Python menyediakan
-                  indeks positif (+) dan indeks negatif (-). Indeks positif 
-                  digunakan untuk menghitung dari awal list (dari kiri ke kanan)
-                  dan dimulai dari indeks ke-0. Sedangkan indeks negatif digunakan
-                  untuk menghitung dari akhir list (dari kanan ke kiri), sangat berguna
-                  bila kita ingin mengambil elemen terakhir tanpa mengetahui panjang list.
-                </p>
+                {/* ========== 4. OPERASI DASAR LIST ========== */}
+                <h3 style={styles.subTitle}>4. Operasi Dasar List</h3>
+                <ul style={styles.list}>
+                  <li><strong>Concatenation (+):</strong> Menggabungkan dua list.</li>
+                  <li><strong>Repetition (*):</strong> Mengulang list sebanyak n kali.</li>
+                  <li><strong>Keanggotaan (in):</strong> Mengecek apakah nilai ada di dalam list.</li>
+                  <li><strong>Panjang (len):</strong> Menghitung jumlah elemen.</li>
+                </ul>
+                <CodeEditor codeKey="concat" title="Concatenation (+)" />
+                <CodeEditor codeKey="repeat" title="Repetition (*)" />
+                <CodeEditor codeKey="keanggotaan" title="Operator in" />
+                <CodeEditor codeKey="panjang" title="Fungsi len()" />
 
-                <CodeEditor 
-                  codeKey="indexed" 
-                  title="Contoh Kode Program"
-                />
+                {/* ========== 5. MANIPULASI LIST ========== */}
+                <h3 style={styles.subTitle}>5. Manipulasi List (Menambah, Mengubah, Menghapus)</h3>
+                
+                <h4 style={styles.subSubTitle}>a. Menambah Elemen</h4>
+                <ul style={styles.list}>
+                  <li><code>append(x)</code> – tambah x di akhir.</li>
+                  <li><code>insert(i, x)</code> – sisip x pada indeks i.</li>
+                  <li><code>extend(iterable)</code> – tambah semua elemen dari iterable.</li>
+                </ul>
+                <CodeEditor codeKey="append" title="append()" />
+                <CodeEditor codeKey="insert" title="insert()" />
+                <CodeEditor codeKey="extend" title="extend()" />
 
-                <p style={styles.text}>
-                  Penjelasan: List data memiliki empat elemen. Elemen pertama
-                  dapat diakses menggunakan indeks 0, sedangkan elemen terakhir
-                  dapat diakses menggunakan indeks -1.
-                </p>
+                <h4 style={styles.subSubTitle}>b. Menghapus Elemen</h4>
+                <ul style={styles.list}>
+                  <li><code>remove(x)</code> – hapus elemen pertama yang bernilai x.</li>
+                  <li><code>pop(i)</code> – hapus elemen indeks i (kembalikan nilainya).</li>
+                  <li><code>clear()</code> – hapus semua elemen.</li>
+                  <li><code>del list[i]</code> atau <code>del list[i:j]</code> – hapus berdasarkan indeks/slice.</li>
+                </ul>
+                <CodeEditor codeKey="remove" title="remove()" />
+                <CodeEditor codeKey="pop" title="pop()" />
+                <CodeEditor codeKey="clear" title="clear()" />
+                <CodeEditor codeKey="del_slice" title="del (slice)" />
 
-                {/* 3. MUTABLE */}
-                <h3 style={styles.subTitle}>3. Mutable (Dapat Diubah)</h3>
-                <p style={styles.text}>
-                  List bersifat mutable, artinya elemen di dalam list dapat
-                  diubah, ditambah, atau dihapus tanpa membuat list baru,
-                  sifat ini meembuat list sangat fleksibel dalam pengolahan data.
-                </p>
+                <h4 style={styles.subSubTitle}>c. Mengubah Elemen</h4>
+                <p style={styles.text}>Menugaskan nilai baru ke indeks tertentu: <code>list[indeks] = nilai_baru</code></p>
+                <CodeEditor codeKey="ubah" title="Mengubah Elemen" />
 
-                <CodeEditor 
-                  codeKey="mutable" 
-                  title="Contoh Kode Program"
-                />
+                <h4 style={styles.subSubTitle}>d. Pengurutan & Pembalikan</h4>
+                <ul style={styles.list}>
+                  <li><code>sort()</code> – mengurutkan ascending (permanen).</li>
+                  <li><code>reverse()</code> – membalik urutan (permanen).</li>
+                </ul>
+                <CodeEditor codeKey="sort" title="sort()" />
+                <CodeEditor codeKey="reverse" title="reverse()" />
 
-                <p style={styles.text}>
-                  Penjelasan: Elemen dengan indeks ke-1 diubah dari nanas
-                  menjadi semangka.
-                </p>
-
-                {/* 4. HETEROGENEOUS */}
-                <h3 style={styles.subTitle}>
-                  4. Heterogeneous (Tipe Data Campuran)
-                </h3>
-
-                <p style={styles.text}>
-                  List dapat menyimpan berbagai tipe data dalam satu struktur,
-                  seperti string, integer, float, dan boolean.
-                </p>
-              
-                <CodeEditor 
-                  codeKey="heterogeneous" 
-                  title="Contoh Kode Program"
-                />
-
-                <p style={styles.text}>
-                  Penjelasan: Dalam satu list terdapat berbagai tipe data,
-                  yaitu string ("Andi"), integer (20), float (175.5),
-                  dan boolean (True).
-                </p>
-
-                {/* 5. DYNAMIC SIZE */}
-                <h3 style={styles.subTitle}>
-                  5. Dynamic Size (Ukuran Dinamis)
-                </h3>
-
-                <p style={styles.text}>
-                  List memiliki ukuran yang dinamis, artinya ukuran list dapat
-                  berubah secara otomatis ketika elemen ditambahkan atau
-                  dihapus.
-                </p>
-
-                <CodeEditor 
-                  codeKey="dynamic" 
-                  title="Contoh Kode Program"
-                />
+                <h4 style={styles.subSubTitle}>e. Method Informasi Lainnya</h4>
+                <ul style={styles.list}>
+                  <li><code>count(x)</code> – jumlah kemunculan x.</li>
+                  <li><code>index(x)</code> – indeks pertama x.</li>
+                </ul>
+                <CodeEditor codeKey="count" title="count()" />
+                <CodeEditor codeKey="index" title="index()" />
 
                 <p style={styles.text}>
-                  Penjelasan: Python menyesuaikan ukuran list secara otomatis
-                  saat elemen baru ditambahkan.
+                  Dengan memahami karakteristik, pembuatan, akses, operasi dasar, dan manipulasi list, 
+                  Anda siap menggunakan list untuk menyelesaikan berbagai masalah pemrograman secara efisien.
                 </p>
-
-                {/* 6. NESTED LIST */}
-                <h3 style={styles.subTitle}>6. Nested List</h3>
-
-                <p style={styles.text}>
-                  Nested list adalah list yang berisi list lain di dalamnya.
-                  Nested list digunakan untuk merepresentasikan data bertingkat
-                  atau data dua dimensi, seperti tabel nilai, matriks, atau data kelompok.
-                  Setiap elemen dalamn nested list dapat berupa list baru. Nested list 
-                  banyak digunakan untuk membuat representasi tabel sederhana.
-                </p>
-
-                <p style={styles.text}>
-                    <strong>Contoh data nilai mahasiswa:</strong>
-                </p>
-
-                <table
-                  style={{
-                    width: "100%",
-                    borderCollapse: "collapse",
-                    marginTop: "15px",
-                    marginBottom: "20px",
-                  }}
-                >
-
-                                    <thead>
-                    <tr style={{ backgroundColor: "#306998", color: "white" }}>
-                      <th style={styles.td}>Nama</th>
-                      <th style={styles.td}>UTS</th>
-                      <th style={styles.td}>UAS</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td style={styles.td}>Nova</td>
-                      <td style={styles.td}>80</td>
-                      <td style={styles.td}>90</td>
-                    </tr>
-                    <tr>
-                      <td style={styles.td}>Cindy</td>
-                      <td style={styles.td}>85</td>
-                      <td style={styles.td}>88</td>
-                    </tr>
-                    <tr>
-                      <td style={styles.td}>Sabrina</td>
-                      <td style={styles.td}>78</td>
-                      <td style={styles.td}>92</td>
-                    </tr>
-                  </tbody>
-                </table>
-
-                <CodeEditor 
-                  codeKey="nested" 
-                  title="Contoh Kode Program"
-                />
-
-                <p style={styles.text}>
-                  Penjelasan: Setiap baris tabel direpresentasikan sebagai satu
-                  list, dan seluruh data disimpan dalam satu list utama.
-                </p>
-
               </div>
-            
             </section>
           </div>
         </div>
@@ -420,31 +344,16 @@ const styles = {
     fontWeight: "700"
   },
   section: { marginBottom: "40px" },
-  sectionTitle: {
-    fontSize: "22px",
-    fontWeight: "700",
-    marginBottom: "15px",
-    borderLeft: "5px solid #306998",
-    paddingLeft: "12px"
-  },
   card: {
     backgroundColor: "white",
     borderRadius: "10px",
     padding: "20px",
     boxShadow: "0 5px 15px rgba(0,0,0,0.08)"
   },
-  list: { paddingLeft: "20px", lineHeight: "1.8" },
-  text: { lineHeight: "1.8", color: "#333" },
-  subTitle: { marginTop: "22px", color: "#306998" },
-  code: {
-    backgroundColor: "#272822",
-    color: "#f8f8f2",
-    padding: "15px",
-    borderRadius: "8px",
-    fontFamily: "monospace",
-    overflow: "auto"
-  },
-  // Styles untuk Code Editor Pyodide
+  list: { paddingLeft: "20px", lineHeight: "1.8", marginBottom: "15px" },
+  text: { lineHeight: "1.8", color: "#333", marginBottom: "15px" },
+  subTitle: { marginTop: "28px", marginBottom: "10px", color: "#306998", fontSize: "1.4rem", fontWeight: "600" },
+  subSubTitle: { marginTop: "20px", marginBottom: "8px", color: "#2c5282", fontSize: "1.2rem", fontWeight: "600" },
   codeEditorContainer: {
     border: "2px solid #306998",
     borderRadius: "10px",
@@ -460,14 +369,7 @@ const styles = {
     justifyContent: "space-between",
     alignItems: "center"
   },
-  codeEditorTitle: {
-    fontWeight: "600",
-    fontSize: "14px"
-  },
-  codeEditorButtons: {
-    display: "flex",
-    gap: "10px"
-  },
+  codeEditorTitle: { fontWeight: "600", fontSize: "14px" },
   runButton: {
     backgroundColor: "#FFD43B",
     color: "#306998",
@@ -479,7 +381,6 @@ const styles = {
     fontSize: "13px",
     transition: "all 0.2s"
   },
-  // Style untuk area kode yang read-only
   codeInputReadOnly: {
     width: "100%",
     minHeight: "120px",
@@ -498,33 +399,13 @@ const styles = {
     wordWrap: "break-word",
     fontFamily: "monospace"
   },
-  // BARU: Style untuk textarea yang bisa diedit
-  codeInputEditable: {
-    width: "100%",
-    minHeight: "200px",
-    backgroundColor: "#272822",
-    color: "#f8f8f2",
-    border: "none",
-    padding: "15px",
-    fontFamily: "monospace",
-    fontSize: "14px",
-    lineHeight: "1.5",
-    resize: "vertical",
-    outline: "none",
-    direction: "ltr",        // <-- TAMBAHKAN INI
-    textAlign: "left"
-  },
-  // BARU: Header Output
   outputHeader: {
     backgroundColor: "#306998",
     color: "white",
     padding: "10px 15px",
     borderTop: "2px solid #1e1e1e"
   },
-  outputTitle: {
-    fontWeight: "600",
-    fontSize: "14px"
-  },
+  outputTitle: { fontWeight: "600", fontSize: "14px" },
   codeOutput: {
     backgroundColor: "#1e1e1e",
     padding: "15px",
@@ -537,65 +418,5 @@ const styles = {
     margin: 0,
     whiteSpace: "pre-wrap",
     wordWrap: "break-word"
-  },
-  quizBox: {
-    border: "2px solid #2fa69a",
-    borderRadius: "12px",
-    overflow: "hidden",
-    backgroundColor: "#ffffff"
-  },
-  quizHeader: {
-    backgroundColor: "#cfd8e6",
-    padding: "15px",
-    fontWeight: "600"
-  },
-  quizContent: { padding: "20px" },
-  quizQuestion: { marginBottom: "20px", whiteSpace: "pre-line" },
-  quizOption: {
-    padding: "12px",
-    marginBottom: "10px",
-    borderRadius: "8px",
-    border: "1px solid #2fa69a",
-    cursor: "pointer"
-  },
-  quizError: {
-    marginTop: "15px",
-    backgroundColor: "#f8d7da",
-    color: "#842029",
-    padding: "12px",
-    borderRadius: "8px"
-  },
-  quizSuccess: {
-    marginTop: "15px",
-    backgroundColor: "#d1e7dd",
-    color: "#0f5132",
-    padding: "12px",
-    borderRadius: "8px"
-  },
-  quizFooter: {
-    display: "flex",
-    justifyContent: "space-between",
-    padding: "15px"
-  },
-  primaryButton: {
-    backgroundColor: "#1e63d5",
-    color: "white",
-    border: "none",
-    padding: "8px 18px",
-    borderRadius: "8px",
-    cursor: "pointer"
-  },
-  secondaryButton: {
-    backgroundColor: "#9ca3af",
-    color: "white",
-    border: "none",
-    padding: "8px 18px",
-    borderRadius: "8px",
-    cursor: "pointer"
-  },
-  td: {
-    border: "1px solid #ddd",
-    padding: "10px",
-    textAlign: "center"
   }
 };
