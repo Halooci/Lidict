@@ -557,7 +557,7 @@ _buffer.getvalue()
           {/* HEADER */}
           <div style={styles.header}>
             <div style={styles.headerAccent}></div>
-            <h1 style={styles.headerTitle}>OPERASI NESTED LIST</h1>
+            <h1 style={styles.headerTitle}>OPERASI  DAN MANIPULASI NESTED LIST</h1>
           </div>
 
           {/* TUJUAN PEMBELAJARAN */}
@@ -620,7 +620,7 @@ _buffer.getvalue()
 
           {/* LATIHAN PRAKTIK (CODING) */}
           <section style={styles.section}>
-            <h2 style={styles.sectionTitle}>Latihan Praktik</h2>
+            <h2 style={styles.sectionTitle}>Ayo Praktik!</h2>
             <div style={styles.card}>
               <div style={styles.alertBox}>
                 <strong>📝 Instruksi:</strong>
@@ -632,7 +632,7 @@ _buffer.getvalue()
               </div>
               <CodeEditorEditable
                 codeKey="latihan"
-                title="Latihan Operasi Nested List"
+                title="Ayo Praktik"
                 validationRules={{}}
                 pyodideReady={pyodideReady}
                 runPythonCode={runPythonCode}
@@ -643,7 +643,7 @@ _buffer.getvalue()
 
           {/* LATIHAN INTERAKTIF - 5 SOAL */}
           <section style={styles.section}>
-            <h2 style={styles.sectionTitle}>Latihan Interaktif</h2>
+            <h2 style={styles.sectionTitle}>Latihan</h2>
             <div style={styles.card}>
               <p style={styles.text}>Isilah bagian yang kosong pada kode (soal 1-2) dan drag pilihan ke area kosong (soal 3-5). Anda dapat mencoba berulang kali hingga jawaban benar.</p>
               <button style={styles.resetButton} onClick={resetInteractiveQuestions}>↻ Reset Semua Jawaban</button>

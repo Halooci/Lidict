@@ -93,7 +93,7 @@ export default function SidebarMateri() {
         >
           <SubItem label="Pendahuluan Nested List" to="/NestedList/PendahuluanNestedList" currentPath={currentPath} />
           <SubItem label="Pembuatan dan Akses Elemen Nested List" to="/NestedList/PembuatanAksesNestedList" currentPath={currentPath} />
-          <SubItem label="Operasi Nested List" to="/NestedList/OperasiNestedList" currentPath={currentPath} />
+          <SubItem label="Operasi dan Manipulasi Nested List" to="/NestedList/OperasiNestedList" currentPath={currentPath} />
           <SubItem label="Rangkuman Nested List" to="/NestedList/RangkumanNestedList" currentPath={currentPath} />
           <SubItem label="Kuis Nested List" to="/NestedList/KuisNestedList" currentPath={currentPath} />
         </Accordion>
