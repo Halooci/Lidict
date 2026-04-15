@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import Navbar from "../../komponen/Navbar";
 import SidebarMateri from "../../komponen/SidebarMateri";
 
-// ================= STYLE GLOBAL =================
+// ================= STYLE GLOBAL (sama seperti sebelumnya) =================
 const styles = {
   page: {
     padding: "30px 40px",
@@ -164,45 +164,6 @@ const styles = {
     borderRadius: "8px",
     textAlign: "center",
     color: "#92400e",
-  },
-  quizBox: {
-    border: "2px solid #2fa69a",
-    borderRadius: "12px",
-    overflow: "hidden",
-    backgroundColor: "#ffffff",
-  },
-  quizHeader: { backgroundColor: "#cfd8e6", padding: "15px", fontWeight: "600" },
-  quizContent: { padding: "20px" },
-  quizQuestion: { marginBottom: "20px", whiteSpace: "pre-line" },
-  quizOption: {
-    padding: "12px",
-    marginBottom: "10px",
-    borderRadius: "8px",
-    border: "1px solid #2fa69a",
-    cursor: "pointer",
-  },
-  quizError: {
-    marginTop: "15px",
-    backgroundColor: "#f8d7da",
-    color: "#842029",
-    padding: "12px",
-    borderRadius: "8px",
-  },
-  quizSuccess: {
-    marginTop: "15px",
-    backgroundColor: "#d1e7dd",
-    color: "#0f5132",
-    padding: "12px",
-    borderRadius: "8px",
-  },
-  quizFooter: { display: "flex", justifyContent: "space-between", padding: "15px" },
-  quizNavButton: {
-    border: "none",
-    padding: "8px 18px",
-    borderRadius: "8px",
-    cursor: "pointer",
-    fontWeight: "600",
-    transition: "all 0.2s ease",
   },
   errorBox: {
     backgroundColor: "#ff4444",
@@ -537,7 +498,7 @@ const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, highlightM
   );
 };
 
-// ================= KOMPONEN UNTUK LATIHAN PRAKTIK CODING (DIREVISI TOPIKNYA) =================
+// ================= KOMPONEN UNTUK LATIHAN PRAKTIK CODING =================
 const CodeEditorEditable = ({ title, pyodideReady, runPythonCode }) => {
   const [localCode, setLocalCode] = useState("");
   const [output, setOutput] = useState("");
@@ -559,44 +520,34 @@ const CodeEditorEditable = ({ title, pyodideReady, runPythonCode }) => {
     setIsRunning(true);
 
     const trimmed = localCode.trim();
-    // Validasi: harus membuat variabel nilai dengan isi [85, 90, 78, 92, 88]
-    if (!trimmed.includes("nilai =")) {
-      setError("❌ ERROR: Buat variabel 'nilai' dengan isi [85, 90, 78, 92, 88].");
+    if (!trimmed.includes("belanja =")) {
+      setError("❌ ERROR: Kamu harus membuat variabel 'belanja'.");
       setIsRunning(false);
       return;
     }
-    const regexCreate = /nilai\s*=\s*\[\s*85\s*,\s*90\s*,\s*78\s*,\s*92\s*,\s*88\s*\]/;
-    if (!regexCreate.test(trimmed)) {
-      setError("❌ ERROR: Isi list harus [85, 90, 78, 92, 88].");
+    const regex = /belanja\s*=\s*\[\s*["']apel["']\s*,\s*["']jeruk["']\s*,\s*["']mangga["']\s*\]/;
+    if (!regex.test(trimmed)) {
+      setError("❌ ERROR: Isi list harus ['apel', 'jeruk', 'mangga'].");
       setIsRunning(false);
       return;
     }
-    // Validasi mencetak elemen pertama (indeks 0)
-    if (!/print\s*\(\s*nilai\s*\[\s*0\s*\]\s*\)/.test(trimmed)) {
-      setError("❌ ERROR: Cetak elemen pertama dengan print(nilai[0]).");
+    if (!/print\s*\(\s*belanja\s*\[\s*0\s*\]\s*\)/.test(trimmed)) {
+      setError("❌ ERROR: Kamu harus mencetak elemen pertama dengan print(belanja[0]).");
       setIsRunning(false);
       return;
     }
-    // Validasi mencetak elemen terakhir (indeks -1)
-    if (!/print\s*\(\s*nilai\s*\[\s*-\s*1\s*\]\s*\)/.test(trimmed)) {
-      setError("❌ ERROR: Cetak elemen terakhir dengan print(nilai[-1]).");
-      setIsRunning(false);
-      return;
-    }
-    // Validasi slicing tiga nilai tengah (indeks 1 sampai 4)
-    if (!/print\s*\(\s*nilai\s*\[\s*1\s*:\s*4\s*\]\s*\)/.test(trimmed)) {
-      setError("❌ ERROR: Cetak tiga nilai tengah dengan print(nilai[1:4]).");
+    if (!/print\s*\(\s*belanja\s*\[\s*-\s*1\s*\]\s*\)/.test(trimmed)) {
+      setError("❌ ERROR: Kamu harus mencetak elemen terakhir dengan print(belanja[-1]).");
       setIsRunning(false);
       return;
     }
 
     const result = await runPythonCode(localCode);
     setOutput(result);
-    // Cek output: harus mengandung 85, 88, dan [90,78,92] (perhatikan spasi setelah koma)
-    if (result.includes("85") && result.includes("88") && (result.includes("[90, 78, 92]") || result.includes("[90,78,92]"))) {
+    if (result.includes("apel") && result.includes("mangga")) {
       setOutput(result + "\n\n✅ SELAMAT! Jawaban kamu BENAR!");
     } else {
-      setOutput(result + "\n\n⚠️ Output tidak sesuai. Pastikan kamu mencetak elemen pertama (85), terakhir (88), dan slicing [1:4] menghasilkan [90,78,92].");
+      setOutput(result + "\n\n⚠️ Output tidak sesuai. Pastikan kamu mencetak elemen pertama dan terakhir.");
     }
     setIsRunning(false);
   }, [localCode, pyodideReady, runPythonCode]);
@@ -872,21 +823,21 @@ print("Indeks 1 sampai 3:", angka[1:4])`;
     indices: [1, 2, 3],
     explanations: [
       "✂️ Slicing `angka[1:4]` → mulai dari indeks 1 (nilai 20), berhenti SEBELUM indeks 4 (nilai 50 tidak termasuk).",
-      "✂️ Mengambil indeks 2 (nilai 30).",
-      "✂️ Mengambil indeks 3 (nilai 40). Hasil slicing adalah list baru [20,30,40]."
+      "✂️ Mengambil elemen indeks 2 (nilai 30).",
+      "✂️ Mengambil elemen indeks 3 (nilai 40). Hasil slicing adalah list baru [20,30,40]."
     ]
   });
 
   // Soal interaktif
-  const soal1CodeParts = ["buah = [\"apel\", \"jeruk\", \"mangga\"]\nprint(buah[", "])"];
+  const soal1CodeParts = ["buah = [\"apel\", \"jeruk\", \"mangga\"]\nprint(buah[", "])  # ingin mencetak 'jeruk'"];
   const soal1Placeholders = [""];
   const soal1Expected = ["1"];
 
-  const soal2CodeParts = ["nilai = [10, 20, 30, 40]\nprint(nilai[", "])"];
+  const soal2CodeParts = ["nilai = [10, 20, 30, 40]\nprint(nilai[", "])  # ingin mencetak 30"];
   const soal2Placeholders = [""];
   const soal2Expected = ["2"];
 
-  const soal3CodeParts = ["data = [5, 10, 15, 20]\nprint(data[", "])"];
+  const soal3CodeParts = ["data = [5, 10, 15, 20]\nprint(data[", "])  # menggunakan indeks negatif untuk mencetak 15"];
   const soal3Placeholders = [""];
   const soal3Expected = ["-2"];
 
@@ -1011,13 +962,14 @@ sys.stdout = StringIO()
           {/* MATERI UTAMA */}
           {isEksplorasiCompleted && (
             <>
-              {/* MEMBUAT LIST (tanpa visualisasi) */}
+              {/* MEMBUAT LIST */}
               <section style={styles.section}>
                 <h2 style={styles.sectionTitle}>📝 Membuat List</h2>
                 <div style={styles.card}>
                   <p style={styles.text}>
                     List dibuat dengan tanda kurung siku <code>[]</code> dan elemen dipisahkan koma. 
                     List dapat berisi berbagai tipe data (integer, string, boolean, float, dll) dalam satu list.
+                    List bersifat <strong>mutable</strong> (dapat diubah setelah dibuat) dan <strong>ordered</strong> (mempertahankan urutan elemen sesuai saat dibuat).
                   </p>
                   <div style={styles.codeEditorContainer}>
                     <div style={styles.codeEditorHeader}>
@@ -1026,9 +978,6 @@ sys.stdout = StringIO()
                     <div style={styles.codeInputReadOnly}>
                       <pre style={styles.codePre}>{contohMembuatList}</pre>
                     </div>
-                  </div>
-                  <div style={styles.infoBox}>
-                    <strong>📌 Catatan:</strong> List bersifat <strong>mutable</strong> (dapat diubah) dan <strong>ordered</strong> (mempertahankan urutan).
                   </div>
                 </div>
               </section>
@@ -1058,7 +1007,8 @@ sys.stdout = StringIO()
                 <h2 style={styles.sectionTitle}>🔍 Akses Elemen (Indeks Negatif)</h2>
                 <div style={styles.card}>
                   <p style={styles.text}>
-                    Indeks negatif: <strong>-1</strong> untuk elemen terakhir, <strong>-2</strong> untuk kedua terakhir, dst. Contoh di bawah menggunakan list yang sama.
+                    Python juga mendukung indeks negatif untuk mengakses elemen dari belakang. 
+                    Indeks <strong>-1</strong> untuk elemen terakhir, <strong>-2</strong> untuk kedua terakhir, dst.
                   </p>
                   <CodeEditorWithVisual
                     code={contohAksesNegatif}
@@ -1078,7 +1028,19 @@ sys.stdout = StringIO()
                 <h2 style={styles.sectionTitle}>✂️ Slicing List</h2>
                 <div style={styles.card}>
                   <p style={styles.text}>
-                    Slicing <code>list[awal:akhir]</code> mengambil elemen dari indeks `awal` hingga sebelum `akhir`.
+                    <strong>Slicing</strong> adalah teknik untuk mengambil sebagian elemen dari list. 
+                    Format penulisannya adalah <code>list[awal:akhir]</code>, di mana:
+                  </p>
+                  <ul style={styles.list}>
+                    <li><code>awal</code> adalah indeks mulai (termasuk).</li>
+                    <li><code>akhir</code> adalah indeks berhenti (tidak termasuk).</li>
+                    <li>Jika <code>awal</code> dikosongkan, berarti mulai dari indeks 0.</li>
+                    <li>Jika <code>akhir</code> dikosongkan, berarti sampai akhir list.</li>
+                  </ul>
+                  <p style={styles.text}>
+                    Contoh: <code>list[:3]</code> mengambil 3 elemen pertama (indeks 0,1,2).<br />
+                    <code>list[2:]</code> mengambil elemen dari indeks 2 sampai akhir.<br />
+                    <code>list[1:4]</code> mengambil elemen indeks 1,2,3.
                   </p>
                   <CodeEditorWithVisual
                     code={contohSlicing}
@@ -1089,28 +1051,50 @@ sys.stdout = StringIO()
                     pyodideReady={pyodideReady}
                     runPythonCode={runPythonCode}
                   />
-                  <div style={styles.highlightBox}>
-                    <strong>💡 Tips:</strong> <code>list[:3]</code> mengambil 3 elemen pertama, <code>list[2:]</code> dari indeks 2 sampai akhir.
-                  </div>
                 </div>
               </section>
 
-              {/* LATIHAN PRAKTIK CODING - TOPIK BARU: DATA NILAI SISWA */}
+              {/* MENGAPA PERLU LIST - dengan keunggulan yang sudah diperbaiki */}
               <section style={styles.section}>
-                <h2 style={styles.sectionTitle}>💻 Latihan Praktik</h2>
+                <h2 style={styles.sectionTitle}>📚 Mengapa Perlu List?</h2>
                 <div style={styles.card}>
                   <p style={styles.text}>
-                    <strong>Studi Kasus: Data Nilai Ujian Siswa</strong><br />
-                    Seorang guru ingin mengelola nilai ujian siswa. Buatlah program Python yang:
+                    Tanpa list, kita harus membuat banyak variabel terpisah yang tidak efisien.
+                  </p>
+                  <div style={styles.highlightBox}>
+                    <pre style={styles.code}>{`# Tidak efisien dengan variabel terpisah
+nilai1 = 85
+nilai2 = 90
+nilai3 = 78
+# ... sulit diolah`}</pre>
+                  </div>
+                  <p style={styles.text}>
+                    Dengan list, data menjadi terstruktur, mudah diakses dengan perulangan, dan ringkas.
+                  </p>
+                  <div style={styles.infoBox}>
+                    <strong>Keunggulan List:</strong> Menghemat jumlah variabel dan dapat ditambah, dihapus, atau diubah elemennya.
+                  </div>
+                  <p style={styles.text}>
+                    Materi selanjutnya akan membahas lebih detail tentang pembuatan, akses, operasi, dan manipulasi list.
+                  </p>
+                </div>
+              </section>
+
+              {/* AYO PRAKTIK */}
+              <section style={styles.section}>
+                <h2 style={styles.sectionTitle}>💻 Ayo Praktik</h2>
+                <div style={styles.card}>
+                  <p style={styles.text}>
+                    <strong>Studi Kasus: Daftar Belanja</strong><br />
+                    Buatlah program Python yang:
                   </p>
                   <ol style={styles.list}>
-                    <li>Membuat list bernama <code>nilai</code> dengan isi <code>[85, 90, 78, 92, 88]</code>.</li>
-                    <li>Menampilkan elemen <strong>pertama</strong> (85) menggunakan indeks positif.</li>
-                    <li>Menampilkan elemen <strong>terakhir</strong> (88) menggunakan indeks negatif.</li>
-                    <li>Menampilkan <strong>tiga nilai tengah</strong> (90, 78, 92) menggunakan slicing.</li>
+                    <li>Membuat list bernama <code>belanja</code> dengan isi <code>["apel", "jeruk", "mangga"]</code>.</li>
+                    <li>Menampilkan elemen <strong>pertama</strong> (apel) menggunakan indeks positif.</li>
+                    <li>Menampilkan elemen <strong>terakhir</strong> (mangga) menggunakan indeks negatif.</li>
                   </ol>
                   <CodeEditorEditable
-                    title="Latihan: Data Nilai Siswa"
+                    title="Ayo Praktik"
                     pyodideReady={pyodideReady}
                     runPythonCode={runPythonCode}
                   />

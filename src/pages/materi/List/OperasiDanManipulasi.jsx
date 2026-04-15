@@ -1699,10 +1699,10 @@ export default function OperasiManipulasiList() {
               </section>
 
               <section style={styles.section}>
-                <h2 style={styles.sectionTitle}>💻 Latihan Praktik</h2>
+                <h2 style={styles.sectionTitle}>💻 AYO PRAKTIK!</h2>
                 <div style={styles.card}>
                   <p style={styles.text}>
-                    <strong>📖 Cerita: Manajemen Daftar Belanja</strong><br />
+                    <strong>📖 Studi Kasus: Manajemen Daftar Belanja</strong><br />
                     Andi pergi ke pasar untuk membeli buah. Ia ingin membeli apel, jeruk, dan mangga. 
                     Karena lupa membawa catatan, ia menyimpan daftar belanjanya dalam sebuah list Python bernama <code>belanja</code>.
                     Sesampainya di pasar, ia melihat pisang yang segar dan memutuskan untuk menambahkannya ke dalam daftar belanja di akhir.
@@ -1711,12 +1711,12 @@ export default function OperasiManipulasiList() {
                     Terakhir, ia ingin melihat isi daftar belanjanya yang sudah diperbarui.
                   </p>
                   <p style={styles.text}>Buatlah program Python sesuai cerita di atas!</p>
-                  <CodeEditorEditable title="Latihan Daftar Belanja" pyodideReady={pyodideReady} runPythonCode={runPythonCode} />
+                  <CodeEditorEditable title="Ayo Praktik" pyodideReady={pyodideReady} runPythonCode={runPythonCode} />
                 </div>
               </section>
 
               <section style={styles.section}>
-                <h2 style={styles.sectionTitle}>🧩 Latihan Interaktif: Drag & Drop Matching</h2>
+                <h2 style={styles.sectionTitle}>🧩 Latihan</h2>
                 <div style={styles.card}>
                   <p>Seret fungsi/method list ke kegunaan yang sesuai. Setelah semua terisi, klik "Periksa Jawaban".</p>
                   <DragDropMatching items={matchingItems} resetTrigger={resetMatching} />
