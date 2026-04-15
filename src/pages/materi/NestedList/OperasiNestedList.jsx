@@ -209,7 +209,6 @@ const DragDropCompletionQuestion = ({ question, codeTemplate, placeholders, opti
     e.dataTransfer.dropEffect = "copy";
   };
 
-  // Fungsi drop untuk satu slot tertentu
   const handleDrop = useCallback((e, idx) => {
     e.preventDefault();
     e.stopPropagation();
@@ -251,7 +250,6 @@ const DragDropCompletionQuestion = ({ question, codeTemplate, placeholders, opti
     }
   };
 
-  // Memecah template berdasarkan placeholder ___
   const renderCodeWithDropZones = () => {
     const parts = codeTemplate.split(/(___)/g);
     let placeholderIndex = 0;
@@ -347,6 +345,7 @@ export default function OperasiNestedList() {
   const [pyodideReady, setPyodideReady] = useState(false);
   const pyodideRef = useRef(null);
   const [resetInteractives, setResetInteractives] = useState(0);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true); // State untuk sidebar
 
   // Contoh kode read-only (tetap sama)
   const exampleCodes = {
@@ -543,149 +542,156 @@ _buffer.getvalue()
   return (
     <>
       <Navbar />
-      <div style={{ marginLeft: "280px" }}>
-        <SidebarMateri />
-        <div style={{ paddingTop: "64px" }}>
-          <div style={styles.page}>
-            {/* HEADER */}
-            <div style={styles.header}>
-              <div style={styles.headerAccent}></div>
-              <h1 style={styles.headerTitle}>OPERASI NESTED LIST</h1>
-            </div>
-
-            {/* TUJUAN PEMBELAJARAN */}
-            <section style={styles.section}>
-              <h2 style={styles.sectionTitle}>Tujuan Pembelajaran</h2>
-              <div style={styles.card}>
-                <ol style={styles.list}>
-                  <li>Mahasiswa mampu mengakses elemen dalam nested list menggunakan indeks.</li>
-                  <li>Mahasiswa mampu mengubah nilai elemen dalam nested list.</li>
-                  <li>Mahasiswa mampu menambah, menyisipkan, dan menghapus baris pada nested list.</li>
-                  <li>Mahasiswa mampu menambah dan menghapus kolom (elemen) pada setiap baris.</li>
-                  <li>Mahasiswa mampu mencari nilai dalam nested list.</li>
-                  <li>Mahasiswa mampu melakukan iterasi pada nested list.</li>
-                  <li>Mahasiswa mampu menggabungkan dua nested list.</li>
-                </ol>
-              </div>
-            </section>
-
-            {/* MATERI (lengkap) */}
-            <section style={styles.section}>
-              <div style={styles.card}>
-                <h3 style={styles.subTitle}>1. Mengakses Elemen Nested List</h3>
-                <p style={styles.text}>Gunakan dua indeks: <code>nama_list[indeks_baris][indeks_kolom]</code>. Indeks dimulai dari 0.</p>
-                <CodeEditor code={exampleCodes.mengakses} codeKey="mengakses" pyodideReady={pyodideReady} runPythonCode={runPythonCode} />
-                <h3 style={styles.subTitle}>2. Mengubah Nilai Elemen</h3>
-                <p style={styles.text}>Kita dapat mengubah nilai elemen tertentu dengan mengaksesnya lalu menetapkan nilai baru.</p>
-                <CodeEditor code={exampleCodes.mengubah} codeKey="mengubah" pyodideReady={pyodideReady} runPythonCode={runPythonCode} />
-                <h3 style={styles.subTitle}>3. Menambah Baris Baru (append)</h3>
-                <p style={styles.text}>Gunakan method <code>append()</code> untuk menambahkan baris (list) baru di akhir nested list.</p>
-                <CodeEditor code={exampleCodes.menambahBaris} codeKey="menambahBaris" pyodideReady={pyodideReady} runPythonCode={runPythonCode} />
-                <h3 style={styles.subTitle}>4. Menyisipkan Baris (insert)</h3>
-                <p style={styles.text}>Gunakan method <code>insert(posisi, baris_baru)</code> untuk menyisipkan baris di posisi tertentu.</p>
-                <CodeEditor code={exampleCodes.menyisipBaris} codeKey="menyisipBaris" pyodideReady={pyodideReady} runPythonCode={runPythonCode} />
-                <h3 style={styles.subTitle}>5. Menghapus Baris</h3>
-                <p style={styles.text}>Gunakan <code>pop()</code> untuk menghapus baris terakhir, atau <code>del</code> untuk menghapus baris berdasarkan indeks.</p>
-                <CodeEditor code={exampleCodes.menghapusBaris} codeKey="menghapusBaris" pyodideReady={pyodideReady} runPythonCode={runPythonCode} />
-                <h3 style={styles.subTitle}>6. Menambah Kolom (Elemen pada Setiap Baris)</h3>
-                <p style={styles.text}>Iterasi setiap baris dan gunakan <code>append()</code> pada baris tersebut untuk menambah kolom.</p>
-                <CodeEditor code={exampleCodes.menambahKolom} codeKey="menambahKolom" pyodideReady={pyodideReady} runPythonCode={runPythonCode} />
-                <h3 style={styles.subTitle}>7. Menghapus Kolom</h3>
-                <p style={styles.text}>Iterasi setiap baris dan gunakan <code>pop(indeks_kolom)</code> atau <code>del</code> untuk menghapus kolom tertentu.</p>
-                <CodeEditor code={exampleCodes.menghapusKolom} codeKey="menghapusKolom" pyodideReady={pyodideReady} runPythonCode={runPythonCode} />
-                <h3 style={styles.subTitle}>8. Mencari Nilai dalam Nested List</h3>
-                <p style={styles.text}>Gunakan perulangan bersarang untuk memeriksa setiap elemen.</p>
-                <CodeEditor code={exampleCodes.mencari} codeKey="mencari" pyodideReady={pyodideReady} runPythonCode={runPythonCode} />
-                <h3 style={styles.subTitle}>9. Nested List dengan Panjang Baris Berbeda (Ragged Array)</h3>
-                <p style={styles.text}>Setiap baris dapat memiliki jumlah kolom yang berbeda.</p>
-                <CodeEditor code={exampleCodes.mengaksesRagged} codeKey="mengaksesRagged" pyodideReady={pyodideReady} runPythonCode={runPythonCode} />
-                <h3 style={styles.subTitle}>10. Iterasi Seluruh Elemen</h3>
-                <p style={styles.text}>Gunakan perulangan bersarang untuk mengakses semua elemen.</p>
-                <CodeEditor code={exampleCodes.iterasi} codeKey="iterasi" pyodideReady={pyodideReady} runPythonCode={runPythonCode} />
-                <h3 style={styles.subTitle}>11. Membuat Nested List dengan List Comprehension</h3>
-                <p style={styles.text}>Cara ringkas membuat matriks berukuran tertentu.</p>
-                <CodeEditor code={exampleCodes.listComprehension} codeKey="listComprehension" pyodideReady={pyodideReady} runPythonCode={runPythonCode} />
-                <h3 style={styles.subTitle}>12. Menggabungkan Dua Nested List</h3>
-                <p style={styles.text}>Operator <code>+</code> dapat digunakan untuk menggabungkan dua nested list.</p>
-                <CodeEditor code={exampleCodes.menggabungkan} codeKey="menggabungkan" pyodideReady={pyodideReady} runPythonCode={runPythonCode} />
-              </div>
-            </section>
-
-            {/* LATIHAN PRAKTIK (CODING) */}
-            <section style={styles.section}>
-              <h2 style={styles.sectionTitle}>Latihan Praktik</h2>
-              <div style={styles.card}>
-                <div style={styles.alertBox}>
-                  <strong>📝 Instruksi:</strong>
-                  <ul style={{ marginTop: "5px", paddingLeft: "20px" }}>
-                    <li>Buatlah nested list dengan nama <code>data</code> yang berisi tiga baris: [1,2,3], [4,5,6], [7,8,9].</li>
-                    <li>Ubah elemen baris pertama kolom pertama menjadi 100.</li>
-                    <li>Tampilkan elemen baris ketiga kolom kedua (nilai 8) menggunakan print.</li>
-                  </ul>
-                </div>
-                <CodeEditorEditable
-                  codeKey="latihan"
-                  title="Latihan Operasi Nested List"
-                  validationRules={{}}
-                  pyodideReady={pyodideReady}
-                  runPythonCode={runPythonCode}
-                  expectedOutput={["8"]}
-                />
-              </div>
-            </section>
-
-            {/* LATIHAN INTERAKTIF - 5 SOAL */}
-            <section style={styles.section}>
-              <h2 style={styles.sectionTitle}>Latihan Interaktif</h2>
-              <div style={styles.card}>
-                <p style={styles.text}>Isilah bagian yang kosong pada kode (soal 1-2) dan drag pilihan ke area kosong (soal 3-5). Anda dapat mencoba berulang kali hingga jawaban benar.</p>
-                <button style={styles.resetButton} onClick={resetInteractiveQuestions}>↻ Reset Semua Jawaban</button>
-                
-                <CodeCompletionQuestion
-                  question="1. Lengkapi kode untuk mengubah elemen baris pertama kolom kedua menjadi 99."
-                  codeParts={soal1CodeParts}
-                  placeholders={soal1Placeholders}
-                  expectedAnswers={soal1Expected}
-                  resetTrigger={resetInteractives}
-                />
-
-                <CodeCompletionQuestion
-                  question="2. Lengkapi kode untuk menambahkan baris baru [5,6] di akhir nested list."
-                  codeParts={soal2CodeParts}
-                  placeholders={soal2Placeholders}
-                  expectedAnswers={soal2Expected}
-                  resetTrigger={resetInteractives}
-                />
-
-                <DragDropCompletionQuestion
-                  question="3. Lengkapi kode berikut untuk menambahkan kolom (nilai 0) pada setiap baris nested list."
-                  codeTemplate={soal3Template}
-                  placeholders={soal3Placeholders}
-                  options={soal3Options}
-                  expectedAnswers={soal3Expected}
-                  resetTrigger={resetInteractives}
-                />
-
-                <DragDropCompletionQuestion
-                  question="4. Lengkapi kode berikut untuk menghapus baris pertama dari nested list."
-                  codeTemplate={soal4Template}
-                  placeholders={soal4Placeholders}
-                  options={soal4Options}
-                  expectedAnswers={soal4Expected}
-                  resetTrigger={resetInteractives}
-                />
-
-                <DragDropCompletionQuestion
-                  question="5. Lengkapi kode berikut untuk mengubah elemen baris kedua kolom pertama menjadi 99."
-                  codeTemplate={soal5Template}
-                  placeholders={soal5Placeholders}
-                  options={soal5Options}
-                  expectedAnswers={soal5Expected}
-                  resetTrigger={resetInteractives}
-                />
-              </div>
-            </section>
+      <SidebarMateri isOpen={isSidebarOpen} onToggle={() => setIsSidebarOpen(!isSidebarOpen)} />
+      <div 
+        className="main-content"
+        style={{ 
+          marginLeft: isSidebarOpen ? "280px" : "0",
+          transition: "margin-left 0.3s ease",
+          paddingTop: "64px",
+          minHeight: "100vh",
+          width: "auto",
+        }}
+      >
+        <div style={styles.page}>
+          {/* HEADER */}
+          <div style={styles.header}>
+            <div style={styles.headerAccent}></div>
+            <h1 style={styles.headerTitle}>OPERASI NESTED LIST</h1>
           </div>
+
+          {/* TUJUAN PEMBELAJARAN */}
+          <section style={styles.section}>
+            <h2 style={styles.sectionTitle}>Tujuan Pembelajaran</h2>
+            <div style={styles.card}>
+              <ol style={styles.list}>
+                <li>Mahasiswa mampu mengakses elemen dalam nested list menggunakan indeks.</li>
+                <li>Mahasiswa mampu mengubah nilai elemen dalam nested list.</li>
+                <li>Mahasiswa mampu menambah, menyisipkan, dan menghapus baris pada nested list.</li>
+                <li>Mahasiswa mampu menambah dan menghapus kolom (elemen) pada setiap baris.</li>
+                <li>Mahasiswa mampu mencari nilai dalam nested list.</li>
+                <li>Mahasiswa mampu melakukan iterasi pada nested list.</li>
+                <li>Mahasiswa mampu menggabungkan dua nested list.</li>
+              </ol>
+            </div>
+          </section>
+
+          {/* MATERI (lengkap) */}
+          <section style={styles.section}>
+            <div style={styles.card}>
+              <h3 style={styles.subTitle}>1. Mengakses Elemen Nested List</h3>
+              <p style={styles.text}>Gunakan dua indeks: <code>nama_list[indeks_baris][indeks_kolom]</code>. Indeks dimulai dari 0.</p>
+              <CodeEditor code={exampleCodes.mengakses} codeKey="mengakses" pyodideReady={pyodideReady} runPythonCode={runPythonCode} />
+              <h3 style={styles.subTitle}>2. Mengubah Nilai Elemen</h3>
+              <p style={styles.text}>Kita dapat mengubah nilai elemen tertentu dengan mengaksesnya lalu menetapkan nilai baru.</p>
+              <CodeEditor code={exampleCodes.mengubah} codeKey="mengubah" pyodideReady={pyodideReady} runPythonCode={runPythonCode} />
+              <h3 style={styles.subTitle}>3. Menambah Baris Baru (append)</h3>
+              <p style={styles.text}>Gunakan method <code>append()</code> untuk menambahkan baris (list) baru di akhir nested list.</p>
+              <CodeEditor code={exampleCodes.menambahBaris} codeKey="menambahBaris" pyodideReady={pyodideReady} runPythonCode={runPythonCode} />
+              <h3 style={styles.subTitle}>4. Menyisipkan Baris (insert)</h3>
+              <p style={styles.text}>Gunakan method <code>insert(posisi, baris_baru)</code> untuk menyisipkan baris di posisi tertentu.</p>
+              <CodeEditor code={exampleCodes.menyisipBaris} codeKey="menyisipBaris" pyodideReady={pyodideReady} runPythonCode={runPythonCode} />
+              <h3 style={styles.subTitle}>5. Menghapus Baris</h3>
+              <p style={styles.text}>Gunakan <code>pop()</code> untuk menghapus baris terakhir, atau <code>del</code> untuk menghapus baris berdasarkan indeks.</p>
+              <CodeEditor code={exampleCodes.menghapusBaris} codeKey="menghapusBaris" pyodideReady={pyodideReady} runPythonCode={runPythonCode} />
+              <h3 style={styles.subTitle}>6. Menambah Kolom (Elemen pada Setiap Baris)</h3>
+              <p style={styles.text}>Iterasi setiap baris dan gunakan <code>append()</code> pada baris tersebut untuk menambah kolom.</p>
+              <CodeEditor code={exampleCodes.menambahKolom} codeKey="menambahKolom" pyodideReady={pyodideReady} runPythonCode={runPythonCode} />
+              <h3 style={styles.subTitle}>7. Menghapus Kolom</h3>
+              <p style={styles.text}>Iterasi setiap baris dan gunakan <code>pop(indeks_kolom)</code> atau <code>del</code> untuk menghapus kolom tertentu.</p>
+              <CodeEditor code={exampleCodes.menghapusKolom} codeKey="menghapusKolom" pyodideReady={pyodideReady} runPythonCode={runPythonCode} />
+              <h3 style={styles.subTitle}>8. Mencari Nilai dalam Nested List</h3>
+              <p style={styles.text}>Gunakan perulangan bersarang untuk memeriksa setiap elemen.</p>
+              <CodeEditor code={exampleCodes.mencari} codeKey="mencari" pyodideReady={pyodideReady} runPythonCode={runPythonCode} />
+              <h3 style={styles.subTitle}>9. Nested List dengan Panjang Baris Berbeda (Ragged Array)</h3>
+              <p style={styles.text}>Setiap baris dapat memiliki jumlah kolom yang berbeda.</p>
+              <CodeEditor code={exampleCodes.mengaksesRagged} codeKey="mengaksesRagged" pyodideReady={pyodideReady} runPythonCode={runPythonCode} />
+              <h3 style={styles.subTitle}>10. Iterasi Seluruh Elemen</h3>
+              <p style={styles.text}>Gunakan perulangan bersarang untuk mengakses semua elemen.</p>
+              <CodeEditor code={exampleCodes.iterasi} codeKey="iterasi" pyodideReady={pyodideReady} runPythonCode={runPythonCode} />
+              <h3 style={styles.subTitle}>11. Membuat Nested List dengan List Comprehension</h3>
+              <p style={styles.text}>Cara ringkas membuat matriks berukuran tertentu.</p>
+              <CodeEditor code={exampleCodes.listComprehension} codeKey="listComprehension" pyodideReady={pyodideReady} runPythonCode={runPythonCode} />
+              <h3 style={styles.subTitle}>12. Menggabungkan Dua Nested List</h3>
+              <p style={styles.text}>Operator <code>+</code> dapat digunakan untuk menggabungkan dua nested list.</p>
+              <CodeEditor code={exampleCodes.menggabungkan} codeKey="menggabungkan" pyodideReady={pyodideReady} runPythonCode={runPythonCode} />
+            </div>
+          </section>
+
+          {/* LATIHAN PRAKTIK (CODING) */}
+          <section style={styles.section}>
+            <h2 style={styles.sectionTitle}>Latihan Praktik</h2>
+            <div style={styles.card}>
+              <div style={styles.alertBox}>
+                <strong>📝 Instruksi:</strong>
+                <ul style={{ marginTop: "5px", paddingLeft: "20px" }}>
+                  <li>Buatlah nested list dengan nama <code>data</code> yang berisi tiga baris: [1,2,3], [4,5,6], [7,8,9].</li>
+                  <li>Ubah elemen baris pertama kolom pertama menjadi 100.</li>
+                  <li>Tampilkan elemen baris ketiga kolom kedua (nilai 8) menggunakan print.</li>
+                </ul>
+              </div>
+              <CodeEditorEditable
+                codeKey="latihan"
+                title="Latihan Operasi Nested List"
+                validationRules={{}}
+                pyodideReady={pyodideReady}
+                runPythonCode={runPythonCode}
+                expectedOutput={["8"]}
+              />
+            </div>
+          </section>
+
+          {/* LATIHAN INTERAKTIF - 5 SOAL */}
+          <section style={styles.section}>
+            <h2 style={styles.sectionTitle}>Latihan Interaktif</h2>
+            <div style={styles.card}>
+              <p style={styles.text}>Isilah bagian yang kosong pada kode (soal 1-2) dan drag pilihan ke area kosong (soal 3-5). Anda dapat mencoba berulang kali hingga jawaban benar.</p>
+              <button style={styles.resetButton} onClick={resetInteractiveQuestions}>↻ Reset Semua Jawaban</button>
+              
+              <CodeCompletionQuestion
+                question="1. Lengkapi kode untuk mengubah elemen baris pertama kolom kedua menjadi 99."
+                codeParts={soal1CodeParts}
+                placeholders={soal1Placeholders}
+                expectedAnswers={soal1Expected}
+                resetTrigger={resetInteractives}
+              />
+
+              <CodeCompletionQuestion
+                question="2. Lengkapi kode untuk menambahkan baris baru [5,6] di akhir nested list."
+                codeParts={soal2CodeParts}
+                placeholders={soal2Placeholders}
+                expectedAnswers={soal2Expected}
+                resetTrigger={resetInteractives}
+              />
+
+              <DragDropCompletionQuestion
+                question="3. Lengkapi kode berikut untuk menambahkan kolom (nilai 0) pada setiap baris nested list."
+                codeTemplate={soal3Template}
+                placeholders={soal3Placeholders}
+                options={soal3Options}
+                expectedAnswers={soal3Expected}
+                resetTrigger={resetInteractives}
+              />
+
+              <DragDropCompletionQuestion
+                question="4. Lengkapi kode berikut untuk menghapus baris pertama dari nested list."
+                codeTemplate={soal4Template}
+                placeholders={soal4Placeholders}
+                options={soal4Options}
+                expectedAnswers={soal4Expected}
+                resetTrigger={resetInteractives}
+              />
+
+              <DragDropCompletionQuestion
+                question="5. Lengkapi kode berikut untuk mengubah elemen baris kedua kolom pertama menjadi 99."
+                codeTemplate={soal5Template}
+                placeholders={soal5Placeholders}
+                options={soal5Options}
+                expectedAnswers={soal5Expected}
+                resetTrigger={resetInteractives}
+              />
+            </div>
+          </section>
         </div>
       </div>
     </>
@@ -700,6 +706,9 @@ const styles = {
     backgroundColor: "#f5f7fa",
     minHeight: "calc(100vh - 64px)",
     fontFamily: "Poppins, sans-serif",
+    width: "100%",
+    maxWidth: "100%",
+    boxSizing: "border-box",
   },
   header: {
     backgroundColor: "#306998",

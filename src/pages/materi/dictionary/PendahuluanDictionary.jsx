@@ -15,7 +15,6 @@ const CodeEditorEditable = ({ codeKey, title, expectedAnswer, validationRules, p
 
   const validateCode = useCallback((code) => {
     const trimmedCode = code.trim();
-    // Validasi: harus ada dictionary dengan nama 'data' (atau bebas, tapi kita periksa)
     const dictRegex = /(\bdata\s*=\s*\{[^}]*\})/;
     if (!dictRegex.test(trimmedCode)) {
       return {
@@ -23,14 +22,12 @@ const CodeEditorEditable = ({ codeKey, title, expectedAnswer, validationRules, p
         message: "❌ ERROR: Kamu harus membuat dictionary dengan nama 'data' menggunakan kurung kurawal {}."
       };
     }
-    // Periksa apakah ada print(data)
     if (!/print\s*\(\s*data\s*\)/.test(trimmedCode)) {
       return {
         valid: false,
         message: "❌ ERROR: Kamu harus menampilkan dictionary menggunakan print(data)."
       };
     }
-    // Pastikan data didefinisikan sebelum print
     const defIndex = trimmedCode.indexOf('data =');
     const printIndex = trimmedCode.indexOf('print(data)');
     if (defIndex === -1 || printIndex === -1) return { valid: false, message: "❌ ERROR: Struktur kode tidak lengkap." };
@@ -132,7 +129,7 @@ const QuizDictionary = () => {
       id: 1,
       text: "Apa struktur data yang digunakan untuk menyimpan pasangan key-value di Python?",
       options: ["List", "Tuple", "Dictionary", "Set"],
-      correct: 2, // indeks 0-based
+      correct: 2,
     },
     {
       id: 2,
@@ -233,6 +230,7 @@ const QuizDictionary = () => {
 export default function PendahuluanDictionary() {
   const [pyodideReady, setPyodideReady] = useState(false);
   const pyodideRef = useRef(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true); // State untuk sidebar
 
   const exampleCodes = {
     basic: `# Membuat dictionary sederhana
@@ -315,204 +313,199 @@ _buffer.getvalue()
   return (
     <>
       <Navbar />
-      <div style={{ marginLeft: "280px" }}>
-        <SidebarMateri />
-        <div style={{ paddingTop: "64px" }}>
-          <div style={styles.page}>
-            {/* HEADER */}
-            <div style={styles.header}>
-              <div style={styles.headerAccent}></div>
-              <h1 style={styles.headerTitle}>📖 PENDAHULUAN DICTIONARY</h1>
-            </div>
-
-            {/* TUJUAN PEMBELAJARAN */}
-            <section style={styles.section}>
-              <h2 style={styles.sectionTitle}>🎯 Tujuan Pembelajaran</h2>
-              <div style={styles.card}>
-                <ul style={styles.list}>
-                  <li>Memahami pengertian dan konsep dasar dictionary dalam Python.</li>
-                  <li>Mengetahui karakteristik utama dictionary (key unik, immutable key, mutable value).</li>
-                  <li>Membedakan dictionary dengan struktur data lain seperti list.</li>
-                  <li>Menguasai operasi dasar pada dictionary (membuat, mengakses, mengubah, menghapus).</li>
-                  <li>Mampu mengimplementasikan dictionary dalam kasus sederhana.</li>
-                </ul>
-              </div>
-            </section>
-
-            {/* EKSPLORASI AWAL */}
-            <section style={styles.section}>
-              <h2 style={styles.sectionTitle}>🔍 Eksplorasi Awal</h2>
-              <div style={styles.card}>
-                <p style={styles.text}>
-                  <strong>Tahukah kamu?</strong> Dictionary di Python terinspirasi dari struktur data <strong>hash table</strong> yang memungkinkan pencarian data dalam waktu <strong>O(1)</strong> rata-rata, sangat cepat bahkan untuk data besar.
-                </p>
-                <p style={styles.text}>
-                  <strong>Contoh nyata penggunaan dictionary:</strong>
-                </p>
-                <ul style={styles.list}>
-                  <li>Menyimpan data mahasiswa berdasarkan NIM (key) → data diri (value).</li>
-                  <li>Menghitung frekuensi kata dalam sebuah teks.</li>
-                  <li>Konfigurasi aplikasi dalam format JSON (mirip dictionary).</li>
-                  <li>Mengimplementasikan cache atau memoization untuk optimasi fungsi.</li>
-                </ul>
-                <div style={styles.infoBox}>
-                  <strong>💡 Catatan:</strong> Mulai Python 3.7, dictionary mempertahankan urutan item sesuai urutan penyisipan. Sebelumnya, dictionary tidak terurut.
-                </div>
-              </div>
-            </section>
-
-            {/* PENGERTIAN DICTIONARY */}
-            <section style={styles.section}>
-              <h2 style={styles.sectionTitle}>📌 Apa Itu Dictionary?</h2>
-              <div style={styles.card}>
-                <p style={styles.text}>
-                  <strong>Dictionary</strong> adalah struktur data dalam Python yang digunakan untuk menyimpan kumpulan data dalam bentuk <strong>pasangan key (kunci) dan value (nilai)</strong>. 
-                  Setiap key bersifat unik dan digunakan untuk mengakses nilai yang terkait. Dictionary bersifat <strong>mutable</strong> (dapat diubah) dan tidak memiliki indeks numerik seperti list, melainkan menggunakan key sebagai pengganti indeks.
-                </p>
-                <p style={styles.text}>
-                  Dictionary didefinisikan dengan kurung kurawal <code style={styles.inlineCode}>{`{}`}</code> dan setiap pasangan key-value dipisahkan oleh titik dua <code style={styles.inlineCode}>:</code>. 
-                  Key harus berupa tipe data yang immutable (string, integer, tuple), sedangkan value dapat berupa tipe data apa pun (list, dictionary lain, fungsi, dll).
-                </p>
-                <div style={styles.infoBox}>
-                  <strong>📖 Analogi:</strong> Seperti kamus bahasa, kita mencari arti (value) berdasarkan kata (key).
-                </div>
-              </div>
-            </section>
-
-            {/* KARAKTERISTIK DASAR */}
-            <section style={styles.section}>
-              <h2 style={styles.sectionTitle}>⚙️ Karakteristik Dasar Dictionary</h2>
-              <div style={styles.card}>
-                <ul style={styles.list}>
-                  <li><strong>Key unik</strong> → Tidak boleh ada dua key yang sama; jika key yang sama digunakan lagi, nilai sebelumnya akan ditimpa.</li>
-                  <li><strong>Key harus immutable</strong> → String, integer, float, tuple (dengan elemen immutable). List <strong>tidak bisa</strong> dijadikan key.</li>
-                  <li><strong>Value dapat berupa apa saja</strong> → Angka, string, boolean, list, dictionary, bahkan fungsi.</li>
-                  <li><strong>Urutan terjaga (Python 3.7+)</strong> → Item disimpan sesuai urutan penyisipan.</li>
-                  <li><strong>Mutable & Dinamis</strong> → Bisa menambah, mengubah, menghapus item; ukuran otomatis menyesuaikan.</li>
-                </ul>
-              </div>
-            </section>
-
-            {/* PERBEDAAN DENGAN LIST */}
-            <section style={styles.section}>
-              <h2 style={styles.sectionTitle}>📊 Perbandingan Dictionary vs List</h2>
-              <div style={styles.card}>
-                <table style={styles.table}>
-                  <thead>
-                    <tr style={styles.tableHeader}>
-                      <th style={styles.tableCell}>Aspek</th>
-                      <th style={styles.tableCell}>List</th>
-                      <th style={styles.tableCell}>Dictionary</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td style={styles.tableCell}>Pengaksesan</td>
-                      <td style={styles.tableCell}>Menggunakan indeks angka (0,1,2,…)</td>
-                      <td style={styles.tableCell}>Menggunakan key (string, integer, dll)</td>
-                    </tr>
-                    <tr>
-                      <td style={styles.tableCell}>Urutan</td>
-                      <td style={styles.tableCell}>Terurut dan bisa di-slice</td>
-                      <td style={styles.tableCell}>Terurut sejak Python 3.7 (insertion order)</td>
-                    </tr>
-                    <tr>
-                      <td style={styles.tableCell}>Kecepatan pencarian</td>
-                      <td style={styles.tableCell}>O(n) – perlu scan linear</td>
-                      <td style={styles.tableCell}>O(1) rata-rata – langsung ke key via hash</td>
-                    </tr>
-                    <tr>
-                      <td style={styles.tableCell}>Batasan key</td>
-                      <td style={styles.tableCell}>Tidak ada konsep key</td>
-                      <td style={styles.tableCell}>Key harus immutable dan unik</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </section>
-
-            {/* OPERASI DASAR */}
-            <section style={styles.section}>
-              <h2 style={styles.sectionTitle}>🛠️ Operasi Dasar Dictionary</h2>
-              <div style={styles.card}>
-                <ul style={styles.list}>
-                  <li><strong>Membuat dictionary kosong</strong> → <code style={styles.inlineCode}>data = {`{}`}</code> atau <code style={styles.inlineCode}>data = dict()</code></li>
-                  <li><strong>Menambah / mengubah item</strong> → <code style={styles.inlineCode}>data["key"] = "value"</code></li>
-                  <li><strong>Mengakses nilai</strong> → <code style={styles.inlineCode}>data["key"]</code> (error jika key tidak ada) atau <code style={styles.inlineCode}>.get("key", default)</code> (aman)</li>
-                  <li><strong>Menghapus item</strong> → <code style={styles.inlineCode}>del data["key"]</code> atau <code style={styles.inlineCode}>data.pop("key")</code></li>
-                  <li><strong>Mengecek keberadaan key</strong> → <code style={styles.inlineCode}>if "key" in data:</code></li>
-                  <li><strong>Mendapatkan semua key, value, atau pasangan</strong> → <code style={styles.inlineCode}>.keys()</code>, <code style={styles.inlineCode}>.values()</code>, <code style={styles.inlineCode}>.items()</code></li>
-                  <li><strong>Panjang dictionary</strong> → <code style={styles.inlineCode}>len(data)</code></li>
-                </ul>
-              </div>
-            </section>
-
-            {/* CONTOH KODE PROGRAM (BISA DIJALANKAN) */}
-            <section style={styles.section}>
-              <h2 style={styles.sectionTitle}>💻 Contoh Implementasi Dictionary</h2>
-              <div style={styles.card}>
-                <p style={styles.text}>
-                  Berikut adalah contoh penggunaan dictionary untuk menyimpan data mahasiswa. Kode ini bisa langsung dijalankan dan diedit.
-                </p>
-                <CodeEditor
-                  code={exampleCodes.basic}
-                  codeKey="dict_example"
-                  pyodideReady={pyodideReady}
-                  runPythonCode={runPythonCode}
-                />
-                <p style={styles.text}>
-                  <strong>Penjelasan:</strong> Dictionary <code>mahasiswa</code> memiliki key berupa string dan value yang bervariasi. 
-                  Kita dapat mengakses nilai dengan key, menambah key baru, mengubah nilai (termasuk list di dalamnya), menghapus key, dan melakukan iterasi.
-                </p>
-              </div>
-            </section>
-
-            {/* LATIHAN PRAKTIK (EDITOR INTERAKTIF) */}
-            <section style={styles.section}>
-              <h2 style={styles.sectionTitle}>✏️ Latihan Praktik</h2>
-              <div style={styles.card}>
-                <div style={styles.alertBox}>
-                  <strong>⚠️ Instruksi Latihan:</strong>
-                  <ul style={{ marginTop: "5px", paddingLeft: "20px" }}>
-                    <li>Buatlah sebuah dictionary dengan nama variabel <code>data</code>.</li>
-                    <li>Dictionary harus berisi tiga pasangan key-value: <br/>
-                      - key <code>"nama"</code> dengan value <code>"Andi"</code><br/>
-                      - key <code>"usia"</code> dengan value <code>20</code><br/>
-                      - key <code>"hobi"</code> dengan value <code>["membaca", "coding"]</code>
-                    </li>
-                    <li>Setelah membuat dictionary, tampilkan seluruh isinya menggunakan <code>print(data)</code>.</li>
-                  </ul>
-                </div>
-                <CodeEditorEditable
-                  codeKey="latihan_dict"
-                  title="Latihan: Membuat Dictionary Sederhana"
-                  validationRules={{}}
-                  pyodideReady={pyodideReady}
-                  runPythonCode={runPythonCode}
-                />
-              </div>
-            </section>
-
-            {/* KUIS PILIHAN GANDA */}
-            <section style={styles.section}>
-              <h2 style={styles.sectionTitle}>📝 Latihan Interaktif</h2>
-              <div style={styles.card}>
-                <QuizDictionary />
-              </div>
-            </section>
-
-            {/* KESIMPULAN */}
-            {/* <section style={styles.section}>
-              <h2 style={styles.sectionTitle}>✅ Kesimpulan</h2>
-              <div style={styles.card}>
-                <p style={styles.text}>
-                  Dictionary adalah struktur data yang sangat fleksibel dan efisien untuk menyimpan data berpasangan. 
-                  Pemahaman tentang sifat <strong>key-value</strong>, <strong>keunikan key</strong>, dan <strong>mutable</strong> menjadi fondasi penting. 
-                  Di materi selanjutnya, Anda akan mempelajari metode bawaan dictionary, nested dictionary, dictionary comprehension, dan berbagai teknik lanjutan.
-                </p>
-              </div>
-            </section> */}
+      <SidebarMateri isOpen={isSidebarOpen} onToggle={() => setIsSidebarOpen(!isSidebarOpen)} />
+      <div 
+        className="main-content"
+        style={{ 
+          marginLeft: isSidebarOpen ? "280px" : "0",
+          transition: "margin-left 0.3s ease",
+          paddingTop: "64px",
+          minHeight: "100vh",
+          width: "auto",
+        }}
+      >
+        <div style={styles.page}>
+          {/* HEADER */}
+          <div style={styles.header}>
+            <div style={styles.headerAccent}></div>
+            <h1 style={styles.headerTitle}>📖 PENDAHULUAN DICTIONARY</h1>
           </div>
+
+          {/* TUJUAN PEMBELAJARAN */}
+          <section style={styles.section}>
+            <h2 style={styles.sectionTitle}>🎯 Tujuan Pembelajaran</h2>
+            <div style={styles.card}>
+              <ul style={styles.list}>
+                <li>Memahami pengertian dan konsep dasar dictionary dalam Python.</li>
+                <li>Mengetahui karakteristik utama dictionary (key unik, immutable key, mutable value).</li>
+                <li>Membedakan dictionary dengan struktur data lain seperti list.</li>
+                <li>Menguasai operasi dasar pada dictionary (membuat, mengakses, mengubah, menghapus).</li>
+                <li>Mampu mengimplementasikan dictionary dalam kasus sederhana.</li>
+              </ul>
+            </div>
+          </section>
+
+          {/* EKSPLORASI AWAL */}
+          <section style={styles.section}>
+            <h2 style={styles.sectionTitle}>🔍 Eksplorasi Awal</h2>
+            <div style={styles.card}>
+              <p style={styles.text}>
+                <strong>Tahukah kamu?</strong> Dictionary di Python terinspirasi dari struktur data <strong>hash table</strong> yang memungkinkan pencarian data dalam waktu <strong>O(1)</strong> rata-rata, sangat cepat bahkan untuk data besar.
+              </p>
+              <p style={styles.text}>
+                <strong>Contoh nyata penggunaan dictionary:</strong>
+              </p>
+              <ul style={styles.list}>
+                <li>Menyimpan data mahasiswa berdasarkan NIM (key) → data diri (value).</li>
+                <li>Menghitung frekuensi kata dalam sebuah teks.</li>
+                <li>Konfigurasi aplikasi dalam format JSON (mirip dictionary).</li>
+                <li>Mengimplementasikan cache atau memoization untuk optimasi fungsi.</li>
+              </ul>
+              <div style={styles.infoBox}>
+                <strong>💡 Catatan:</strong> Mulai Python 3.7, dictionary mempertahankan urutan item sesuai urutan penyisipan. Sebelumnya, dictionary tidak terurut.
+              </div>
+            </div>
+          </section>
+
+          {/* PENGERTIAN DICTIONARY */}
+          <section style={styles.section}>
+            <h2 style={styles.sectionTitle}>📌 Apa Itu Dictionary?</h2>
+            <div style={styles.card}>
+              <p style={styles.text}>
+                <strong>Dictionary</strong> adalah struktur data dalam Python yang digunakan untuk menyimpan kumpulan data dalam bentuk <strong>pasangan key (kunci) dan value (nilai)</strong>. 
+                Setiap key bersifat unik dan digunakan untuk mengakses nilai yang terkait. Dictionary bersifat <strong>mutable</strong> (dapat diubah) dan tidak memiliki indeks numerik seperti list, melainkan menggunakan key sebagai pengganti indeks.
+              </p>
+              <p style={styles.text}>
+                Dictionary didefinisikan dengan kurung kurawal <code style={styles.inlineCode}>{`{}`}</code> dan setiap pasangan key-value dipisahkan oleh titik dua <code style={styles.inlineCode}>:</code>. 
+                Key harus berupa tipe data yang immutable (string, integer, tuple), sedangkan value dapat berupa tipe data apa pun (list, dictionary lain, fungsi, dll).
+              </p>
+              <div style={styles.infoBox}>
+                <strong>📖 Analogi:</strong> Seperti kamus bahasa, kita mencari arti (value) berdasarkan kata (key).
+              </div>
+            </div>
+          </section>
+
+          {/* KARAKTERISTIK DASAR */}
+          <section style={styles.section}>
+            <h2 style={styles.sectionTitle}>⚙️ Karakteristik Dasar Dictionary</h2>
+            <div style={styles.card}>
+              <ul style={styles.list}>
+                <li><strong>Key unik</strong> → Tidak boleh ada dua key yang sama; jika key yang sama digunakan lagi, nilai sebelumnya akan ditimpa.</li>
+                <li><strong>Key harus immutable</strong> → String, integer, float, tuple (dengan elemen immutable). List <strong>tidak bisa</strong> dijadikan key.</li>
+                <li><strong>Value dapat berupa apa saja</strong> → Angka, string, boolean, list, dictionary, bahkan fungsi.</li>
+                <li><strong>Urutan terjaga (Python 3.7+)</strong> → Item disimpan sesuai urutan penyisipan.</li>
+                <li><strong>Mutable & Dinamis</strong> → Bisa menambah, mengubah, menghapus item; ukuran otomatis menyesuaikan.</li>
+              </ul>
+            </div>
+          </section>
+
+          {/* PERBEDAAN DENGAN LIST */}
+          <section style={styles.section}>
+            <h2 style={styles.sectionTitle}>📊 Perbandingan Dictionary vs List</h2>
+            <div style={styles.card}>
+              <table style={styles.table}>
+                <thead>
+                  <tr style={styles.tableHeader}>
+                    <th style={styles.tableCell}>Aspek</th>
+                    <th style={styles.tableCell}>List</th>
+                    <th style={styles.tableCell}>Dictionary</th>
+                   </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td style={styles.tableCell}>Pengaksesan</td>
+                    <td style={styles.tableCell}>Menggunakan indeks angka (0,1,2,…)</td>
+                    <td style={styles.tableCell}>Menggunakan key (string, integer, dll)</td>
+                   </tr>
+                  <tr>
+                    <td style={styles.tableCell}>Urutan</td>
+                    <td style={styles.tableCell}>Terurut dan bisa di-slice</td>
+                    <td style={styles.tableCell}>Terurut sejak Python 3.7 (insertion order)</td>
+                   </tr>
+                  <tr>
+                    <td style={styles.tableCell}>Kecepatan pencarian</td>
+                    <td style={styles.tableCell}>O(n) – perlu scan linear</td>
+                    <td style={styles.tableCell}>O(1) rata-rata – langsung ke key via hash</td>
+                   </tr>
+                  <tr>
+                    <td style={styles.tableCell}>Batasan key</td>
+                    <td style={styles.tableCell}>Tidak ada konsep key</td>
+                    <td style={styles.tableCell}>Key harus immutable dan unik</td>
+                   </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          {/* OPERASI DASAR */}
+          <section style={styles.section}>
+            <h2 style={styles.sectionTitle}>🛠️ Operasi Dasar Dictionary</h2>
+            <div style={styles.card}>
+              <ul style={styles.list}>
+                <li><strong>Membuat dictionary kosong</strong> → <code style={styles.inlineCode}>data = {`{}`}</code> atau <code style={styles.inlineCode}>data = dict()</code></li>
+                <li><strong>Menambah / mengubah item</strong> → <code style={styles.inlineCode}>data["key"] = "value"</code></li>
+                <li><strong>Mengakses nilai</strong> → <code style={styles.inlineCode}>data["key"]</code> (error jika key tidak ada) atau <code style={styles.inlineCode}>.get("key", default)</code> (aman)</li>
+                <li><strong>Menghapus item</strong> → <code style={styles.inlineCode}>del data["key"]</code> atau <code style={styles.inlineCode}>data.pop("key")</code></li>
+                <li><strong>Mengecek keberadaan key</strong> → <code style={styles.inlineCode}>if "key" in data:</code></li>
+                <li><strong>Mendapatkan semua key, value, atau pasangan</strong> → <code style={styles.inlineCode}>.keys()</code>, <code style={styles.inlineCode}>.values()</code>, <code style={styles.inlineCode}>.items()</code></li>
+                <li><strong>Panjang dictionary</strong> → <code style={styles.inlineCode}>len(data)</code></li>
+              </ul>
+            </div>
+          </section>
+
+          {/* CONTOH KODE PROGRAM (BISA DIJALANKAN) */}
+          <section style={styles.section}>
+            <h2 style={styles.sectionTitle}>💻 Contoh Implementasi Dictionary</h2>
+            <div style={styles.card}>
+              <p style={styles.text}>
+                Berikut adalah contoh penggunaan dictionary untuk menyimpan data mahasiswa. Kode ini bisa langsung dijalankan dan diedit.
+              </p>
+              <CodeEditor
+                code={exampleCodes.basic}
+                codeKey="dict_example"
+                pyodideReady={pyodideReady}
+                runPythonCode={runPythonCode}
+              />
+              <p style={styles.text}>
+                <strong>Penjelasan:</strong> Dictionary <code>mahasiswa</code> memiliki key berupa string dan value yang bervariasi. 
+                Kita dapat mengakses nilai dengan key, menambah key baru, mengubah nilai (termasuk list di dalamnya), menghapus key, dan melakukan iterasi.
+              </p>
+            </div>
+          </section>
+
+          {/* LATIHAN PRAKTIK (EDITOR INTERAKTIF) */}
+          <section style={styles.section}>
+            <h2 style={styles.sectionTitle}>✏️ Latihan Praktik</h2>
+            <div style={styles.card}>
+              <div style={styles.alertBox}>
+                <strong>⚠️ Instruksi Latihan:</strong>
+                <ul style={{ marginTop: "5px", paddingLeft: "20px" }}>
+                  <li>Buatlah sebuah dictionary dengan nama variabel <code>data</code>.</li>
+                  <li>Dictionary harus berisi tiga pasangan key-value: <br/>
+                    - key <code>"nama"</code> dengan value <code>"Andi"</code><br/>
+                    - key <code>"usia"</code> dengan value <code>20</code><br/>
+                    - key <code>"hobi"</code> dengan value <code>["membaca", "coding"]</code>
+                  </li>
+                  <li>Setelah membuat dictionary, tampilkan seluruh isinya menggunakan <code>print(data)</code>.</li>
+                </ul>
+              </div>
+              <CodeEditorEditable
+                codeKey="latihan_dict"
+                title="Latihan: Membuat Dictionary Sederhana"
+                validationRules={{}}
+                pyodideReady={pyodideReady}
+                runPythonCode={runPythonCode}
+              />
+            </div>
+          </section>
+
+          {/* KUIS PILIHAN GANDA */}
+          <section style={styles.section}>
+            <h2 style={styles.sectionTitle}>📝 Latihan Interaktif</h2>
+            <div style={styles.card}>
+              <QuizDictionary />
+            </div>
+          </section>
         </div>
       </div>
     </>
@@ -527,6 +520,9 @@ const styles = {
     backgroundColor: "#f5f7fa",
     minHeight: "calc(100vh - 64px)",
     fontFamily: "Poppins, sans-serif",
+    width: "100%",
+    maxWidth: "100%",
+    boxSizing: "border-box",
   },
   header: {
     backgroundColor: "#306998",
@@ -601,7 +597,7 @@ const styles = {
     padding: "10px",
     border: "1px solid #ddd",
   },
-  // Code editor styles (sama seperti contoh nested list)
+  // Code editor styles
   codeEditorContainer: {
     border: "2px solid #306998",
     borderRadius: "10px",

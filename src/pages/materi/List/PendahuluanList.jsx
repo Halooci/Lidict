@@ -326,8 +326,7 @@ buah = ["apel", "jeruk", "mangga"]
 angka = [10, 20, 30]
 
 print(buah)
-print(angka)
-print("Jumlah elemen buah:", len(buah))`,
+print(angka)`,
     aksesElemen: `# Mengakses elemen list berdasarkan indeks
 buah = ["apel", "jeruk", "mangga"]
 print(buah[0])   # elemen pertama
@@ -559,9 +558,9 @@ nilai3 = 78
 # ... sulit diolah`}</pre>
                   </div>
                   <p style={styles.text}>
-                    Dengan list, data menjadi <strong>terstruktur</strong>, <strong>mudah diakses</strong> dengan perulangan, dan <strong>ringkas</strong>.
+                    Dengan list, data menjadi <strong>terstruktur</strong>, <strong>mudah diakses</strong>, <strong>ringkas</strong>, menghemat <strong>jumlah variabel</strong>, dan dengan mudah di<strong>manipulasi</strong> dengan cara mengakses langsung elemen atau nilai yang ingin dimanipulasi.
                   </p>
-                  <div style={styles.infoBox}>
+                  {/* <div style={styles.infoBox}>
                     <strong>Keunggulan List:</strong>
                     <ul style={styles.list}>
                       <li>Menghemat jumlah variabel</li>
@@ -569,7 +568,7 @@ nilai3 = 78
                       <li>Mendukung operasi kolektif (seperti <code>sum()</code>, <code>max()</code>)</li>
                       <li>Dapat ditambah, dihapus, atau diubah elemennya</li>
                     </ul>
-                  </div>
+                  </div> */}
                 </div>
               </section>
 
@@ -584,7 +583,7 @@ nilai3 = 78
                     <li><strong>Indeks:</strong> Setiap elemen memiliki posisi numerik mulai dari 0. Indeks negatif untuk akses dari akhir (-1 = elemen terakhir).</li>
                     <li><strong>Mutable:</strong> Elemen list dapat diubah, ditambah, atau dihapus setelah list dibuat.</li>
                     <li><strong>Tipe data campuran:</strong> Satu list bisa berisi angka, string, boolean, bahkan list lain.</li>
-                    <li><strong>Panjang list:</strong> Fungsi <code>len()</code> mengembalikan jumlah elemen.</li>
+                    {/* <li><strong>Panjang list:</strong> Fungsi <code>len()</code> mengembalikan jumlah elemen.</li> */}
                   </ul>
                   <CodeEditor 
                     code={exampleCodes.aksesElemen} 

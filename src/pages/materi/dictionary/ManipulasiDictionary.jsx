@@ -71,22 +71,17 @@ const CodeEditorEditable = ({ codeKey, title, validationRules, pyodideReady, run
     setError("");
   }, []);
 
-  // Validasi sederhana: cek apakah ada dictionary 'inventaris' dan operasi tertentu (update, pop, dll)
-  // Kita buat validasi lebih fleksibel sesuai studi kasus
   const validateCode = useCallback((code) => {
     const trimmedCode = code.trim();
     if (!/\binventaris\s*=\s*\{[^}]*\}/.test(trimmedCode)) {
       return { valid: false, message: "❌ ERROR: Buatlah dictionary dengan nama 'inventaris'." };
     }
-    // Cek apakah ada operasi update untuk menambah stok
     if (!/inventaris\.update\(/.test(trimmedCode)) {
       return { valid: false, message: "❌ ERROR: Gunakan metode update() untuk menambah stok barang baru." };
     }
-    // Cek apakah ada pop untuk menghapus item
     if (!/inventaris\.pop\(/.test(trimmedCode)) {
       return { valid: false, message: "❌ ERROR: Gunakan metode pop() untuk menghapus barang yang habis." };
     }
-    // Cek apakah ada print inventaris di akhir
     if (!/print\s*\(\s*inventaris\s*\)/.test(trimmedCode)) {
       return { valid: false, message: "❌ ERROR: Tampilkan isi inventaris dengan print(inventaris) di akhir." };
     }
@@ -109,7 +104,6 @@ const CodeEditorEditable = ({ codeKey, title, validationRules, pyodideReady, run
 
     const result = await runPythonCode(localCode);
     setOutput(result);
-    // Cek output mengandung dictionary yang diharapkan (bisa fleksibel)
     if (expectedOutput && result.includes(expectedOutput)) {
       setOutput(result + `\n\n✅ ${successMessage || "SELAMAT! Kode kamu benar!"}`);
     } else if (expectedOutput) {
@@ -225,6 +219,7 @@ export default function ManipulasiDictionary() {
   const [pyodideReady, setPyodideReady] = useState(false);
   const pyodideRef = useRef(null);
   const [resetInteractives, setResetInteractives] = useState(0);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true); // State untuk sidebar
 
   // Kode contoh untuk materi (tanpa komentar)
   const exampleCodes = {
@@ -395,148 +390,155 @@ _buffer.getvalue()
   return (
     <>
       <Navbar />
-      <div style={{ marginLeft: "280px" }}>
-        <SidebarMateri />
-        <div style={{ paddingTop: "64px" }}>
-          <div style={styles.page}>
-            <div style={styles.header}>
-              <div style={styles.headerAccent}></div>
-              <h1 style={styles.headerTitle}>MANIPULASI DICTIONARY</h1>
-            </div>
-
-            {/* TUJUAN PEMBELAJARAN */}
-            <section style={styles.section}>
-              <h2 style={styles.sectionTitle}>🎯 Tujuan Pembelajaran</h2>
-              <div style={styles.card}>
-                <ul style={styles.list}>
-                  <li>Mahasiswa mampu melakukan operasi manipulasi dasar pada dictionary (menambah, mengupdate, menghapus item).</li>
-                  <li>Mahasiswa mampu menggunakan metode-metode penting seperti update(), pop(), popitem(), clear(), copy(), dan dictionary comprehension.</li>
-                  <li>Mahasiswa mampu menerapkan manipulasi dictionary dalam pemecahan masalah nyata (studi kasus).</li>
-                </ul>
-              </div>
-            </section>
-
-            {/* MATERI DENGAN CONTOH KODE */}
-            <section style={styles.section}>
-              <div style={styles.card}>
-                <h3 style={styles.subTitle}>1. Menambah/Mengupdate dengan update()</h3>
-                <p style={styles.text}>
-                  Metode <code>update()</code> digunakan untuk menambah atau memperbarui beberapa pasangan key-value sekaligus.
-                </p>
-                <CodeEditor
-                  code={exampleCodes.update}
-                  codeKey="update"
-                  pyodideReady={pyodideReady}
-                  runPythonCode={runPythonCode}
-                  explanations={explanations.update}
-                />
-
-                <h3 style={styles.subTitle}>2. Menghapus dengan pop()</h3>
-                <p style={styles.text}>
-                  <code>pop(key)</code> menghapus item dengan key tertentu dan mengembalikan nilainya.
-                </p>
-                <CodeEditor
-                  code={exampleCodes.pop}
-                  codeKey="pop"
-                  pyodideReady={pyodideReady}
-                  runPythonCode={runPythonCode}
-                  explanations={explanations.pop}
-                />
-
-                <h3 style={styles.subTitle}>3. Menghapus Item Terakhir dengan popitem()</h3>
-                <p style={styles.text}>
-                  <code>popitem()</code> menghapus item terakhir (berdasarkan urutan penyisipan) dan mengembalikan tuple (key, value).
-                </p>
-                <CodeEditor
-                  code={exampleCodes.popitem}
-                  codeKey="popitem"
-                  pyodideReady={pyodideReady}
-                  runPythonCode={runPythonCode}
-                  explanations={explanations.popitem}
-                />
-
-                <h3 style={styles.subTitle}>4. Menghapus Semua Item dengan clear()</h3>
-                <p style={styles.text}>
-                  <code>clear()</code> menghapus semua item dalam dictionary, menghasilkan dictionary kosong.
-                </p>
-                <CodeEditor
-                  code={exampleCodes.clear}
-                  codeKey="clear"
-                  pyodideReady={pyodideReady}
-                  runPythonCode={runPythonCode}
-                  explanations={explanations.clear}
-                />
-
-                <h3 style={styles.subTitle}>5. Menyalin Dictionary dengan copy()</h3>
-                <p style={styles.text}>
-                  <code>copy()</code> membuat salinan dangkal (shallow copy) dari dictionary.
-                </p>
-                <CodeEditor
-                  code={exampleCodes.copy}
-                  codeKey="copy"
-                  pyodideReady={pyodideReady}
-                  runPythonCode={runPythonCode}
-                  explanations={explanations.copy}
-                />
-
-                <h3 style={styles.subTitle}>6. Dictionary Comprehension</h3>
-                <p style={styles.text}>
-                  Dictionary comprehension adalah cara ringkas membuat dictionary dengan ekspresi dan perulangan.
-                </p>
-                <CodeEditor
-                  code={exampleCodes.dictComp}
-                  codeKey="dictComp"
-                  pyodideReady={pyodideReady}
-                  runPythonCode={runPythonCode}
-                  explanations={explanations.dictComp}
-                />
-              </div>
-            </section>
-
-            {/* LATIHAN PRAKTIK (STUDI KASUS CERITA) */}
-            <section style={styles.section}>
-              <h2 style={styles.sectionTitle}>✏️ Latihan Praktik (Studi Kasus)</h2>
-              <div style={styles.card}>
-                <div style={styles.alertBox}>
-                  <strong>📖 Cerita Kasus: Inventaris Toko Buku</strong>
-                  <p style={{ marginTop: "8px" }}>
-                    Sebuah toko buku memiliki dictionary <code>inventaris</code> yang menyimpan stok buku dengan format <code>{"{'judul buku': jumlah_stok}"}</code>. 
-                    Saat ini inventaris berisi: <code>{"{'Python Dasar': 10, 'Data Science': 5, 'Web Programming': 7}"}</code>.
-                  </p>
-                  <p>
-                    Lakukan operasi berikut secara berurutan:
-                  </p>
-                  <ol style={{ marginLeft: "20px", lineHeight: "1.8" }}>
-                    <li>Buat dictionary <code>inventaris</code> sesuai data awal.</li>
-                    <li>Tambah stok buku baru <code>"Machine Learning"</code> sebanyak 3 eksemplar menggunakan <code>update()</code>.</li>
-                    <li>Buku <code>"Data Science"</code> habis terjual, hapus buku tersebut dari inventaris menggunakan <code>pop()</code>.</li>
-                    <li>Tampilkan isi <code>inventaris</code> terakhir.</li>
-                  </ol>
-                  <p style={{ marginTop: "8px" }}>
-                    <strong>Petunjuk:</strong> Gunakan metode <code>update()</code> untuk menambah, <code>pop()</code> untuk menghapus, dan <code>print(inventaris)</code> di akhir.
-                  </p>
-                </div>
-                <CodeEditorEditable
-                  codeKey="latihan_inventaris"
-                  title="Latihan: Manipulasi Inventaris Toko Buku"
-                  pyodideReady={pyodideReady}
-                  runPythonCode={runPythonCode}
-                  expectedOutput="'Python Dasar': 10, 'Web Programming': 7, 'Machine Learning': 3"  // Cek sebagian
-                  successMessage="Selamat! Anda berhasil memanipulasi dictionary inventaris dengan benar."
-                />
-              </div>
-            </section>
-
-            {/* LATIHAN INTERAKTIF PILIHAN GANDA */}
-            <section style={styles.section}>
-              <h2 style={styles.sectionTitle}>📝 Latihan Interaktif (Pilihan Ganda)</h2>
-              <div style={styles.card}>
-                <p style={styles.text}>Pilihlah jawaban yang paling tepat untuk setiap soal.</p>
-                <button style={styles.resetQuizButton} onClick={resetQuiz}>↻ Reset Jawaban</button>
-                <MultipleChoiceQuiz questions={quizQuestions} resetTrigger={resetInteractives} />
-              </div>
-            </section>
+      <SidebarMateri isOpen={isSidebarOpen} onToggle={() => setIsSidebarOpen(!isSidebarOpen)} />
+      <div 
+        className="main-content"
+        style={{ 
+          marginLeft: isSidebarOpen ? "280px" : "0",
+          transition: "margin-left 0.3s ease",
+          paddingTop: "64px",
+          minHeight: "100vh",
+          width: "auto",
+        }}
+      >
+        <div style={styles.page}>
+          <div style={styles.header}>
+            <div style={styles.headerAccent}></div>
+            <h1 style={styles.headerTitle}>MANIPULASI DICTIONARY</h1>
           </div>
+
+          {/* TUJUAN PEMBELAJARAN */}
+          <section style={styles.section}>
+            <h2 style={styles.sectionTitle}>🎯 Tujuan Pembelajaran</h2>
+            <div style={styles.card}>
+              <ul style={styles.list}>
+                <li>Mahasiswa mampu melakukan operasi manipulasi dasar pada dictionary (menambah, mengupdate, menghapus item).</li>
+                <li>Mahasiswa mampu menggunakan metode-metode penting seperti update(), pop(), popitem(), clear(), copy(), dan dictionary comprehension.</li>
+                <li>Mahasiswa mampu menerapkan manipulasi dictionary dalam pemecahan masalah nyata (studi kasus).</li>
+              </ul>
+            </div>
+          </section>
+
+          {/* MATERI DENGAN CONTOH KODE */}
+          <section style={styles.section}>
+            <div style={styles.card}>
+              <h3 style={styles.subTitle}>1. Menambah/Mengupdate dengan update()</h3>
+              <p style={styles.text}>
+                Metode <code>update()</code> digunakan untuk menambah atau memperbarui beberapa pasangan key-value sekaligus.
+              </p>
+              <CodeEditor
+                code={exampleCodes.update}
+                codeKey="update"
+                pyodideReady={pyodideReady}
+                runPythonCode={runPythonCode}
+                explanations={explanations.update}
+              />
+
+              <h3 style={styles.subTitle}>2. Menghapus dengan pop()</h3>
+              <p style={styles.text}>
+                <code>pop(key)</code> menghapus item dengan key tertentu dan mengembalikan nilainya.
+              </p>
+              <CodeEditor
+                code={exampleCodes.pop}
+                codeKey="pop"
+                pyodideReady={pyodideReady}
+                runPythonCode={runPythonCode}
+                explanations={explanations.pop}
+              />
+
+              <h3 style={styles.subTitle}>3. Menghapus Item Terakhir dengan popitem()</h3>
+              <p style={styles.text}>
+                <code>popitem()</code> menghapus item terakhir (berdasarkan urutan penyisipan) dan mengembalikan tuple (key, value).
+              </p>
+              <CodeEditor
+                code={exampleCodes.popitem}
+                codeKey="popitem"
+                pyodideReady={pyodideReady}
+                runPythonCode={runPythonCode}
+                explanations={explanations.popitem}
+              />
+
+              <h3 style={styles.subTitle}>4. Menghapus Semua Item dengan clear()</h3>
+              <p style={styles.text}>
+                <code>clear()</code> menghapus semua item dalam dictionary, menghasilkan dictionary kosong.
+              </p>
+              <CodeEditor
+                code={exampleCodes.clear}
+                codeKey="clear"
+                pyodideReady={pyodideReady}
+                runPythonCode={runPythonCode}
+                explanations={explanations.clear}
+              />
+
+              <h3 style={styles.subTitle}>5. Menyalin Dictionary dengan copy()</h3>
+              <p style={styles.text}>
+                <code>copy()</code> membuat salinan dangkal (shallow copy) dari dictionary.
+              </p>
+              <CodeEditor
+                code={exampleCodes.copy}
+                codeKey="copy"
+                pyodideReady={pyodideReady}
+                runPythonCode={runPythonCode}
+                explanations={explanations.copy}
+              />
+
+              <h3 style={styles.subTitle}>6. Dictionary Comprehension</h3>
+              <p style={styles.text}>
+                Dictionary comprehension adalah cara ringkas membuat dictionary dengan ekspresi dan perulangan.
+              </p>
+              <CodeEditor
+                code={exampleCodes.dictComp}
+                codeKey="dictComp"
+                pyodideReady={pyodideReady}
+                runPythonCode={runPythonCode}
+                explanations={explanations.dictComp}
+              />
+            </div>
+          </section>
+
+          {/* LATIHAN PRAKTIK (STUDI KASUS CERITA) */}
+          <section style={styles.section}>
+            <h2 style={styles.sectionTitle}>✏️ Latihan Praktik (Studi Kasus)</h2>
+            <div style={styles.card}>
+              <div style={styles.alertBox}>
+                <strong>📖 Cerita Kasus: Inventaris Toko Buku</strong>
+                <p style={{ marginTop: "8px" }}>
+                  Sebuah toko buku memiliki dictionary <code>inventaris</code> yang menyimpan stok buku dengan format <code>{"{'judul buku': jumlah_stok}"}</code>. 
+                  Saat ini inventaris berisi: <code>{"{'Python Dasar': 10, 'Data Science': 5, 'Web Programming': 7}"}</code>.
+                </p>
+                <p>
+                  Lakukan operasi berikut secara berurutan:
+                </p>
+                <ol style={{ marginLeft: "20px", lineHeight: "1.8" }}>
+                  <li>Buat dictionary <code>inventaris</code> sesuai data awal.</li>
+                  <li>Tambah stok buku baru <code>"Machine Learning"</code> sebanyak 3 eksemplar menggunakan <code>update()</code>.</li>
+                  <li>Buku <code>"Data Science"</code> habis terjual, hapus buku tersebut dari inventaris menggunakan <code>pop()</code>.</li>
+                  <li>Tampilkan isi <code>inventaris</code> terakhir.</li>
+                </ol>
+                <p style={{ marginTop: "8px" }}>
+                  <strong>Petunjuk:</strong> Gunakan metode <code>update()</code> untuk menambah, <code>pop()</code> untuk menghapus, dan <code>print(inventaris)</code> di akhir.
+                </p>
+              </div>
+              <CodeEditorEditable
+                codeKey="latihan_inventaris"
+                title="Latihan: Manipulasi Inventaris Toko Buku"
+                pyodideReady={pyodideReady}
+                runPythonCode={runPythonCode}
+                expectedOutput="'Python Dasar': 10, 'Web Programming': 7, 'Machine Learning': 3"
+                successMessage="Selamat! Anda berhasil memanipulasi dictionary inventaris dengan benar."
+              />
+            </div>
+          </section>
+
+          {/* LATIHAN INTERAKTIF PILIHAN GANDA */}
+          <section style={styles.section}>
+            <h2 style={styles.sectionTitle}>📝 Latihan Interaktif (Pilihan Ganda)</h2>
+            <div style={styles.card}>
+              <p style={styles.text}>Pilihlah jawaban yang paling tepat untuk setiap soal.</p>
+              <button style={styles.resetQuizButton} onClick={resetQuiz}>↻ Reset Jawaban</button>
+              <MultipleChoiceQuiz questions={quizQuestions} resetTrigger={resetInteractives} />
+            </div>
+          </section>
         </div>
       </div>
     </>
@@ -551,6 +553,9 @@ const styles = {
     backgroundColor: "#f5f7fa",
     minHeight: "calc(100vh - 64px)",
     fontFamily: "Poppins, sans-serif",
+    width: "100%",
+    maxWidth: "100%",
+    boxSizing: "border-box",
   },
   header: {
     backgroundColor: "#306998",

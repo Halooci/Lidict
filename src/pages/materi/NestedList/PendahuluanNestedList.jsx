@@ -267,7 +267,7 @@ const QuizNestedList = () => {
 export default function PendahuluanNestedList() {
   const [pyodideReady, setPyodideReady] = useState(false);
   const pyodideRef = useRef(null);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true); // <-- State untuk buka/tutup sidebar
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true); // State untuk buka/tutup sidebar
 
   const exampleCodes = {
     nested: `# Contoh nested list: data nilai siswa dalam 2 mata pelajaran
@@ -331,11 +331,16 @@ _buffer.getvalue()
     <>
       <Navbar />
       <SidebarMateri isOpen={isSidebarOpen} onToggle={() => setIsSidebarOpen(!isSidebarOpen)} />
-      <div style={{ 
-        marginLeft: isSidebarOpen ? "280px" : "0",
-        transition: "margin-left 0.3s ease",
-        paddingTop: "64px"
-      }}>
+      <div 
+        className="main-content"
+        style={{ 
+          marginLeft: isSidebarOpen ? "280px" : "0",
+          transition: "margin-left 0.3s ease",
+          paddingTop: "64px",
+          minHeight: "100vh",
+          width: "auto",
+        }}
+      >
         <div style={styles.page}>
           {/* HEADER */}
           <div style={styles.header}>
@@ -457,6 +462,9 @@ const styles = {
     backgroundColor: "#f5f7fa",
     minHeight: "calc(100vh - 64px)",
     fontFamily: "Poppins, sans-serif",
+    width: "100%",
+    maxWidth: "100%",
+    boxSizing: "border-box",
   },
 
   header: {

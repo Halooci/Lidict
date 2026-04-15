@@ -6,6 +6,7 @@ export default function RangkumanList() {
   /* ================= PYODIDE SETUP ================= */
   const [pyodideReady, setPyodideReady] = useState(false);
   const pyodideRef = useRef(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true); // State untuk sidebar
   
   // State untuk setiap editor kode
   const [codeOutputs, setCodeOutputs] = useState({});
@@ -187,125 +188,132 @@ sys.stdout = StringIO()
   return (
     <>
       <Navbar />
-      <div style={{ marginLeft: "280px" }}>
-        <SidebarMateri />
-        <div style={{ paddingTop: "64px" }}>
-          <div style={styles.page}>
-            {/* HEADER */}
-            <div style={styles.header}>
-              <div style={styles.headerAccent}></div>
-              <h1 style={styles.headerTitle}>RANGKUMAN LIST</h1>
-            </div>
-
-            <section style={styles.section}>
-              <div style={styles.card}>
-                <p style={styles.text}>
-                  <strong>List</strong> adalah struktur data bawaan Python yang bersifat <strong>linier</strong>, 
-                  <strong>ordered</strong>, <strong>mutable</strong>, dan dapat menyimpan <strong>tipe data campuran</strong>. 
-                  Elemen list diakses menggunakan <strong>indeks</strong> (positif dari kiri, negatif dari kanan). 
-                  List sangat fleksibel karena ukurannya dapat berubah secara dinamis.
-                </p>
-
-                {/* ========== 1. KARAKTERISTIK LIST ========== */}
-                <h3 style={styles.subTitle}>1. Karakteristik List</h3>
-                <ul style={styles.list}>
-                  <li><strong>Ordered (Terurut):</strong> Urutan elemen sesuai saat dibuat.</li>
-                  <li><strong>Indexed (Memiliki Indeks):</strong> Indeks positif (0,1,2,...) dan negatif (-1,-2,...).</li>
-                  <li><strong>Mutable (Dapat Diubah):</strong> Elemen dapat ditambah, dihapus, atau diubah.</li>
-                  <li><strong>Heterogeneous (Tipe Campuran):</strong> Bisa berisi integer, string, boolean, float, dll.</li>
-                  <li><strong>Dynamic Size (Ukuran Dinamis):</strong> Ukuran otomatis bertambah saat ditambah elemen.</li>
-                </ul>
-
-                <CodeEditor codeKey="ordered" title="Contoh Ordered" />
-                <CodeEditor codeKey="indexed" title="Contoh Indeks Positif & Negatif" />
-                <CodeEditor codeKey="mutable" title="Contoh Mutable (Ubah Elemen)" />
-                <CodeEditor codeKey="heterogeneous" title="Contoh Tipe Data Campuran" />
-                <CodeEditor codeKey="dynamic" title="Contoh Ukuran Dinamis (append)" />
-
-                {/* ========== 2. MEMBUAT LIST ========== */}
-                <h3 style={styles.subTitle}>2. Membuat List</h3>
-                <p style={styles.text}>
-                  List dibuat dengan tanda kurung siku <code>[]</code>, elemen dipisahkan koma. 
-                  Dapat berupa list kosong, list dengan satu tipe data, atau campuran.
-                </p>
-                <CodeEditor codeKey="createList" title="Berbagai Cara Membuat List" />
-
-                {/* ========== 3. AKSES ELEMEN LIST ========== */}
-                <h3 style={styles.subTitle}>3. Akses Elemen List</h3>
-                <p style={styles.text}>
-                  <strong>Indeks positif:</strong> dimulai dari 0 (elemen pertama).<br />
-                  <strong>Indeks negatif:</strong> dimulai dari -1 (elemen terakhir).<br />
-                  <strong>Slicing:</strong> <code>list[awal:akhir]</code> mengambil elemen dari indeks <code>awal</code> hingga sebelum <code>akhir</code>.
-                </p>
-                <CodeEditor codeKey="aksesPositif" title="Akses dengan Indeks Positif" />
-                <CodeEditor codeKey="aksesNegatif" title="Akses dengan Indeks Negatif" />
-                <CodeEditor codeKey="slicing" title="Slicing List" />
-
-                {/* ========== 4. OPERASI DASAR LIST ========== */}
-                <h3 style={styles.subTitle}>4. Operasi Dasar List</h3>
-                <ul style={styles.list}>
-                  <li><strong>Concatenation (+):</strong> Menggabungkan dua list.</li>
-                  <li><strong>Repetition (*):</strong> Mengulang list sebanyak n kali.</li>
-                  <li><strong>Keanggotaan (in):</strong> Mengecek apakah nilai ada di dalam list.</li>
-                  <li><strong>Panjang (len):</strong> Menghitung jumlah elemen.</li>
-                </ul>
-                <CodeEditor codeKey="concat" title="Concatenation (+)" />
-                <CodeEditor codeKey="repeat" title="Repetition (*)" />
-                <CodeEditor codeKey="keanggotaan" title="Operator in" />
-                <CodeEditor codeKey="panjang" title="Fungsi len()" />
-
-                {/* ========== 5. MANIPULASI LIST ========== */}
-                <h3 style={styles.subTitle}>5. Manipulasi List (Menambah, Mengubah, Menghapus)</h3>
-                
-                <h4 style={styles.subSubTitle}>a. Menambah Elemen</h4>
-                <ul style={styles.list}>
-                  <li><code>append(x)</code> – tambah x di akhir.</li>
-                  <li><code>insert(i, x)</code> – sisip x pada indeks i.</li>
-                  <li><code>extend(iterable)</code> – tambah semua elemen dari iterable.</li>
-                </ul>
-                <CodeEditor codeKey="append" title="append()" />
-                <CodeEditor codeKey="insert" title="insert()" />
-                <CodeEditor codeKey="extend" title="extend()" />
-
-                <h4 style={styles.subSubTitle}>b. Menghapus Elemen</h4>
-                <ul style={styles.list}>
-                  <li><code>remove(x)</code> – hapus elemen pertama yang bernilai x.</li>
-                  <li><code>pop(i)</code> – hapus elemen indeks i (kembalikan nilainya).</li>
-                  <li><code>clear()</code> – hapus semua elemen.</li>
-                  <li><code>del list[i]</code> atau <code>del list[i:j]</code> – hapus berdasarkan indeks/slice.</li>
-                </ul>
-                <CodeEditor codeKey="remove" title="remove()" />
-                <CodeEditor codeKey="pop" title="pop()" />
-                <CodeEditor codeKey="clear" title="clear()" />
-                <CodeEditor codeKey="del_slice" title="del (slice)" />
-
-                <h4 style={styles.subSubTitle}>c. Mengubah Elemen</h4>
-                <p style={styles.text}>Menugaskan nilai baru ke indeks tertentu: <code>list[indeks] = nilai_baru</code></p>
-                <CodeEditor codeKey="ubah" title="Mengubah Elemen" />
-
-                <h4 style={styles.subSubTitle}>d. Pengurutan & Pembalikan</h4>
-                <ul style={styles.list}>
-                  <li><code>sort()</code> – mengurutkan ascending (permanen).</li>
-                  <li><code>reverse()</code> – membalik urutan (permanen).</li>
-                </ul>
-                <CodeEditor codeKey="sort" title="sort()" />
-                <CodeEditor codeKey="reverse" title="reverse()" />
-
-                <h4 style={styles.subSubTitle}>e. Method Informasi Lainnya</h4>
-                <ul style={styles.list}>
-                  <li><code>count(x)</code> – jumlah kemunculan x.</li>
-                  <li><code>index(x)</code> – indeks pertama x.</li>
-                </ul>
-                <CodeEditor codeKey="count" title="count()" />
-                <CodeEditor codeKey="index" title="index()" />
-
-                <p style={styles.text}>
-                  Dengan memahami karakteristik, pembuatan, akses, operasi dasar, dan manipulasi list, 
-                  Anda siap menggunakan list untuk menyelesaikan berbagai masalah pemrograman secara efisien.
-                </p>
-              </div>
-            </section>
+      <SidebarMateri isOpen={isSidebarOpen} onToggle={() => setIsSidebarOpen(!isSidebarOpen)} />
+      <div 
+        className="main-content"
+        style={{ 
+          marginLeft: isSidebarOpen ? "280px" : "0",
+          transition: "margin-left 0.3s ease",
+          paddingTop: "64px",
+          minHeight: "100vh",
+          width: "auto",
+        }}
+      >
+        <div style={styles.page}>
+          {/* HEADER */}
+          <div style={styles.header}>
+            <div style={styles.headerAccent}></div>
+            <h1 style={styles.headerTitle}>RANGKUMAN LIST</h1>
           </div>
+
+          <section style={styles.section}>
+            <div style={styles.card}>
+              <p style={styles.text}>
+                <strong>List</strong> adalah struktur data bawaan Python yang bersifat <strong>linier</strong>, 
+                <strong>ordered</strong>, <strong>mutable</strong>, dan dapat menyimpan <strong>tipe data campuran</strong>. 
+                Elemen list diakses menggunakan <strong>indeks</strong> (positif dari kiri, negatif dari kanan). 
+                List sangat fleksibel karena ukurannya dapat berubah secara dinamis.
+              </p>
+
+              {/* ========== 1. KARAKTERISTIK LIST ========== */}
+              <h3 style={styles.subTitle}>1. Karakteristik List</h3>
+              <ul style={styles.list}>
+                <li><strong>Ordered (Terurut):</strong> Urutan elemen sesuai saat dibuat.</li>
+                <li><strong>Indexed (Memiliki Indeks):</strong> Indeks positif (0,1,2,...) dan negatif (-1,-2,...).</li>
+                <li><strong>Mutable (Dapat Diubah):</strong> Elemen dapat ditambah, dihapus, atau diubah.</li>
+                <li><strong>Heterogeneous (Tipe Campuran):</strong> Bisa berisi integer, string, boolean, float, dll.</li>
+                <li><strong>Dynamic Size (Ukuran Dinamis):</strong> Ukuran otomatis bertambah saat ditambah elemen.</li>
+              </ul>
+
+              <CodeEditor codeKey="ordered" title="Contoh Ordered" />
+              <CodeEditor codeKey="indexed" title="Contoh Indeks Positif & Negatif" />
+              <CodeEditor codeKey="mutable" title="Contoh Mutable (Ubah Elemen)" />
+              <CodeEditor codeKey="heterogeneous" title="Contoh Tipe Data Campuran" />
+              <CodeEditor codeKey="dynamic" title="Contoh Ukuran Dinamis (append)" />
+
+              {/* ========== 2. MEMBUAT LIST ========== */}
+              <h3 style={styles.subTitle}>2. Membuat List</h3>
+              <p style={styles.text}>
+                List dibuat dengan tanda kurung siku <code>[]</code>, elemen dipisahkan koma. 
+                Dapat berupa list kosong, list dengan satu tipe data, atau campuran.
+              </p>
+              <CodeEditor codeKey="createList" title="Berbagai Cara Membuat List" />
+
+              {/* ========== 3. AKSES ELEMEN LIST ========== */}
+              <h3 style={styles.subTitle}>3. Akses Elemen List</h3>
+              <p style={styles.text}>
+                <strong>Indeks positif:</strong> dimulai dari 0 (elemen pertama).<br />
+                <strong>Indeks negatif:</strong> dimulai dari -1 (elemen terakhir).<br />
+                <strong>Slicing:</strong> <code>list[awal:akhir]</code> mengambil elemen dari indeks <code>awal</code> hingga sebelum <code>akhir</code>.
+              </p>
+              <CodeEditor codeKey="aksesPositif" title="Akses dengan Indeks Positif" />
+              <CodeEditor codeKey="aksesNegatif" title="Akses dengan Indeks Negatif" />
+              <CodeEditor codeKey="slicing" title="Slicing List" />
+
+              {/* ========== 4. OPERASI DASAR LIST ========== */}
+              <h3 style={styles.subTitle}>4. Operasi Dasar List</h3>
+              <ul style={styles.list}>
+                <li><strong>Concatenation (+):</strong> Menggabungkan dua list.</li>
+                <li><strong>Repetition (*):</strong> Mengulang list sebanyak n kali.</li>
+                <li><strong>Keanggotaan (in):</strong> Mengecek apakah nilai ada di dalam list.</li>
+                <li><strong>Panjang (len):</strong> Menghitung jumlah elemen.</li>
+              </ul>
+              <CodeEditor codeKey="concat" title="Concatenation (+)" />
+              <CodeEditor codeKey="repeat" title="Repetition (*)" />
+              <CodeEditor codeKey="keanggotaan" title="Operator in" />
+              <CodeEditor codeKey="panjang" title="Fungsi len()" />
+
+              {/* ========== 5. MANIPULASI LIST ========== */}
+              <h3 style={styles.subTitle}>5. Manipulasi List (Menambah, Mengubah, Menghapus)</h3>
+              
+              <h4 style={styles.subSubTitle}>a. Menambah Elemen</h4>
+              <ul style={styles.list}>
+                <li><code>append(x)</code> – tambah x di akhir.</li>
+                <li><code>insert(i, x)</code> – sisip x pada indeks i.</li>
+                <li><code>extend(iterable)</code> – tambah semua elemen dari iterable.</li>
+              </ul>
+              <CodeEditor codeKey="append" title="append()" />
+              <CodeEditor codeKey="insert" title="insert()" />
+              <CodeEditor codeKey="extend" title="extend()" />
+
+              <h4 style={styles.subSubTitle}>b. Menghapus Elemen</h4>
+              <ul style={styles.list}>
+                <li><code>remove(x)</code> – hapus elemen pertama yang bernilai x.</li>
+                <li><code>pop(i)</code> – hapus elemen indeks i (kembalikan nilainya).</li>
+                <li><code>clear()</code> – hapus semua elemen.</li>
+                <li><code>del list[i]</code> atau <code>del list[i:j]</code> – hapus berdasarkan indeks/slice.</li>
+              </ul>
+              <CodeEditor codeKey="remove" title="remove()" />
+              <CodeEditor codeKey="pop" title="pop()" />
+              <CodeEditor codeKey="clear" title="clear()" />
+              <CodeEditor codeKey="del_slice" title="del (slice)" />
+
+              <h4 style={styles.subSubTitle}>c. Mengubah Elemen</h4>
+              <p style={styles.text}>Menugaskan nilai baru ke indeks tertentu: <code>list[indeks] = nilai_baru</code></p>
+              <CodeEditor codeKey="ubah" title="Mengubah Elemen" />
+
+              <h4 style={styles.subSubTitle}>d. Pengurutan & Pembalikan</h4>
+              <ul style={styles.list}>
+                <li><code>sort()</code> – mengurutkan ascending (permanen).</li>
+                <li><code>reverse()</code> – membalik urutan (permanen).</li>
+              </ul>
+              <CodeEditor codeKey="sort" title="sort()" />
+              <CodeEditor codeKey="reverse" title="reverse()" />
+
+              <h4 style={styles.subSubTitle}>e. Method Informasi Lainnya</h4>
+              <ul style={styles.list}>
+                <li><code>count(x)</code> – jumlah kemunculan x.</li>
+                <li><code>index(x)</code> – indeks pertama x.</li>
+              </ul>
+              <CodeEditor codeKey="count" title="count()" />
+              <CodeEditor codeKey="index" title="index()" />
+
+              <p style={styles.text}>
+                Dengan memahami karakteristik, pembuatan, akses, operasi dasar, dan manipulasi list, 
+                Anda siap menggunakan list untuk menyelesaikan berbagai masalah pemrograman secara efisien.
+              </p>
+            </div>
+          </section>
         </div>
       </div>
     </>
@@ -319,7 +327,10 @@ const styles = {
     paddingTop: "40px",
     backgroundColor: "#f5f7fa",
     minHeight: "100vh",
-    fontFamily: "Poppins, sans-serif"
+    fontFamily: "Poppins, sans-serif",
+    width: "100%",
+    maxWidth: "100%",
+    boxSizing: "border-box",
   },
   header: {
     backgroundColor: "#306998",

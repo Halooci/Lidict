@@ -94,6 +94,9 @@ if not ditemukan:
     print(f"Nilai {cari} tidak ditemukan")`,
   });
 
+  // State untuk sidebar
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
   // Load Pyodide
   useEffect(() => {
     const loadPyodide = async () => {
@@ -127,12 +130,16 @@ if not ditemukan:
 
     try {
       const pyodide = pyodideRef.current;
-      let output = "";
-      pyodide.setStdout({ batched: (text) => { output += text; } });
-      setCodeOutputs(prev => ({ ...prev, [codeKey]: "" }));
-      
+      // Redirect stdout ke StringIO agar newline tetap terjaga
+      await pyodide.runPythonAsync(`
+import sys
+from io import StringIO
+sys.stdout = StringIO()
+      `);
       await pyodide.runPythonAsync(codeInputs[codeKey]);
-      setCodeOutputs(prev => ({ ...prev, [codeKey]: output }));
+      const output = await pyodide.runPythonAsync("sys.stdout.getvalue()");
+      await pyodide.runPythonAsync("sys.stdout = sys.__stdout__");
+      setCodeOutputs(prev => ({ ...prev, [codeKey]: output || "(Tidak ada output)" }));
     } catch (error) {
       setCodeOutputs(prev => ({
         ...prev,
@@ -171,163 +178,170 @@ if not ditemukan:
   return (
     <>
       <Navbar />
-      <div style={{ marginLeft: "280px" }}>
-        <SidebarMateri />
-        <div style={{ paddingTop: "64px" }}>
-          <div style={styles.page}>
-            {/* HEADER */}
-            <div style={styles.header}>
-              <div style={styles.headerAccent}></div>
-              <h1 style={styles.headerTitle}>RANGKUMAN NESTED LIST</h1>
-            </div>
-
-            {/* PENDAHULUAN */}
-            <section style={styles.section}>
-              <div style={styles.card}>
-                <p style={styles.text}>
-                  <strong>Nested list</strong> adalah list yang di dalamnya berisi list lain. 
-                  Struktur ini sangat berguna untuk merepresentasikan data dua dimensi 
-                  seperti tabel, matriks, atau data yang memiliki hierarki. Setiap elemen 
-                  dalam nested list dapat diakses menggunakan dua indeks: 
-                  <code> list[indeks_baris][indeks_kolom]</code>. Berikut adalah berbagai 
-                  operasi yang dapat dilakukan pada nested list.
-                </p>
-              </div>
-            </section>
-
-            {/* 1. MENGAKSES ELEMEN */}
-            <section style={styles.section}>
-              <div style={styles.card}>
-                <h3 style={styles.subTitle}>1. Mengakses Elemen Nested List</h3>
-                <p style={styles.text}>
-                  Gunakan dua buah indeks: indeks pertama untuk memilih baris, indeks kedua 
-                  untuk memilih kolom. Indeks dimulai dari 0.
-                </p>
-                <CodeEditor codeKey="akses" title="Contoh Kode Program" />
-              </div>
-            </section>
-
-            {/* 2. MENGUBAH NILAI ELEMEN */}
-            <section style={styles.section}>
-              <div style={styles.card}>
-                <h3 style={styles.subTitle}>2. Mengubah Nilai Elemen</h3>
-                <p style={styles.text}>
-                  Kita dapat mengubah nilai elemen tertentu dengan mengaksesnya lalu 
-                  menetapkan nilai baru.
-                </p>
-                <CodeEditor codeKey="ubah" title="Contoh Kode Program" />
-              </div>
-            </section>
-
-            {/* 3. MENAMBAH BARIS */}
-            <section style={styles.section}>
-              <div style={styles.card}>
-                <h3 style={styles.subTitle}>3. Menambah Baris Baru (append)</h3>
-                <p style={styles.text}>
-                  Gunakan method <code>append()</code> untuk menambahkan list baru sebagai baris 
-                  di akhir nested list.
-                </p>
-                <CodeEditor codeKey="tambahBaris" title="Contoh Kode Program" />
-              </div>
-            </section>
-
-            {/* 4. MENYISIPKAN BARIS */}
-            <section style={styles.section}>
-              <div style={styles.card}>
-                <h3 style={styles.subTitle}>4. Menyisipkan Baris (insert)</h3>
-                <p style={styles.text}>
-                  Method <code>insert(posisi, baris_baru)</code> menyisipkan baris baru pada 
-                  indeks tertentu.
-                </p>
-                <CodeEditor codeKey="sisipBaris" title="Contoh Kode Program" />
-              </div>
-            </section>
-
-            {/* 5. MENGHAPUS BARIS */}
-            <section style={styles.section}>
-              <div style={styles.card}>
-                <h3 style={styles.subTitle}>5. Menghapus Baris</h3>
-                <p style={styles.text}>
-                  Gunakan <code>pop()</code> untuk menghapus baris terakhir, atau <code>del</code> 
-                  untuk menghapus berdasarkan indeks.
-                </p>
-                <CodeEditor codeKey="hapusBaris" title="Contoh Kode Program" />
-              </div>
-            </section>
-
-            {/* 6. MENAMBAH KOLOM */}
-            <section style={styles.section}>
-              <div style={styles.card}>
-                <h3 style={styles.subTitle}>6. Menambah Kolom (Elemen pada Setiap Baris)</h3>
-                <p style={styles.text}>
-                  Iterasi setiap baris dan gunakan <code>append()</code> untuk menambahkan 
-                  elemen baru di akhir setiap baris.
-                </p>
-                <CodeEditor codeKey="tambahKolom" title="Contoh Kode Program" />
-              </div>
-            </section>
-
-            {/* 7. MENGHAPUS KOLOM */}
-            <section style={styles.section}>
-              <div style={styles.card}>
-                <h3 style={styles.subTitle}>7. Menghapus Kolom</h3>
-                <p style={styles.text}>
-                  Iterasi setiap baris dan gunakan <code>pop(indeks_kolom)</code> atau 
-                  <code>del</code> untuk menghapus kolom tertentu dari semua baris.
-                </p>
-                <CodeEditor codeKey="hapusKolom" title="Contoh Kode Program" />
-              </div>
-            </section>
-
-            {/* 8. ITERASI SELURUH ELEMEN */}
-            <section style={styles.section}>
-              <div style={styles.card}>
-                <h3 style={styles.subTitle}>8. Iterasi Seluruh Elemen</h3>
-                <p style={styles.text}>
-                  Gunakan perulangan bersarang (<code>for</code> di dalam <code>for</code>) 
-                  untuk mengakses semua elemen nested list.
-                </p>
-                <CodeEditor codeKey="iterasi" title="Contoh Kode Program" />
-              </div>
-            </section>
-
-            {/* 9. MEMBUAT NESTED LIST DENGAN LIST COMPREHENSION */}
-            <section style={styles.section}>
-              <div style={styles.card}>
-                <h3 style={styles.subTitle}>9. Membuat Nested List dengan List Comprehension</h3>
-                <p style={styles.text}>
-                  Cara ringkas untuk membuat matriks berukuran tertentu, misalnya matriks 3x4 
-                  dengan nilai 0.
-                </p>
-                <CodeEditor codeKey="listComprehension" title="Contoh Kode Program" />
-              </div>
-            </section>
-
-            {/* 10. MENGGABUNGKAN DUA NESTED LIST */}
-            <section style={styles.section}>
-              <div style={styles.card}>
-                <h3 style={styles.subTitle}>10. Menggabungkan Dua Nested List</h3>
-                <p style={styles.text}>
-                  Operator <code>+</code> dapat digunakan untuk menggabungkan dua nested list 
-                  menjadi satu.
-                </p>
-                <CodeEditor codeKey="menggabung" title="Contoh Kode Program" />
-              </div>
-            </section>
-
-            {/* 11. MENCARI NILAI DALAM NESTED LIST */}
-            <section style={styles.section}>
-              <div style={styles.card}>
-                <h3 style={styles.subTitle}>11. Mencari Nilai dalam Nested List</h3>
-                <p style={styles.text}>
-                  Gunakan perulangan bersarang dan pengecekan kondisi untuk menemukan nilai 
-                  tertentu.
-                </p>
-                <CodeEditor codeKey="mencari" title="Contoh Kode Program" />
-              </div>
-            </section>
-
+      <SidebarMateri isOpen={isSidebarOpen} onToggle={() => setIsSidebarOpen(!isSidebarOpen)} />
+      <div 
+        className="main-content"
+        style={{ 
+          marginLeft: isSidebarOpen ? "280px" : "0",
+          transition: "margin-left 0.3s ease",
+          paddingTop: "64px",
+          minHeight: "100vh",
+          width: "auto",
+        }}
+      >
+        <div style={styles.page}>
+          {/* HEADER */}
+          <div style={styles.header}>
+            <div style={styles.headerAccent}></div>
+            <h1 style={styles.headerTitle}>RANGKUMAN NESTED LIST</h1>
           </div>
+
+          {/* PENDAHULUAN */}
+          <section style={styles.section}>
+            <div style={styles.card}>
+              <p style={styles.text}>
+                <strong>Nested list</strong> adalah list yang di dalamnya berisi list lain. 
+                Struktur ini sangat berguna untuk merepresentasikan data dua dimensi 
+                seperti tabel, matriks, atau data yang memiliki hierarki. Setiap elemen 
+                dalam nested list dapat diakses menggunakan dua indeks: 
+                <code> list[indeks_baris][indeks_kolom]</code>. Berikut adalah berbagai 
+                operasi yang dapat dilakukan pada nested list.
+              </p>
+            </div>
+          </section>
+
+          {/* 1. MENGAKSES ELEMEN */}
+          <section style={styles.section}>
+            <div style={styles.card}>
+              <h3 style={styles.subTitle}>1. Mengakses Elemen Nested List</h3>
+              <p style={styles.text}>
+                Gunakan dua buah indeks: indeks pertama untuk memilih baris, indeks kedua 
+                untuk memilih kolom. Indeks dimulai dari 0.
+              </p>
+              <CodeEditor codeKey="akses" title="Contoh Kode Program" />
+            </div>
+          </section>
+
+          {/* 2. MENGUBAH NILAI ELEMEN */}
+          <section style={styles.section}>
+            <div style={styles.card}>
+              <h3 style={styles.subTitle}>2. Mengubah Nilai Elemen</h3>
+              <p style={styles.text}>
+                Kita dapat mengubah nilai elemen tertentu dengan mengaksesnya lalu 
+                menetapkan nilai baru.
+              </p>
+              <CodeEditor codeKey="ubah" title="Contoh Kode Program" />
+            </div>
+          </section>
+
+          {/* 3. MENAMBAH BARIS */}
+          <section style={styles.section}>
+            <div style={styles.card}>
+              <h3 style={styles.subTitle}>3. Menambah Baris Baru (append)</h3>
+              <p style={styles.text}>
+                Gunakan method <code>append()</code> untuk menambahkan list baru sebagai baris 
+                di akhir nested list.
+              </p>
+              <CodeEditor codeKey="tambahBaris" title="Contoh Kode Program" />
+            </div>
+          </section>
+
+          {/* 4. MENYISIPKAN BARIS */}
+          <section style={styles.section}>
+            <div style={styles.card}>
+              <h3 style={styles.subTitle}>4. Menyisipkan Baris (insert)</h3>
+              <p style={styles.text}>
+                Method <code>insert(posisi, baris_baru)</code> menyisipkan baris baru pada 
+                indeks tertentu.
+              </p>
+              <CodeEditor codeKey="sisipBaris" title="Contoh Kode Program" />
+            </div>
+          </section>
+
+          {/* 5. MENGHAPUS BARIS */}
+          <section style={styles.section}>
+            <div style={styles.card}>
+              <h3 style={styles.subTitle}>5. Menghapus Baris</h3>
+              <p style={styles.text}>
+                Gunakan <code>pop()</code> untuk menghapus baris terakhir, atau <code>del</code> 
+                untuk menghapus berdasarkan indeks.
+              </p>
+              <CodeEditor codeKey="hapusBaris" title="Contoh Kode Program" />
+            </div>
+          </section>
+
+          {/* 6. MENAMBAH KOLOM */}
+          <section style={styles.section}>
+            <div style={styles.card}>
+              <h3 style={styles.subTitle}>6. Menambah Kolom (Elemen pada Setiap Baris)</h3>
+              <p style={styles.text}>
+                Iterasi setiap baris dan gunakan <code>append()</code> untuk menambahkan 
+                elemen baru di akhir setiap baris.
+              </p>
+              <CodeEditor codeKey="tambahKolom" title="Contoh Kode Program" />
+            </div>
+          </section>
+
+          {/* 7. MENGHAPUS KOLOM */}
+          <section style={styles.section}>
+            <div style={styles.card}>
+              <h3 style={styles.subTitle}>7. Menghapus Kolom</h3>
+              <p style={styles.text}>
+                Iterasi setiap baris dan gunakan <code>pop(indeks_kolom)</code> atau 
+                <code>del</code> untuk menghapus kolom tertentu dari semua baris.
+              </p>
+              <CodeEditor codeKey="hapusKolom" title="Contoh Kode Program" />
+            </div>
+          </section>
+
+          {/* 8. ITERASI SELURUH ELEMEN */}
+          <section style={styles.section}>
+            <div style={styles.card}>
+              <h3 style={styles.subTitle}>8. Iterasi Seluruh Elemen</h3>
+              <p style={styles.text}>
+                Gunakan perulangan bersarang (<code>for</code> di dalam <code>for</code>) 
+                untuk mengakses semua elemen nested list.
+              </p>
+              <CodeEditor codeKey="iterasi" title="Contoh Kode Program" />
+            </div>
+          </section>
+
+          {/* 9. MEMBUAT NESTED LIST DENGAN LIST COMPREHENSION */}
+          <section style={styles.section}>
+            <div style={styles.card}>
+              <h3 style={styles.subTitle}>9. Membuat Nested List dengan List Comprehension</h3>
+              <p style={styles.text}>
+                Cara ringkas untuk membuat matriks berukuran tertentu, misalnya matriks 3x4 
+                dengan nilai 0.
+              </p>
+              <CodeEditor codeKey="listComprehension" title="Contoh Kode Program" />
+            </div>
+          </section>
+
+          {/* 10. MENGGABUNGKAN DUA NESTED LIST */}
+          <section style={styles.section}>
+            <div style={styles.card}>
+              <h3 style={styles.subTitle}>10. Menggabungkan Dua Nested List</h3>
+              <p style={styles.text}>
+                Operator <code>+</code> dapat digunakan untuk menggabungkan dua nested list 
+                menjadi satu.
+              </p>
+              <CodeEditor codeKey="menggabung" title="Contoh Kode Program" />
+            </div>
+          </section>
+
+          {/* 11. MENCARI NILAI DALAM NESTED LIST */}
+          <section style={styles.section}>
+            <div style={styles.card}>
+              <h3 style={styles.subTitle}>11. Mencari Nilai dalam Nested List</h3>
+              <p style={styles.text}>
+                Gunakan perulangan bersarang dan pengecekan kondisi untuk menemukan nilai 
+                tertentu.
+              </p>
+              <CodeEditor codeKey="mencari" title="Contoh Kode Program" />
+            </div>
+          </section>
+
         </div>
       </div>
     </>
@@ -342,6 +356,9 @@ const styles = {
     backgroundColor: "#f5f7fa",
     minHeight: "calc(100vh - 64px)",
     fontFamily: "Poppins, sans-serif",
+    width: "100%",
+    maxWidth: "100%",
+    boxSizing: "border-box",
   },
   header: {
     backgroundColor: "#306998",
