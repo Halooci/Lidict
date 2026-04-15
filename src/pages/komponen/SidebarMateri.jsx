@@ -79,7 +79,7 @@ export default function SidebarMateri() {
           setActiveAccordion={setActiveAccordion}
         >
           <SubItem label="Pendahuluan List" to="/List/PendahuluanList" currentPath={currentPath} />
-          <SubItem label="Pembuatan dan Akses Element" to="/List/PembuatanAksesElement" currentPath={currentPath} />
+          <SubItem label="Pembuatan dan Akses Elemen" to="/List/PembuatanAksesElement" currentPath={currentPath} />
           <SubItem label="Operasi dan Manipulasi" to="/List/OperasiDanManipulasi" currentPath={currentPath} />
           <SubItem label="Rangkuman List" to="/List/RangkumanList" currentPath={currentPath} />
           <SubItem label="Kuis List" to="/List/KuisList" currentPath={currentPath} />
@@ -92,7 +92,7 @@ export default function SidebarMateri() {
           setActiveAccordion={setActiveAccordion}
         >
           <SubItem label="Pendahuluan Nested List" to="/NestedList/PendahuluanNestedList" currentPath={currentPath} />
-          <SubItem label="Pembuatan dan Akses Element Nested List" to="/NestedList/PembuatanAksesNestedList" currentPath={currentPath} />
+          <SubItem label="Pembuatan dan Akses Elemen Nested List" to="/NestedList/PembuatanAksesNestedList" currentPath={currentPath} />
           <SubItem label="Operasi Nested List" to="/NestedList/OperasiNestedList" currentPath={currentPath} />
           <SubItem label="Rangkuman Nested List" to="/NestedList/RangkumanNestedList" currentPath={currentPath} />
           <SubItem label="Kuis Nested List" to="/NestedList/KuisNestedList" currentPath={currentPath} />

@@ -297,10 +297,29 @@ const styles = {
     marginBottom: "20px",
   },
   feedback: { marginTop: "8px", fontSize: "14px", fontStyle: "italic", color: "#333" },
+  visualHeader: {
+    backgroundColor: "#306998",
+    color: "white",
+    padding: "10px 15px",
+    fontWeight: "600",
+    fontSize: "15px",
+  },
+  visualArea: {
+    backgroundColor: "#1e1e1e",
+    padding: "15px",
+    minHeight: "200px",
+  },
+  visualPlaceholder: {
+    color: "#aaa",
+    fontFamily: "monospace",
+    fontSize: "14px",
+    textAlign: "center",
+    margin: "20px 0",
+  },
 };
 
-// ================= KOMPONEN VISUALISASI LIST DENGAN HOVER INTERAKTIF =================
-const ListVisualization = ({ data, title, highlightSequence, processExplanation }) => {
+// ================= KOMPONEN VISUALISASI LIST =================
+const ListVisualization = ({ data, title, highlightSequence, processExplanation, hidePositive = false, hideNegative = false, disableHover = false }) => {
   const [currentHighlight, setCurrentHighlight] = useState(null);
   const [explanationText, setExplanationText] = useState("");
   const [hoveredIndex, setHoveredIndex] = useState(null);
@@ -322,19 +341,46 @@ const ListVisualization = ({ data, title, highlightSequence, processExplanation 
           setExplanationText("");
         }, 500);
       }
-    }, 1800);
+    }, 3000);
     return () => clearInterval(interval);
   }, [highlightSequence, processExplanation]);
 
   const negativeIndices = data.map((_, i) => -(data.length - i));
 
   const getHoverExplanation = (idx, item) => {
-    const posIdx = idx;
-    const negIdx = negativeIndices[idx];
-    return `📌 Elemen: "${item}"
-✅ Indeks positif: ${posIdx} → akses dengan data[${posIdx}]
-✅ Indeks negatif: ${negIdx} → akses dengan data[${negIdx}]
-💡 Tip: Indeks negatif dihitung dari akhir list, -1 = elemen terakhir.`;
+    let msg = `📌 Elemen: "${item}"`;
+    if (!hidePositive) msg += `\n✅ Indeks positif: ${idx} → data[${idx}]`;
+    if (!hideNegative) msg += `\n✅ Indeks negatif: ${negativeIndices[idx]} → data[${negativeIndices[idx]}]`;
+    if (!hidePositive && !hideNegative) msg += `\n💡 Tip: Indeks negatif dihitung dari akhir list.`;
+    return msg;
+  };
+
+  const getBgColor = (idx) => {
+    if (disableHover) {
+      if (currentHighlight === idx) return "#FFD43B";
+      return "#306998";
+    }
+    if (currentHighlight === idx) return "#FFD43B";
+    if (hoveredIndex === idx) return "#FFA500";
+    return "#306998";
+  };
+
+  const getTextColor = (idx) => {
+    if (disableHover) {
+      if (currentHighlight === idx) return "#1f2937";
+      return "white";
+    }
+    if (currentHighlight === idx || hoveredIndex === idx) return "#1f2937";
+    return "white";
+  };
+
+  const getTransform = (idx) => {
+    if (disableHover) {
+      if (currentHighlight === idx) return "scale(1.05)";
+      return "scale(1)";
+    }
+    if (currentHighlight === idx || hoveredIndex === idx) return "scale(1.05)";
+    return "scale(1)";
   };
 
   return (
@@ -345,27 +391,27 @@ const ListVisualization = ({ data, title, highlightSequence, processExplanation 
           <div
             key={idx}
             style={visStyles.itemCard}
-            onMouseEnter={() => setHoveredIndex(idx)}
-            onMouseLeave={() => setHoveredIndex(null)}
+            onMouseEnter={() => !disableHover && setHoveredIndex(idx)}
+            onMouseLeave={() => !disableHover && setHoveredIndex(null)}
           >
             <div
               style={{
                 ...visStyles.item,
-                backgroundColor: currentHighlight === idx ? "#FFD43B" : (hoveredIndex === idx ? "#FFA500" : "#306998"),
-                color: (currentHighlight === idx || hoveredIndex === idx) ? "#1f2937" : "white",
-                transform: (currentHighlight === idx || hoveredIndex === idx) ? "scale(1.05)" : "scale(1)",
+                backgroundColor: getBgColor(idx),
+                color: getTextColor(idx),
+                transform: getTransform(idx),
                 transition: "all 0.3s ease",
-                cursor: "pointer",
+                cursor: disableHover ? "default" : "pointer",
               }}
             >
               <div style={visStyles.value}>{String(item)}</div>
             </div>
-            <div style={visStyles.indexLabel}>Indeks +{idx}</div>
-            <div style={visStyles.indexLabelNeg}>Indeks {negativeIndices[idx]}</div>
+            {!hidePositive && <div style={visStyles.indexLabel}>Indeks +{idx}</div>}
+            {!hideNegative && <div style={visStyles.indexLabelNeg}>Indeks {negativeIndices[idx]}</div>}
           </div>
         ))}
       </div>
-      {hoveredIndex !== null && (
+      {!disableHover && hoveredIndex !== null && (
         <div style={visStyles.hoverExplanationBox}>
           {getHoverExplanation(hoveredIndex, data[hoveredIndex])}
         </div>
@@ -375,9 +421,11 @@ const ListVisualization = ({ data, title, highlightSequence, processExplanation 
           <strong>📖 Proses animasi:</strong> {explanationText}
         </div>
       )}
-      <div style={visStyles.note}>
-        💡 <strong>Petunjuk:</strong> Arahkan kursor ke kotak untuk melihat detail indeks. Klik "Jalankan & Lihat Proses" untuk simulasi akses list.
-      </div>
+      {!disableHover && (
+        <div style={visStyles.note}>
+          💡 <strong>Petunjuk:</strong> Arahkan kursor ke kotak untuk melihat detail indeks.
+        </div>
+      )}
     </div>
   );
 };
@@ -419,10 +467,11 @@ const visStyles = {
   note: { fontSize: "12px", color: "#666", marginTop: "10px", textAlign: "center" },
 };
 
-// ================= KOMPONEN CODE EDITOR READ-ONLY DENGAN VISUALISASI =================
-const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, highlightMapping, pyodideReady, runPythonCode }) => {
+// ================= KOMPONEN CODE EDITOR DENGAN VISUALISASI =================
+const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, highlightMapping, pyodideReady, runPythonCode, hidePositive = false, hideNegative = false, disableHover = false }) => {
   const [output, setOutput] = useState("");
   const [isRunning, setIsRunning] = useState(false);
+  const [showVisual, setShowVisual] = useState(false);
   const [highlightSequence, setHighlightSequence] = useState([]);
   const [explanationSteps, setExplanationSteps] = useState([]);
 
@@ -432,18 +481,22 @@ const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, highlightM
       return;
     }
     setIsRunning(true);
+    setShowVisual(false);
     const result = await runPythonCode(code);
     setOutput(result);
     setIsRunning(false);
+    setShowVisual(true);
 
     if (highlightMapping) {
       const { indices, explanations } = highlightMapping();
+      const totalSteps = indices.length;
+      const totalDuration = totalSteps * 3000 + 500;
       setHighlightSequence(indices.map((i) => ({ index: i })));
       setExplanationSteps(explanations);
       setTimeout(() => {
         setHighlightSequence([]);
         setExplanationSteps([]);
-      }, 6000);
+      }, totalDuration);
     }
   }, [pyodideReady, code, runPythonCode, highlightMapping]);
 
@@ -452,31 +505,39 @@ const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, highlightM
       <div style={styles.codeEditorHeader}>
         <span style={styles.codeEditorTitle}>{title}</span>
         <button style={styles.runButton} onClick={handleRun} disabled={!pyodideReady || isRunning}>
-          {isRunning ? "⏳ Menjalankan..." : pyodideReady ? "▶ Jalankan & Lihat Proses" : "⏳ Memuat..."}
+          {isRunning ? "⏳ Menjalankan..." : pyodideReady ? "▶ Jalankan" : "⏳ Memuat..."}
         </button>
       </div>
       <div style={styles.codeInputReadOnly}>
         <pre style={styles.codePre}>{code}</pre>
       </div>
-      {visualData && (
-        <ListVisualization
-          data={visualData}
-          title={visualTitle}
-          highlightSequence={highlightSequence}
-          processExplanation={explanationSteps}
-        />
-      )}
+      <div style={styles.visualHeader}>📊 Visualisasi Kode Program</div>
+      <div style={styles.visualArea}>
+        {showVisual && visualData ? (
+          <ListVisualization
+            data={visualData}
+            title={visualTitle}
+            highlightSequence={highlightSequence}
+            processExplanation={explanationSteps}
+            hidePositive={hidePositive}
+            hideNegative={hideNegative}
+            disableHover={disableHover}
+          />
+        ) : (
+          <div style={styles.visualPlaceholder}>(Klik 'Jalankan' untuk melihat hasil)</div>
+        )}
+      </div>
       <div style={styles.outputHeader}>
-        <span style={styles.outputTitle}>Output Program</span>
+        <span style={styles.outputTitle}>Output</span>
       </div>
       <div style={styles.codeOutput}>
-        <pre style={styles.outputContent}>{output || "(Klik tombol di atas untuk menjalankan kode dan melihat simulasi)"}</pre>
+        <pre style={styles.outputContent}>{output || "(Klik tombol di atas untuk menjalankan kode)"}</pre>
       </div>
     </div>
   );
 };
 
-// ================= KOMPONEN UNTUK LATIHAN PRAKTIK CODING =================
+// ================= KOMPONEN UNTUK LATIHAN PRAKTIK CODING (DIREVISI TOPIKNYA) =================
 const CodeEditorEditable = ({ title, pyodideReady, runPythonCode }) => {
   const [localCode, setLocalCode] = useState("");
   const [output, setOutput] = useState("");
@@ -498,34 +559,44 @@ const CodeEditorEditable = ({ title, pyodideReady, runPythonCode }) => {
     setIsRunning(true);
 
     const trimmed = localCode.trim();
-    if (!trimmed.includes("belanja =")) {
-      setError("❌ ERROR: Kamu harus membuat variabel 'belanja'.");
+    // Validasi: harus membuat variabel nilai dengan isi [85, 90, 78, 92, 88]
+    if (!trimmed.includes("nilai =")) {
+      setError("❌ ERROR: Buat variabel 'nilai' dengan isi [85, 90, 78, 92, 88].");
       setIsRunning(false);
       return;
     }
-    const regex = /belanja\s*=\s*\[\s*["']apel["']\s*,\s*["']jeruk["']\s*,\s*["']mangga["']\s*\]/;
-    if (!regex.test(trimmed)) {
-      setError("❌ ERROR: Isi list harus ['apel', 'jeruk', 'mangga'].");
+    const regexCreate = /nilai\s*=\s*\[\s*85\s*,\s*90\s*,\s*78\s*,\s*92\s*,\s*88\s*\]/;
+    if (!regexCreate.test(trimmed)) {
+      setError("❌ ERROR: Isi list harus [85, 90, 78, 92, 88].");
       setIsRunning(false);
       return;
     }
-    if (!/print\s*\(\s*belanja\s*\[\s*0\s*\]\s*\)/.test(trimmed)) {
-      setError("❌ ERROR: Kamu harus mencetak elemen pertama dengan print(belanja[0]).");
+    // Validasi mencetak elemen pertama (indeks 0)
+    if (!/print\s*\(\s*nilai\s*\[\s*0\s*\]\s*\)/.test(trimmed)) {
+      setError("❌ ERROR: Cetak elemen pertama dengan print(nilai[0]).");
       setIsRunning(false);
       return;
     }
-    if (!/print\s*\(\s*belanja\s*\[\s*-\s*1\s*\]\s*\)/.test(trimmed)) {
-      setError("❌ ERROR: Kamu harus mencetak elemen terakhir dengan print(belanja[-1]).");
+    // Validasi mencetak elemen terakhir (indeks -1)
+    if (!/print\s*\(\s*nilai\s*\[\s*-\s*1\s*\]\s*\)/.test(trimmed)) {
+      setError("❌ ERROR: Cetak elemen terakhir dengan print(nilai[-1]).");
+      setIsRunning(false);
+      return;
+    }
+    // Validasi slicing tiga nilai tengah (indeks 1 sampai 4)
+    if (!/print\s*\(\s*nilai\s*\[\s*1\s*:\s*4\s*\]\s*\)/.test(trimmed)) {
+      setError("❌ ERROR: Cetak tiga nilai tengah dengan print(nilai[1:4]).");
       setIsRunning(false);
       return;
     }
 
     const result = await runPythonCode(localCode);
     setOutput(result);
-    if (result.includes("apel") && result.includes("mangga")) {
+    // Cek output: harus mengandung 85, 88, dan [90,78,92] (perhatikan spasi setelah koma)
+    if (result.includes("85") && result.includes("88") && (result.includes("[90, 78, 92]") || result.includes("[90,78,92]"))) {
       setOutput(result + "\n\n✅ SELAMAT! Jawaban kamu BENAR!");
     } else {
-      setOutput(result + "\n\n⚠️ Output tidak sesuai. Pastikan kamu mencetak elemen pertama dan terakhir.");
+      setOutput(result + "\n\n⚠️ Output tidak sesuai. Pastikan kamu mencetak elemen pertama (85), terakhir (88), dan slicing [1:4] menghasilkan [90,78,92].");
     }
     setIsRunning(false);
   }, [localCode, pyodideReady, runPythonCode]);
@@ -736,50 +807,67 @@ export default function PembuatanAksesElement() {
   };
 
   // Data visual
-  const buahData = ["apel", "jeruk", "mangga"];
+  const campuranData = ["apel", 100, true, 3.14];
   const angkaData = [10, 20, 30, 40, 50];
 
-  // Contoh kode
-  const exampleCodes = {
-    pembuatan: `# Membuat list
+  // Kode contoh
+  const contohMembuatList = `# List dengan tipe data sama (string)
 buah = ["apel", "jeruk", "mangga"]
-print(buah)`,
-    akses: `# Akses elemen dengan indeks positif
-buah = ["apel", "jeruk", "mangga"]
-print("Elemen pertama:", buah[0])
-print("Elemen kedua:", buah[1])`,
-    negatif: `# Akses dengan indeks negatif
-buah = ["apel", "jeruk", "mangga"]
-print("Elemen terakhir:", buah[-1])
-print("Elemen kedua dari belakang:", buah[-2])`,
-    slicing: `# Slicing list
-angka = [10, 20, 30, 40, 50]
-print("Indeks 1 sampai 3:", angka[1:4])  # [20, 30, 40]`,
-  };
 
-  // Fungsi mapping untuk visualisasi
-  const highlightPembuatan = () => ({
-    indices: [0, 1, 2],
+# List dengan tipe data sama (integer)
+angka = [10, 20, 30, 40, 50]
+
+# List dengan tipe data campuran
+campuran = ["teks", 100, True, 3.14]`;
+
+  const contohAksesPositif = `# List dengan tipe data campuran
+data = ["apel", 100, True, 3.14]
+
+# Mengakses elemen pertama (indeks 0)
+print("Elemen pertama:", data[0])
+# Mengakses elemen kedua (indeks 1)
+print("Elemen kedua:", data[1])
+# Mengakses elemen ketiga (indeks 2)
+print("Elemen ketiga:", data[2])
+# Mengakses elemen keempat (indeks 3)
+print("Elemen keempat:", data[3])`;
+
+  const contohAksesNegatif = `# List dengan tipe data campuran
+data = ["apel", 100, True, 3.14]
+
+# Mengakses elemen terakhir (indeks -1)
+print("Elemen terakhir:", data[-1])
+# Mengakses elemen kedua dari belakang (indeks -2)
+print("Elemen kedua dari belakang:", data[-2])
+# Mengakses elemen ketiga dari belakang (indeks -3)
+print("Elemen ketiga dari belakang:", data[-3])
+# Mengakses elemen pertama dari belakang (indeks -4)
+print("Elemen pertama dari belakang:", data[-4])`;
+
+  const contohSlicing = `angka = [10, 20, 30, 40, 50]
+print("Indeks 1 sampai 3:", angka[1:4])`;
+
+  // Highlight mapping
+  const highlightPositif = () => ({
+    indices: [0, 1, 2, 3],
     explanations: [
-      "👉 Python membaca list dari kiri ke kanan. Indeks 0: 'apel' → disimpan di memori.",
-      "👉 Indeks 1: 'jeruk' → disimpan setelah 'apel'.",
-      "👉 Indeks 2: 'mangga' → disimpan setelah 'jeruk'. Kemudian print(buah) menampilkan seluruh list."
+      "📌 Perintah `data[0]` → mengambil elemen indeks 0, yaitu 'apel'.",
+      "📌 Perintah `data[1]` → mengambil elemen indeks 1, yaitu 100.",
+      "📌 Perintah `data[2]` → mengambil elemen indeks 2, yaitu True.",
+      "📌 Perintah `data[3]` → mengambil elemen indeks 3, yaitu 3.14."
     ]
   });
-  const highlightAkses = () => ({
-    indices: [0, 1],
-    explanations: [
-      "📌 Perintah `buah[0]` → Python langsung mengambil elemen pada indeks 0, yaitu 'apel', lalu mencetaknya.",
-      "📌 Perintah `buah[1]` → Python mengambil elemen pada indeks 1, yaitu 'jeruk', lalu mencetaknya."
-    ]
-  });
+
   const highlightNegatif = () => ({
-    indices: [2, 1],
+    indices: [3, 2, 1, 0],
     explanations: [
-      "🔹 `buah[-1]` → indeks negatif -1 diubah menjadi indeks positif (len-1 = 2), yaitu 'mangga'. Dicetak.",
-      "🔹 `buah[-2]` → indeks -2 diubah menjadi indeks positif 1, yaitu 'jeruk'. Dicetak."
+      "🔹 `data[-1]` → indeks -1 sama dengan indeks positif 3, yaitu 3.14.",
+      "🔹 `data[-2]` → indeks -2 sama dengan indeks positif 2, yaitu True.",
+      "🔹 `data[-3]` → indeks -3 sama dengan indeks positif 1, yaitu 100.",
+      "🔹 `data[-4]` → indeks -4 sama dengan indeks positif 0, yaitu 'apel'."
     ]
   });
+
   const highlightSlicing = () => ({
     indices: [1, 2, 3],
     explanations: [
@@ -790,15 +878,15 @@ print("Indeks 1 sampai 3:", angka[1:4])  # [20, 30, 40]`,
   });
 
   // Soal interaktif
-  const soal1CodeParts = ["buah = [\"apel\", \"jeruk\", \"mangga\"]\nprint(buah[", "])  # ingin mencetak 'jeruk'"];
+  const soal1CodeParts = ["buah = [\"apel\", \"jeruk\", \"mangga\"]\nprint(buah[", "])"];
   const soal1Placeholders = [""];
   const soal1Expected = ["1"];
 
-  const soal2CodeParts = ["nilai = [10, 20, 30, 40]\nprint(nilai[", "])  # ingin mencetak 30"];
+  const soal2CodeParts = ["nilai = [10, 20, 30, 40]\nprint(nilai[", "])"];
   const soal2Placeholders = [""];
   const soal2Expected = ["2"];
 
-  const soal3CodeParts = ["data = [5, 10, 15, 20]\nprint(data[", "])  # menggunakan indeks negatif untuk mencetak 15"];
+  const soal3CodeParts = ["data = [5, 10, 15, 20]\nprint(data[", "])"];
   const soal3Placeholders = [""];
   const soal3Expected = ["-2"];
 
@@ -869,9 +957,8 @@ sys.stdout = StringIO()
             <h2 style={styles.sectionTitle}>🎯 Tujuan Pembelajaran</h2>
             <div style={styles.card}>
               <ol style={styles.list}>
-                <li>Mahasiswa mampu membuat list dalam Python dengan berbagai tipe data.</li>
-                <li>Mahasiswa mampu mengakses elemen list menggunakan indeks positif dan negatif.</li>
-                <li>Mahasiswa mampu melakukan slicing untuk mengambil sebagian elemen list.</li>
+                <li>Mahasiswa mampu membuat list dalam Python.</li>
+                <li>Mahasiswa mampu mengambil elemen list menggunakan indeks positif, negatif, dan slicing.</li>
               </ol>
               <p style={{ ...styles.text, fontSize: "14px", marginTop: "10px", fontStyle: "italic" }}>
                 🎯 <strong>Kaitan dengan CPMK:</strong> Materi ini mendukung CPMK 1 dan 4 (kemampuan menuliskan kode Python untuk menyelesaikan masalah data sederhana).
@@ -924,67 +1011,69 @@ sys.stdout = StringIO()
           {/* MATERI UTAMA */}
           {isEksplorasiCompleted && (
             <>
-              {/* MEMBUAT LIST */}
+              {/* MEMBUAT LIST (tanpa visualisasi) */}
               <section style={styles.section}>
                 <h2 style={styles.sectionTitle}>📝 Membuat List</h2>
                 <div style={styles.card}>
                   <p style={styles.text}>
-                    List dibuat dengan tanda kurung siku <code>[]</code> dan elemen dipisahkan koma.
+                    List dibuat dengan tanda kurung siku <code>[]</code> dan elemen dipisahkan koma. 
+                    List dapat berisi berbagai tipe data (integer, string, boolean, float, dll) dalam satu list.
                   </p>
-                  <CodeEditorWithVisual
-                    code={exampleCodes.pembuatan}
-                    title="Contoh: Membuat List"
-                    visualData={buahData}
-                    visualTitle="Visualisasi List 'buah'"
-                    highlightMapping={highlightPembuatan}
-                    pyodideReady={pyodideReady}
-                    runPythonCode={runPythonCode}
-                  />
+                  <div style={styles.codeEditorContainer}>
+                    <div style={styles.codeEditorHeader}>
+                      <span style={styles.codeEditorTitle}>Contoh Kode Program</span>
+                    </div>
+                    <div style={styles.codeInputReadOnly}>
+                      <pre style={styles.codePre}>{contohMembuatList}</pre>
+                    </div>
+                  </div>
                   <div style={styles.infoBox}>
                     <strong>📌 Catatan:</strong> List bersifat <strong>mutable</strong> (dapat diubah) dan <strong>ordered</strong> (mempertahankan urutan).
                   </div>
                 </div>
               </section>
 
-              {/* AKSES POSITIF */}
+              {/* AKSES ELEMEN (INDEKS POSITIF) */}
               <section style={styles.section}>
                 <h2 style={styles.sectionTitle}>🔍 Akses Elemen (Indeks Positif)</h2>
                 <div style={styles.card}>
                   <p style={styles.text}>
-                    Indeks dimulai dari <strong>0</strong> untuk elemen pertama.
+                    Indeks dimulai dari <strong>0</strong> untuk elemen pertama. Contoh di bawah menggunakan list dengan tipe data campuran.
                   </p>
                   <CodeEditorWithVisual
-                    code={exampleCodes.akses}
-                    title="Contoh: Akses dengan Indeks Positif"
-                    visualData={buahData}
-                    visualTitle="Visualisasi List 'buah'"
-                    highlightMapping={highlightAkses}
+                    code={contohAksesPositif}
+                    title="Contoh Kode Program"
+                    visualData={campuranData}
+                    visualTitle="Visualisasi List 'data'"
+                    highlightMapping={highlightPositif}
                     pyodideReady={pyodideReady}
                     runPythonCode={runPythonCode}
+                    hideNegative={true}
                   />
                 </div>
               </section>
 
-              {/* AKSES NEGATIF */}
+              {/* AKSES ELEMEN (INDEKS NEGATIF) */}
               <section style={styles.section}>
                 <h2 style={styles.sectionTitle}>🔍 Akses Elemen (Indeks Negatif)</h2>
                 <div style={styles.card}>
                   <p style={styles.text}>
-                    Indeks negatif: <strong>-1</strong> untuk elemen terakhir, <strong>-2</strong> untuk kedua terakhir.
+                    Indeks negatif: <strong>-1</strong> untuk elemen terakhir, <strong>-2</strong> untuk kedua terakhir, dst. Contoh di bawah menggunakan list yang sama.
                   </p>
                   <CodeEditorWithVisual
-                    code={exampleCodes.negatif}
-                    title="Contoh: Akses dengan Indeks Negatif"
-                    visualData={buahData}
-                    visualTitle="Visualisasi List 'buah'"
+                    code={contohAksesNegatif}
+                    title="Contoh Kode Program"
+                    visualData={campuranData}
+                    visualTitle="Visualisasi List 'data'"
                     highlightMapping={highlightNegatif}
                     pyodideReady={pyodideReady}
                     runPythonCode={runPythonCode}
+                    hidePositive={true}
                   />
                 </div>
               </section>
 
-              {/* SLICING */}
+              {/* SLICING LIST */}
               <section style={styles.section}>
                 <h2 style={styles.sectionTitle}>✂️ Slicing List</h2>
                 <div style={styles.card}>
@@ -992,8 +1081,8 @@ sys.stdout = StringIO()
                     Slicing <code>list[awal:akhir]</code> mengambil elemen dari indeks `awal` hingga sebelum `akhir`.
                   </p>
                   <CodeEditorWithVisual
-                    code={exampleCodes.slicing}
-                    title="Contoh: Slicing"
+                    code={contohSlicing}
+                    title="Contoh Kode Program"
                     visualData={angkaData}
                     visualTitle="Visualisasi List 'angka'"
                     highlightMapping={highlightSlicing}
@@ -1006,21 +1095,22 @@ sys.stdout = StringIO()
                 </div>
               </section>
 
-              {/* LATIHAN PRAKTIK CODING */}
+              {/* LATIHAN PRAKTIK CODING - TOPIK BARU: DATA NILAI SISWA */}
               <section style={styles.section}>
                 <h2 style={styles.sectionTitle}>💻 Latihan Praktik</h2>
                 <div style={styles.card}>
                   <p style={styles.text}>
-                    <strong>Studi Kasus: Daftar Belanja</strong><br />
-                    Buatlah program Python yang:
+                    <strong>Studi Kasus: Data Nilai Ujian Siswa</strong><br />
+                    Seorang guru ingin mengelola nilai ujian siswa. Buatlah program Python yang:
                   </p>
                   <ol style={styles.list}>
-                    <li>Membuat list bernama <code>belanja</code> dengan isi <code>["apel", "jeruk", "mangga"]</code>.</li>
-                    <li>Menampilkan elemen <strong>pertama</strong> (apel) menggunakan indeks positif.</li>
-                    <li>Menampilkan elemen <strong>terakhir</strong> (mangga) menggunakan indeks negatif.</li>
+                    <li>Membuat list bernama <code>nilai</code> dengan isi <code>[85, 90, 78, 92, 88]</code>.</li>
+                    <li>Menampilkan elemen <strong>pertama</strong> (85) menggunakan indeks positif.</li>
+                    <li>Menampilkan elemen <strong>terakhir</strong> (88) menggunakan indeks negatif.</li>
+                    <li>Menampilkan <strong>tiga nilai tengah</strong> (90, 78, 92) menggunakan slicing.</li>
                   </ol>
                   <CodeEditorEditable
-                    title="Latihan: Daftar Belanja"
+                    title="Latihan: Data Nilai Siswa"
                     pyodideReady={pyodideReady}
                     runPythonCode={runPythonCode}
                   />
