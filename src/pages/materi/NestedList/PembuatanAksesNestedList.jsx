@@ -278,7 +278,7 @@ print("Nilai siswa 2 mata pelajaran 3:", nilai[1][2])  # output: 79`,
   const soal1CodeParts = [
     "data = [[10, 20, 30], [40, 50, 60]]\nprint(data[",
     "][",
-    "])  # ingin mencetak 20"
+    "])"
   ];
   const soal1Placeholders = ["", ""];
   const soal1Expected = ["0", "1"];
@@ -290,7 +290,7 @@ print("Nilai siswa 2 mata pelajaran 3:", nilai[1][2])  # output: 79`,
   const soal3CodeParts = [
     "data = [[10, 20], [30, 40], [50, 60]]\nprint(data[",
     "][",
-    "])  # ingin mencetak 60"
+    "])"
   ];
   const soal3Placeholders = ["", ""];
   const soal3Expected = ["2", "1"];
@@ -459,7 +459,7 @@ _buffer.getvalue()
 
           {/* LATIHAN PRAKTIK (CODING) */}
           <section style={styles.section}>
-            <h2 style={styles.sectionTitle}>Latihan Praktik</h2>
+            <h2 style={styles.sectionTitle}>Ayo Praktik!</h2>
             <div style={styles.card}>
               <div style={styles.alertBox}>
                 <strong>📝 Instruksi:</strong>
@@ -471,7 +471,7 @@ _buffer.getvalue()
               </div>
               <CodeEditorEditable
                 codeKey="latihan"
-                title="Latihan Membuat dan Mengakses Nested List"
+                title="Ayo Praktik"
                 validationRules={{}}
                 pyodideReady={pyodideReady}
                 runPythonCode={runPythonCode}
@@ -482,7 +482,7 @@ _buffer.getvalue()
 
           {/* LATIHAN INTERAKTIF - 5 SOAL (3 completion inline + 2 output guess) */}
           <section style={styles.section}>
-            <h2 style={styles.sectionTitle}>Latihan Interaktif</h2>
+            <h2 style={styles.sectionTitle}>Latihan</h2>
             <div style={styles.card}>
               <p style={styles.text}>Isilah bagian yang kosong pada kode di bawah ini dengan mengetikkan jawaban pada kotak yang tersedia.</p>
               <button style={styles.resetButton} onClick={resetInteractiveQuestions}>↻ Reset Jawaban</button>
@@ -498,7 +498,7 @@ _buffer.getvalue()
 
               {/* Soal 2: Membuat nested list baris kedua */}
               <CodeCompletionQuestion
-                question="2. Lengkapi kode untuk membuat nested list yang berisi dua baris: baris pertama [1,2], baris kedua [3,4]"
+                question="2. Lengkapi kode untuk membuat nested list yang berisi dua baris: baris pertama [1,2], baris kedua [3,4]:"
                 codeParts={soal2CodeParts}
                 placeholders={soal2Placeholders}
                 expectedAnswers={soal2Expected}
@@ -516,7 +516,7 @@ _buffer.getvalue()
 
               {/* Soal 4: Menentukan output */}
               <GuessOutputQuestion
-                question="4. Apa output dari kode berikut?"
+                question="4. Output dari kode berikut adalah ..."
                 codeSnippet={`nilai = [[5, 7], [9, 11]]
 print(nilai[1][0])`}
                 expectedOutput="9"
@@ -525,7 +525,7 @@ print(nilai[1][0])`}
 
               {/* Soal 5: Menentukan output */}
               <GuessOutputQuestion
-                question="5. Jika kita menjalankan kode berikut, apa yang akan tercetak?"
+                question="5. Jika kita menjalankan kode berikut, maka yang akan tercetak adalah ..."
                 codeSnippet={`a = [[2, 4], [6, 8]]
 b = a[0][1]
 print(b)`}
