@@ -256,7 +256,7 @@ export default function PendahuluanList() {
 
   const eksplorasiQuestions = [
     {
-      text: "Apa yang dimaksud dengan 'list' dalam pemrograman Python?",
+      text: "Yang dimaksud dengan 'list' dalam pemrograman Python adalah ...",
       options: [
         "Tipe data untuk menyimpan satu angka saja",
         "Struktur data untuk menyimpan banyak nilai dalam satu variabel",
@@ -266,7 +266,7 @@ export default function PendahuluanList() {
       correct: 1,
     },
     {
-      text: "Manakah yang merupakan contoh penulisan list yang benar di Python?",
+      text: "yang merupakan contoh penulisan list yang benar di Python adalah ...",
       options: ["{1, 2, 3}", "(1, 2, 3)", "[1, 2, 3]", "<1, 2, 3>"],
       correct: 2,
     },
@@ -377,7 +377,7 @@ sys.stdout = StringIO()
   // Quiz
   const quizQuestions = [
     {
-      question: "Apa fungsi utama List dalam Python?",
+      question: "Fungsi utama List dalam Python yaitu ...",
       options: [
         "Melakukan operasi matematika kompleks",
         "Menyimpan kumpulan data dalam satu variabel",
@@ -387,27 +387,27 @@ sys.stdout = StringIO()
       answer: 1,
     },
     {
-      question: "Bagaimana cara membuat list kosong dalam Python?",
+      question: "Cara membuat list kosong dalam Python yaitu ...",
       options: ["list = ()", "list = {}", "list = []", 'list = ""'],
       answer: 2,
     },
     {
-      question: "List dalam Python dapat menyimpan berbagai tipe data sekaligus.",
+      question: "List dalam Python dapat menyimpan berbagai tipe data sekaligus. Pernyataan ini adalah ...",
       options: ["Benar", "Salah"],
       answer: 0,
     },
     {
-      question: "Apa output dari kode berikut?\n\nbuah = [\"apel\", \"jeruk\"]\nprint(len(buah))",
+      question: "Output dari kode berikut?\n\nbuah = [\"apel\", \"jeruk\"]\nprint(len(buah)) adalah ...",
       options: ["0", "1", "2", "3"],
       answer: 2,
     },
     {
-      question: "Mengapa kita membutuhkan List dibanding variabel tunggal?",
+      question: "Kita membutuhkan List dibanding variabel tunggal karena ...",
       options: [
-        "Agar program berjalan lebih cepat",
+        "program berjalan lebih cepat",
         "Untuk menyimpan banyak data secara terorganisir dalam satu variabel",
-        "Supaya tidak perlu menggunakan perulangan",
-        "Agar tipe data lebih ketat",
+        "tidak perlu menggunakan perulangan",
+        "tipe data lebih ketat",
       ],
       answer: 1,
     },

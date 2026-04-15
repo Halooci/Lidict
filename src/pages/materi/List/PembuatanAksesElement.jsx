@@ -699,12 +699,12 @@ export default function PembuatanAksesElement() {
 
   const eksplorasiQuestions = [
     {
-      text: "Apa yang digunakan untuk mengakses elemen pertama dalam list?",
+      text: "Yang digunakan untuk mengakses elemen pertama dalam list adalah ...",
       options: ["Indeks 0", "Indeks 1", "Indeks -1", "Indeks length-1"],
       correct: 0,
     },
     {
-      text: "Manakah cara yang benar untuk membuat list berisi angka 5, 10, 15?",
+      text: "Cara yang benar untuk membuat list berisi angka 5, 10, 15 adalah ...",
       options: ["angka = (5, 10, 15)", "angka = {5, 10, 15}", "angka = [5, 10, 15]", "angka = <5, 10, 15>"],
       correct: 2,
     },
@@ -829,15 +829,15 @@ print("Indeks 1 sampai 3:", angka[1:4])`;
   });
 
   // Soal interaktif
-  const soal1CodeParts = ["buah = [\"apel\", \"jeruk\", \"mangga\"]\nprint(buah[", "])  # ingin mencetak 'jeruk'"];
+  const soal1CodeParts = ["buah = [\"apel\", \"jeruk\", \"mangga\"]\nprint(buah[", "])"];
   const soal1Placeholders = [""];
   const soal1Expected = ["1"];
 
-  const soal2CodeParts = ["nilai = [10, 20, 30, 40]\nprint(nilai[", "])  # ingin mencetak 30"];
+  const soal2CodeParts = ["nilai = [10, 20, 30, 40]\nprint(nilai[", "])"];
   const soal2Placeholders = [""];
   const soal2Expected = ["2"];
 
-  const soal3CodeParts = ["data = [5, 10, 15, 20]\nprint(data[", "])  # menggunakan indeks negatif untuk mencetak 15"];
+  const soal3CodeParts = ["data = [5, 10, 15, 20]\nprint(data[", "])"];
   const soal3Placeholders = [""];
   const soal3Expected = ["-2"];
 
@@ -1133,14 +1133,14 @@ nilai3 = 78
                   />
 
                   <GuessOutputQuestion
-                    question="4. Apa output dari kode berikut?"
+                    question="4. Output dari kode berikut adalah ..."
                     codeSnippet={soal4Code}
                     expectedOutput="jeruk"
                     resetTrigger={resetInteractives}
                   />
 
                   <GuessOutputQuestion
-                    question="5. Jika kita menjalankan kode berikut, apa yang akan tercetak?"
+                    question="5. Jika kita menjalankan kode berikut, maka yang akan tercetak adalah ..."
                     codeSnippet={soal5Code}
                     expectedOutput="200"
                     resetTrigger={resetInteractives}

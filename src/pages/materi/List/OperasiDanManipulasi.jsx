@@ -1056,8 +1056,8 @@ export default function OperasiManipulasiList() {
   const [isEksplorasiCompleted, setIsEksplorasiCompleted] = useState(false);
 
   const eksplorasiQuestions = [
-    { text: "Method apa yang digunakan untuk menambahkan elemen di akhir list?", options: ["insert()", "append()", "extend()", "add()"], correct: 1 },
-    { text: "Apa fungsi dari method `remove()` pada list?", options: ["Menghapus elemen berdasarkan indeks", "Menghapus elemen berdasarkan nilai pertama yang cocok", "Menghapus semua elemen", "Menghapus elemen terakhir"], correct: 1 },
+    { text: "Method yang digunakan untuk menambahkan elemen di akhir list adalah ...", options: ["insert()", "append()", "extend()", "add()"], correct: 1 },
+    { text: "Fungsi dari method `remove()` pada list adalah ...", options: ["Menghapus elemen berdasarkan indeks", "Menghapus elemen berdasarkan nilai pertama yang cocok", "Menghapus semua elemen", "Menghapus elemen terakhir"], correct: 1 },
   ];
 
   const checkEksplorasiAnswer = (questionIdx) => {

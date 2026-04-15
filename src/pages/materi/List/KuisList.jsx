@@ -25,7 +25,7 @@ export default function KuisList() {
     {
       id: 1,
       type: "multiple_choice",
-      text: "Manakah cara yang benar untuk membuat list kosong di Python?",
+      text: "Cara yang benar untuk membuat list kosong di Python adalah ...",
       options: [
         "A. list = []",
         "B. list = ()",
@@ -39,7 +39,7 @@ export default function KuisList() {
     {
       id: 2,
       type: "multiple_choice",
-      text: "Apa output dari kode berikut?\n\n```python\nbuah = ['apel', 'mangga', 'jeruk']\nprint(buah[-1])\n```",
+      text: "Output dari kode berikut adalah ... \n\n```python\nbuah = ['apel', 'mangga', 'jeruk']\nprint(buah[-1])\n```",
       options: [
         "A. apel",
         "B. mangga",
@@ -53,7 +53,7 @@ export default function KuisList() {
     {
       id: 3,
       type: "multiple_choice",
-      text: "Perhatikan kode berikut:\n\n```python\nangka = [10, 20, 30, 40, 50]\nprint(angka[1:4])\n```\nApa outputnya?",
+      text: "Perhatikan kode berikut:\n\n```python\nangka = [10, 20, 30, 40, 50]\nprint(angka[1:4])\n```\nOutputnya adalah ...",
       options: [
         "A. [10, 20, 30]",
         "B. [20, 30, 40]",
@@ -67,7 +67,7 @@ export default function KuisList() {
     {
       id: 4,
       type: "multiple_choice",
-      text: "Manakah method yang digunakan untuk menambahkan elemen di akhir list?",
+      text: "Method yang digunakan untuk menambahkan elemen di akhir list adalah ...",
       options: [
         "A. insert()",
         "B. extend()",
@@ -81,7 +81,7 @@ export default function KuisList() {
     {
       id: 5,
       type: "multiple_choice",
-      text: "Apa hasil dari kode berikut?\n\n```python\na = [1, 2, 3]\nb = a\na.append(4)\nprint(b)\n```",
+      text: "Hasil dari kode berikut adalah ...\n\n```python\na = [1, 2, 3]\nb = a\na.append(4)\nprint(b)\n```",
       options: [
         "A. [1, 2, 3]",
         "B. [1, 2, 3, 4]",
@@ -96,12 +96,12 @@ export default function KuisList() {
     {
       id: 6,
       type: "dragdrop",
-      text: "Lengkapi kode untuk mengambil elemen ke-3 dari list berikut:",
+      text: "Lengkapi kode untuk mengambil elemen ke 3 dari list berikut:",
       codeTemplate: `warna = ['merah', 'kuning', 'hijau', 'biru']\nprint(warna[______])`,
       placeholders: ["2"],
       dragItems: ["0", "1", "2", "3", "4"],
       correct: ["2"],
-      explanation: "Indeks ke-3 adalah indeks 2 karena indexing dimulai dari 0."
+      explanation: "Indeks ke 3 adalah indeks 2 karena indexing dimulai dari 0."
     },
     {
       id: 7,
