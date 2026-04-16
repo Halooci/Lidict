@@ -456,7 +456,7 @@ sys.stdout = StringIO()
 
           {/* TUJUAN PEMBELAJARAN */}
           <section style={styles.section}>
-            <h2 style={styles.sectionTitle}>🎯 Tujuan Pembelajaran</h2>
+            <h2 style={styles.sectionTitle}>Tujuan Pembelajaran</h2>
             <div style={styles.card}>
               <ol style={styles.list}>
                 <li>Mahasiswa mampu menjelaskan pengertian list sebagai struktur data untuk menyimpan kumpulan data dalam Python.</li>
