@@ -53,7 +53,7 @@ export default function SidebarMateri() {
         {/* ========= ACCORDION PETA KONSEP (induk) dengan 2 anak ========= */}
         <Accordion
           id="petaKonsep"
-          title="📖 Peta Konsep"
+          title="Peta Konsep"
           activeAccordion={activeAccordion}
           setActiveAccordion={setActiveAccordion}
         >
