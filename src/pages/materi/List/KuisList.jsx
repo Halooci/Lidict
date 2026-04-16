@@ -264,35 +264,25 @@ export default function KuisList() {
     if (timerRef.current) clearInterval(timerRef.current);
   };
 
-  // Halaman hasil
+  // Halaman hasil (skor ditampilkan dalam skala /100)
   if (submitted && resultsData) {
-    const { finalScore, waktuDigunakan, results: detailResults } = resultsData;
+    const { finalScore, waktuDigunakan } = resultsData;
     const minutesUsed = Math.floor(waktuDigunakan / 60);
     const secondsUsed = waktuDigunakan % 60;
     const passed = finalScore >= 7;
+    const statusText = passed ? 'Lulus' : 'Tidak Lulus';
+    const skor100 = finalScore * 10;
 
     return (
       <div style={resultStyles.container}>
         <div style={resultStyles.card}>
-          <h1 style={resultStyles.title}>📊 Hasil Kuis List</h1>
+          <h1 style={resultStyles.title}>Hasil Kuis List</h1>
           <div style={resultStyles.scoreBox}>
-            <p>⏱️ Waktu pengerjaan: {minutesUsed} menit {secondsUsed} detik</p>
-            <p>✅ Jumlah soal benar: {finalScore} / 10</p>
-            <p>📈 Nilai: {finalScore * 10} ({finalScore * 10 >= 70 ? 'Lulus' : 'Tidak Lulus'})</p>
-          </div>
-          <div style={resultStyles.details}>
-            <h3>📝 Rincian Jawaban</h3>
-            {detailResults.map((q, idx) => (
-              <div key={idx} style={{...resultStyles.questionItem, backgroundColor: q.isCorrect ? '#e8f5e9' : '#ffebee'}}>
-                <p><strong>Soal {idx+1}:</strong> {q.text.substring(0, 100)}...</p>
-                <p><strong>Jawaban Anda:</strong> {q.userAnswer !== null && q.userAnswer !== undefined ? (q.type === 'multiple_choice' ? q.options[q.userAnswer] : q.userAnswer) : 'Tidak dijawab'}</p>
-                {!q.isCorrect && <p><strong>Jawaban benar:</strong> {q.type === 'multiple_choice' ? q.options[q.correct] : q.correct.join(', ')}</p>}
-                <p><strong>Penjelasan:</strong> {q.explanation}</p>
-              </div>
-            ))}
+            <p>Waktu pengerjaan: {minutesUsed} menit {secondsUsed} detik</p>
+            <p>Skor: {skor100} / 100 ({statusText})</p>
           </div>
           <div style={resultStyles.buttonGroup}>
-            <button onClick={resetQuiz} style={resultStyles.button}>🔄 Ulangi Kuis</button>
+            <button onClick={resetQuiz} style={resultStyles.button}>Ulangi Kuis</button>
             {passed && (
               <button onClick={() => window.location.href = '/NestedList/PendahuluanNestedList'} style={{...resultStyles.button, backgroundColor: '#28a745'}}>➡️ Lanjut ke Materi Selanjutnya (Nested List)</button>
             )}
@@ -307,15 +297,15 @@ export default function KuisList() {
     return (
       <div style={instructionStyles.container}>
         <div style={instructionStyles.card}>
-          <h1 style={instructionStyles.title}>📋 Kuis List</h1>
+          <h1 style={instructionStyles.title}>Kuis List</h1>
           <div style={instructionStyles.infoBox}>
-            <p>⏱️ Durasi: <strong>20 Menit</strong></p>
-            <p>📝 Jumlah Soal: <strong>10 Butir</strong></p>
-            <p>🎯 Nilai Maksimal: <strong>100</strong></p>
-            <p>✅ Nilai Kelulusan Minimum: <strong>70</strong></p>
+            <p>Durasi: <strong>20 Menit</strong></p>
+            <p>Jumlah Soal: <strong>10 Butir</strong></p>
+            <p>Skor Maksimal: <strong>100</strong></p>
+            <p>Skor Kelulusan Minimum: <strong>70</strong></p>
           </div>
           <div style={instructionStyles.petunjuk}>
-            <h3>📖 Petunjuk Pengerjaan</h3>
+            <h3>Petunjuk Pengerjaan</h3>
             <ol>
               <li>Aktivitas ini terdiri dari <strong>10 butir soal</strong>.</li>
               <li>Tekan tombol <strong>MULAI</strong> di bawah untuk masuk ke halaman kuis.</li>
@@ -531,7 +521,7 @@ const instructionStyles = {
   },
 };
 
-// ==================== STYLE KUIS (sama seperti semula) ====================
+// ==================== STYLE KUIS ====================
 const kuisStyles = {
   container: {
     minHeight: "100vh",
@@ -754,7 +744,7 @@ const resultStyles = {
     fontFamily: "Poppins, sans-serif",
   },
   card: {
-    maxWidth: "900px",
+    maxWidth: "600px",
     margin: "0 auto",
     backgroundColor: "white",
     borderRadius: "12px",
@@ -773,17 +763,6 @@ const resultStyles = {
     borderRadius: "8px",
     marginBottom: "20px",
     textAlign: "center",
-  },
-  details: {
-    marginBottom: "20px",
-    maxHeight: "400px",
-    overflowY: "auto",
-  },
-  questionItem: {
-    padding: "12px",
-    marginBottom: "10px",
-    borderRadius: "8px",
-    borderLeft: "4px solid",
   },
   buttonGroup: {
     display: "flex",
