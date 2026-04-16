@@ -25,7 +25,7 @@ export default function KuisNestedList() {
     {
       id: 1,
       type: "multiple_choice",
-      text: "Manakah cara mengakses angka 30 dari nested list berikut?\n\n```python\ndata = [[10, 20], [30, 40]]\n```",
+      text: "Cara mengakses angka 30 dari nested list berikut adalah ...\n\n```python\ndata = [[10, 20], [30, 40]]\n```",
       options: [
         "A. data[0][1]",
         "B. data[1][0]",
@@ -39,7 +39,7 @@ export default function KuisNestedList() {
     {
       id: 2,
       type: "multiple_choice",
-      text: "Apa output dari kode berikut?\n\n```python\nmatrix = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]\nprint(matrix[1][2])\n```",
+      text: "Output dari kode berikut adalah ...\n\n```python\nmatrix = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]\nprint(matrix[1][2])\n```",
       options: [
         "A. 2",
         "B. 4",
@@ -53,7 +53,7 @@ export default function KuisNestedList() {
     {
       id: 3,
       type: "multiple_choice",
-      text: "Perhatikan kode berikut:\n\n```python\nnested = [[1], [2, 3], [4, 5, 6]]\nprint(len(nested[1]))\n```\nApa outputnya?",
+      text: "Perhatikan kode berikut:\n\n```python\nnested = [[1], [2, 3], [4, 5, 6]]\nprint(len(nested[1]))\n```\nOutputnya adalah ...",
       options: [
         "A. 1",
         "B. 2",
@@ -67,7 +67,7 @@ export default function KuisNestedList() {
     {
       id: 4,
       type: "multiple_choice",
-      text: "Manakah pernyataan yang BENAR tentang nested list di Python?",
+      text: "Prnyataan berikut yang BENAR tentang nested list di Python adalah ...",
       options: [
         "A. Nested list hanya bisa memiliki 2 tingkat kedalaman",
         "B. Setiap elemen dalam nested list harus memiliki tipe data yang sama",
@@ -81,7 +81,7 @@ export default function KuisNestedList() {
     {
       id: 5,
       type: "multiple_choice",
-      text: "Apa hasil dari kode berikut?\n\n```python\nlst = [[0] * 3] * 3\nlst[0][1] = 5\nprint(lst)\n```",
+      text: "Hasil dari kode berikut adalah ...\n\n```python\nlst = [[0] * 3] * 3\nlst[0][1] = 5\nprint(lst)\n```",
       options: [
         "A. [[0,5,0], [0,0,0], [0,0,0]]",
         "B. [[0,5,0], [0,5,0], [0,5,0]]",
@@ -98,7 +98,7 @@ export default function KuisNestedList() {
       type: "dragdrop",
       text: "Lengkapi kode untuk membuat nested list 3x3 dengan nilai 0 menggunakan list comprehension:",
       codeTemplate: `matrix = [[0 for j in range(3)] for i in range(______)]\nprint(matrix)`,
-      placeholders: ["3"],
+      placeholders: ["..."],
       dragItems: ["2", "3", "4", "range(3)", "[0,1,2]"],
       correct: ["3"],
       explanation: "range(3) menghasilkan 0,1,2 sehingga terbentuk 3 baris."
@@ -108,7 +108,7 @@ export default function KuisNestedList() {
       type: "dragdrop",
       text: "Lengkapi kode untuk mengakses angka 7 dari nested list berikut:",
       codeTemplate: `data = [[1,2],[3,4],[5,6,7]]\nprint(data[______][______])`,
-      placeholders: ["2", "2"],
+      placeholders: ["...", "..."],
       dragItems: ["0", "1", "2", "3"],
       correct: ["2", "2"],
       explanation: "data[2] adalah [5,6,7], kemudian indeks [2] mengambil 7."
@@ -118,7 +118,7 @@ export default function KuisNestedList() {
       type: "dragdrop",
       text: "Lengkapi kode untuk menjumlahkan semua elemen dalam nested list (flatten):",
       codeTemplate: `nested = [[1,2],[3,4],[5,6]]\ntotal = 0\nfor sublist in nested:\n    for val in ______:\n        total += val\nprint(total)`,
-      placeholders: ["sublist"],
+      placeholders: ["..."],
       dragItems: ["nested", "sublist", "val", "range(len(sublist))", "total"],
       correct: ["sublist"],
       explanation: "Loop pertama mengambil setiap sublist, loop kedua mengambil setiap nilai dalam sublist."
@@ -128,7 +128,7 @@ export default function KuisNestedList() {
       type: "dragdrop",
       text: "Lengkapi kode untuk menambahkan elemen 99 ke dalam sublist kedua dari nested list:",
       codeTemplate: `matrix = [[1,2],[3,4]]\nmatrix[______].append(99)\nprint(matrix)`,
-      placeholders: ["1"],
+      placeholders: [""],
       dragItems: ["0", "1", "2", "-1", "append"],
       correct: ["1"],
       explanation: "Indeks 1 mengakses sublist [3,4], lalu append(99) menambahkannya."
@@ -138,7 +138,7 @@ export default function KuisNestedList() {
       type: "dragdrop",
       text: "Lengkapi kode untuk membuat nested list 2x2 dengan nilai perkalian indeks (i*j):",
       codeTemplate: `matrix = [[i*j for j in range(2)] for i in range(______)]\nprint(matrix)`,
-      placeholders: ["2"],
+      placeholders: [""],
       dragItems: ["1", "2", "3", "range(2)", "2x2"],
       correct: ["2"],
       explanation: "range(2) menghasilkan baris 0 dan 1, sehingga terbentuk 2 baris."

@@ -61,7 +61,7 @@ const CodeEditor = ({ code, codeKey, pyodideReady, runPythonCode, explanations }
 };
 
 // ===================== KOMPONEN LATIHAN PRAKTIK (EDITOR DENGAN VALIDASI) =====================
-const CodeEditorEditable = ({ codeKey, title, validationRules, pyodideReady, runPythonCode, expectedOutput }) => {
+const CodeEditorEditable = ({ codeKey, title, pyodideReady, runPythonCode, expectedOutput }) => {
   const [localCode, setLocalCode] = useState("");
   const [output, setOutput] = useState("");
   const [error, setError] = useState("");
@@ -215,9 +215,98 @@ export default function PembuatanAksesElementDictionary() {
   const [pyodideReady, setPyodideReady] = useState(false);
   const pyodideRef = useRef(null);
   const [resetInteractives, setResetInteractives] = useState(0);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true); // State untuk sidebar
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
-  // Kode contoh (tanpa komentar)
+  // State untuk eksplorasi
+  const [eksplorasiTempAnswers, setEksplorasiTempAnswers] = useState([null, null, null]);
+  const [eksplorasiSavedAnswers, setEksplorasiSavedAnswers] = useState([null, null, null]);
+  const [eksplorasiFeedback, setEksplorasiFeedback] = useState(["", "", ""]);
+  const [isEksplorasiCompleted, setIsEksplorasiCompleted] = useState(false);
+
+  const eksplorasiQuestions = [
+    {
+      text: "Berikut ini cara membuat dictionary kosong yang benar di Python adalah ...",
+      options: [
+        "data = []",
+        "data = ()",
+        "data = {}",
+        "data = dict[]",
+        "data = set()",
+      ],
+      correct: 2, // data = {}
+    },
+    {
+      text: "Perhatikan kode berikut:\n\n`mahasiswa = {\"nama\": \"Budi\", \"nim\": \"123\"}`\n\nApa output dari `print(mahasiswa[\"nama\"])`?",
+      options: [
+        "mahasiswa",
+        "Budi",
+        "nama",
+        "123",
+        "Error",
+      ],
+      correct: 1, // Budi
+    },
+    {
+      text: "Manakah cara mengakses nilai dari key 'umur' pada dictionary `data = {\"nama\": \"Andi\", \"umur\": 20}` yang TIDAK akan menyebabkan error meskipun key belum tentu ada?",
+      options: [
+        "data.umur",
+        "data['umur']",
+        "data.get('umur')",
+        "data[umur]",
+        "data('umur')",
+      ],
+      correct: 2, // data.get('umur')
+    },
+  ];
+
+  const checkEksplorasiAnswer = (questionIdx) => {
+    const selected = eksplorasiTempAnswers[questionIdx];
+    if (selected === null) {
+      setEksplorasiFeedback((prev) => {
+        const newFeedback = [...prev];
+        newFeedback[questionIdx] = "❌ Pilih jawaban terlebih dahulu!";
+        return newFeedback;
+      });
+      return;
+    }
+    const isCorrect = selected === eksplorasiQuestions[questionIdx].correct;
+    if (isCorrect) {
+      const newSaved = [...eksplorasiSavedAnswers];
+      newSaved[questionIdx] = selected;
+      setEksplorasiSavedAnswers(newSaved);
+      setEksplorasiFeedback((prev) => {
+        const newFeedback = [...prev];
+        newFeedback[questionIdx] = "✅ Benar! Jawaban tersimpan.";
+        return newFeedback;
+      });
+    } else {
+      setEksplorasiFeedback((prev) => {
+        const newFeedback = [...prev];
+        newFeedback[questionIdx] = "❌ Salah. Coba lagi!";
+        return newFeedback;
+      });
+    }
+  };
+
+  useEffect(() => {
+    const allCorrect = eksplorasiSavedAnswers.every(
+      (ans, idx) => ans !== null && ans === eksplorasiQuestions[idx].correct
+    );
+    setIsEksplorasiCompleted(allCorrect);
+  }, [eksplorasiSavedAnswers]);
+
+  const handleTempAnswer = (questionIdx, optionIdx) => {
+    const newTemp = [...eksplorasiTempAnswers];
+    newTemp[questionIdx] = optionIdx;
+    setEksplorasiTempAnswers(newTemp);
+    setEksplorasiFeedback((prev) => {
+      const newFeedback = [...prev];
+      newFeedback[questionIdx] = "";
+      return newFeedback;
+    });
+  };
+
+  // Kode contoh (hanya membuat dan mengakses dictionary)
   const exampleCodes = {
     membuatDict: `mahasiswa = {
     "nama": "Budi Santoso",
@@ -242,50 +331,6 @@ print("NIM:", mahasiswa["nim"])
 
 print("Jurusan:", mahasiswa.get("jurusan"))
 print("Alamat:", mahasiswa.get("alamat", "Tidak tersedia"))`,
-    
-    ubahTambah: `mahasiswa = {
-    "nama": "Budi Santoso",
-    "nim": "12345678"
-}
-
-mahasiswa["nama"] = "Budi Wijaya"
-print("Setelah ubah nama:", mahasiswa)
-
-mahasiswa["jurusan"] = "Informatika"
-mahasiswa["angkatan"] = 2025
-print("Setelah tambah:", mahasiswa)`,
-    
-    hapusItem: `mahasiswa = {
-    "nama": "Budi Santoso",
-    "nim": "12345678",
-    "jurusan": "Informatika",
-    "angkatan": 2025
-}
-
-del mahasiswa["angkatan"]
-print("Setelah del angkatan:", mahasiswa)
-
-nilai_nim = mahasiswa.pop("nim")
-print("NIM yang dihapus:", nilai_nim)
-print("Dictionary setelah pop:", mahasiswa)`,
-    
-    iterasiDict: `mahasiswa = {
-    "nama": "Budi Santoso",
-    "nim": "12345678",
-    "jurusan": "Informatika"
-}
-
-print("Key-key:")
-for key in mahasiswa.keys():
-    print("-", key)
-
-print("\\nValue-value:")
-for value in mahasiswa.values():
-    print("-", value)
-
-print("\\nPasangan key-value:")
-for key, value in mahasiswa.items():
-    print(f"{key}: {value}")`,
   };
 
   // Penjelasan untuk setiap contoh (per baris)
@@ -316,83 +361,36 @@ for key, value in mahasiswa.items():
       "Mencetak 'Jurusan:' dengan nilai dari key 'jurusan' menggunakan metode get(). get() akan mengembalikan None jika key tidak ada, tapi di sini key ada.",
       "Mencetak 'Alamat:' dengan nilai dari key 'alamat'. Karena key 'alamat' tidak ada, get() mengembalikan nilai default 'Tidak tersedia'."
     ],
-    ubahTambah: [
-      "Membuat dictionary 'mahasiswa' dengan dua key: 'nama' dan 'nim'.",
-      "Key 'nama' = 'Budi Santoso'.",
-      "Key 'nim' = '12345678'.",
-      "Menutup kurung kurawal.",
-      "Baris kosong.",
-      "Mengubah nilai key 'nama' menjadi 'Budi Wijaya' (assignment).",
-      "Mencetak teks dan isi dictionary setelah perubahan.",
-      "Baris kosong.",
-      "Menambah key baru 'jurusan' dengan value 'Informatika' (karena key belum ada).",
-      "Menambah key baru 'angkatan' dengan value 2025.",
-      "Mencetak teks dan isi dictionary setelah penambahan."
-    ],
-    hapusItem: [
-      "Membuat dictionary 'mahasiswa' dengan 4 pasangan key-value.",
-      "Key 'nama' = 'Budi Santoso'.",
-      "Key 'nim' = '12345678'.",
-      "Key 'jurusan' = 'Informatika'.",
-      "Key 'angkatan' = 2025.",
-      "Menutup kurung kurawal.",
-      "Baris kosong.",
-      "Menghapus key 'angkatan' menggunakan perintah del.",
-      "Mencetak teks dan isi dictionary setelah penghapusan.",
-      "Baris kosong.",
-      "Menghapus key 'nim' menggunakan metode pop(). Metode ini mengembalikan nilai yang dihapus dan menyimpannya ke variabel 'nilai_nim'.",
-      "Mencetak teks dan nilai yang dihapus (12345678).",
-      "Mencetak teks dan isi dictionary setelah pop()."
-    ],
-    iterasiDict: [
-      "Membuat dictionary 'mahasiswa' dengan 3 key.",
-      "Key 'nama' = 'Budi Santoso'.",
-      "Key 'nim' = '12345678'.",
-      "Key 'jurusan' = 'Informatika'.",
-      "Menutup kurung kurawal.",
-      "Baris kosong.",
-      "Mencetak teks 'Key-key:'.",
-      "Perulangan for untuk setiap key yang diperoleh dari method keys().",
-      "Mencetak tanda strip dan key yang sedang diiterasi.",
-      "Baris kosong.",
-      "Mencetak teks 'Value-value:'.",
-      "Perulangan for untuk setiap value dari method values().",
-      "Mencetak tanda strip dan value.",
-      "Baris kosong.",
-      "Mencetak teks 'Pasangan key-value:'.",
-      "Perulangan for untuk setiap pasangan (key, value) dari method items().",
-      "Mencetak key dan value menggunakan f-string."
-    ]
   };
 
-  // Data untuk 5 soal melengkapi kode
+  // Data untuk 5 soal melengkapi kode (tetap dipertahankan karena sesuai materi)
   const soal1CodeParts = [
     "data = {\n    \"nama\": \"Andi\",\n    \"usia\": 21,\n    ",
     ": \"Jakarta\"\n}\nprint(data[\"",
     "\"])  # ingin mencetak 'Andi'"
   ];
-  const soal1Placeholders = ["key", "key"];
+  const soal1Placeholders = ["...", "..."];
   const soal1Expected = ["\"kota\"", "nama"];
 
   const soal2CodeParts = [
     "nilai = {\n    \"Matematika\": 85,\n    \"Fisika\": 90,\n    \"Kimia\": 78\n}\n# Cetak nilai Fisika\nprint(nilai.",
     ")  # menggunakan metode get"
   ];
-  const soal2Placeholders = ["get('Fisika')"];
+  const soal2Placeholders = ["..."];
   const soal2Expected = ["get(\"Fisika\")"];
 
   const soal3CodeParts = [
     "siswa = {\n    \"nama\": \"Rina\",\n    \"umur\": 19\n}\n# Tambahkan key 'kota' dengan value 'Bandung'\n",
     " = \"Bandung\"\nprint(siswa)"
   ];
-  const soal3Placeholders = ["siswa['kota']"];
+  const soal3Placeholders = ["...']"];
   const soal3Expected = ["siswa[\"kota\"]"];
 
   const soal4CodeParts = [
     "buku = {\n    \"judul\": \"Python Dasar\",\n    \"penulis\": \"John Doe\",\n    \"tahun\": 2020\n}\n# Hapus key 'tahun'\ndel ",
     "\nprint(buku)"
   ];
-  const soal4Placeholders = ["buku['tahun']"];
+  const soal4Placeholders = ["...']"];
   const soal4Expected = ["buku[\"tahun\"]"];
 
   const soal5CodeParts = [
@@ -400,7 +398,7 @@ for key, value in mahasiswa.items():
     " in harga:\n    print(",
     ")"
   ];
-  const soal5Placeholders = ["key", "key"];
+  const soal5Placeholders = ["...", "..."];
   const soal5Expected = ["key", "key"];
 
   // Load Pyodide
@@ -473,151 +471,178 @@ _buffer.getvalue()
             <h1 style={styles.headerTitle}>PEMBUATAN DAN AKSES ELEMEN DICTIONARY</h1>
           </div>
 
+          {/* TUJUAN PEMBELAJARAN (DIUBAH) */}
           <section style={styles.section}>
             <h2 style={styles.sectionTitle}>🎯 Tujuan Pembelajaran</h2>
             <div style={styles.card}>
               <ul style={styles.list}>
-                <li>Mahasiswa mampu membuat dictionary dengan berbagai cara (kurung kurawal dan fungsi dict()).</li>
-                <li>Mahasiswa mampu mengakses nilai dari dictionary menggunakan tanda kurung siku dan metode get().</li>
-                <li>Mahasiswa mampu menambah, mengubah, dan menghapus pasangan key-value dalam dictionary.</li>
-                <li>Mahasiswa mampu melakukan iterasi pada dictionary (keys, values, items).</li>
-                <li>Mahasiswa mampu menerapkan dictionary dalam studi kasus sederhana.</li>
+                <li>Mahasiswa mampu membuat dictionary.</li>
+                <li>Mahasiswa mampu mengakses nilai dari dictionary.</li>
               </ul>
             </div>
           </section>
 
+          {/* EKSPLORASI AWAL */}
           <section style={styles.section}>
+            <h2 style={styles.sectionTitle}>🔍 Eksplorasi</h2>
             <div style={styles.card}>
-              <h3 style={styles.subTitle}>1. Membuat Dictionary</h3>
               <p style={styles.text}>
-                Dictionary dapat dibuat dengan dua cara: menggunakan kurung kurawal <code>{`{}`}</code> atau fungsi <code>dict()</code>.
+                Sebelum mempelajari lebih dalam, jawab pertanyaan berikut. Pilih jawaban, lalu klik "Periksa Jawaban".
+                <strong style={{ color: "#d9534f" }}> Materi akan terbuka setelah semua jawaban benar.</strong>
               </p>
-              <CodeEditor
-                code={exampleCodes.membuatDict}
-                codeKey="membuatDict"
-                pyodideReady={pyodideReady}
-                runPythonCode={runPythonCode}
-                explanations={explanations.membuatDict}
-              />
-
-              <h3 style={styles.subTitle}>2. Mengakses Nilai Dictionary</h3>
-              <p style={styles.text}>
-                Ada dua cara mengakses nilai: menggunakan <code>nama_dict["key"]</code> (akan error jika key tidak ada) atau metode <code>.get("key", default)</code> (lebih aman).
-              </p>
-              <CodeEditor
-                code={exampleCodes.aksesDict}
-                codeKey="aksesDict"
-                pyodideReady={pyodideReady}
-                runPythonCode={runPythonCode}
-                explanations={explanations.aksesDict}
-              />
-
-              <h3 style={styles.subTitle}>3. Mengubah dan Menambah Item</h3>
-              <p style={styles.text}>
-                Gunakan sintaks <code>nama_dict["key"] = nilai_baru</code>. Jika key sudah ada, nilai akan diubah; jika belum ada, pasangan baru akan ditambahkan.
-              </p>
-              <CodeEditor
-                code={exampleCodes.ubahTambah}
-                codeKey="ubahTambah"
-                pyodideReady={pyodideReady}
-                runPythonCode={runPythonCode}
-                explanations={explanations.ubahTambah}
-              />
-
-              <h3 style={styles.subTitle}>4. Menghapus Item</h3>
-              <p style={styles.text}>
-                Gunakan <code>del nama_dict["key"]</code> atau metode <code>.pop("key")</code> yang mengembalikan nilai yang dihapus.
-              </p>
-              <CodeEditor
-                code={exampleCodes.hapusItem}
-                codeKey="hapusItem"
-                pyodideReady={pyodideReady}
-                runPythonCode={runPythonCode}
-                explanations={explanations.hapusItem}
-              />
-
-              <h3 style={styles.subTitle}>5. Iterasi (Perulangan) pada Dictionary</h3>
-              <p style={styles.text}>
-                Kita bisa melakukan iterasi terhadap key, value, atau pasangan key-value menggunakan method <code>.keys()</code>, <code>.values()</code>, dan <code>.items()</code>.
-              </p>
-              <CodeEditor
-                code={exampleCodes.iterasiDict}
-                codeKey="iterasiDict"
-                pyodideReady={pyodideReady}
-                runPythonCode={runPythonCode}
-                explanations={explanations.iterasiDict}
-              />
+              {eksplorasiQuestions.map((q, idx) => (
+                <div
+                  key={idx}
+                  style={{
+                    marginBottom: "30px",
+                    borderBottom: "1px solid #e0e0e0",
+                    paddingBottom: "20px",
+                  }}
+                >
+                  <p style={{ fontWeight: "600", marginBottom: "12px" }}>
+                    {idx + 1}. {q.text}
+                  </p>
+                  <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                    {q.options.map((opt, optIdx) => (
+                      <div
+                        key={optIdx}
+                        onClick={() => handleTempAnswer(idx, optIdx)}
+                        style={{
+                          ...styles.eksplorasiOption,
+                          backgroundColor: eksplorasiTempAnswers[idx] === optIdx ? "#2fa69a" : "#f9f9f9",
+                          color: eksplorasiTempAnswers[idx] === optIdx ? "white" : "#1f2937",
+                        }}
+                      >
+                        <strong>{String.fromCharCode(65 + optIdx)}.</strong> {opt}
+                      </div>
+                    ))}
+                  </div>
+                  <button style={styles.checkEksplorasiButton} onClick={() => checkEksplorasiAnswer(idx)}>
+                    Periksa Jawaban
+                  </button>
+                  {eksplorasiFeedback[idx] && (
+                    <div
+                      style={{
+                        marginTop: "12px",
+                        padding: "10px",
+                        borderRadius: "8px",
+                        backgroundColor: eksplorasiFeedback[idx].includes("Benar") ? "#d1e7dd" : "#f8d7da",
+                      }}
+                    >
+                      {eksplorasiFeedback[idx]}
+                    </div>
+                  )}
+                </div>
+              ))}
+              {!isEksplorasiCompleted && (
+                <div style={styles.lockMessage}>🔒 Materi terkunci. Jawab semua pertanyaan dengan benar.</div>
+              )}
             </div>
           </section>
 
-          <section style={styles.section}>
-            <h2 style={styles.sectionTitle}>✏️ Latihan Praktik (Studi Kasus)</h2>
-            <div style={styles.card}>
-              <div style={styles.alertBox}>
-                <strong>📝 Studi Kasus: Data Mahasiswa</strong>
-                <ul style={{ marginTop: "5px", paddingLeft: "20px" }}>
-                  <li>Buatlah dictionary dengan nama <code>data_mahasiswa</code> yang berisi key: <code>"nama"</code> dengan value <code>"Citra"</code>, key <code>"usia"</code> dengan value <code>22</code>, dan key <code>"jurusan"</code> dengan value <code>"Sistem Informasi"</code>.</li>
-                  <li>Tampilkan nilai dari key <code>"nama"</code> menggunakan <code>print()</code>.</li>
-                  <li>Tampilkan nilai dari key <code>"usia"</code> menggunakan <code>print()</code>.</li>
-                </ul>
-              </div>
-              <CodeEditorEditable
-                codeKey="latihan"
-                title="Latihan: Membuat dan Mengakses Dictionary"
-                pyodideReady={pyodideReady}
-                runPythonCode={runPythonCode}
-                expectedOutput={["Citra", "22"]}
-              />
-            </div>
-          </section>
+          {/* MATERI UTAMA (HANYA MEMBUAT DAN MENGAKSES) */}
+          {isEksplorasiCompleted && (
+            <>
+              <section style={styles.section}>
+                <div style={styles.card}>
+                  <h3 style={styles.subTitle}>1. Membuat Dictionary</h3>
+                  <p style={styles.text}>
+                    Dictionary dapat dibuat dengan dua cara: menggunakan kurung kurawal <code>{`{}`}</code> atau fungsi <code>dict()</code>.
+                  </p>
+                  <CodeEditor
+                    code={exampleCodes.membuatDict}
+                    codeKey="membuatDict"
+                    pyodideReady={pyodideReady}
+                    runPythonCode={runPythonCode}
+                    explanations={explanations.membuatDict}
+                  />
 
-          <section style={styles.section}>
-            <h2 style={styles.sectionTitle}>📝 Latihan Interaktif</h2>
-            <div style={styles.card}>
-              <p style={styles.text}>Lengkapi kode berikut dengan mengetikkan jawaban pada kotak yang tersedia.</p>
-              <button style={styles.resetButton} onClick={resetInteractiveQuestions}>↻ Reset Semua Jawaban</button>
-              
-              <CodeCompletionQuestion
-                question="1. Lengkapi kode untuk membuat dictionary dengan key 'kota' dan mencetak nilai 'Andi'."
-                codeParts={soal1CodeParts}
-                placeholders={soal1Placeholders}
-                expectedAnswers={soal1Expected}
-                resetTrigger={resetInteractives}
-              />
+                  <h3 style={styles.subTitle}>2. Mengakses Nilai Dictionary</h3>
+                  <p style={styles.text}>
+                    Ada dua cara mengakses nilai: menggunakan <code>nama_dict["key"]</code> (akan error jika key tidak ada) atau metode <code>.get("key", default)</code> (lebih aman).
+                  </p>
+                  <CodeEditor
+                    code={exampleCodes.aksesDict}
+                    codeKey="aksesDict"
+                    pyodideReady={pyodideReady}
+                    runPythonCode={runPythonCode}
+                    explanations={explanations.aksesDict}
+                  />
+                </div>
+              </section>
 
-              <CodeCompletionQuestion
-                question="2. Lengkapi kode untuk mencetak nilai Fisika menggunakan metode get()."
-                codeParts={soal2CodeParts}
-                placeholders={soal2Placeholders}
-                expectedAnswers={soal2Expected}
-                resetTrigger={resetInteractives}
-              />
+              {/* AYO PRAKTIK (dulu Latihan Praktik) */}
+              <section style={styles.section}>
+                <h2 style={styles.sectionTitle}>✏️ Ayo Praktik</h2>
+                <div style={styles.card}>
+                  <div style={styles.alertBox}>
+                    <strong>📝 Studi Kasus: Data Mahasiswa</strong>
+                    <ul style={{ marginTop: "5px", paddingLeft: "20px" }}>
+                      <li>Buatlah dictionary dengan nama <code>data_mahasiswa</code> yang berisi key: <code>"nama"</code> dengan value <code>"Citra"</code>, key <code>"usia"</code> dengan value <code>22</code>, dan key <code>"jurusan"</code> dengan value <code>"Sistem Informasi"</code>.</li>
+                      <li>Tampilkan nilai dari key <code>"nama"</code> menggunakan <code>print()</code>.</li>
+                      <li>Tampilkan nilai dari key <code>"usia"</code> menggunakan <code>print()</code>.</li>
+                    </ul>
+                  </div>
+                  <CodeEditorEditable
+                    codeKey="latihan"
+                    title="Ayo Praktik: Membuat dan Mengakses Dictionary"
+                    pyodideReady={pyodideReady}
+                    runPythonCode={runPythonCode}
+                    expectedOutput={["Citra", "22"]}
+                  />
+                </div>
+              </section>
 
-              <CodeCompletionQuestion
-                question="3. Lengkapi kode untuk menambahkan key 'kota' dengan value 'Bandung' ke dictionary siswa."
-                codeParts={soal3CodeParts}
-                placeholders={soal3Placeholders}
-                expectedAnswers={soal3Expected}
-                resetTrigger={resetInteractives}
-              />
+              {/* LATIHAN (dulu Latihan Interaktif) */}
+              <section style={styles.section}>
+                <h2 style={styles.sectionTitle}>📝 Latihan</h2>
+                <div style={styles.card}>
+                  <p style={styles.text}>Lengkapi kode berikut dengan mengetikkan jawaban pada kotak yang tersedia.</p>
+                  <button style={styles.resetButton} onClick={resetInteractiveQuestions}>↻ Reset Semua Jawaban</button>
+                  
+                  <CodeCompletionQuestion
+                    question="1. Lengkapi kode untuk membuat dictionary dengan key 'kota' dan mencetak nilai 'Andi'."
+                    codeParts={soal1CodeParts}
+                    placeholders={soal1Placeholders}
+                    expectedAnswers={soal1Expected}
+                    resetTrigger={resetInteractives}
+                  />
 
-              <CodeCompletionQuestion
-                question="4. Lengkapi kode untuk menghapus key 'tahun' dari dictionary buku."
-                codeParts={soal4CodeParts}
-                placeholders={soal4Placeholders}
-                expectedAnswers={soal4Expected}
-                resetTrigger={resetInteractives}
-              />
+                  <CodeCompletionQuestion
+                    question="2. Lengkapi kode untuk mencetak nilai Fisika menggunakan metode get()."
+                    codeParts={soal2CodeParts}
+                    placeholders={soal2Placeholders}
+                    expectedAnswers={soal2Expected}
+                    resetTrigger={resetInteractives}
+                  />
 
-              <CodeCompletionQuestion
-                question="5. Lengkapi kode untuk melakukan iterasi dan mencetak semua key dari dictionary harga."
-                codeParts={soal5CodeParts}
-                placeholders={soal5Placeholders}
-                expectedAnswers={soal5Expected}
-                resetTrigger={resetInteractives}
-              />
-            </div>
-          </section>
+                  <CodeCompletionQuestion
+                    question="3. Lengkapi kode untuk menambahkan key 'kota' dengan value 'Bandung' ke dictionary siswa."
+                    codeParts={soal3CodeParts}
+                    placeholders={soal3Placeholders}
+                    expectedAnswers={soal3Expected}
+                    resetTrigger={resetInteractives}
+                  />
+
+                  <CodeCompletionQuestion
+                    question="4. Lengkapi kode untuk menghapus key 'tahun' dari dictionary buku."
+                    codeParts={soal4CodeParts}
+                    placeholders={soal4Placeholders}
+                    expectedAnswers={soal4Expected}
+                    resetTrigger={resetInteractives}
+                  />
+
+                  <CodeCompletionQuestion
+                    question="5. Lengkapi kode untuk melakukan iterasi dan mencetak semua key dari dictionary harga."
+                    codeParts={soal5CodeParts}
+                    placeholders={soal5Placeholders}
+                    expectedAnswers={soal5Expected}
+                    resetTrigger={resetInteractives}
+                  />
+                </div>
+              </section>
+            </>
+          )}
         </div>
       </div>
     </>
@@ -858,5 +883,33 @@ const styles = {
     fontSize: "14px",
     marginBottom: "20px"
   },
-  feedback: { marginTop: "8px", fontSize: "14px", fontStyle: "italic", color: "#333" }
+  feedback: { marginTop: "8px", fontSize: "14px", fontStyle: "italic", color: "#333" },
+  // Style untuk eksplorasi
+  eksplorasiOption: {
+    padding: "12px",
+    borderRadius: "8px",
+    cursor: "pointer",
+    transition: "all 0.2s",
+    border: "1px solid #ddd",
+    backgroundColor: "#f9f9f9",
+  },
+  checkEksplorasiButton: {
+    marginTop: "12px",
+    backgroundColor: "#306998",
+    color: "white",
+    border: "none",
+    padding: "8px 16px",
+    borderRadius: "6px",
+    cursor: "pointer",
+    fontWeight: "500",
+  },
+  lockMessage: {
+    marginTop: "20px",
+    padding: "15px",
+    backgroundColor: "#fef3c7",
+    borderLeft: "5px solid #f59e0b",
+    borderRadius: "8px",
+    textAlign: "center",
+    color: "#92400e",
+  },
 };
