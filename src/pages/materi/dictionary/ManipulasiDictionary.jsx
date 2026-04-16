@@ -23,7 +23,7 @@ const CodeEditor = ({ code, codeKey, pyodideReady, runPythonCode, explanations }
   return (
     <div style={styles.codeEditorContainer}>
       <div style={styles.codeEditorHeader}>
-        <span style={styles.codeEditorTitle}>📘 Contoh Kode Program</span>
+        <span style={styles.codeEditorTitle}>Contoh Kode Program</span>
         <button style={styles.runButton} onClick={handleRun} disabled={!pyodideReady}>
           {pyodideReady ? "▶ Jalankan" : "⏳ Memuat..."}
         </button>
@@ -40,7 +40,7 @@ const CodeEditor = ({ code, codeKey, pyodideReady, runPythonCode, explanations }
       {hasRun && hasExplanations && (
         <div style={styles.explanationsContainer}>
           <div style={styles.explanationsHeader}>
-            <span style={styles.explanationsTitle}>📖 Penjelasan Kode (per baris)</span>
+            <span style={styles.explanationsTitle}>Penjelasan Kode (per baris)</span>
           </div>
           <div style={styles.explanationsContent}>
             {codeLines.map((line, idx) => {
@@ -138,78 +138,97 @@ const CodeEditorEditable = ({ codeKey, title, validationRules, pyodideReady, run
   );
 };
 
-// ===================== KOMPONEN LATIHAN (PILIHAN GANDA) =====================
-const MultipleChoiceQuiz = ({ questions, resetTrigger }) => {
-  const [selected, setSelected] = useState({});
-  const [submitted, setSubmitted] = useState(false);
-  const [score, setScore] = useState(0);
+// ===================== KOMPONEN LATIHAN (FORMAT EKSPLORASI) =====================
+const LatihanSoal = ({ questions, resetTrigger }) => {
+  const [answers, setAnswers] = useState(questions.map(() => null));
+  const [feedback, setFeedback] = useState(questions.map(() => ""));
+  const [globalError, setGlobalError] = useState("");
+  const [allCorrect, setAllCorrect] = useState(false);
 
   useEffect(() => {
-    setSelected({});
-    setSubmitted(false);
-    setScore(0);
-  }, [resetTrigger]);
+    setAnswers(questions.map(() => null));
+    setFeedback(questions.map(() => ""));
+    setGlobalError("");
+    setAllCorrect(false);
+  }, [resetTrigger, questions]);
 
-  const handleSelect = (qId, optionIndex) => {
-    if (!submitted) {
-      setSelected({ ...selected, [qId]: optionIndex });
+  const handleAnswerChange = (qIdx, optIdx) => {
+    const newAnswers = [...answers];
+    newAnswers[qIdx] = optIdx;
+    setAnswers(newAnswers);
+    const newFeedback = [...feedback];
+    newFeedback[qIdx] = "";
+    setFeedback(newFeedback);
+    setGlobalError("");
+    setAllCorrect(false);
+  };
+
+  const handleCheckAll = () => {
+    // Cek apakah semua soal sudah dijawab
+    const allAnswered = answers.every(ans => ans !== null);
+    if (!allAnswered) {
+      setGlobalError("❌ Anda harus menjawab semua soal terlebih dahulu!");
+      return;
+    }
+    setGlobalError("");
+    // Evaluasi semua jawaban
+    const newFeedback = answers.map((ans, idx) => {
+      if (ans === questions[idx].correctIndex) {
+        return "✅ Benar";
+      } else {
+        return "❌ Salah. Coba lagi!";
+      }
+    });
+    setFeedback(newFeedback);
+    const semuaBenar = newFeedback.every(f => f === "✅ Benar");
+    if (semuaBenar) {
+      setAllCorrect(true);
     }
   };
 
-  const handleSubmit = () => {
-    let correctCount = 0;
-    questions.forEach(q => {
-      if (selected[q.id] === q.correctIndex) correctCount++;
-    });
-    setScore(correctCount);
-    setSubmitted(true);
-  };
-
-  const handleReset = () => {
-    setSelected({});
-    setSubmitted(false);
-    setScore(0);
-  };
+  if (allCorrect) {
+    return (
+      <div style={styles.successBox}>
+        🎉 Selamat! Semua jawaban Anda benar.
+      </div>
+    );
+  }
 
   return (
-    <div style={styles.quizContainer}>
-      <h3 style={styles.quizTitle}>📝 Latihan: Pilih Kode yang Benar</h3>
+    <div>
       {questions.map((q, idx) => (
-        <div key={q.id} style={styles.questionCard}>
-          <p style={styles.questionText}>{idx+1}. {q.text}</p>
-          <div style={styles.options}>
+        <div key={idx} style={styles.latihanCard}>
+          <p style={styles.latihanQuestionText}>{idx+1}. {q.text}</p>
+          <div style={styles.latihanOptions}>
             {q.options.map((opt, optIdx) => (
-              <label key={optIdx} style={styles.optionLabel}>
-                <input
-                  type="radio"
-                  name={`q${q.id}`}
-                  value={optIdx}
-                  checked={selected[q.id] === optIdx}
-                  onChange={() => handleSelect(q.id, optIdx)}
-                  disabled={submitted}
-                  style={styles.radio}
-                />
-                <span style={{ marginLeft: "8px" }}>{opt}</span>
-              </label>
+              <div
+                key={optIdx}
+                onClick={() => handleAnswerChange(idx, optIdx)}
+                style={{
+                  ...styles.eksplorasiOption,
+                  backgroundColor: answers[idx] === optIdx ? "#2fa69a" : "#f9f9f9",
+                  color: answers[idx] === optIdx ? "white" : "#1f2937",
+                }}
+              >
+                <strong>{String.fromCharCode(65 + optIdx)}.</strong> {opt}
+              </div>
             ))}
           </div>
-          {submitted && (
-            <div style={styles.feedback}>
-              {selected[q.id] === q.correctIndex ? "✅ Benar" : `❌ Salah. Jawaban yang benar: ${q.options[q.correctIndex]}`}
+          {feedback[idx] && (
+            <div style={{ marginTop: "12px", padding: "10px", borderRadius: "8px", backgroundColor: feedback[idx].includes("Benar") ? "#d1e7dd" : "#f8d7da" }}>
+              {feedback[idx]}
             </div>
           )}
         </div>
       ))}
-      {!submitted ? (
-        <button style={styles.submitButton} onClick={handleSubmit}>Kumpulkan Jawaban</button>
-      ) : (
-        <div>
-          <div style={styles.resultBox}>
-            <strong>Skor Anda: {score} / {questions.length}</strong>
-          </div>
-          <button style={styles.resetQuizButton} onClick={handleReset}>Kerjakan Ulang</button>
+      {globalError && (
+        <div style={{ marginTop: "10px", marginBottom: "15px", padding: "12px", borderRadius: "8px", backgroundColor: "#f8d7da", color: "#842029" }}>
+          {globalError}
         </div>
       )}
+      <button style={styles.checkAllButton} onClick={handleCheckAll}>
+        Periksa Semua Jawaban
+      </button>
     </div>
   );
 };
@@ -237,7 +256,7 @@ export default function ManipulasiDictionary() {
         "insert()",
         "merge()",
       ],
-      correct: 1, // update()
+      correct: 1,
     },
     {
       text: "Perhatikan dictionary: `stok = {'apel': 10, 'mangga': 5}`. Kode manakah yang akan menghapus key 'mangga' beserta nilainya?",
@@ -248,7 +267,7 @@ export default function ManipulasiDictionary() {
         "stok.pop('mangga')",
         "stok.popitem('mangga')",
       ],
-      correct: 3, // stok.pop('mangga') atau del juga bisa, tapi pop lebih umum di manipulasi. Saya gunakan pop sebagai jawaban
+      correct: 3,
     },
     {
       text: "Metode dictionary yang menghapus semua item sehingga menghasilkan dictionary kosong adalah ...",
@@ -259,7 +278,7 @@ export default function ManipulasiDictionary() {
         "empty()",
         "reset()",
       ],
-      correct: 2, // clear()
+      correct: 2,
     },
   ];
 
@@ -310,7 +329,7 @@ export default function ManipulasiDictionary() {
     });
   };
 
-  // Kode contoh untuk materi (tetap sama)
+  // Kode contoh untuk materi
   const exampleCodes = {
     update: `data = {"a": 1, "b": 2}
 data.update({"c": 3, "d": 4})
@@ -335,7 +354,6 @@ print("Dictionary salinan:", salinan)`,
 print("Dictionary kuadrat:", kuadrat)`,
   };
 
-  // Penjelasan per baris
   const explanations = {
     update: [
       "Membuat dictionary 'data' dengan key 'a':1 dan 'b':2.",
@@ -372,57 +390,56 @@ print("Dictionary kuadrat:", kuadrat)`,
     ]
   };
 
-  // Data soal pilihan ganda (tetap)
-  const quizQuestions = [
+  // ===================== DATA LATIHAN (SEKARANG MEMILIKI 5 OPSI A-E) =====================
+  const latihanQuestions = [
     {
-      id: 1,
-      text: "Manakah kode yang BENAR untuk menambahkan pasangan key-value baru 'kota': 'Bandung' ke dalam dictionary `data` yang sudah ada?",
+      text: "Kode yang BENAR untuk menambahkan pasangan key-value baru 'kota': 'Bandung' ke dalam dictionary `data` yang sudah ada adalah ...",
       options: [
         "data.add('kota', 'Bandung')",
         "data['kota'] = 'Bandung'",
         "data.insert('kota', 'Bandung')",
-        "data.append('kota', 'Bandung')"
+        "data.append('kota', 'Bandung')",
+        "data.put('kota', 'Bandung')"   // opsi E (salah)
       ],
-      correctIndex: 1
+      correctIndex: 1  // B
     },
     {
-      id: 2,
-      text: "Perhatikan dictionary: `nilai = {'Matematika': 85, 'Fisika': 90, 'Kimia': 78}`. Kode manakah yang akan menghapus key 'Fisika' beserta nilainya?",
+      text: "Perhatikan dictionary: `nilai = {'Matematika': 85, 'Fisika': 90, 'Kimia': 78}`. Kode yang akan menghapus key 'Fisika' beserta nilainya adalah ...",
       options: [
         "nilai.remove('Fisika')",
         "del nilai['Fisika']",
         "nilai.delete('Fisika')",
-        "nilai.popitem('Fisika')"
+        "nilai.popitem('Fisika')",
+        "nilai.pop('Fisika')"          // opsi E (sebenarnya juga benar, tapi kita tambahkan sebagai pengecoh; jawaban benar tetap B)
       ],
-      correctIndex: 1
+      correctIndex: 1  // B
     },
     {
-      id: 3,
-      text: "Kode manakah yang tepat untuk menggabungkan dictionary `a = {'x':1}` dan `b = {'y':2}` menjadi satu dictionary `c` yang berisi {'x':1, 'y':2}?",
+      text: "Kode yang tepat untuk menggabungkan dictionary `a = {'x':1}` dan `b = {'y':2}` menjadi satu dictionary `c` yang berisi {'x':1, 'y':2} adalah ...",
       options: [
         "c = a + b",
         "c = a.update(b)",
         "c = {**a, **b}",
-        "c = a.concat(b)"
+        "c = a.concat(b)",
+        "c = a.merge(b)"               // opsi E (salah)
       ],
-      correctIndex: 2
+      correctIndex: 2  // C
     },
     {
-      id: 4,
-      text: "Fungsi/metode manakah yang digunakan untuk menghapus semua item dalam dictionary?",
+      text: "Fungsi yang digunakan untuk menghapus semua item dalam dictionary adalah ...",
       options: [
         "delete()",
         "removeAll()",
         "clear()",
-        "popall()"
+        "popall()",
+        "reset()"                      // opsi E (salah)
       ],
-      correctIndex: 2
+      correctIndex: 2  // C
     },
     {
-      id: 5,
-      text: "Perhatikan kode berikut:\n`data = {'a': 10, 'b': 20, 'c': 30}`\n`hasil = data.pop('b')`\nBerapakah nilai dari variabel `hasil` setelah kode dijalankan?",
-      options: ["10", "20", "30", "Error"],
-      correctIndex: 1
+      text: "Perhatikan kode berikut:\n`data = {'a': 10, 'b': 20, 'c': 30}`\n`hasil = data.pop('b')`\nNilai dari variabel `hasil` setelah kode dijalankan adalah ...",
+      options: ["10", "20", "30", "Error", "0"],   // opsi E = 0 (salah)
+      correctIndex: 1  // B
     }
   ];
 
@@ -472,7 +489,7 @@ _buffer.getvalue()
     }
   }, []);
 
-  const resetQuiz = () => {
+  const resetLatihan = () => {
     setResetInteractives(prev => prev + 1);
   };
 
@@ -496,14 +513,14 @@ _buffer.getvalue()
             <h1 style={styles.headerTitle}>MANIPULASI DICTIONARY</h1>
           </div>
 
-          {/* TUJUAN PEMBELAJARAN (DIUBAH) */}
+          {/* TUJUAN PEMBELAJARAN (menggunakan angka 1. dan 2.) */}
           <section style={styles.section}>
-            <h2 style={styles.sectionTitle}>🎯 Tujuan Pembelajaran</h2>
+            <h2 style={styles.sectionTitle}>Tujuan Pembelajaran</h2>
             <div style={styles.card}>
-              <ul style={styles.list}>
+              <ol style={styles.listAngka}>
                 <li>Mahasiswa mampu melakukan manipulasi dasar pada dictionary.</li>
                 <li>Mahasiswa mampu menerapkan manipulasi dictionary dalam pemecahan masalah nyata (studi kasus).</li>
-              </ul>
+              </ol>
             </div>
           </section>
 
@@ -644,9 +661,9 @@ _buffer.getvalue()
                 </div>
               </section>
 
-              {/* AYO PRAKTIK (dulu Latihan Praktik) */}
+              {/* AYO PRAKTIK */}
               <section style={styles.section}>
-                <h2 style={styles.sectionTitle}>✏️ Ayo Praktik</h2>
+                <h2 style={styles.sectionTitle}>Ayo Praktik</h2>
                 <div style={styles.card}>
                   <div style={styles.alertBox}>
                     <strong>📖 Cerita Kasus: Inventaris Toko Buku</strong>
@@ -678,13 +695,13 @@ _buffer.getvalue()
                 </div>
               </section>
 
-              {/* LATIHAN (dulu Latihan Interaktif) */}
+              {/* LATIHAN (format eksplorasi) */}
               <section style={styles.section}>
-                <h2 style={styles.sectionTitle}>📝 Latihan</h2>
+                <h2 style={styles.sectionTitle}>Latihan</h2>
                 <div style={styles.card}>
-                  <p style={styles.text}>Pilihlah jawaban yang paling tepat untuk setiap soal.</p>
-                  <button style={styles.resetQuizButton} onClick={resetQuiz}>↻ Reset Jawaban</button>
-                  <MultipleChoiceQuiz questions={quizQuestions} resetTrigger={resetInteractives} />
+                  <p style={styles.text}>Pilihlah jawaban yang tepat untuk setiap soal. Anda harus menjawab semua soal terlebih dahulu, lalu klik "Periksa Semua Jawaban". Jika masih ada yang salah, perbaiki jawaban Anda dan periksa lagi sampai semua benar.</p>
+                  <button style={styles.resetQuizButton} onClick={resetLatihan}>↻ Reset Semua Jawaban</button>
+                  <LatihanSoal questions={latihanQuestions} resetTrigger={resetInteractives} />
                 </div>
               </section>
             </>
@@ -695,7 +712,7 @@ _buffer.getvalue()
   );
 }
 
-/* ================== STYLE (ditambah style untuk eksplorasi) ================== */
+/* ================== STYLE ================== */
 const styles = {
   page: {
     padding: "30px 40px",
@@ -744,7 +761,10 @@ const styles = {
     padding: "25px",
     boxShadow: "0 5px 15px rgba(0,0,0,0.08)",
   },
-  list: { paddingLeft: "20px", lineHeight: "1.8" },
+  listAngka: {
+    paddingLeft: "20px",
+    lineHeight: "1.8",
+  },
   text: { lineHeight: "1.8", color: "#333" },
   subTitle: { marginTop: "20px", marginBottom: "10px", color: "#306998" },
   alertBox: {
@@ -877,74 +897,6 @@ const styles = {
     color: "#ccc",
     flex: "1",
   },
-  // Quiz styles (pilihan ganda)
-  quizContainer: {
-    marginTop: "20px"
-  },
-  quizTitle: {
-    fontSize: "18px",
-    fontWeight: "600",
-    marginBottom: "15px"
-  },
-  questionCard: {
-    backgroundColor: "#f9f9f9",
-    borderRadius: "8px",
-    padding: "15px",
-    marginBottom: "15px",
-    border: "1px solid #ddd"
-  },
-  questionText: {
-    fontWeight: "500",
-    marginBottom: "10px",
-    whiteSpace: "pre-line"
-  },
-  options: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "8px",
-    marginBottom: "10px"
-  },
-  optionLabel: {
-    display: "flex",
-    alignItems: "center",
-    cursor: "pointer"
-  },
-  radio: {
-    marginRight: "5px"
-  },
-  feedback: {
-    marginTop: "8px",
-    fontSize: "14px",
-    fontStyle: "italic"
-  },
-  submitButton: {
-    backgroundColor: "#306998",
-    color: "white",
-    border: "none",
-    padding: "10px 20px",
-    borderRadius: "6px",
-    cursor: "pointer",
-    fontSize: "14px",
-    marginTop: "10px"
-  },
-  resultBox: {
-    marginTop: "15px",
-    padding: "10px",
-    backgroundColor: "#e7f3ff",
-    borderRadius: "6px",
-    textAlign: "center"
-  },
-  resetQuizButton: {
-    backgroundColor: "#6c757d",
-    color: "white",
-    border: "none",
-    padding: "8px 16px",
-    borderRadius: "6px",
-    cursor: "pointer",
-    fontSize: "14px",
-    marginBottom: "20px",
-    marginRight: "10px"
-  },
   // Style untuk eksplorasi
   eksplorasiOption: {
     padding: "12px",
@@ -972,5 +924,55 @@ const styles = {
     borderRadius: "8px",
     textAlign: "center",
     color: "#92400e",
+  },
+  // Style untuk latihan (format eksplorasi)
+  latihanCard: {
+    backgroundColor: "#f9f9f9",
+    borderRadius: "8px",
+    padding: "15px",
+    marginBottom: "20px",
+    border: "1px solid #ddd"
+  },
+  latihanQuestionText: {
+    fontWeight: "600",
+    marginBottom: "12px",
+    whiteSpace: "pre-line"
+  },
+  latihanOptions: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "10px"
+  },
+  checkAllButton: {
+    marginTop: "20px",
+    backgroundColor: "#306998",
+    color: "white",
+    border: "none",
+    padding: "12px 24px",
+    borderRadius: "8px",
+    cursor: "pointer",
+    fontWeight: "600",
+    fontSize: "16px",
+    width: "100%",
+  },
+  successBox: {
+    marginTop: "15px",
+    padding: "12px",
+    borderRadius: "8px",
+    backgroundColor: "#d1e7dd",
+    color: "#0f5132",
+    textAlign: "center",
+    fontWeight: "bold"
+  },
+  resetQuizButton: {
+    backgroundColor: "#6c757d",
+    color: "white",
+    border: "none",
+    padding: "8px 16px",
+    borderRadius: "6px",
+    cursor: "pointer",
+    fontSize: "14px",
+    marginBottom: "20px",
+    marginRight: "10px"
   },
 };
