@@ -25,7 +25,7 @@ export default function KuisDictionary() {
     {
       id: 1,
       type: "multiple_choice",
-      text: "Manakah pernyataan yang BENAR tentang dictionary di Python?",
+      text: "Pernyataan yang BENAR tentang dictionary di Python adalah ...",
       options: [
         "A. Dictionary dapat diakses menggunakan indeks angka seperti list",
         "B. Key dalam dictionary harus bersifat unik dan immutable",
@@ -39,7 +39,7 @@ export default function KuisDictionary() {
     {
       id: 2,
       type: "multiple_choice",
-      text: "Apa output dari kode berikut?\n\n```python\ndata = {'a': 1, 'b': 2, 'c': 3}\nprint(data.get('d', 0))\n```",
+      text: "Output dari kode berikut adalah ...\n\n```python\ndata = {'a': 1, 'b': 2, 'c': 3}\nprint(data.get('d', 0))\n```",
       options: [
         "A. None",
         "B. Error",
@@ -53,7 +53,7 @@ export default function KuisDictionary() {
     {
       id: 3,
       type: "multiple_choice",
-      text: "Metode mana yang digunakan untuk menggabungkan dua dictionary?",
+      text: "Metode yang digunakan untuk menggabungkan dua dictionary adalah ...",
       options: [
         "A. merge()",
         "B. combine()",
@@ -67,7 +67,7 @@ export default function KuisDictionary() {
     {
       id: 4,
       type: "multiple_choice",
-      text: "Perhatikan kode berikut:\n\n```python\nx = {'a': 10, 'b': 20}\ny = x.copy()\ny['a'] = 99\nprint(x['a'])\n```\nApa outputnya?",
+      text: "Perhatikan kode berikut:\n\n```python\nx = {'a': 10, 'b': 20}\ny = x.copy()\ny['a'] = 99\nprint(x['a'])\n```\nOutputnya adalah ...",
       options: [
         "A. 99",
         "B. 10",
@@ -81,7 +81,7 @@ export default function KuisDictionary() {
     {
       id: 5,
       type: "multiple_choice",
-      text: "Manakah cara yang benar untuk menghapus semua item dalam dictionary `data`?",
+      text: "Cara yang benar untuk menghapus semua item dalam dictionary `data` adalah ...",
       options: [
         "A. data.removeAll()",
         "B. data.delete()",
