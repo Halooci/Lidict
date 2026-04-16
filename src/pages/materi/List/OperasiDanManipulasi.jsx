@@ -144,24 +144,23 @@ const styles = {
     border: "1px solid #ddd",
     backgroundColor: "#f9f9f9",
   },
-  checkEksplorasiButton: {
-    marginTop: "12px",
-    backgroundColor: "#306998",
-    color: "white",
-    border: "none",
-    padding: "8px 16px",
-    borderRadius: "6px",
-    cursor: "pointer",
-    fontWeight: "500",
+  eksplorasiOptionDisabled: {
+    padding: "12px",
+    borderRadius: "8px",
+    border: "1px solid #ccc",
+    backgroundColor: "#e9ecef",
+    color: "#6c757d",
+    cursor: "not-allowed",
+    opacity: 0.7,
   },
-  lockMessage: {
+  infoMessage: {
     marginTop: "20px",
     padding: "15px",
-    backgroundColor: "#fef3c7",
-    borderLeft: "5px solid #f59e0b",
+    backgroundColor: "#cfe2ff",
+    borderLeft: "5px solid #0d6efd",
     borderRadius: "8px",
     textAlign: "center",
-    color: "#92400e",
+    color: "#084298",
   },
   errorBox: {
     backgroundColor: "#ff4444",
@@ -293,6 +292,22 @@ const styles = {
     fontSize: "14px",
     textAlign: "center",
     margin: "20px 0",
+  },
+  feedbackCorrect: {
+    marginTop: "10px",
+    padding: "8px 12px",
+    backgroundColor: "#d1e7dd",
+    color: "#0f5132",
+    borderRadius: "6px",
+    fontWeight: "500",
+  },
+  feedbackWrong: {
+    marginTop: "10px",
+    padding: "8px 12px",
+    backgroundColor: "#f8d7da",
+    color: "#842029",
+    borderRadius: "6px",
+    fontWeight: "500",
   },
 };
 
@@ -1050,8 +1065,8 @@ export default function OperasiManipulasiList() {
   const pyodideRef = useRef(null);
   const [resetMatching, setResetMatching] = useState(0);
 
-  const [eksplorasiTempAnswers, setEksplorasiTempAnswers] = useState([null, null]);
-  const [eksplorasiSavedAnswers, setEksplorasiSavedAnswers] = useState([null, null]);
+  // ================= EKSPLORASI AWAL (DIREVISI) =================
+  const [eksplorasiSelected, setEksplorasiSelected] = useState([null, null]); // menyimpan pilihan user (index opsi)
   const [eksplorasiFeedback, setEksplorasiFeedback] = useState(["", ""]);
   const [isEksplorasiCompleted, setIsEksplorasiCompleted] = useState(false);
 
@@ -1060,30 +1075,34 @@ export default function OperasiManipulasiList() {
     { text: "Fungsi dari method `remove()` pada list adalah ...", options: ["Menghapus elemen berdasarkan indeks", "Menghapus elemen berdasarkan nilai pertama yang cocok", "Menghapus semua elemen", "Menghapus elemen terakhir"], correct: 1 },
   ];
 
-  const checkEksplorasiAnswer = (questionIdx) => {
-    const selected = eksplorasiTempAnswers[questionIdx];
-    if (selected === null) {
-      setEksplorasiFeedback(prev => { const newF = [...prev]; newF[questionIdx] = "❌ Pilih jawaban terlebih dahulu!"; return newF; });
-      return;
-    }
-    const isCorrect = selected === eksplorasiQuestions[questionIdx].correct;
-    if (isCorrect) {
-      const newSaved = [...eksplorasiSavedAnswers]; newSaved[questionIdx] = selected; setEksplorasiSavedAnswers(newSaved);
-      setEksplorasiFeedback(prev => { const newF = [...prev]; newF[questionIdx] = "✅ Benar! Jawaban tersimpan."; return newF; });
-    } else {
-      setEksplorasiFeedback(prev => { const newF = [...prev]; newF[questionIdx] = "❌ Salah. Coba lagi!"; return newF; });
-    }
+  // Fungsi untuk menangani klik opsi (sekali pilih, langsung terkunci)
+  const handleEksplorasiSelect = (questionIdx, optionIdx) => {
+    // Jika pertanyaan sudah dipilih, tidak bisa diubah
+    if (eksplorasiSelected[questionIdx] !== null) return;
+
+    // Simpan pilihan
+    setEksplorasiSelected(prev => {
+      const newSelected = [...prev];
+      newSelected[questionIdx] = optionIdx;
+      return newSelected;
+    });
+
+    // Tentukan feedback Benar/Salah
+    const isCorrect = optionIdx === eksplorasiQuestions[questionIdx].correct;
+    setEksplorasiFeedback(prev => {
+      const newFeedback = [...prev];
+      newFeedback[questionIdx] = isCorrect ? "Benar" : "Salah";
+      return newFeedback;
+    });
   };
 
+  // Memantau apakah semua pertanyaan sudah dipilih (jawaban apapun)
   useEffect(() => {
-    const allCorrect = eksplorasiSavedAnswers.every((ans, idx) => ans !== null && ans === eksplorasiQuestions[idx].correct);
-    setIsEksplorasiCompleted(allCorrect);
-  }, [eksplorasiSavedAnswers]);
-
-  const handleTempAnswer = (questionIdx, optionIdx) => {
-    const newTemp = [...eksplorasiTempAnswers]; newTemp[questionIdx] = optionIdx; setEksplorasiTempAnswers(newTemp);
-    setEksplorasiFeedback(prev => { const newF = [...prev]; newF[questionIdx] = ""; return newF; });
-  };
+    const allSelected = eksplorasiSelected.every(selected => selected !== null);
+    if (allSelected && !isEksplorasiCompleted) {
+      setIsEksplorasiCompleted(true);
+    }
+  }, [eksplorasiSelected, isEksplorasiCompleted]);
 
   // ================= DATA UNTUK VISUALISASI =================
   const concatBeforeA = [1,2,3];
@@ -1338,7 +1357,6 @@ export default function OperasiManipulasiList() {
           <div style={styles.header}>
             <div style={styles.headerAccent}></div>
             <h1 style={styles.headerTitle}>OPERASI DAN MANIPULASI LIST</h1>
-            {/* <p style={styles.headerSubtitle}>Belajar Mengubah, Menambah, Menghapus, dan Mengelola Data dalam List</p> */}
           </div>
 
           <section style={styles.section}>
@@ -1348,30 +1366,67 @@ export default function OperasiManipulasiList() {
             </div>
           </section>
 
-          {/* EKSPLORASI AWAL */}
+          {/* EKSPLORASI AWAL (DIREVISI: tanpa tombol, langsung cek, materi terbuka setelah dijawab) */}
           <section style={styles.section}>
             <h2 style={styles.sectionTitle}>🔍 Eksplorasi Awal</h2>
             <div style={styles.card}>
-              <p style={styles.text}>Jawab pertanyaan berikut. Pilih jawaban, lalu klik "Periksa Jawaban". <strong style={{ color: "#d9534f" }}> Materi akan terbuka setelah kedua jawaban benar.</strong></p>
-              {eksplorasiQuestions.map((q, idx) => (
-                <div key={idx} style={{ marginBottom: "30px", borderBottom: "1px solid #e0e0e0", paddingBottom: "20px" }}>
-                  <p style={{ fontWeight: "600", marginBottom: "12px" }}>{idx + 1}. {q.text}</p>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                    {q.options.map((opt, optIdx) => (
-                      <div key={optIdx} onClick={() => handleTempAnswer(idx, optIdx)} style={{ ...styles.eksplorasiOption, backgroundColor: eksplorasiTempAnswers[idx] === optIdx ? "#2fa69a" : "#f9f9f9", color: eksplorasiTempAnswers[idx] === optIdx ? "white" : "#1f2937" }}>
-                        {String.fromCharCode(65 + optIdx)}. {opt}
+              <p style={styles.text}>
+                Sebelum belajar lebih dalam, jawab pertanyaan berikut dengan memilih opsi yang tersedia.
+                <strong style={{ color: "#0d6efd" }}> Materi akan terbuka setelah kedua pertanyaan dijawab (apapun jawabannya).</strong>
+              </p>
+              {eksplorasiQuestions.map((q, idx) => {
+                const isAnswered = eksplorasiSelected[idx] !== null;
+                const selectedIdx = eksplorasiSelected[idx];
+                return (
+                  <div key={idx} style={{ marginBottom: "30px", borderBottom: "1px solid #e0e0e0", paddingBottom: "20px" }}>
+                    <p style={{ fontWeight: "600", marginBottom: "12px" }}>{idx + 1}. {q.text}</p>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                      {q.options.map((opt, optIdx) => {
+                        let optionStyle = {};
+                        if (isAnswered) {
+                          // Jika sudah dipilih, semua opsi dinonaktifkan
+                          optionStyle = styles.eksplorasiOptionDisabled;
+                          // Jika opsi ini adalah jawaban yang dipilih, beri warna hijau jika benar, merah jika salah
+                          if (selectedIdx === optIdx) {
+                            const isCorrect = selectedIdx === q.correct;
+                            optionStyle = {
+                              ...optionStyle,
+                              backgroundColor: isCorrect ? "#d4edda" : "#f8d7da",
+                              borderColor: isCorrect ? "#28a745" : "#dc3545",
+                              color: isCorrect ? "#155724" : "#842029",
+                            };
+                          }
+                        } else {
+                          optionStyle = styles.eksplorasiOption;
+                        }
+                        return (
+                          <div
+                            key={optIdx}
+                            onClick={() => !isAnswered && handleEksplorasiSelect(idx, optIdx)}
+                            style={optionStyle}
+                          >
+                            {String.fromCharCode(65 + optIdx)}. {opt}
+                          </div>
+                        );
+                      })}
+                    </div>
+                    {eksplorasiFeedback[idx] && (
+                      <div style={eksplorasiFeedback[idx] === "Benar" ? styles.feedbackCorrect : styles.feedbackWrong}>
+                        {eksplorasiFeedback[idx]}
                       </div>
-                    ))}
+                    )}
                   </div>
-                  <button style={styles.checkEksplorasiButton} onClick={() => checkEksplorasiAnswer(idx)}>Periksa Jawaban</button>
-                  {eksplorasiFeedback[idx] && <div style={{ marginTop: "12px", padding: "10px", borderRadius: "8px", backgroundColor: eksplorasiFeedback[idx].includes("Benar") ? "#d1e7dd" : "#f8d7da" }}>{eksplorasiFeedback[idx]}</div>}
+                );
+              })}
+              {!isEksplorasiCompleted && (
+                <div style={styles.infoMessage}>
+                  ℹ️ Jawab kedua pertanyaan di atas untuk membuka materi pembelajaran.
                 </div>
-              ))}
-              {!isEksplorasiCompleted && <div style={styles.lockMessage}>🔒 Materi terkunci. Jawab kedua pertanyaan dengan benar.</div>}
+              )}
             </div>
           </section>
 
-          {/* MATERI UTAMA */}
+          {/* MATERI UTAMA (muncul otomatis setelah eksplorasi selesai) */}
           {isEksplorasiCompleted && (
             <>
               <section style={styles.section}>

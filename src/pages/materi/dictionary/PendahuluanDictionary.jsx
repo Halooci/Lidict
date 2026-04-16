@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import Navbar from "../../komponen/Navbar";
 import SidebarMateri from "../../komponen/SidebarMateri";
 
-// ===================== KOMPONEN LATIHAN INTERAKTIF (1 TOMOL PERIKSA DI BAWAH, OPSI A-E) =====================
+// ===================== KOMPONEN LATIHAN INTERAKTIF (1 TOMBOL PERIKSA DI BAWAH, OPSI A-E) =====================
 const InteractiveLatihan = () => {
   const [answers, setAnswers] = useState([null, null, null, null, null]);
   const [feedback, setFeedback] = useState(["", "", "", "", ""]);
@@ -168,10 +168,10 @@ export default function PendahuluanDictionary() {
   const pyodideRef = useRef(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
-  // State untuk eksplorasi
-  const [eksplorasiTempAnswers, setEksplorasiTempAnswers] = useState([null, null, null]);
-  const [eksplorasiSavedAnswers, setEksplorasiSavedAnswers] = useState([null, null, null]);
+  // ================= EKSPLORASI (DIREVISI) =================
+  const [eksplorasiSelected, setEksplorasiSelected] = useState([null, null, null]); // pilihan user (index opsi)
   const [eksplorasiFeedback, setEksplorasiFeedback] = useState(["", "", ""]);
+  const [eksplorasiHasAnswered, setEksplorasiHasAnswered] = useState([false, false, false]); // apakah sudah menjawab (terkunci)
   const [isEksplorasiCompleted, setIsEksplorasiCompleted] = useState(false);
 
   const eksplorasiQuestions = [
@@ -204,52 +204,40 @@ export default function PendahuluanDictionary() {
     },
   ];
 
-  const checkEksplorasiAnswer = (questionIdx) => {
-    const selected = eksplorasiTempAnswers[questionIdx];
-    if (selected === null) {
-      setEksplorasiFeedback((prev) => {
-        const newFeedback = [...prev];
-        newFeedback[questionIdx] = "❌ Pilih jawaban terlebih dahulu!";
-        return newFeedback;
-      });
-      return;
-    }
-    const isCorrect = selected === eksplorasiQuestions[questionIdx].correct;
-    if (isCorrect) {
-      const newSaved = [...eksplorasiSavedAnswers];
-      newSaved[questionIdx] = selected;
-      setEksplorasiSavedAnswers(newSaved);
-      setEksplorasiFeedback((prev) => {
-        const newFeedback = [...prev];
-        newFeedback[questionIdx] = "✅ Benar! Jawaban tersimpan.";
-        return newFeedback;
-      });
-    } else {
-      setEksplorasiFeedback((prev) => {
-        const newFeedback = [...prev];
-        newFeedback[questionIdx] = "❌ Salah. Coba lagi!";
-        return newFeedback;
-      });
-    }
-  };
+  // Fungsi menangani klik opsi (sekali pilih, langsung terkunci)
+  const handleEksplorasiSelect = (questionIdx, optionIdx) => {
+    if (eksplorasiHasAnswered[questionIdx]) return; // sudah terjawab, tidak bisa diubah
 
-  useEffect(() => {
-    const allCorrect = eksplorasiSavedAnswers.every(
-      (ans, idx) => ans !== null && ans === eksplorasiQuestions[idx].correct
-    );
-    setIsEksplorasiCompleted(allCorrect);
-  }, [eksplorasiSavedAnswers]);
+    // Simpan pilihan
+    setEksplorasiSelected(prev => {
+      const newSel = [...prev];
+      newSel[questionIdx] = optionIdx;
+      return newSel;
+    });
 
-  const handleTempAnswer = (questionIdx, optionIdx) => {
-    const newTemp = [...eksplorasiTempAnswers];
-    newTemp[questionIdx] = optionIdx;
-    setEksplorasiTempAnswers(newTemp);
-    setEksplorasiFeedback((prev) => {
-      const newFeedback = [...prev];
-      newFeedback[questionIdx] = "";
-      return newFeedback;
+    // Tentukan feedback Benar/Salah
+    const isCorrect = optionIdx === eksplorasiQuestions[questionIdx].correct;
+    setEksplorasiFeedback(prev => {
+      const newFb = [...prev];
+      newFb[questionIdx] = isCorrect ? "Benar" : "Salah";
+      return newFb;
+    });
+
+    // Tandai sudah dijawab
+    setEksplorasiHasAnswered(prev => {
+      const newAns = [...prev];
+      newAns[questionIdx] = true;
+      return newAns;
     });
   };
+
+  // Memantau apakah semua pertanyaan sudah dijawab
+  useEffect(() => {
+    const allAnswered = eksplorasiHasAnswered.every(v => v === true);
+    if (allAnswered && !isEksplorasiCompleted) {
+      setIsEksplorasiCompleted(true);
+    }
+  }, [eksplorasiHasAnswered, isEksplorasiCompleted]);
 
   // Load Pyodide (tetap ada meskipun tidak digunakan)
   useEffect(() => {
@@ -340,91 +328,96 @@ _buffer.getvalue()
             </div>
           </section>
 
-          {/* EKSPLORASI AWAL */}
+          {/* EKSPLORASI AWAL (DIREVISI) */}
           <section style={styles.section}>
             <h2 style={styles.sectionTitle}>🔍 Eksplorasi</h2>
             <div style={styles.card}>
               <p style={styles.text}>
-                Sebelum mempelajari lebih dalam, jawab pertanyaan berikut. Pilih
-                jawaban, lalu klik "Periksa Jawaban".
-                <strong style={{ color: "#d9534f" }}>
+                Sebelum mempelajari lebih dalam, jawab pertanyaan berikut dengan memilih opsi yang tersedia.
+                <strong style={{ color: "#0d6efd" }}>
                   {" "}
-                  Materi akan terbuka setelah semua jawaban benar.
+                  Materi akan terbuka setelah ketiga pertanyaan dijawab (apapun jawabannya).
                 </strong>
               </p>
-              {eksplorasiQuestions.map((q, idx) => (
-                <div
-                  key={idx}
-                  style={{
-                    marginBottom: "30px",
-                    borderBottom: "1px solid #e0e0e0",
-                    paddingBottom: "20px",
-                  }}
-                >
-                  <p style={{ fontWeight: "600", marginBottom: "12px" }}>
-                    {idx + 1}. {q.text}
-                  </p>
+              {eksplorasiQuestions.map((q, idx) => {
+                const isAnswered = eksplorasiHasAnswered[idx];
+                const selectedIdx = eksplorasiSelected[idx];
+                return (
                   <div
+                    key={idx}
                     style={{
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: "10px",
+                      marginBottom: "30px",
+                      borderBottom: "1px solid #e0e0e0",
+                      paddingBottom: "20px",
                     }}
                   >
-                    {q.options.map((opt, optIdx) => (
-                      <div
-                        key={optIdx}
-                        onClick={() => handleTempAnswer(idx, optIdx)}
-                        style={{
-                          ...styles.eksplorasiOption,
-                          backgroundColor:
-                            eksplorasiTempAnswers[idx] === optIdx
-                              ? "#2fa69a"
-                              : "#f9f9f9",
-                          color:
-                            eksplorasiTempAnswers[idx] === optIdx
-                              ? "white"
-                              : "#1f2937",
-                        }}
-                      >
-                        <strong>{String.fromCharCode(65 + optIdx)}.</strong>{" "}
-                        {opt}
-                      </div>
-                    ))}
-                  </div>
-                  <button
-                    style={styles.checkEksplorasiButton}
-                    onClick={() => checkEksplorasiAnswer(idx)}
-                  >
-                    Periksa Jawaban
-                  </button>
-                  {eksplorasiFeedback[idx] && (
+                    <p style={{ fontWeight: "600", marginBottom: "12px" }}>
+                      {idx + 1}. {q.text}
+                    </p>
                     <div
                       style={{
-                        marginTop: "12px",
-                        padding: "10px",
-                        borderRadius: "8px",
-                        backgroundColor: eksplorasiFeedback[idx].includes(
-                          "Benar"
-                        )
-                          ? "#d1e7dd"
-                          : "#f8d7da",
+                        display: "flex",
+                        flexDirection: "column",
+                        gap: "10px",
                       }}
                     >
-                      {eksplorasiFeedback[idx]}
+                      {q.options.map((opt, optIdx) => {
+                        let optionStyle = {
+                          ...styles.eksplorasiOption,
+                          cursor: "pointer",
+                        };
+                        if (isAnswered) {
+                          optionStyle.cursor = "not-allowed";
+                          optionStyle.opacity = 0.7;
+                          if (selectedIdx === optIdx) {
+                            const isCorrect = (selectedIdx === q.correct);
+                            optionStyle.backgroundColor = isCorrect ? "#d4edda" : "#f8d7da";
+                            optionStyle.borderColor = isCorrect ? "#28a745" : "#dc3545";
+                            optionStyle.color = isCorrect ? "#155724" : "#842029";
+                          } else {
+                            optionStyle.backgroundColor = "#e9ecef";
+                            optionStyle.color = "#6c757d";
+                          }
+                        } else {
+                          optionStyle.backgroundColor = eksplorasiSelected[idx] === optIdx ? "#2fa69a" : "#f9f9f9";
+                          optionStyle.color = eksplorasiSelected[idx] === optIdx ? "white" : "#1f2937";
+                        }
+                        return (
+                          <div
+                            key={optIdx}
+                            onClick={() => !isAnswered && handleEksplorasiSelect(idx, optIdx)}
+                            style={optionStyle}
+                          >
+                            <strong>{String.fromCharCode(65 + optIdx)}.</strong> {opt}
+                          </div>
+                        );
+                      })}
                     </div>
-                  )}
-                </div>
-              ))}
+                    {eksplorasiFeedback[idx] && (
+                      <div
+                        style={{
+                          marginTop: "12px",
+                          padding: "10px",
+                          borderRadius: "8px",
+                          backgroundColor: eksplorasiFeedback[idx] === "Benar" ? "#d1e7dd" : "#f8d7da",
+                          color: eksplorasiFeedback[idx] === "Benar" ? "#0f5132" : "#842029",
+                        }}
+                      >
+                        {eksplorasiFeedback[idx] === "Benar" ? "✅ Benar" : "❌ Salah"}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
               {!isEksplorasiCompleted && (
                 <div style={styles.lockMessage}>
-                  🔒 Materi terkunci. Jawab semua pertanyaan dengan benar.
+                  🔒 Materi terkunci. Jawab semua pertanyaan di atas untuk membuka materi.
                 </div>
               )}
             </div>
           </section>
 
-          {/* MATERI UTAMA (hanya tampil jika eksplorasi sudah dilewati) */}
+          {/* MATERI UTAMA (hanya tampil jika eksplorasi sudah selesai) */}
           {isEksplorasiCompleted && (
             <>
               {/* PENGERTIAN DICTIONARY */}
@@ -567,7 +560,7 @@ _buffer.getvalue()
                         </td>
                       </tr>
                     </tbody>
-                  </table>
+                   </table>
                   <div style={styles.infoBox}>
                     <strong>💡 Analogi sederhana:</strong> List seperti rak buku
                     bernomor (indeks 0,1,2,...). Dictionary seperti lemari
@@ -674,7 +667,6 @@ const styles = {
   eksplorasiOption: {
     padding: "12px",
     borderRadius: "8px",
-    cursor: "pointer",
     transition: "all 0.2s",
     border: "1px solid #ddd",
     backgroundColor: "#f9f9f9",
@@ -704,10 +696,10 @@ const styles = {
   lockMessage: {
     marginTop: "20px",
     padding: "15px",
-    backgroundColor: "#fef3c7",
-    borderLeft: "5px solid #f59e0b",
+    backgroundColor: "#cfe2ff",
+    borderLeft: "5px solid #0d6efd",
     borderRadius: "8px",
     textAlign: "center",
-    color: "#92400e",
+    color: "#084298",
   },
 };

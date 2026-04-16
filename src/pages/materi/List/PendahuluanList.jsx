@@ -32,13 +32,6 @@ const styles = {
     fontSize: "28px",
     fontWeight: "700",
   },
-  headerSubtitle: {
-    margin: "10px 0 0 0",
-    textAlign: "center",
-    fontSize: "16px",
-    fontWeight: "400",
-    opacity: 0.9,
-  },
   section: { marginBottom: "40px" },
   sectionTitle: {
     fontSize: "22px",
@@ -146,24 +139,23 @@ const styles = {
     border: "1px solid #ddd",
     backgroundColor: "#f9f9f9",
   },
-  checkEksplorasiButton: {
-    marginTop: "12px",
-    backgroundColor: "#306998",
-    color: "white",
-    border: "none",
-    padding: "8px 16px",
-    borderRadius: "6px",
-    cursor: "pointer",
-    fontWeight: "500",
+  eksplorasiOptionDisabled: {
+    padding: "12px",
+    borderRadius: "8px",
+    border: "1px solid #ccc",
+    backgroundColor: "#e9ecef",
+    color: "#6c757d",
+    cursor: "not-allowed",
+    opacity: 0.7,
   },
-  lockMessage: {
+  infoMessage: {
     marginTop: "20px",
     padding: "15px",
-    backgroundColor: "#fef3c7",
-    borderLeft: "5px solid #f59e0b",
+    backgroundColor: "#cfe2ff",
+    borderLeft: "5px solid #0d6efd",
     borderRadius: "8px",
     textAlign: "center",
-    color: "#92400e",
+    color: "#084298",
   },
   quizBox: {
     border: "2px solid #2fa69a",
@@ -203,6 +195,22 @@ const styles = {
     cursor: "pointer",
     fontWeight: "600",
     transition: "all 0.2s ease",
+  },
+  feedbackCorrect: {
+    marginTop: "10px",
+    padding: "8px 12px",
+    backgroundColor: "#d1e7dd",
+    color: "#0f5132",
+    borderRadius: "6px",
+    fontWeight: "500",
+  },
+  feedbackWrong: {
+    marginTop: "10px",
+    padding: "8px 12px",
+    backgroundColor: "#f8d7da",
+    color: "#842029",
+    borderRadius: "6px",
+    fontWeight: "500",
   },
 };
 
@@ -248,9 +256,8 @@ export default function PendahuluanList() {
   const [pyodideReady, setPyodideReady] = useState(false);
   const pyodideRef = useRef(null);
 
-  // State untuk eksplorasi
-  const [eksplorasiTempAnswers, setEksplorasiTempAnswers] = useState([null, null]);
-  const [eksplorasiSavedAnswers, setEksplorasiSavedAnswers] = useState([null, null]);
+  // State untuk eksplorasi (cukup dijawab, tidak harus benar)
+  const [eksplorasiSelected, setEksplorasiSelected] = useState([null, null]); // menyimpan pilihan user (index opsi)
   const [eksplorasiFeedback, setEksplorasiFeedback] = useState(["", ""]);
   const [isEksplorasiCompleted, setIsEksplorasiCompleted] = useState(false);
 
@@ -272,52 +279,34 @@ export default function PendahuluanList() {
     },
   ];
 
-  const checkEksplorasiAnswer = (questionIdx) => {
-    const selected = eksplorasiTempAnswers[questionIdx];
-    if (selected === null) {
-      setEksplorasiFeedback((prev) => {
-        const newFeedback = [...prev];
-        newFeedback[questionIdx] = "❌ Pilih jawaban terlebih dahulu!";
-        return newFeedback;
-      });
-      return;
-    }
-    const isCorrect = selected === eksplorasiQuestions[questionIdx].correct;
-    if (isCorrect) {
-      const newSaved = [...eksplorasiSavedAnswers];
-      newSaved[questionIdx] = selected;
-      setEksplorasiSavedAnswers(newSaved);
-      setEksplorasiFeedback((prev) => {
-        const newFeedback = [...prev];
-        newFeedback[questionIdx] = "✅ Benar! Jawaban tersimpan.";
-        return newFeedback;
-      });
-    } else {
-      setEksplorasiFeedback((prev) => {
-        const newFeedback = [...prev];
-        newFeedback[questionIdx] = "❌ Salah. Coba lagi!";
-        return newFeedback;
-      });
-    }
-  };
+  // Fungsi untuk menangani klik opsi (sekali pilih, langsung terkunci)
+  const handleEksplorasiSelect = (questionIdx, optionIdx) => {
+    // Jika pertanyaan sudah dipilih, tidak bisa diubah
+    if (eksplorasiSelected[questionIdx] !== null) return;
 
-  useEffect(() => {
-    const allCorrect = eksplorasiSavedAnswers.every(
-      (ans, idx) => ans !== null && ans === eksplorasiQuestions[idx].correct
-    );
-    setIsEksplorasiCompleted(allCorrect);
-  }, [eksplorasiSavedAnswers]);
+    // Simpan pilihan
+    setEksplorasiSelected(prev => {
+      const newSelected = [...prev];
+      newSelected[questionIdx] = optionIdx;
+      return newSelected;
+    });
 
-  const handleTempAnswer = (questionIdx, optionIdx) => {
-    const newTemp = [...eksplorasiTempAnswers];
-    newTemp[questionIdx] = optionIdx;
-    setEksplorasiTempAnswers(newTemp);
-    setEksplorasiFeedback((prev) => {
+    // Tentukan feedback Benar/Salah
+    const isCorrect = optionIdx === eksplorasiQuestions[questionIdx].correct;
+    setEksplorasiFeedback(prev => {
       const newFeedback = [...prev];
-      newFeedback[questionIdx] = "";
+      newFeedback[questionIdx] = isCorrect ? "Benar" : "Salah";
       return newFeedback;
     });
   };
+
+  // Memantau apakah semua pertanyaan sudah dipilih (jawaban apapun)
+  useEffect(() => {
+    const allSelected = eksplorasiSelected.every(selected => selected !== null);
+    if (allSelected && !isEksplorasiCompleted) {
+      setIsEksplorasiCompleted(true);
+    }
+  }, [eksplorasiSelected, isEksplorasiCompleted]);
 
   // Kode contoh
   const exampleCodes = {
@@ -451,7 +440,6 @@ sys.stdout = StringIO()
           <div style={styles.header}>
             <div style={styles.headerAccent}></div>
             <h1 style={styles.headerTitle}>PENDAHULUAN LIST</h1>
-            {/* <p style={styles.headerSubtitle}>Memahami Konsep Dasar List dalam Struktur Data</p> */}
           </div>
 
           {/* TUJUAN PEMBELAJARAN */}
@@ -463,55 +451,70 @@ sys.stdout = StringIO()
                 <li>Mahasiswa mampu mengidentifikasi fungsi dan keunggulan list dibandingkan variabel tunggal.</li>
                 <li>Mahasiswa memahami konsep dasar list (indeks, mutable, tipe data campuran).</li>
               </ol>
-              {/* <p style={{ ...styles.text, fontSize: "14px", marginTop: "10px", fontStyle: "italic" }}>
-                🎯 <strong>Kaitan dengan CPMK:</strong> Materi ini mendukung CPMK 1 dan 4 (kemampuan menuliskan kode Python untuk menyelesaikan masalah data sederhana).
-              </p> */}
             </div>
           </section>
 
-          {/* EKSPLORASI AWAL */}
+          {/* EKSPLORASI AWAL (cukup dijawab, materi langsung terbuka) */}
           <section style={styles.section}>
             <h2 style={styles.sectionTitle}>🔍 Eksplorasi Awal</h2>
             <div style={styles.card}>
               <p style={styles.text}>
-                Sebelum mempelajari lebih dalam, jawab pertanyaan berikut. Pilih jawaban, lalu klik "Periksa Jawaban". 
-                <strong style={{ color: "#d9534f" }}> Materi akan terbuka setelah kedua jawaban benar.</strong>
+                Sebelum mempelajari lebih dalam, jawab pertanyaan berikut dengan memilih opsi yang tersedia.
+                <strong style={{ color: "#0d6efd" }}> Materi akan terbuka setelah kedua pertanyaan dijawab (apapun jawabannya).</strong>
               </p>
-              {eksplorasiQuestions.map((q, idx) => (
-                <div key={idx} style={{ marginBottom: "30px", borderBottom: "1px solid #e0e0e0", paddingBottom: "20px" }}>
-                  <p style={{ fontWeight: "600", marginBottom: "12px" }}>{idx + 1}. {q.text}</p>
-                  <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                    {q.options.map((opt, optIdx) => (
-                      <div
-                        key={optIdx}
-                        onClick={() => handleTempAnswer(idx, optIdx)}
-                        style={{
-                          ...styles.eksplorasiOption,
-                          backgroundColor: eksplorasiTempAnswers[idx] === optIdx ? "#2fa69a" : "#f9f9f9",
-                          color: eksplorasiTempAnswers[idx] === optIdx ? "white" : "#1f2937",
-                        }}
-                      >
-                        {String.fromCharCode(65 + optIdx)}. {opt}
-                      </div>
-                    ))}
-                  </div>
-                  <button style={styles.checkEksplorasiButton} onClick={() => checkEksplorasiAnswer(idx)}>
-                    Periksa Jawaban
-                  </button>
-                  {eksplorasiFeedback[idx] && (
-                    <div style={{ marginTop: "12px", padding: "10px", borderRadius: "8px", backgroundColor: eksplorasiFeedback[idx].includes("Benar") ? "#d1e7dd" : "#f8d7da" }}>
-                      {eksplorasiFeedback[idx]}
+              {eksplorasiQuestions.map((q, idx) => {
+                const isAnswered = eksplorasiSelected[idx] !== null;
+                const selectedIdx = eksplorasiSelected[idx];
+                return (
+                  <div key={idx} style={{ marginBottom: "30px", borderBottom: "1px solid #e0e0e0", paddingBottom: "20px" }}>
+                    <p style={{ fontWeight: "600", marginBottom: "12px" }}>{idx + 1}. {q.text}</p>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                      {q.options.map((opt, optIdx) => {
+                        let optionStyle = {};
+                        if (isAnswered) {
+                          // Jika sudah dipilih, semua opsi dinonaktifkan
+                          optionStyle = styles.eksplorasiOptionDisabled;
+                          // Jika opsi ini adalah jawaban yang dipilih, beri warna hijau jika benar, merah jika salah? Bisa optional
+                          if (selectedIdx === optIdx) {
+                            const isCorrect = selectedIdx === q.correct;
+                            optionStyle = {
+                              ...optionStyle,
+                              backgroundColor: isCorrect ? "#d4edda" : "#f8d7da",
+                              borderColor: isCorrect ? "#28a745" : "#dc3545",
+                              color: isCorrect ? "#155724" : "#842029",
+                            };
+                          }
+                        } else {
+                          optionStyle = styles.eksplorasiOption;
+                        }
+                        return (
+                          <div
+                            key={optIdx}
+                            onClick={() => !isAnswered && handleEksplorasiSelect(idx, optIdx)}
+                            style={optionStyle}
+                          >
+                            {String.fromCharCode(65 + optIdx)}. {opt}
+                          </div>
+                        );
+                      })}
                     </div>
-                  )}
-                </div>
-              ))}
+                    {eksplorasiFeedback[idx] && (
+                      <div style={eksplorasiFeedback[idx] === "Benar" ? styles.feedbackCorrect : styles.feedbackWrong}>
+                        {eksplorasiFeedback[idx]}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
               {!isEksplorasiCompleted && (
-                <div style={styles.lockMessage}>🔒 Materi terkunci. Jawab kedua pertanyaan dengan benar.</div>
+                <div style={styles.infoMessage}>
+                  ℹ️ Jawab kedua pertanyaan di atas untuk membuka materi pembelajaran.
+                </div>
               )}
             </div>
           </section>
 
-          {/* MATERI UTAMA */}
+          {/* MATERI UTAMA (muncul otomatis setelah eksplorasi selesai) */}
           {isEksplorasiCompleted && (
             <>
               {/* APA ITU LIST */}
@@ -560,15 +563,6 @@ nilai3 = 78
                   <p style={styles.text}>
                     Dengan list, data menjadi <strong>terstruktur</strong>, <strong>mudah diakses</strong>, <strong>ringkas</strong>, menghemat <strong>jumlah variabel</strong>, dan dengan mudah di<strong>manipulasi</strong> dengan cara mengakses langsung elemen atau nilai yang ingin dimanipulasi.
                   </p>
-                  {/* <div style={styles.infoBox}>
-                    <strong>Keunggulan List:</strong>
-                    <ul style={styles.list}>
-                      <li>Menghemat jumlah variabel</li>
-                      <li>Memudahkan iterasi (perulangan) dengan <code>for</code></li>
-                      <li>Mendukung operasi kolektif (seperti <code>sum()</code>, <code>max()</code>)</li>
-                      <li>Dapat ditambah, dihapus, atau diubah elemennya</li>
-                    </ul>
-                  </div> */}
                 </div>
               </section>
 
@@ -583,7 +577,6 @@ nilai3 = 78
                     <li><strong>Indeks:</strong> Setiap elemen memiliki posisi numerik mulai dari 0. Indeks negatif untuk akses dari akhir (-1 = elemen terakhir).</li>
                     <li><strong>Mutable:</strong> Elemen list dapat diubah, ditambah, atau dihapus setelah list dibuat.</li>
                     <li><strong>Tipe data campuran:</strong> Satu list bisa berisi angka, string, boolean, bahkan list lain.</li>
-                    {/* <li><strong>Panjang list:</strong> Fungsi <code>len()</code> mengembalikan jumlah elemen.</li> */}
                   </ul>
                   <CodeEditor 
                     code={exampleCodes.aksesElemen} 

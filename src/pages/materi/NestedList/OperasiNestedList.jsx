@@ -340,11 +340,11 @@ const DragDropCompletionQuestion = ({ question, codeTemplate, placeholders, opti
   );
 };
 
-// ===================== EKSPLORASI AWAL (PILIHAN GANDA) =====================
+// ===================== EKSPLORASI AWAL (DIREVISI) =====================
 const Eksplorasi = ({ onComplete }) => {
-  const [answers, setAnswers] = useState([null, null]);
-  const [feedbacks, setFeedbacks] = useState(["", ""]);
-  const [completed, setCompleted] = useState(false);
+  const [selected, setSelected] = useState([null, null]); // pilihan user (index opsi)
+  const [feedback, setFeedback] = useState(["", ""]);
+  const [hasAnswered, setHasAnswered] = useState([false, false]); // apakah sudah menjawab (terkunci)
 
   const questions = [
     {
@@ -371,80 +371,97 @@ const Eksplorasi = ({ onComplete }) => {
     }
   ];
 
+  // Fungsi menangani klik opsi (sekali pilih, langsung terkunci)
   const handleAnswer = (qIdx, optIdx) => {
-    const newAnswers = [...answers];
-    newAnswers[qIdx] = optIdx;
-    setAnswers(newAnswers);
-    setFeedbacks(prev => {
+    if (hasAnswered[qIdx]) return; // sudah terjawab, tidak bisa diubah
+
+    // Simpan pilihan
+    setSelected(prev => {
+      const newSel = [...prev];
+      newSel[qIdx] = optIdx;
+      return newSel;
+    });
+
+    // Tentukan feedback Benar/Salah
+    const isCorrect = (optIdx === questions[qIdx].correct);
+    setFeedback(prev => {
       const newFb = [...prev];
-      newFb[qIdx] = "";
+      newFb[qIdx] = isCorrect ? "Benar" : "Salah";
       return newFb;
+    });
+
+    // Tandai sudah dijawab
+    setHasAnswered(prev => {
+      const newAns = [...prev];
+      newAns[qIdx] = true;
+      return newAns;
     });
   };
 
-  const checkAnswer = (qIdx) => {
-    if (answers[qIdx] === null) {
-      setFeedbacks(prev => {
-        const newFb = [...prev];
-        newFb[qIdx] = "❌ Pilih jawaban terlebih dahulu!";
-        return newFb;
-      });
-      return;
-    }
-    const isCorrect = answers[qIdx] === questions[qIdx].correct;
-    if (isCorrect) {
-      setFeedbacks(prev => {
-        const newFb = [...prev];
-        newFb[qIdx] = "✅ Benar!";
-        return newFb;
-      });
-    } else {
-      setFeedbacks(prev => {
-        const newFb = [...prev];
-        newFb[qIdx] = "❌ Salah. Coba lagi!";
-        return newFb;
-      });
-    }
-  };
-
+  // Memantau apakah semua pertanyaan sudah dijawab
   useEffect(() => {
-    const allCorrect = answers.every((ans, idx) => ans !== null && ans === questions[idx].correct);
-    if (allCorrect && !completed) {
-      setCompleted(true);
+    const allAnswered = hasAnswered.every(v => v === true);
+    if (allAnswered) {
       onComplete();
     }
-  }, [answers, questions, completed, onComplete]);
+  }, [hasAnswered, onComplete]);
 
   return (
     <div style={styles.eksplorasiContainer}>
       <h3 style={styles.eksplorasiTitle}>🔍 Eksplorasi Awal</h3>
-      <p style={styles.text}>Jawab pertanyaan berikut dengan benar agar materi terbuka. Kamu boleh mengulang sampai benar.</p>
-      {questions.map((q, idx) => (
-        <div key={idx} style={styles.eksplorasiCard}>
-          <p style={styles.questionText}>{idx+1}. {q.text}</p>
-          <div style={{ display: "block", marginBottom: "15px" }}>
-            {q.options.map((opt, optIdx) => (
-              <label key={optIdx} style={{ display: "block", marginBottom: "8px", cursor: "pointer" }}>
-                <input
-                  type="radio"
-                  name={`eksplorasi${idx}`}
-                  value={optIdx}
-                  checked={answers[idx] === optIdx}
-                  onChange={() => handleAnswer(idx, optIdx)}
-                  style={{ marginRight: "8px" }}
-                />
-                <span>{opt}</span>
-              </label>
-            ))}
-          </div>
-          <button style={styles.checkEksplorasiButton} onClick={() => checkAnswer(idx)}>Periksa Jawaban</button>
-          {feedbacks[idx] && (
-            <div style={{ marginTop: "8px", fontSize: "14px", fontStyle: "italic", color: feedbacks[idx].includes("Benar") ? "#28a745" : "#dc3545" }}>
-              {feedbacks[idx]}
+      <p style={styles.text}>
+        Sebelum mempelajari materi, jawab pertanyaan berikut dengan memilih opsi yang tersedia.
+        <strong style={{ color: "#0d6efd" }}> Materi akan terbuka setelah kedua pertanyaan dijawab (apapun jawabannya).</strong>
+      </p>
+      {questions.map((q, idx) => {
+        const isAnswered = hasAnswered[idx];
+        const selectedIdx = selected[idx];
+        return (
+          <div key={idx} style={styles.eksplorasiCard}>
+            <p style={styles.questionText}>{idx+1}. {q.text}</p>
+            <div style={{ display: "block", marginBottom: "15px" }}>
+              {q.options.map((opt, optIdx) => {
+                let optionStyle = { display: "block", marginBottom: "8px", cursor: "pointer" };
+                if (isAnswered) {
+                  optionStyle = { ...optionStyle, opacity: 0.7, cursor: "not-allowed" };
+                  if (selectedIdx === optIdx) {
+                    const isCorrect = (selectedIdx === q.correct);
+                    optionStyle.backgroundColor = isCorrect ? "#d4edda" : "#f8d7da";
+                    optionStyle.borderColor = isCorrect ? "#28a745" : "#dc3545";
+                    optionStyle.color = isCorrect ? "#155724" : "#842029";
+                    optionStyle.padding = "5px 10px";
+                    optionStyle.borderRadius = "6px";
+                  }
+                }
+                return (
+                  <label key={optIdx} style={optionStyle}>
+                    <input
+                      type="radio"
+                      name={`eksplorasi${idx}`}
+                      value={optIdx}
+                      checked={selectedIdx === optIdx}
+                      onChange={() => handleAnswer(idx, optIdx)}
+                      disabled={isAnswered}
+                      style={{ marginRight: "8px" }}
+                    />
+                    <span>{opt}</span>
+                  </label>
+                );
+              })}
             </div>
-          )}
-        </div>
-      ))}
+            {feedback[idx] && (
+              <div style={{
+                marginTop: "8px",
+                fontSize: "14px",
+                fontStyle: "italic",
+                color: feedback[idx] === "Benar" ? "#28a745" : "#dc3545"
+              }}>
+                {feedback[idx] === "Benar" ? "✅ Benar" : "❌ Salah"}
+              </div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 };
@@ -830,7 +847,7 @@ _buffer.getvalue()
           {/* PESAN TERKUNCI */}
           {!isEksplorasiCompleted && (
             <div style={styles.lockMessage}>
-              🔒 Materi terkunci. Selesaikan eksplorasi di atas dengan menjawab kedua pertanyaan dengan benar.
+              🔒 Materi terkunci. Selesaikan eksplorasi di atas dengan menjawab kedua pertanyaan.
             </div>
           )}
         </div>
@@ -924,16 +941,6 @@ const styles = {
     padding: "20px",
     marginBottom: "20px",
     boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
-  },
-  checkEksplorasiButton: {
-    backgroundColor: "#306998",
-    color: "white",
-    border: "none",
-    padding: "6px 16px",
-    borderRadius: "6px",
-    cursor: "pointer",
-    fontSize: "14px",
-    marginTop: "10px",
   },
   codeEditorContainer: {
     border: "2px solid #306998",
