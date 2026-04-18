@@ -371,14 +371,14 @@ print("Alamat:", mahasiswa.get("alamat", "Tidak tersedia"))`,
     "siswa = {\n    \"nama\": \"Rina\",\n    \"umur\": 19\n}\n# Tambahkan key 'kota' dengan value 'Bandung'\n",
     " = \"Bandung\"\nprint(siswa)"
   ];
-  const soal3Placeholders = ["...']"];
+  const soal3Placeholders = ["..."];
   const soal3Expected = ["siswa[\"kota\"]"];
 
   const soal4CodeParts = [
     "buku = {\n    \"judul\": \"Python Dasar\",\n    \"penulis\": \"John Doe\",\n    \"tahun\": 2020\n}\n# Hapus key 'tahun'\ndel ",
     "\nprint(buku)"
   ];
-  const soal4Placeholders = ["...']"];
+  const soal4Placeholders = ["..."];
   const soal4Expected = ["buku[\"tahun\"]"];
 
   const soal5CodeParts = [
