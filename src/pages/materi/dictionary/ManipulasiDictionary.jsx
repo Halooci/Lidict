@@ -60,7 +60,7 @@ const CodeEditor = ({ code, codeKey, pyodideReady, runPythonCode, explanations }
   );
 };
 
-// ===================== KOMPONEN LATIHAN PRAKTIK (EDITOR DENGAN VALIDASI) =====================
+// ===================== KOMPONEN LATIHAN PRAKTIK (EDITOR DENGAN VALIDASI TOLERAN SPASI & KUTIP) =====================
 const CodeEditorEditable = ({ codeKey, title, validationRules, pyodideReady, runPythonCode, expectedOutput, successMessage }) => {
   const [localCode, setLocalCode] = useState("");
   const [output, setOutput] = useState("");
@@ -73,15 +73,19 @@ const CodeEditorEditable = ({ codeKey, title, validationRules, pyodideReady, run
 
   const validateCode = useCallback((code) => {
     const trimmedCode = code.trim();
+    // Toleransi spasi: \s* dan kutip single/double pada key (tidak wajib karena isi dictionary bebas)
     if (!/\binventaris\s*=\s*\{[^}]*\}/.test(trimmedCode)) {
       return { valid: false, message: "❌ ERROR: Buatlah dictionary dengan nama 'inventaris'." };
     }
-    if (!/inventaris\.update\(/.test(trimmedCode)) {
+    // update() boleh ada spasi sebelum dan sesudah tanda kurung
+    if (!/inventaris\.update\s*\(/.test(trimmedCode)) {
       return { valid: false, message: "❌ ERROR: Gunakan metode update() untuk menambah stok barang baru." };
     }
-    if (!/inventaris\.pop\(/.test(trimmedCode)) {
+    // pop() boleh ada spasi sebelum dan sesudah tanda kurung
+    if (!/inventaris\.pop\s*\(/.test(trimmedCode)) {
       return { valid: false, message: "❌ ERROR: Gunakan metode pop() untuk menghapus barang yang habis." };
     }
+    // print inventaris dengan toleransi spasi
     if (!/print\s*\(\s*inventaris\s*\)/.test(trimmedCode)) {
       return { valid: false, message: "❌ ERROR: Tampilkan isi inventaris dengan print(inventaris) di akhir." };
     }
@@ -138,7 +142,7 @@ const CodeEditorEditable = ({ codeKey, title, validationRules, pyodideReady, run
   );
 };
 
-// ===================== KOMPONEN LATIHAN (FORMAT EKSPLORASI) =====================
+// ===================== KOMPONEN LATIHAN (FORMAT EKSPLORASI) - TAMPILKAN SOAL & PESAN SUKSES DI BAWAH =====================
 const LatihanSoal = ({ questions, resetTrigger }) => {
   const [answers, setAnswers] = useState(questions.map(() => null));
   const [feedback, setFeedback] = useState(questions.map(() => ""));
@@ -160,7 +164,7 @@ const LatihanSoal = ({ questions, resetTrigger }) => {
     newFeedback[qIdx] = "";
     setFeedback(newFeedback);
     setGlobalError("");
-    setAllCorrect(false);
+    setAllCorrect(false); // reset status benar semua karena ada perubahan
   };
 
   const handleCheckAll = () => {
@@ -181,18 +185,8 @@ const LatihanSoal = ({ questions, resetTrigger }) => {
     });
     setFeedback(newFeedback);
     const semuaBenar = newFeedback.every(f => f === "✅ Benar");
-    if (semuaBenar) {
-      setAllCorrect(true);
-    }
+    setAllCorrect(semuaBenar);
   };
-
-  if (allCorrect) {
-    return (
-      <div style={styles.successBox}>
-        🎉 Selamat! Semua jawaban Anda benar.
-      </div>
-    );
-  }
 
   return (
     <div>
@@ -208,6 +202,7 @@ const LatihanSoal = ({ questions, resetTrigger }) => {
                   ...styles.eksplorasiOption,
                   backgroundColor: answers[idx] === optIdx ? "#2fa69a" : "#f9f9f9",
                   color: answers[idx] === optIdx ? "white" : "#1f2937",
+                  cursor: "pointer",
                 }}
               >
                 <strong>{String.fromCharCode(65 + optIdx)}.</strong> {opt}
@@ -226,9 +221,14 @@ const LatihanSoal = ({ questions, resetTrigger }) => {
           {globalError}
         </div>
       )}
-      <button style={styles.checkAllButton} onClick={handleCheckAll}>
-        Periksa Semua Jawaban
+      <button style={styles.checkAllButton} onClick={handleCheckAll} disabled={allCorrect}>
+        {allCorrect ? "✅ Semua Jawaban Benar" : "Periksa Semua Jawaban"}
       </button>
+      {allCorrect && (
+        <div style={styles.successBox}>
+          🎉 Selamat! Semua jawaban Anda benar.
+        </div>
+      )}
     </div>
   );
 };
@@ -241,67 +241,42 @@ export default function ManipulasiDictionary() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   // ================= EKSPLORASI (DIREVISI) =================
-  const [eksplorasiSelected, setEksplorasiSelected] = useState([null, null, null]); // pilihan user (index opsi)
+  const [eksplorasiSelected, setEksplorasiSelected] = useState([null, null, null]);
   const [eksplorasiFeedback, setEksplorasiFeedback] = useState(["", "", ""]);
-  const [eksplorasiHasAnswered, setEksplorasiHasAnswered] = useState([false, false, false]); // apakah sudah menjawab (terkunci)
+  const [eksplorasiHasAnswered, setEksplorasiHasAnswered] = useState([false, false, false]);
   const [isEksplorasiCompleted, setIsEksplorasiCompleted] = useState(false);
 
   const eksplorasiQuestions = [
     {
       text: "Metode dictionary yang digunakan untuk menambah atau memperbarui beberapa pasangan key-value sekaligus adalah ...",
-      options: [
-        "append()",
-        "update()",
-        "add()",
-        "insert()",
-        "merge()",
-      ],
+      options: ["append()", "update()", "add()", "insert()", "merge()"],
       correct: 1,
     },
     {
       text: "Perhatikan dictionary: `stok = {'apel': 10, 'mangga': 5}`. Kode manakah yang akan menghapus key 'mangga' beserta nilainya?",
-      options: [
-        "stok.remove('mangga')",
-        "del stok['mangga']",
-        "stok.delete('mangga')",
-        "stok.pop('mangga')",
-        "stok.popitem('mangga')",
-      ],
+      options: ["stok.remove('mangga')", "del stok['mangga']", "stok.delete('mangga')", "stok.pop('mangga')", "stok.popitem('mangga')"],
       correct: 3,
     },
     {
       text: "Metode dictionary yang menghapus semua item sehingga menghasilkan dictionary kosong adalah ...",
-      options: [
-        "delete()",
-        "removeAll()",
-        "clear()",
-        "empty()",
-        "reset()",
-      ],
+      options: ["delete()", "removeAll()", "clear()", "empty()", "reset()"],
       correct: 2,
     },
   ];
 
-  // Fungsi menangani klik opsi (sekali pilih, langsung terkunci)
   const handleEksplorasiSelect = (questionIdx, optionIdx) => {
-    if (eksplorasiHasAnswered[questionIdx]) return; // sudah terjawab, tidak bisa diubah
-
-    // Simpan pilihan
+    if (eksplorasiHasAnswered[questionIdx]) return;
     setEksplorasiSelected(prev => {
       const newSel = [...prev];
       newSel[questionIdx] = optionIdx;
       return newSel;
     });
-
-    // Tentukan feedback Benar/Salah
     const isCorrect = optionIdx === eksplorasiQuestions[questionIdx].correct;
     setEksplorasiFeedback(prev => {
       const newFb = [...prev];
       newFb[questionIdx] = isCorrect ? "Benar" : "Salah";
       return newFb;
     });
-
-    // Tandai sudah dijawab
     setEksplorasiHasAnswered(prev => {
       const newAns = [...prev];
       newAns[questionIdx] = true;
@@ -309,7 +284,6 @@ export default function ManipulasiDictionary() {
     });
   };
 
-  // Memantau apakah semua pertanyaan sudah dijawab
   useEffect(() => {
     const allAnswered = eksplorasiHasAnswered.every(v => v === true);
     if (allAnswered && !isEksplorasiCompleted) {
@@ -378,7 +352,7 @@ print("Dictionary kuadrat:", kuadrat)`,
     ]
   };
 
-  // ===================== DATA LATIHAN (SEKARANG MEMILIKI 5 OPSI A-E) =====================
+  // ===================== DATA LATIHAN (5 SOAL) =====================
   const latihanQuestions = [
     {
       text: "Kode yang BENAR untuk menambahkan pasangan key-value baru 'kota': 'Bandung' ke dalam dictionary `data` yang sudah ada adalah ...",
@@ -387,9 +361,9 @@ print("Dictionary kuadrat:", kuadrat)`,
         "data['kota'] = 'Bandung'",
         "data.insert('kota', 'Bandung')",
         "data.append('kota', 'Bandung')",
-        "data.put('kota', 'Bandung')"   // opsi E (salah)
+        "data.put('kota', 'Bandung')"
       ],
-      correctIndex: 1  // B
+      correctIndex: 1
     },
     {
       text: "Perhatikan dictionary: `nilai = {'Matematika': 85, 'Fisika': 90, 'Kimia': 78}`. Kode yang akan menghapus key 'Fisika' beserta nilainya adalah ...",
@@ -398,9 +372,9 @@ print("Dictionary kuadrat:", kuadrat)`,
         "del nilai['Fisika']",
         "nilai.delete('Fisika')",
         "nilai.popitem('Fisika')",
-        "nilai.pop('Fisika')"          // opsi E (sebenarnya juga benar, tapi kita tambahkan sebagai pengecoh; jawaban benar tetap B)
+        "nilai.pop('Fisika')"
       ],
-      correctIndex: 1  // B
+      correctIndex: 1
     },
     {
       text: "Kode yang tepat untuk menggabungkan dictionary `a = {'x':1}` dan `b = {'y':2}` menjadi satu dictionary `c` yang berisi {'x':1, 'y':2} adalah ...",
@@ -409,9 +383,9 @@ print("Dictionary kuadrat:", kuadrat)`,
         "c = a.update(b)",
         "c = {**a, **b}",
         "c = a.concat(b)",
-        "c = a.merge(b)"               // opsi E (salah)
+        "c = a.merge(b)"
       ],
-      correctIndex: 2  // C
+      correctIndex: 2
     },
     {
       text: "Fungsi yang digunakan untuk menghapus semua item dalam dictionary adalah ...",
@@ -420,14 +394,14 @@ print("Dictionary kuadrat:", kuadrat)`,
         "removeAll()",
         "clear()",
         "popall()",
-        "reset()"                      // opsi E (salah)
+        "reset()"
       ],
-      correctIndex: 2  // C
+      correctIndex: 2
     },
     {
       text: "Perhatikan kode berikut:\n`data = {'a': 10, 'b': 20, 'c': 30}`\n`hasil = data.pop('b')`\nNilai dari variabel `hasil` setelah kode dijalankan adalah ...",
-      options: ["10", "20", "30", "Error", "0"],   // opsi E = 0 (salah)
-      correctIndex: 1  // B
+      options: ["10", "20", "30", "Error", "0"],
+      correctIndex: 1
     }
   ];
 
@@ -501,7 +475,7 @@ _buffer.getvalue()
             <h1 style={styles.headerTitle}>MANIPULASI DICTIONARY</h1>
           </div>
 
-          {/* TUJUAN PEMBELAJARAN (menggunakan angka 1. dan 2.) */}
+          {/* TUJUAN PEMBELAJARAN */}
           <section style={styles.section}>
             <h2 style={styles.sectionTitle}>Tujuan Pembelajaran</h2>
             <div style={styles.card}>
@@ -512,7 +486,7 @@ _buffer.getvalue()
             </div>
           </section>
 
-          {/* EKSPLORASI AWAL (DIREVISI) */}
+          {/* EKSPLORASI AWAL */}
           <section style={styles.section}>
             <h2 style={styles.sectionTitle}>🔍 Eksplorasi</h2>
             <div style={styles.card}>
@@ -527,23 +501,11 @@ _buffer.getvalue()
                 const isAnswered = eksplorasiHasAnswered[idx];
                 const selectedIdx = eksplorasiSelected[idx];
                 return (
-                  <div
-                    key={idx}
-                    style={{
-                      marginBottom: "30px",
-                      borderBottom: "1px solid #e0e0e0",
-                      paddingBottom: "20px",
-                    }}
-                  >
-                    <p style={{ fontWeight: "600", marginBottom: "12px" }}>
-                      {idx + 1}. {q.text}
-                    </p>
+                  <div key={idx} style={{ marginBottom: "30px", borderBottom: "1px solid #e0e0e0", paddingBottom: "20px" }}>
+                    <p style={{ fontWeight: "600", marginBottom: "12px" }}>{idx + 1}. {q.text}</p>
                     <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                       {q.options.map((opt, optIdx) => {
-                        let optionStyle = {
-                          ...styles.eksplorasiOption,
-                          cursor: "pointer",
-                        };
+                        let optionStyle = { ...styles.eksplorasiOption, cursor: "pointer" };
                         if (isAnswered) {
                           optionStyle.cursor = "not-allowed";
                           optionStyle.opacity = 0.7;
@@ -561,26 +523,14 @@ _buffer.getvalue()
                           optionStyle.color = eksplorasiSelected[idx] === optIdx ? "white" : "#1f2937";
                         }
                         return (
-                          <div
-                            key={optIdx}
-                            onClick={() => !isAnswered && handleEksplorasiSelect(idx, optIdx)}
-                            style={optionStyle}
-                          >
+                          <div key={optIdx} onClick={() => !isAnswered && handleEksplorasiSelect(idx, optIdx)} style={optionStyle}>
                             <strong>{String.fromCharCode(65 + optIdx)}.</strong> {opt}
                           </div>
                         );
                       })}
                     </div>
                     {eksplorasiFeedback[idx] && (
-                      <div
-                        style={{
-                          marginTop: "12px",
-                          padding: "10px",
-                          borderRadius: "8px",
-                          backgroundColor: eksplorasiFeedback[idx] === "Benar" ? "#d1e7dd" : "#f8d7da",
-                          color: eksplorasiFeedback[idx] === "Benar" ? "#0f5132" : "#842029",
-                        }}
-                      >
+                      <div style={{ marginTop: "12px", padding: "10px", borderRadius: "8px", backgroundColor: eksplorasiFeedback[idx] === "Benar" ? "#d1e7dd" : "#f8d7da", color: eksplorasiFeedback[idx] === "Benar" ? "#0f5132" : "#842029" }}>
                         {eksplorasiFeedback[idx] === "Benar" ? "✅ Benar" : "❌ Salah"}
                       </div>
                     )}
@@ -588,89 +538,39 @@ _buffer.getvalue()
                 );
               })}
               {!isEksplorasiCompleted && (
-                <div style={styles.lockMessageInfo}>
-                  🔒 Materi terkunci. Jawab semua pertanyaan di atas untuk membuka materi.
-                </div>
+                <div style={styles.lockMessageInfo}>🔒 Materi terkunci. Jawab semua pertanyaan di atas untuk membuka materi.</div>
               )}
             </div>
           </section>
 
-          {/* MATERI UTAMA (hanya tampil jika eksplorasi selesai) */}
+          {/* MATERI UTAMA */}
           {isEksplorasiCompleted && (
             <>
               <section style={styles.section}>
                 <div style={styles.card}>
                   <h3 style={styles.subTitle}>1. Menambah/Mengupdate dengan update()</h3>
-                  <p style={styles.text}>
-                    Metode <code>update()</code> digunakan untuk menambah atau memperbarui beberapa pasangan key-value sekaligus.
-                  </p>
-                  <CodeEditor
-                    code={exampleCodes.update}
-                    codeKey="update"
-                    pyodideReady={pyodideReady}
-                    runPythonCode={runPythonCode}
-                    explanations={explanations.update}
-                  />
+                  <p style={styles.text}>Metode <code>update()</code> digunakan untuk menambah atau memperbarui beberapa pasangan key-value sekaligus.</p>
+                  <CodeEditor code={exampleCodes.update} codeKey="update" pyodideReady={pyodideReady} runPythonCode={runPythonCode} explanations={explanations.update} />
 
                   <h3 style={styles.subTitle}>2. Menghapus dengan pop()</h3>
-                  <p style={styles.text}>
-                    <code>pop(key)</code> menghapus item dengan key tertentu dan mengembalikan nilainya.
-                  </p>
-                  <CodeEditor
-                    code={exampleCodes.pop}
-                    codeKey="pop"
-                    pyodideReady={pyodideReady}
-                    runPythonCode={runPythonCode}
-                    explanations={explanations.pop}
-                  />
+                  <p style={styles.text}><code>pop(key)</code> menghapus item dengan key tertentu dan mengembalikan nilainya.</p>
+                  <CodeEditor code={exampleCodes.pop} codeKey="pop" pyodideReady={pyodideReady} runPythonCode={runPythonCode} explanations={explanations.pop} />
 
                   <h3 style={styles.subTitle}>3. Menghapus Item Terakhir dengan popitem()</h3>
-                  <p style={styles.text}>
-                    <code>popitem()</code> menghapus item terakhir (berdasarkan urutan penyisipan) dan mengembalikan tuple (key, value).
-                  </p>
-                  <CodeEditor
-                    code={exampleCodes.popitem}
-                    codeKey="popitem"
-                    pyodideReady={pyodideReady}
-                    runPythonCode={runPythonCode}
-                    explanations={explanations.popitem}
-                  />
+                  <p style={styles.text}><code>popitem()</code> menghapus item terakhir (berdasarkan urutan penyisipan) dan mengembalikan tuple (key, value).</p>
+                  <CodeEditor code={exampleCodes.popitem} codeKey="popitem" pyodideReady={pyodideReady} runPythonCode={runPythonCode} explanations={explanations.popitem} />
 
                   <h3 style={styles.subTitle}>4. Menghapus Semua Item dengan clear()</h3>
-                  <p style={styles.text}>
-                    <code>clear()</code> menghapus semua item dalam dictionary, menghasilkan dictionary kosong.
-                  </p>
-                  <CodeEditor
-                    code={exampleCodes.clear}
-                    codeKey="clear"
-                    pyodideReady={pyodideReady}
-                    runPythonCode={runPythonCode}
-                    explanations={explanations.clear}
-                  />
+                  <p style={styles.text}><code>clear()</code> menghapus semua item dalam dictionary, menghasilkan dictionary kosong.</p>
+                  <CodeEditor code={exampleCodes.clear} codeKey="clear" pyodideReady={pyodideReady} runPythonCode={runPythonCode} explanations={explanations.clear} />
 
                   <h3 style={styles.subTitle}>5. Menyalin Dictionary dengan copy()</h3>
-                  <p style={styles.text}>
-                    <code>copy()</code> membuat salinan dangkal (shallow copy) dari dictionary.
-                  </p>
-                  <CodeEditor
-                    code={exampleCodes.copy}
-                    codeKey="copy"
-                    pyodideReady={pyodideReady}
-                    runPythonCode={runPythonCode}
-                    explanations={explanations.copy}
-                  />
+                  <p style={styles.text}><code>copy()</code> membuat salinan dangkal (shallow copy) dari dictionary.</p>
+                  <CodeEditor code={exampleCodes.copy} codeKey="copy" pyodideReady={pyodideReady} runPythonCode={runPythonCode} explanations={explanations.copy} />
 
                   <h3 style={styles.subTitle}>6. Dictionary Comprehension</h3>
-                  <p style={styles.text}>
-                    Dictionary comprehension adalah cara ringkas membuat dictionary dengan ekspresi dan perulangan.
-                  </p>
-                  <CodeEditor
-                    code={exampleCodes.dictComp}
-                    codeKey="dictComp"
-                    pyodideReady={pyodideReady}
-                    runPythonCode={runPythonCode}
-                    explanations={explanations.dictComp}
-                  />
+                  <p style={styles.text}>Dictionary comprehension adalah cara ringkas membuat dictionary dengan ekspresi dan perulangan.</p>
+                  <CodeEditor code={exampleCodes.dictComp} codeKey="dictComp" pyodideReady={pyodideReady} runPythonCode={runPythonCode} explanations={explanations.dictComp} />
                 </div>
               </section>
 
@@ -684,9 +584,7 @@ _buffer.getvalue()
                       Sebuah toko buku memiliki dictionary <code>inventaris</code> yang menyimpan stok buku dengan format <code>{"{'judul buku': jumlah_stok}"}</code>. 
                       Saat ini inventaris berisi: <code>{"{'Python Dasar': 10, 'Data Science': 5, 'Web Programming': 7}"}</code>.
                     </p>
-                    <p>
-                      Lakukan operasi berikut secara berurutan:
-                    </p>
+                    <p>Lakukan operasi berikut secara berurutan:</p>
                     <ol style={{ marginLeft: "20px", lineHeight: "1.8" }}>
                       <li>Buat dictionary <code>inventaris</code> sesuai data awal.</li>
                       <li>Tambah stok buku baru <code>"Machine Learning"</code> sebanyak 3 eksemplar menggunakan <code>update()</code>.</li>
@@ -708,7 +606,7 @@ _buffer.getvalue()
                 </div>
               </section>
 
-              {/* LATIHAN (format eksplorasi) */}
+              {/* LATIHAN (dengan pesan sukses di bawah tanpa menghilangkan soal) */}
               <section style={styles.section}>
                 <h2 style={styles.sectionTitle}>Latihan</h2>
                 <div style={styles.card}>
@@ -910,7 +808,6 @@ const styles = {
     color: "#ccc",
     flex: "1",
   },
-  // Style untuk eksplorasi
   eksplorasiOption: {
     padding: "12px",
     borderRadius: "8px",
@@ -927,7 +824,6 @@ const styles = {
     textAlign: "center",
     color: "#084298",
   },
-  // Style untuk latihan (format eksplorasi)
   latihanCard: {
     backgroundColor: "#f9f9f9",
     borderRadius: "8px",

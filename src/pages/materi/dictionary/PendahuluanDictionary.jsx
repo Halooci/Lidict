@@ -31,7 +31,7 @@ const InteractiveLatihan = () => {
         "Dictionary tidak mempertahankan urutan item",
         "Dictionary bersifat immutable (tidak bisa diubah)",
         "Dictionary hanya bisa menyimpan satu tipe data",
-        "Dictionary mempertahankan urutan item sesuai urutan penyisipan (sejak Python 3.7)",
+        "Dictionary mempertahankan urutan item sesuai urutan penyisipan",
         "Key dalam dictionary boleh berupa list",
       ],
       correct: 3, // Mempertahankan urutan item sesuai urutan penyisipan
@@ -76,7 +76,7 @@ const InteractiveLatihan = () => {
         return "✅ Benar";
       } else {
         const correctLetter = String.fromCharCode(65 + questions[idx].correct);
-        return `❌ Salah. Jawaban yang benar: ${correctLetter}. ${questions[idx].options[questions[idx].correct]}`;
+        return `❌ Salah. Coba lagi!`;
       }
     });
     setFeedback(newFeedback);
@@ -422,7 +422,7 @@ _buffer.getvalue()
             <>
               {/* PENGERTIAN DICTIONARY */}
               <section style={styles.section}>
-                <h2 style={styles.sectionTitle}>📌 Apa Itu Dictionary?</h2>
+                <h2 style={styles.sectionTitle}>Apa Itu Dictionary?</h2>
                 <div style={styles.card}>
                   <p style={styles.text}>
                     <strong>Dictionary</strong> adalah struktur data dalam
@@ -453,7 +453,7 @@ _buffer.getvalue()
               {/* KARAKTERISTIK DASAR DICTIONARY */}
               <section style={styles.section}>
                 <h2 style={styles.sectionTitle}>
-                  ⚙️ Karakteristik Dasar Dictionary
+                  Karakteristik Dasar Dictionary
                 </h2>
                 <div style={styles.card}>
                   <ul style={styles.list}>
@@ -511,7 +511,7 @@ _buffer.getvalue()
               {/* PERBANDINGAN DICTIONARY VS LIST */}
               <section style={styles.section}>
                 <h2 style={styles.sectionTitle}>
-                  📊 Perbandingan Dictionary vs List
+                  Perbandingan Dictionary vs List
                 </h2>
                 <div style={styles.card}>
                   <p style={styles.text}>
