@@ -139,16 +139,18 @@ const CodeEditorEditable = ({ codeKey, title, pyodideReady, runPythonCode, expec
   );
 };
 
-// ===================== KOMPONEN SOAL MELENGKAPI KODE (INPUT DINAMIS + CENTER TEXT) =====================
+// ===================== KOMPONEN SOAL MELENGKAPI KODE (DENGAN VALIDASI KOTAK KOSONG) =====================
 const CodeCompletionQuestion = ({ question, codeParts, placeholders, expectedAnswers }) => {
   const [answers, setAnswers] = useState(placeholders.map(() => ""));
   const [feedback, setFeedback] = useState("");
   const [checked, setChecked] = useState(false);
+  const [isEmptyError, setIsEmptyError] = useState(false);
 
   const resetQuestion = () => {
     setAnswers(placeholders.map(() => ""));
     setFeedback("");
     setChecked(false);
+    setIsEmptyError(false);
   };
 
   const handleAnswerChange = (idx, value) => {
@@ -160,9 +162,21 @@ const CodeCompletionQuestion = ({ question, codeParts, placeholders, expectedAns
     const newAnswers = [...answers];
     newAnswers[idx] = value;
     setAnswers(newAnswers);
+    // Hapus error kosong jika user mulai mengisi
+    if (isEmptyError) setIsEmptyError(false);
   };
 
   const handleCheck = () => {
+    // Cek apakah semua kotak sudah terisi (tidak kosong setelah trim)
+    const allFilled = answers.every(ans => ans.trim() !== "");
+    if (!allFilled) {
+      setIsEmptyError(true);
+      setFeedback("⚠️ Lengkapi semua isian terlebih dahulu!");
+      setChecked(false);
+      return;
+    }
+    setIsEmptyError(false);
+
     let allCorrect = true;
     for (let i = 0; i < expectedAnswers.length; i++) {
       const userAnswer = answers[i].trim().replace(/["']/g, '"');
@@ -342,43 +356,48 @@ print("Alamat:", mahasiswa.get("alamat", "Tidak tersedia"))`,
     ],
   };
 
-  // Soal latihan
+  // ===================== SOAL LATIHAN BARU (SESUAI MATERI PEMBUATAN & AKSES) =====================
+  // Soal 1: Membuat dictionary dengan kurung kurawal
   const soal1CodeParts = [
-    "data = {\n    \"nama\": \"Andi\",\n    \"usia\": 21,\n    ",
-    ": \"Jakarta\"\n}\nprint(data[\"",
-    "\"])  # ingin mencetak 'Andi'"
+    "data = {\n    \"nama\": \"Budi\",\n    ",
+    ": 20,\n    \"kota\": \"Jakarta\"\n}\nprint(data)"
   ];
-  const soal1Placeholders = ["...", "..."];
-  const soal1Expected = ["\"kota\"", "nama"];
+  const soal1Placeholders = ["..."];
+  const soal1Expected = ["\"usia\""];
 
+  // Soal 2: Membuat dictionary dengan fungsi dict()
   const soal2CodeParts = [
-    "nilai = {\n    \"Matematika\": 85,\n    \"Fisika\": 90,\n    \"Kimia\": 78\n}\n# Cetak nilai Fisika\nprint(nilai.",
-    ")  # menggunakan metode get"
+    "data = dict(",
+    "=\"Andi\", umur=22, kota=\"Bandung\")\nprint(data[\"",
+    "\"])"
   ];
-  const soal2Placeholders = ["..."];
-  const soal2Expected = ["get(\"Fisika\")"];
+  const soal2Placeholders = ["...", "..."];
+  const soal2Expected = ["nama", "nama"];
 
+  // Soal 3: Mengakses nilai dengan tanda kurung siku []
   const soal3CodeParts = [
-    "siswa = {\n    \"nama\": \"Rina\",\n    \"umur\": 19\n}\n# Tambahkan key 'kota' dengan value 'Bandung'\n",
-    " = \"Bandung\"\nprint(siswa)"
+    "nilai = {\n    \"Matematika\": 85,\n    \"Fisika\": 90,\n    \"Kimia\": 78\n}\nprint(\"Nilai Fisika:\", nilai[",
+    "])"
   ];
   const soal3Placeholders = ["..."];
-  const soal3Expected = ["siswa[\"kota\"]"];
+  const soal3Expected = ["\"Fisika\""];
 
+  // Soal 4: Mengakses nilai dengan metode get()
   const soal4CodeParts = [
-    "buku = {\n    \"judul\": \"Python Dasar\",\n    \"penulis\": \"John Doe\",\n    \"tahun\": 2020\n}\n# Hapus key 'tahun'\ndel ",
-    "\nprint(buku)"
+    "data = {\"nama\": \"Citra\", \"usia\": 19}\nprint(data.get(",
+    ", \"Tidak ditemukan\"))  # akan mencetak \"Tidak ditemukan\" karena key tidak ada"
   ];
   const soal4Placeholders = ["..."];
-  const soal4Expected = ["buku[\"tahun\"]"];
+  const soal4Expected = ["\"alamat\""];
 
+  // Soal 5: Kombinasi membuat dan mengakses
   const soal5CodeParts = [
-    "harga = {\n    \"apel\": 5000,\n    \"mangga\": 8000,\n    \"jeruk\": 6000\n}\n# Cetak semua key menggunakan loop\nfor ",
-    " in harga:\n    print(",
-    ")"
+    "siswa = {\n    \"nama\": \"Rina\",\n    \"kelas\": \"XII\",\n    ",
+    ": 17\n}\nprint(\"Nama:\", siswa[",
+    "])"
   ];
   const soal5Placeholders = ["...", "..."];
-  const soal5Expected = ["key", "key"];
+  const soal5Expected = ["\"usia\"", "\"nama\""];
 
   // Load Pyodide
   useEffect(() => {
@@ -540,12 +559,42 @@ _buffer.getvalue()
               <section style={styles.section}>
                 <h2 style={styles.sectionTitle}>Latihan</h2>
                 <div style={styles.card}>
-                  <p style={styles.text}>Lengkapi kode berikut dengan mengetikkan jawaban pada kotak yang tersedia.</p>
-                  <CodeCompletionQuestion question="1. Lengkapi kode untuk membuat dictionary dengan key 'kota' dan mencetak nilai 'Andi'." codeParts={soal1CodeParts} placeholders={soal1Placeholders} expectedAnswers={soal1Expected} />
-                  <CodeCompletionQuestion question="2. Lengkapi kode untuk mencetak nilai Fisika menggunakan metode get()." codeParts={soal2CodeParts} placeholders={soal2Placeholders} expectedAnswers={soal2Expected} />
-                  <CodeCompletionQuestion question="3. Lengkapi kode untuk menambahkan key 'kota' dengan value 'Bandung' ke dictionary siswa." codeParts={soal3CodeParts} placeholders={soal3Placeholders} expectedAnswers={soal3Expected} />
-                  <CodeCompletionQuestion question="4. Lengkapi kode untuk menghapus key 'tahun' dari dictionary buku." codeParts={soal4CodeParts} placeholders={soal4Placeholders} expectedAnswers={soal4Expected} />
-                  <CodeCompletionQuestion question="5. Lengkapi kode untuk melakukan iterasi dan mencetak semua key dari dictionary harga." codeParts={soal5CodeParts} placeholders={soal5Placeholders} expectedAnswers={soal5Expected} />
+                  <p style={styles.text}>Lengkapi kode berikut dengan mengetikkan jawaban pada kotak yang tersedia. Latihan ini akan menguji kemampuan Anda dalam membuat dictionary dan mengakses elemennya.</p>
+                  
+                  <CodeCompletionQuestion 
+                    question="1. Lengkapi kode untuk membuat dictionary dengan key 'usia' yang bernilai 20." 
+                    codeParts={soal1CodeParts} 
+                    placeholders={soal1Placeholders} 
+                    expectedAnswers={soal1Expected} 
+                  />
+
+                  <CodeCompletionQuestion 
+                    question="2. Lengkapi kode untuk membuat dictionary menggunakan fungsi dict() dengan key 'nama' dan menampilkan nilai 'nama'." 
+                    codeParts={soal2CodeParts} 
+                    placeholders={soal2Placeholders} 
+                    expectedAnswers={soal2Expected} 
+                  />
+
+                  <CodeCompletionQuestion 
+                    question="3. Lengkapi kode untuk mengakses nilai dari key 'Fisika' menggunakan tanda kurung siku []." 
+                    codeParts={soal3CodeParts} 
+                    placeholders={soal3Placeholders} 
+                    expectedAnswers={soal3Expected} 
+                  />
+
+                  <CodeCompletionQuestion 
+                    question="4. Lengkapi kode untuk mengakses nilai dari key 'alamat' menggunakan metode get() (key tidak ada, akan mencetak 'Tidak ditemukan')." 
+                    codeParts={soal4CodeParts} 
+                    placeholders={soal4Placeholders} 
+                    expectedAnswers={soal4Expected} 
+                  />
+
+                  <CodeCompletionQuestion 
+                    question="5. Lengkapi kode untuk menambahkan key 'usia' dan mengakses key 'nama' pada dictionary siswa." 
+                    codeParts={soal5CodeParts} 
+                    placeholders={soal5Placeholders} 
+                    expectedAnswers={soal5Expected} 
+                  />
                 </div>
               </section>
             </>
@@ -767,7 +816,7 @@ const styles = {
     margin: "0 2px",
     fontFamily: "monospace",
     fontSize: "14px",
-    textAlign: "center",  // Perubahan: teks di tengah
+    textAlign: "center",
     outline: "none",
     boxSizing: "content-box",
   },

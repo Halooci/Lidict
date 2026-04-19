@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import Navbar from "../../komponen/Navbar";
 import SidebarMateri from "../../komponen/SidebarMateri";
 
-// ===================== KOMPONEN EDITOR READ-ONLY (DENGAN PENJELASAN SETELAH DIJALANKAN) =====================
+// ===================== KOMPONEN EDITOR READ-ONLY =====================
 const CodeEditor = ({ code, codeKey, pyodideReady, runPythonCode, explanations }) => {
   const [output, setOutput] = useState("");
   const [hasRun, setHasRun] = useState(false);
@@ -60,8 +60,8 @@ const CodeEditor = ({ code, codeKey, pyodideReady, runPythonCode, explanations }
   );
 };
 
-// ===================== KOMPONEN LATIHAN PRAKTIK (EDITOR DENGAN VALIDASI TOLERAN SPASI & KUTIP) =====================
-const CodeEditorEditable = ({ codeKey, title, validationRules, pyodideReady, runPythonCode, expectedOutput, successMessage }) => {
+// ===================== KOMPONEN LATIHAN PRAKTIK (VALIDASI TOLERAN) =====================
+const CodeEditorEditable = ({ codeKey, title, pyodideReady, runPythonCode, expectedOutput, successMessage }) => {
   const [localCode, setLocalCode] = useState("");
   const [output, setOutput] = useState("");
   const [error, setError] = useState("");
@@ -73,19 +73,15 @@ const CodeEditorEditable = ({ codeKey, title, validationRules, pyodideReady, run
 
   const validateCode = useCallback((code) => {
     const trimmedCode = code.trim();
-    // Toleransi spasi: \s* dan kutip single/double pada key (tidak wajib karena isi dictionary bebas)
     if (!/\binventaris\s*=\s*\{[^}]*\}/.test(trimmedCode)) {
       return { valid: false, message: "❌ ERROR: Buatlah dictionary dengan nama 'inventaris'." };
     }
-    // update() boleh ada spasi sebelum dan sesudah tanda kurung
     if (!/inventaris\.update\s*\(/.test(trimmedCode)) {
       return { valid: false, message: "❌ ERROR: Gunakan metode update() untuk menambah stok barang baru." };
     }
-    // pop() boleh ada spasi sebelum dan sesudah tanda kurung
     if (!/inventaris\.pop\s*\(/.test(trimmedCode)) {
       return { valid: false, message: "❌ ERROR: Gunakan metode pop() untuk menghapus barang yang habis." };
     }
-    // print inventaris dengan toleransi spasi
     if (!/print\s*\(\s*inventaris\s*\)/.test(trimmedCode)) {
       return { valid: false, message: "❌ ERROR: Tampilkan isi inventaris dengan print(inventaris) di akhir." };
     }
@@ -142,29 +138,37 @@ const CodeEditorEditable = ({ codeKey, title, validationRules, pyodideReady, run
   );
 };
 
-// ===================== KOMPONEN LATIHAN (FORMAT EKSPLORASI) - TAMPILKAN SOAL & PESAN SUKSES DI BAWAH =====================
+// ===================== KOMPONEN LATIHAN (DENGAN LOCK PER SOAL) =====================
 const LatihanSoal = ({ questions, resetTrigger }) => {
   const [answers, setAnswers] = useState(questions.map(() => null));
   const [feedback, setFeedback] = useState(questions.map(() => ""));
+  const [locked, setLocked] = useState(questions.map(() => false));
   const [globalError, setGlobalError] = useState("");
   const [allCorrect, setAllCorrect] = useState(false);
 
+  // Reset semua state ketika resetTrigger berubah (dari tombol reset di parent, tapi kita tidak menyediakan tombol reset di UI, namun tetap support jika ada)
   useEffect(() => {
     setAnswers(questions.map(() => null));
     setFeedback(questions.map(() => ""));
+    setLocked(questions.map(() => false));
     setGlobalError("");
     setAllCorrect(false);
   }, [resetTrigger, questions]);
 
   const handleAnswerChange = (qIdx, optIdx) => {
+    // Jika soal sudah terkunci (jawaban sudah benar), tidak boleh diubah
+    if (locked[qIdx]) return;
+
     const newAnswers = [...answers];
     newAnswers[qIdx] = optIdx;
     setAnswers(newAnswers);
+    // Hapus feedback untuk soal ini karena jawaban berubah
     const newFeedback = [...feedback];
     newFeedback[qIdx] = "";
     setFeedback(newFeedback);
     setGlobalError("");
-    setAllCorrect(false); // reset status benar semua karena ada perubahan
+    // Jika sebelumnya semua benar, sekarang tidak lagi
+    if (allCorrect) setAllCorrect(false);
   };
 
   const handleCheckAll = () => {
@@ -175,6 +179,7 @@ const LatihanSoal = ({ questions, resetTrigger }) => {
       return;
     }
     setGlobalError("");
+
     // Evaluasi semua jawaban
     const newFeedback = answers.map((ans, idx) => {
       if (ans === questions[idx].correctIndex) {
@@ -184,7 +189,12 @@ const LatihanSoal = ({ questions, resetTrigger }) => {
       }
     });
     setFeedback(newFeedback);
-    const semuaBenar = newFeedback.every(f => f === "✅ Benar");
+
+    // Tentukan soal mana yang benar, lalu kunci
+    const newLocked = answers.map((ans, idx) => ans === questions[idx].correctIndex);
+    setLocked(newLocked);
+
+    const semuaBenar = newLocked.every(v => v === true);
     setAllCorrect(semuaBenar);
   };
 
@@ -202,7 +212,8 @@ const LatihanSoal = ({ questions, resetTrigger }) => {
                   ...styles.eksplorasiOption,
                   backgroundColor: answers[idx] === optIdx ? "#2fa69a" : "#f9f9f9",
                   color: answers[idx] === optIdx ? "white" : "#1f2937",
-                  cursor: "pointer",
+                  cursor: locked[idx] ? "not-allowed" : "pointer",
+                  opacity: locked[idx] ? 0.7 : 1,
                 }}
               >
                 <strong>{String.fromCharCode(65 + optIdx)}.</strong> {opt}
@@ -240,7 +251,7 @@ export default function ManipulasiDictionary() {
   const [resetInteractives, setResetInteractives] = useState(0);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
-  // ================= EKSPLORASI (DIREVISI) =================
+  // EKSPLORASI
   const [eksplorasiSelected, setEksplorasiSelected] = useState([null, null, null]);
   const [eksplorasiFeedback, setEksplorasiFeedback] = useState(["", "", ""]);
   const [eksplorasiHasAnswered, setEksplorasiHasAnswered] = useState([false, false, false]);
@@ -291,7 +302,7 @@ export default function ManipulasiDictionary() {
     }
   }, [eksplorasiHasAnswered, isEksplorasiCompleted]);
 
-  // Kode contoh untuk materi
+  // Kode contoh
   const exampleCodes = {
     update: `data = {"a": 1, "b": 2}
 data.update({"c": 3, "d": 4})
@@ -352,7 +363,7 @@ print("Dictionary kuadrat:", kuadrat)`,
     ]
   };
 
-  // ===================== DATA LATIHAN (5 SOAL) =====================
+  // Data latihan (5 soal)
   const latihanQuestions = [
     {
       text: "Kode yang BENAR untuk menambahkan pasangan key-value baru 'kota': 'Bandung' ke dalam dictionary `data` yang sudah ada adalah ...",
@@ -451,9 +462,11 @@ _buffer.getvalue()
     }
   }, []);
 
-  const resetLatihan = () => {
-    setResetInteractives(prev => prev + 1);
-  };
+  // Fungsi reset untuk latihan (tetap ada karena dipanggil dari tombol reset yang tidak ada? kita bisa hapus tombol reset, tapi state resetTrigger masih bisa digunakan jika diperlukan)
+  // Karena tidak ada tombol reset, kita tidak perlu memanggil resetLatihan. Namun kita tetap menyediakan resetTrigger untuk kemungkinan lain.
+  // Tapi di UI kita tidak menampilkan tombol reset. Jadi kita bisa hapus tombol reset dari render.
+  // Namun agar kode tidak error, kita tetap definisikan fungsi tapi tidak digunakan.
+  // Atau kita hapus saja tombol reset dari bagian Latihan di render.
 
   return (
     <>
@@ -606,12 +619,11 @@ _buffer.getvalue()
                 </div>
               </section>
 
-              {/* LATIHAN (dengan pesan sukses di bawah tanpa menghilangkan soal) */}
+              {/* LATIHAN (tanpa tombol reset) */}
               <section style={styles.section}>
                 <h2 style={styles.sectionTitle}>Latihan</h2>
                 <div style={styles.card}>
-                  <p style={styles.text}>Pilihlah jawaban yang tepat untuk setiap soal. Anda harus menjawab semua soal terlebih dahulu, lalu klik "Periksa Semua Jawaban". Jika masih ada yang salah, perbaiki jawaban Anda dan periksa lagi sampai semua benar.</p>
-                  <button style={styles.resetQuizButton} onClick={resetLatihan}>↻ Reset Semua Jawaban</button>
+                  <p style={styles.text}>Pilihlah jawaban yang tepat untuk setiap soal. Jawab semua soal, lalu klik "Periksa Semua Jawaban". Soal yang benar akan terkunci, soal yang salah dapat diperbaiki. Setelah semua jawaban benar, akan muncul pesan sukses.</p>
                   <LatihanSoal questions={latihanQuestions} resetTrigger={resetInteractives} />
                 </div>
               </section>

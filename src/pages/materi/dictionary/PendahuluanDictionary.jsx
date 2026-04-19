@@ -2,10 +2,11 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import Navbar from "../../komponen/Navbar";
 import SidebarMateri from "../../komponen/SidebarMateri";
 
-// ===================== KOMPONEN LATIHAN INTERAKTIF (1 TOMBOL PERIKSA DI BAWAH, OPSI A-E) =====================
+// ===================== KOMPONEN LATIHAN INTERAKTIF (DENGAN LOCK PER SOAL) =====================
 const InteractiveLatihan = () => {
   const [answers, setAnswers] = useState([null, null, null, null, null]);
   const [feedback, setFeedback] = useState(["", "", "", "", ""]);
+  const [locked, setLocked] = useState([false, false, false, false, false]); // status terkunci per soal
   const [globalError, setGlobalError] = useState("");
 
   const questions = [
@@ -26,10 +27,10 @@ const InteractiveLatihan = () => {
       correct: 2, // Key harus unik dan immutable
     },
     {
-      text: "Pernyataan berikut yang BENAR tentang sifat dictionary di Python adalah ...",
+      text: "Pernyataan yang BENAR tentang sifat dictionary di Python adalah ...",
       options: [
-        "Dictionary tidak mempertahankan urutan item",
         "Dictionary bersifat immutable (tidak bisa diubah)",
+        "Dictionary tidak mempertahankan urutan item",
         "Dictionary hanya bisa menyimpan satu tipe data",
         "Dictionary mempertahankan urutan item sesuai urutan penyisipan",
         "Key dalam dictionary boleh berupa list",
@@ -55,6 +56,9 @@ const InteractiveLatihan = () => {
   ];
 
   const handleAnswerChange = (qIdx, optIdx) => {
+    // Jika soal sudah terkunci (jawaban sudah benar), tidak boleh diubah
+    if (locked[qIdx]) return;
+
     const newAnswers = [...answers];
     newAnswers[qIdx] = optIdx;
     setAnswers(newAnswers);
@@ -71,18 +75,22 @@ const InteractiveLatihan = () => {
       return;
     }
     setGlobalError("");
+
     const newFeedback = answers.map((ans, idx) => {
       if (ans === questions[idx].correct) {
         return "✅ Benar";
       } else {
-        const correctLetter = String.fromCharCode(65 + questions[idx].correct);
-        return `❌ Salah. Coba lagi!`;
+        return "❌ Salah. Coba lagi!";
       }
     });
     setFeedback(newFeedback);
+
+    // Tentukan soal mana yang benar, lalu kunci
+    const newLocked = answers.map((ans, idx) => ans === questions[idx].correct);
+    setLocked(newLocked);
   };
 
-  const allCorrect = feedback.every((f) => f === "✅ Benar") && feedback.some((f) => f !== "");
+  const allCorrect = locked.every((v) => v === true);
 
   return (
     <div>
@@ -107,6 +115,8 @@ const InteractiveLatihan = () => {
                   ...styles.eksplorasiOption,
                   backgroundColor: answers[idx] === optIdx ? "#2fa69a" : "#f9f9f9",
                   color: answers[idx] === optIdx ? "white" : "#1f2937",
+                  cursor: locked[idx] ? "not-allowed" : "pointer",
+                  opacity: locked[idx] ? 0.7 : 1,
                 }}
               >
                 <strong>{String.fromCharCode(65 + optIdx)}.</strong> {opt}
@@ -141,8 +151,12 @@ const InteractiveLatihan = () => {
           {globalError}
         </div>
       )}
-      <button style={styles.checkAllButton} onClick={handleCheckAll}>
-        Periksa Semua Jawaban
+      <button
+        style={styles.checkAllButton}
+        onClick={handleCheckAll}
+        disabled={allCorrect}
+      >
+        {allCorrect ? "✅ Semua Jawaban Benar" : "Periksa Semua Jawaban"}
       </button>
       {allCorrect && (
         <div
@@ -169,9 +183,9 @@ export default function PendahuluanDictionary() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   // ================= EKSPLORASI (DIREVISI) =================
-  const [eksplorasiSelected, setEksplorasiSelected] = useState([null, null, null]); // pilihan user (index opsi)
+  const [eksplorasiSelected, setEksplorasiSelected] = useState([null, null, null]);
   const [eksplorasiFeedback, setEksplorasiFeedback] = useState(["", "", ""]);
-  const [eksplorasiHasAnswered, setEksplorasiHasAnswered] = useState([false, false, false]); // apakah sudah menjawab (terkunci)
+  const [eksplorasiHasAnswered, setEksplorasiHasAnswered] = useState([false, false, false]);
   const [isEksplorasiCompleted, setIsEksplorasiCompleted] = useState(false);
 
   const eksplorasiQuestions = [
@@ -192,30 +206,27 @@ export default function PendahuluanDictionary() {
       correct: 3,
     },
     {
-      text: "Cara mengakses nilai dari key 'nama' pada dictionary `data = {'nama': 'Andi', 'umur': 20}` adalah ...",
+      text: "Sifat dictionary di Python yang benar adalah ...",
       options: [
-        "data['nama']",
-        "data{nama}",
-        "data.get[0]",
-        "data('nama')",
-        "data.nama",
+        "Dictionary bersifat immutable (tidak bisa diubah)",
+        "Dictionary tidak mempertahankan urutan item",
+        "Dictionary bersifat mutable dan mempertahankan urutan item sesuai penyisipan",
+        "Dictionary hanya bisa menyimpan data bertipe string",
+        "Dictionary memiliki indeks numerik seperti list",
       ],
-      correct: 0,
+      correct: 2,
     },
   ];
 
-  // Fungsi menangani klik opsi (sekali pilih, langsung terkunci)
   const handleEksplorasiSelect = (questionIdx, optionIdx) => {
-    if (eksplorasiHasAnswered[questionIdx]) return; // sudah terjawab, tidak bisa diubah
+    if (eksplorasiHasAnswered[questionIdx]) return;
 
-    // Simpan pilihan
     setEksplorasiSelected(prev => {
       const newSel = [...prev];
       newSel[questionIdx] = optionIdx;
       return newSel;
     });
 
-    // Tentukan feedback Benar/Salah
     const isCorrect = optionIdx === eksplorasiQuestions[questionIdx].correct;
     setEksplorasiFeedback(prev => {
       const newFb = [...prev];
@@ -223,7 +234,6 @@ export default function PendahuluanDictionary() {
       return newFb;
     });
 
-    // Tandai sudah dijawab
     setEksplorasiHasAnswered(prev => {
       const newAns = [...prev];
       newAns[questionIdx] = true;
@@ -231,7 +241,6 @@ export default function PendahuluanDictionary() {
     });
   };
 
-  // Memantau apakah semua pertanyaan sudah dijawab
   useEffect(() => {
     const allAnswered = eksplorasiHasAnswered.every(v => v === true);
     if (allAnswered && !isEksplorasiCompleted) {
@@ -320,15 +329,13 @@ _buffer.getvalue()
             <h2 style={styles.sectionTitle}>Tujuan Pembelajaran</h2>
             <div style={styles.card}>
               <ul style={styles.list}>
-                <li>
-                  Mahasiswa mampu memahami pengertian dan konsep dasar dictionary dalam Python.
-                </li>
+                <li>Mahasiswa mampu memahami pengertian dan konsep dasar dictionary dalam Python.</li>
                 <li>Mahasiswa mampu mengidentifikasi karakteristik dictionary.</li>
               </ul>
             </div>
           </section>
 
-          {/* EKSPLORASI AWAL (DIREVISI) */}
+          {/* EKSPLORASI AWAL */}
           <section style={styles.section}>
             <h2 style={styles.sectionTitle}>🔍 Eksplorasi</h2>
             <div style={styles.card}>
@@ -354,13 +361,7 @@ _buffer.getvalue()
                     <p style={{ fontWeight: "600", marginBottom: "12px" }}>
                       {idx + 1}. {q.text}
                     </p>
-                    <div
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        gap: "10px",
-                      }}
-                    >
+                    <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                       {q.options.map((opt, optIdx) => {
                         let optionStyle = {
                           ...styles.eksplorasiOption,
@@ -417,7 +418,7 @@ _buffer.getvalue()
             </div>
           </section>
 
-          {/* MATERI UTAMA (hanya tampil jika eksplorasi sudah selesai) */}
+          {/* MATERI UTAMA (hanya tampil jika eksplorasi selesai) */}
           {isEksplorasiCompleted && (
             <>
               {/* PENGERTIAN DICTIONARY */}
@@ -452,9 +453,7 @@ _buffer.getvalue()
 
               {/* KARAKTERISTIK DASAR DICTIONARY */}
               <section style={styles.section}>
-                <h2 style={styles.sectionTitle}>
-                  Karakteristik Dasar Dictionary
-                </h2>
+                <h2 style={styles.sectionTitle}>Karakteristik Dasar Dictionary</h2>
                 <div style={styles.card}>
                   <ul style={styles.list}>
                     <li>
@@ -510,9 +509,7 @@ _buffer.getvalue()
 
               {/* PERBANDINGAN DICTIONARY VS LIST */}
               <section style={styles.section}>
-                <h2 style={styles.sectionTitle}>
-                  Perbandingan Dictionary vs List
-                </h2>
+                <h2 style={styles.sectionTitle}>Perbandingan Dictionary vs List</h2>
                 <div style={styles.card}>
                   <p style={styles.text}>
                     Agar lebih paham, mari bandingkan dictionary dengan list
@@ -560,7 +557,7 @@ _buffer.getvalue()
                         </td>
                       </tr>
                     </tbody>
-                   </table>
+                  </table>
                   <div style={styles.infoBox}>
                     <strong>💡 Analogi sederhana:</strong> List seperti rak buku
                     bernomor (indeks 0,1,2,...). Dictionary seperti lemari
