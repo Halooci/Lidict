@@ -181,6 +181,14 @@ const styles = {
     fontWeight: "500",
     borderBottom: "2px solid #cc0000",
   },
+  successBox: {
+    backgroundColor: "#28a745",
+    color: "white",
+    padding: "12px 15px",
+    fontSize: "14px",
+    fontWeight: "500",
+    borderBottom: "2px solid #1e7e34",
+  },
   codeInputEditable: {
     width: "100%",
     minHeight: "200px",
@@ -255,15 +263,14 @@ const styles = {
     fontSize: "14px",
     marginRight: "10px",
   },
-  resetButton: {
-    backgroundColor: "#6c757d",
-    color: "white",
+  resetButtonPerSoal: {
+    backgroundColor: "#ffc107",
+    color: "#212529",
     border: "none",
     padding: "8px 16px",
     borderRadius: "6px",
     cursor: "pointer",
     fontSize: "14px",
-    marginBottom: "20px",
   },
   feedback: { marginTop: "8px", fontSize: "14px", fontStyle: "italic", color: "#333" },
   visualHeader: {
@@ -300,6 +307,16 @@ const styles = {
     color: "#842029",
     borderRadius: "6px",
     fontWeight: "500",
+  },
+  finalSuccessBox: {
+    marginTop: "20px",
+    padding: "15px",
+    backgroundColor: "#d1e7dd",
+    color: "#0f5132",
+    borderRadius: "8px",
+    textAlign: "center",
+    fontSize: "16px",
+    fontWeight: "bold",
   },
 };
 
@@ -522,58 +539,80 @@ const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, highlightM
   );
 };
 
-// ================= KOMPONEN UNTUK LATIHAN PRAKTIK CODING =================
+// ================= KOMPONEN UNTUK LATIHAN PRAKTIK CODING (VALIDASI BERTAHAP TANPA MEMBERI JAWABAN) =================
 const CodeEditorEditable = ({ title, pyodideReady, runPythonCode }) => {
   const [localCode, setLocalCode] = useState("");
   const [output, setOutput] = useState("");
-  const [error, setError] = useState("");
+  const [message, setMessage] = useState(null); // { type: 'error' | 'success', text: string }
   const [isRunning, setIsRunning] = useState(false);
 
   const handleChange = useCallback((e) => {
     setLocalCode(e.target.value);
-    setError("");
+    setMessage(null);
   }, []);
 
+  // Fungsi validasi bertahap tanpa memberi jawaban exact
   const validateAndRun = useCallback(async () => {
     if (!pyodideReady) {
-      setOutput("⏳ Pyodide sedang dimuat...");
+      setMessage({ type: 'error', text: "⏳ Pyodide sedang dimuat..." });
       return;
     }
     setOutput("");
-    setError("");
+    setMessage(null);
     setIsRunning(true);
 
-    const trimmed = localCode.trim();
-    if (!trimmed.includes("belanja =")) {
-      setError("❌ ERROR: Kamu harus membuat variabel 'belanja'.");
+    const code = localCode;
+    
+    // Cek 1: Apakah ada variabel 'belanja' dengan isi ['apel','jeruk','mangga']?
+    const varRegex = /belanja\s*=\s*\[\s*['"]apel['"]\s*,\s*['"]jeruk['"]\s*,\s*['"]mangga['"]\s*\]/;
+    const hasCorrectList = varRegex.test(code);
+    
+    // Cek 2: Apakah ada print(belanja[0])?
+    const printFirstRegex = /print\s*\(\s*belanja\s*\[\s*0\s*\]\s*\)/;
+    const hasPrintFirst = printFirstRegex.test(code);
+    
+    // Cek 3: Apakah ada print(belanja[-1])?
+    const printLastRegex = /print\s*\(\s*belanja\s*\[\s*-\s*1\s*\]\s*\)/;
+    const hasPrintLast = printLastRegex.test(code);
+    
+    // Tentukan pesan error/success sesuai tahap - tanpa menyebutkan indeks spesifik
+    if (!hasCorrectList) {
+      setMessage({ 
+        type: 'error', 
+        text: "❌ Periksa kembali kode Anda. Pastikan Anda membuat variabel 'belanja' dengan isi yang diminta (tiga buah: apel, jeruk, mangga)." 
+      });
       setIsRunning(false);
       return;
     }
-    const regex = /belanja\s*=\s*\[\s*["']apel["']\s*,\s*["']jeruk["']\s*,\s*["']mangga["']\s*\]/;
-    if (!regex.test(trimmed)) {
-      setError("❌ ERROR: Isi list harus ['apel', 'jeruk', 'mangga'].");
+    
+    if (!hasPrintFirst) {
+      setMessage({ 
+        type: 'success', 
+        text: "✅ Bagus! Variabel 'belanja' sudah benar. Sekarang, cetak elemen pertama dari list 'belanja'." 
+      });
       setIsRunning(false);
       return;
     }
-    if (!/print\s*\(\s*belanja\s*\[\s*0\s*\]\s*\)/.test(trimmed)) {
-      setError("❌ ERROR: Kamu harus mencetak elemen pertama dengan print(belanja[0]).");
+    
+    if (!hasPrintLast) {
+      setMessage({ 
+        type: 'success', 
+        text: "✅ Bagus! Elemen pertama sudah dicetak. Lanjut ke instruksi selanjutnya." 
+      });
       setIsRunning(false);
       return;
     }
-    if (!/print\s*\(\s*belanja\s*\[\s*-\s*1\s*\]\s*\)/.test(trimmed)) {
-      setError("❌ ERROR: Kamu harus mencetak elemen terakhir dengan print(belanja[-1]).");
+    
+    // Semua sudah benar, jalankan kode dan tampilkan output
+    try {
+      const result = await runPythonCode(code);
+      setOutput(result + "\n\n✅ SELAMAT! Semua instruksi sudah benar.");
+      setMessage({ type: 'success', text: "✅ Semua instruksi selesai! Kode berjalan dengan baik." });
+    } catch (err) {
+      setMessage({ type: 'error', text: `❌ Terjadi kesalahan saat menjalankan: ${err.message}` });
+    } finally {
       setIsRunning(false);
-      return;
     }
-
-    const result = await runPythonCode(localCode);
-    setOutput(result);
-    if (result.includes("apel") && result.includes("mangga")) {
-      setOutput(result + "\n\n✅ SELAMAT! Jawaban kamu BENAR!");
-    } else {
-      setOutput(result + "\n\n⚠️ Output tidak sesuai. Pastikan kamu mencetak elemen pertama dan terakhir.");
-    }
-    setIsRunning(false);
   }, [localCode, pyodideReady, runPythonCode]);
 
   return (
@@ -584,7 +623,11 @@ const CodeEditorEditable = ({ title, pyodideReady, runPythonCode }) => {
           {isRunning ? "⏳ Menjalankan..." : pyodideReady ? "▶ Jalankan" : "⏳ Memuat..."}
         </button>
       </div>
-      {error && <div style={styles.errorBox}>{error}</div>}
+      {message && (
+        <div style={message.type === 'error' ? styles.errorBox : styles.successBox}>
+          {message.text}
+        </div>
+      )}
       <textarea
         style={styles.codeInputEditable}
         value={localCode}
@@ -602,19 +645,29 @@ const CodeEditorEditable = ({ title, pyodideReady, runPythonCode }) => {
   );
 };
 
-// ================= KOMPONEN SOAL MELENGKAPI KODE =================
-const CodeCompletionQuestion = ({ question, codeParts, placeholders, expectedAnswers, resetTrigger }) => {
+// ================= KOMPONEN SOAL MELENGKAPI KODE (DENGAN RESET PER SOAL & FEEDBACK TANPA JAWABAN BENAR) =================
+const CodeCompletionQuestion = ({ question, codeParts, placeholders, expectedAnswers, index, onCorrectChange }) => {
   const [answers, setAnswers] = useState(placeholders.map(() => ""));
   const [feedback, setFeedback] = useState("");
   const [checked, setChecked] = useState(false);
+  const [isCorrect, setIsCorrect] = useState(false);
 
-  useEffect(() => {
+  const resetQuestion = () => {
     setAnswers(placeholders.map(() => ""));
     setFeedback("");
     setChecked(false);
-  }, [resetTrigger, placeholders]);
+    if (isCorrect) {
+      setIsCorrect(false);
+      if (onCorrectChange) onCorrectChange(index, false);
+    }
+  };
 
   const handleAnswerChange = (idx, value) => {
+    if (checked && isCorrect) return;
+    if (checked) {
+      setChecked(false);
+      setFeedback("");
+    }
     const newAnswers = [...answers];
     newAnswers[idx] = value;
     setAnswers(newAnswers);
@@ -623,7 +676,9 @@ const CodeCompletionQuestion = ({ question, codeParts, placeholders, expectedAns
   const handleCheck = () => {
     let allCorrect = true;
     for (let i = 0; i < expectedAnswers.length; i++) {
-      if (answers[i].trim() !== expectedAnswers[i]) {
+      const userAnswer = answers[i].trim().replace(/["']/g, '"');
+      const expected = expectedAnswers[i].replace(/["']/g, '"');
+      if (userAnswer !== expected) {
         allCorrect = false;
         break;
       }
@@ -631,10 +686,18 @@ const CodeCompletionQuestion = ({ question, codeParts, placeholders, expectedAns
     setChecked(true);
     if (allCorrect) {
       setFeedback("✅ Benar!");
+      setIsCorrect(true);
+      if (onCorrectChange) onCorrectChange(index, true);
     } else {
-      const expectedStr = expectedAnswers.join(", ");
-      setFeedback(`❌ Salah. Jawaban yang benar: ${expectedStr}`);
+      setFeedback("❌ Salah. Coba lagi!");
+      setIsCorrect(false);
+      if (onCorrectChange) onCorrectChange(index, false);
     }
+  };
+
+  const getInputSize = (answer, placeholder) => {
+    const length = Math.max(answer.length, placeholder?.length || 0, 10);
+    return length + 2;
   };
 
   const renderCodeWithInputs = () => {
@@ -642,15 +705,16 @@ const CodeCompletionQuestion = ({ question, codeParts, placeholders, expectedAns
     for (let i = 0; i < codeParts.length; i++) {
       result.push(<span key={`text-${i}`}>{codeParts[i]}</span>);
       if (i < placeholders.length) {
+        const isLocked = (checked && isCorrect);
         result.push(
           <input
             key={`input-${i}`}
             type="text"
-            size={placeholders[i]?.length || 10}
+            size={getInputSize(answers[i], placeholders[i])}
             style={styles.inlineInput}
             value={answers[i]}
             onChange={(e) => handleAnswerChange(i, e.target.value)}
-            disabled={checked}
+            disabled={isLocked}
             placeholder={placeholders[i] || "..."}
           />
         );
@@ -659,35 +723,61 @@ const CodeCompletionQuestion = ({ question, codeParts, placeholders, expectedAns
     return result;
   };
 
+  const showReset = checked && feedback && !isCorrect;
+
   return (
     <div style={styles.questionCard}>
       <p style={styles.questionText}>{question}</p>
-      <pre style={styles.codeTemplateInline}>{renderCodeWithInputs()}</pre>
-      <button style={styles.checkButton} onClick={handleCheck} disabled={checked}>
-        Periksa
-      </button>
+      <pre style={styles.codeTemplateInline}>
+        {renderCodeWithInputs()}
+      </pre>
+      <div style={{ display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap" }}>
+        <button style={styles.checkButton} onClick={handleCheck} disabled={checked && isCorrect}>
+          Periksa
+        </button>
+        {showReset && (
+          <button style={styles.resetButtonPerSoal} onClick={resetQuestion}>
+            ↻ Reset Jawaban
+          </button>
+        )}
+      </div>
       {feedback && <div style={styles.feedback}>{feedback}</div>}
     </div>
   );
 };
 
-// ================= KOMPONEN SOAL MENENTUKAN OUTPUT =================
-const GuessOutputQuestion = ({ question, codeSnippet, expectedOutput, resetTrigger }) => {
+// ================= KOMPONEN SOAL MENENTUKAN OUTPUT (DENGAN RESET PER SOAL & FEEDBACK TANPA JAWABAN BENAR) =================
+const GuessOutputQuestion = ({ question, codeSnippet, expectedOutput, index, onCorrectChange }) => {
   const [userAnswer, setUserAnswer] = useState("");
   const [feedback, setFeedback] = useState("");
   const [checked, setChecked] = useState(false);
+  const [isCorrect, setIsCorrect] = useState(false);
 
-  useEffect(() => {
+  const resetQuestion = () => {
     setUserAnswer("");
     setFeedback("");
     setChecked(false);
-  }, [resetTrigger]);
+    if (isCorrect) {
+      setIsCorrect(false);
+      if (onCorrectChange) onCorrectChange(index, false);
+    }
+  };
 
   const handleCheck = () => {
-    const isCorrect = userAnswer.trim() === expectedOutput;
+    const correct = userAnswer.trim() === expectedOutput;
     setChecked(true);
-    setFeedback(isCorrect ? "✅ Benar!" : `❌ Salah. Output yang benar: ${expectedOutput}`);
+    if (correct) {
+      setFeedback("✅ Benar!");
+      setIsCorrect(true);
+      if (onCorrectChange) onCorrectChange(index, true);
+    } else {
+      setFeedback("❌ Salah. Coba lagi!");
+      setIsCorrect(false);
+      if (onCorrectChange) onCorrectChange(index, false);
+    }
   };
+
+  const showReset = checked && feedback && !isCorrect;
 
   return (
     <div style={styles.questionCard}>
@@ -697,13 +787,27 @@ const GuessOutputQuestion = ({ question, codeSnippet, expectedOutput, resetTrigg
         type="text"
         style={styles.fillInput}
         value={userAnswer}
-        onChange={(e) => setUserAnswer(e.target.value)}
+        onChange={(e) => {
+          if (checked && isCorrect) return;
+          if (checked) {
+            setChecked(false);
+            setFeedback("");
+          }
+          setUserAnswer(e.target.value);
+        }}
         placeholder="Ketik output yang dihasilkan..."
-        disabled={checked}
+        disabled={checked && isCorrect}
       />
-      <button style={styles.checkButton} onClick={handleCheck} disabled={checked}>
-        Periksa
-      </button>
+      <div style={{ display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap" }}>
+        <button style={styles.checkButton} onClick={handleCheck} disabled={checked && isCorrect}>
+          Periksa
+        </button>
+        {showReset && (
+          <button style={styles.resetButtonPerSoal} onClick={resetQuestion}>
+            ↻ Reset Jawaban
+          </button>
+        )}
+      </div>
       {feedback && <div style={styles.feedback}>{feedback}</div>}
     </div>
   );
@@ -713,39 +817,46 @@ const GuessOutputQuestion = ({ question, codeSnippet, expectedOutput, resetTrigg
 export default function PembuatanAksesElement() {
   const [pyodideReady, setPyodideReady] = useState(false);
   const pyodideRef = useRef(null);
-  const [resetInteractives, setResetInteractives] = useState(0);
+  // State untuk status benar per soal (5 soal)
+  const [correctStatus, setCorrectStatus] = useState([false, false, false, false, false]);
 
-  // ================= EKSPLORASI AWAL (DIREVISI) =================
-  const [eksplorasiSelected, setEksplorasiSelected] = useState([null, null]); // menyimpan pilihan user (index opsi)
+  // ================= EKSPLORASI AWAL (5 OPSI) =================
+  const [eksplorasiSelected, setEksplorasiSelected] = useState([null, null]);
   const [eksplorasiFeedback, setEksplorasiFeedback] = useState(["", ""]);
   const [isEksplorasiCompleted, setIsEksplorasiCompleted] = useState(false);
 
   const eksplorasiQuestions = [
     {
       text: "Yang digunakan untuk mengakses elemen pertama dalam list adalah ...",
-      options: ["Indeks 0", "Indeks 1", "Indeks -1", "Indeks length-1"],
-      correct: 0,
+      options: [
+        "Indeks 0",
+        "Indeks 1",
+        "Indeks -1",
+        "Indeks length-1",
+        "Indeks pertama adalah 1"
+      ],
+      correct: 0, // Indeks 0
     },
     {
       text: "Cara yang benar untuk membuat list berisi angka 5, 10, 15 adalah ...",
-      options: ["angka = (5, 10, 15)", "angka = {5, 10, 15}", "angka = [5, 10, 15]", "angka = <5, 10, 15>"],
-      correct: 2,
+      options: [
+        "angka = (5, 10, 15)",
+        "angka = {5, 10, 15}",
+        "angka = [5, 10, 15]",
+        "angka = <5, 10, 15>",
+        "angka = list(5, 10, 15)"
+      ],
+      correct: 2, // [5,10,15]
     },
   ];
 
-  // Fungsi untuk menangani klik opsi (sekali pilih, langsung terkunci)
   const handleEksplorasiSelect = (questionIdx, optionIdx) => {
-    // Jika pertanyaan sudah dipilih, tidak bisa diubah
     if (eksplorasiSelected[questionIdx] !== null) return;
-
-    // Simpan pilihan
     setEksplorasiSelected(prev => {
       const newSelected = [...prev];
       newSelected[questionIdx] = optionIdx;
       return newSelected;
     });
-
-    // Tentukan feedback Benar/Salah
     const isCorrect = optionIdx === eksplorasiQuestions[questionIdx].correct;
     setEksplorasiFeedback(prev => {
       const newFeedback = [...prev];
@@ -754,7 +865,6 @@ export default function PembuatanAksesElement() {
     });
   };
 
-  // Memantau apakah semua pertanyaan sudah dipilih (jawaban apapun)
   useEffect(() => {
     const allSelected = eksplorasiSelected.every(selected => selected !== null);
     if (allSelected && !isEksplorasiCompleted) {
@@ -833,7 +943,7 @@ print("Indeks 1 sampai 3:", angka[1:4])`;
     ]
   });
 
-  // Soal interaktif
+  // Soal interaktif (5 soal) - diperjelas menggunakan indeks positif untuk soal 1 dan 2
   const soal1CodeParts = ["buah = [\"apel\", \"jeruk\", \"mangga\"]\nprint(buah[", "])"];
   const soal1Placeholders = [""];
   const soal1Expected = ["1"];
@@ -850,6 +960,17 @@ print("Indeks 1 sampai 3:", angka[1:4])`;
 print(buah[1])`;
   const soal5Code = `angka = [100, 200, 300]
 print(angka[-2])`;
+
+  // Callback untuk update status benar
+  const handleCorrectChange = (index, isCorrect) => {
+    setCorrectStatus(prev => {
+      const newStatus = [...prev];
+      newStatus[index] = isCorrect;
+      return newStatus;
+    });
+  };
+
+  const allCorrect = correctStatus.every(v => v === true);
 
   // Load Pyodide
   useEffect(() => {
@@ -891,10 +1012,6 @@ sys.stdout = StringIO()
     }
   }, []);
 
-  const resetInteractiveQuestions = () => {
-    setResetInteractives(prev => prev + 1);
-  };
-
   return (
     <>
       <Navbar />
@@ -918,7 +1035,7 @@ sys.stdout = StringIO()
             </div>
           </section>
 
-          {/* EKSPLORASI AWAL (DIREVISI: tanpa tombol, langsung cek, materi terbuka setelah dijawab) */}
+          {/* EKSPLORASI AWAL (5 OPSI) */}
           <section style={styles.section}>
             <h2 style={styles.sectionTitle}>🔍 Eksplorasi Awal</h2>
             <div style={styles.card}>
@@ -936,9 +1053,7 @@ sys.stdout = StringIO()
                       {q.options.map((opt, optIdx) => {
                         let optionStyle = {};
                         if (isAnswered) {
-                          // Jika sudah dipilih, semua opsi dinonaktifkan
                           optionStyle = styles.eksplorasiOptionDisabled;
-                          // Jika opsi ini adalah jawaban yang dipilih, beri warna hijau jika benar, merah jika salah
                           if (selectedIdx === optIdx) {
                             const isCorrect = selectedIdx === q.correct;
                             optionStyle = {
@@ -1120,27 +1235,28 @@ nilai3 = 78
                 </div>
               </section>
 
-              {/* LATIHAN INTERAKTIF */}
+              {/* LATIHAN INTERAKTIF (tanpa tombol reset global) */}
               <section style={styles.section}>
                 <h2 style={styles.sectionTitle}>🧩 Latihan</h2>
                 <div style={styles.card}>
                   <p style={styles.text}>Isilah bagian yang kosong pada kode di bawah ini dengan mengetikkan jawaban pada kotak yang tersedia.</p>
-                  <button style={styles.resetButton} onClick={resetInteractiveQuestions}>↻ Reset Jawaban</button>
 
                   <CodeCompletionQuestion
-                    question="1. Lengkapi kode untuk mencetak 'jeruk' dari list berikut:"
+                    question="1. Lengkapi kode untuk mencetak 'jeruk' (gunakan indeks positif) dari list berikut:"
                     codeParts={soal1CodeParts}
                     placeholders={soal1Placeholders}
                     expectedAnswers={soal1Expected}
-                    resetTrigger={resetInteractives}
+                    index={0}
+                    onCorrectChange={handleCorrectChange}
                   />
 
                   <CodeCompletionQuestion
-                    question="2. Lengkapi kode untuk mencetak angka 30 dari list nilai:"
+                    question="2. Lengkapi kode untuk mencetak angka 30 (gunakan indeks positif) dari list nilai:"
                     codeParts={soal2CodeParts}
                     placeholders={soal2Placeholders}
                     expectedAnswers={soal2Expected}
-                    resetTrigger={resetInteractives}
+                    index={1}
+                    onCorrectChange={handleCorrectChange}
                   />
 
                   <CodeCompletionQuestion
@@ -1148,22 +1264,31 @@ nilai3 = 78
                     codeParts={soal3CodeParts}
                     placeholders={soal3Placeholders}
                     expectedAnswers={soal3Expected}
-                    resetTrigger={resetInteractives}
+                    index={2}
+                    onCorrectChange={handleCorrectChange}
                   />
 
                   <GuessOutputQuestion
                     question="4. Output dari kode berikut adalah ..."
                     codeSnippet={soal4Code}
                     expectedOutput="jeruk"
-                    resetTrigger={resetInteractives}
+                    index={3}
+                    onCorrectChange={handleCorrectChange}
                   />
 
                   <GuessOutputQuestion
                     question="5. Jika kita menjalankan kode berikut, maka yang akan tercetak adalah ..."
                     codeSnippet={soal5Code}
                     expectedOutput="200"
-                    resetTrigger={resetInteractives}
+                    index={4}
+                    onCorrectChange={handleCorrectChange}
                   />
+
+                  {allCorrect && (
+                    <div style={styles.finalSuccessBox}>
+                      🎉 Selamat! Anda telah menyelesaikan semua soal dengan benar.
+                    </div>
+                  )}
                 </div>
               </section>
             </>
