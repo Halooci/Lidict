@@ -219,6 +219,8 @@ const styles = {
     borderRadius: "8px",
     textAlign: "center",
     transition: "all 0.2s",
+    color: "white",
+    fontWeight: "bold",
   },
   dropZone: {
     backgroundColor: "#e9ecef",
@@ -440,7 +442,7 @@ const SingleListVisualization = ({ data, title, hoverContext = {}, highlightInde
           {getHoverExplanation(hoveredIndex, data[hoveredIndex])}
         </div>
       )}
-      {explanation && highlightIndex === null && highlightPair.length === 0 && !disableHover && (
+      {explanation && !disableHover && (
         <div style={{
           backgroundColor: "#e8f1ff",
           padding: "10px",
@@ -665,7 +667,6 @@ const AnimatedVisualization = ({ beforeData, afterData, beforeTitle, afterTitle,
     rightHighlightIndex = currentHighlight;
   }
 
-  // Untuk operasi insert, kita nonaktifkan hover di list awal
   let beforeDisableHover = false;
   if (operationName === 'insert') {
     beforeDisableHover = true;
@@ -1168,7 +1169,7 @@ const DragDropMatching = ({ items, resetTrigger }) => {
   const handleCheck = () => {
     const totalMatched = functions.filter(f => f.matchedDescId !== null).length;
     if (totalMatched !== items.length) {
-      setFeedbackMsg(`Belum semua fungsi dipasangkan. (${totalMatched}/${items.length}) Silakan lengkapi semua pasangan terlebih dahulu.`);
+      setFeedbackMsg(`Belum semua metode dipasangkan. (${totalMatched}/${items.length}) Silakan lengkapi semua pasangan terlebih dahulu.`);
       setChecked(false);
       setAllCorrect(false);
       return;
@@ -1177,6 +1178,7 @@ const DragDropMatching = ({ items, resetTrigger }) => {
   };
 
   const getDragItemStyle = (func) => {
+    // Semua drag item memiliki teks putih dan bold (sudah di style dasar)
     if (checked) {
       if (correctFuncIds.has(func.id)) {
         return { backgroundColor: "#28a745", cursor: "default", opacity: 0.8, text: `${func.text} [Benar]` };
@@ -1217,7 +1219,7 @@ const DragDropMatching = ({ items, resetTrigger }) => {
     <div>
       <div style={styles.matchingContainer}>
         <div style={styles.matchingColumn}>
-          <div style={styles.matchingTitle}>Fungsi/Method List</div>
+          <div style={styles.matchingTitle}>Method List</div>
           {functions.map(func => {
             const { backgroundColor, cursor, text } = getDragItemStyle(func);
             return (
@@ -2060,7 +2062,7 @@ export default function OperasiManipulasiList() {
               <section style={styles.section}>
                 <h2 style={styles.sectionTitle}>Latihan</h2>
                 <div style={styles.card}>
-                  <p>Seret fungsi/method list ke kegunaan yang sesuai. Setelah semua terisi, klik "Periksa Jawaban". Pasangan yang benar akan terkunci dan tidak bisa diubah. Pasangan yang salah bisa diperbaiki. Tombol "Reset Jawaban Salah" akan mengacak ulang hanya pasangan yang masih salah.</p>
+                  <p>Seret method list ke kegunaan yang sesuai. Setelah semua terisi, klik "Periksa Jawaban". Pasangan yang benar akan terkunci dan tidak bisa diubah. Pasangan yang salah bisa diperbaiki. Tombol "Reset Jawaban Salah" akan mengacak ulang hanya pasangan yang masih salah.</p>
                   <DragDropMatching items={matchingItems} resetTrigger={resetMatching} />
                 </div>
               </section>
