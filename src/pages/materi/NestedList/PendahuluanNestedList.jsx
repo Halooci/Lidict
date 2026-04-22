@@ -243,7 +243,7 @@ const Eksplorasi = ({ onComplete }) => {
       <h3 style={styles.eksplorasiTitle}>🔍 Eksplorasi</h3>
       <p style={styles.text}>
         Sebelum mempelajari materi, jawab pertanyaan berikut dengan memilih opsi yang tersedia.
-        <strong style={{ color: "#0d6efd" }}> Materi akan terbuka setelah kedua pertanyaan dijawab (apapun jawabannya).</strong>
+        <strong style={{ color: "#0d6efd" }}> Materi akan terbuka setelah kedua pertanyaan dijawab.</strong>
       </p>
       {questions.map((q, idx) => {
         const isAnswered = hasAnswered[idx];

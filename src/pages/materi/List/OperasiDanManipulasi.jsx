@@ -261,6 +261,25 @@ const styles = {
     fontStyle: "italic",
     color: "#333",
   },
+  warningBox: {
+    marginTop: "12px",
+    padding: "15px",
+    fontSize: "16px",
+    fontWeight: "bold",
+    borderRadius: "8px",
+    textAlign: "center",
+  },
+  successBoxLarge: {
+    marginTop: "12px",
+    padding: "15px",
+    fontSize: "16px",
+    fontWeight: "bold",
+    borderRadius: "8px",
+    textAlign: "center",
+    backgroundColor: "#d4edda",
+    color: "#155724",
+    border: "2px solid #28a745",
+  },
   visualWrapper: {
     display: "flex",
     gap: "20px",
@@ -958,14 +977,14 @@ const CodeEditorEditable = ({ title, pyodideReady, runPythonCode }) => {
 
     const code = localCode;
     
-    const varRegex = /belanja\s*=\s*\[\s*['"]apel['"]\s*,\s*['"]jeruk['"]\s*,\s*['"]mangga['"]\s*\]/;
+    const varRegex = /belanja\s*\s*=\s*\s*\[\s*['"]\s*\s*apel\s*\s*['"]\s*,\s*['"]\s*\s*jeruk\s*\s*['"]\s*,\s*['"]\s*\s*mangga\s*\s*['"]\s*\]/;
     const hasCorrectList = varRegex.test(code);
-    const appendRegex = /belanja\.append\s*\(\s*['"]pisang['"]\s*\)/;
+    const appendRegex = /belanja\.append\s*\s*\(\s*\s*['"]\s*\s*pisang\s*\s*['"]\s*\s*\)/;
     const hasAppend = appendRegex.test(code);
-    const removeByValue = /belanja\.remove\s*\(\s*['"]jeruk['"]\s*\)/.test(code);
-    const removeByIndex = /belanja\.pop\s*\(\s*1\s*\)/.test(code);
+    const removeByValue = /belanja\.remove\s*\s*\(\s*\s*['"]\s*\s*jeruk\s*\s*['"]\s*\s*\)/.test(code);
+    const removeByIndex = /belanja\.pop\s*\s*\(\s*\s*1\s*\s*\)/.test(code);
     const hasRemove = removeByValue || removeByIndex;
-    const printRegex = /print\s*\(\s*belanja\s*\)/;
+    const printRegex = /print\s*\s*\(\s*\s*belanja\s*\s*\)/;
     const hasPrint = printRegex.test(code);
     
     if (!hasCorrectList) {
@@ -1027,7 +1046,7 @@ const CodeEditorEditable = ({ title, pyodideReady, runPythonCode }) => {
   );
 };
 
-// ================= KOMPONEN DRAG-N-DROP MATCHING =================
+// ================= KOMPONEN DRAG-N-DROP MATCHING (DENGAN PERBAIKAN PESAN) =================
 const DragDropMatching = ({ items, resetTrigger }) => {
   const shuffleArray = (arr) => {
     const shuffled = [...arr];
@@ -1070,16 +1089,25 @@ const DragDropMatching = ({ items, resetTrigger }) => {
     const allMatched = functions.every(f => f.matchedDescId !== null);
     if (allMatched && newCorrectFuncIds.size === items.length) {
       setAllCorrect(true);
-      setFeedbackMsg("Selamat! Semua jawaban benar!");
+      setFeedbackMsg("🎉 SELAMAT! Semua jawaban benar! 🎉");
     } else {
       setAllCorrect(false);
       if (checked && allMatched) {
-        setFeedbackMsg(`Masih ada ${items.length - newCorrectFuncIds.size} pasangan yang salah. Silakan perbaiki.`);
+        setFeedbackMsg(`❌ Masih ada ${items.length - newCorrectFuncIds.size} pasangan yang salah. Silakan perbaiki.`);
       }
     }
   }, [functions, descriptions, items.length, checked]);
 
   const resetWrongOnly = () => {
+    // Cek apakah sudah pernah diperiksa
+    if (!checked) {
+      setFeedbackMsg("⚠️ Silakan lengkapi jawaban terlebih dahulu! ⚠️");
+      return;
+    }
+    if (allCorrect) {
+      setFeedbackMsg("✅ Semua jawaban sudah benar, tidak perlu reset.");
+      return;
+    }
     const wrongFuncs = functions.filter(f => !correctFuncIds.has(f.id));
     wrongFuncs.forEach(f => f.matchedDescId = null);
     const shuffledWrongFuncs = shuffleArray(wrongFuncs);
@@ -1098,7 +1126,7 @@ const DragDropMatching = ({ items, resetTrigger }) => {
     
     setFunctions(newFunctions);
     setDescriptions(newDescriptions);
-    setFeedbackMsg("Pasangan yang salah telah direset dan diacak. Silakan perbaiki pasangan yang masih salah.");
+    setFeedbackMsg("🔄 Pasangan yang salah telah direset dan diacak. Silakan perbaiki pasangan yang masih salah.");
     setTimeout(() => {
       recalculateCorrect();
     }, 0);
@@ -1136,7 +1164,7 @@ const DragDropMatching = ({ items, resetTrigger }) => {
   const handleDrop = (e, descId) => {
     e.preventDefault();
     if (correctDescIds.has(descId)) {
-      setFeedbackMsg("Pasangan yang sudah benar tidak dapat diubah.");
+      setFeedbackMsg("✅ Pasangan yang sudah benar tidak dapat diubah.");
       return;
     }
     const funcId = parseInt(e.dataTransfer.getData("text/plain"));
@@ -1169,7 +1197,7 @@ const DragDropMatching = ({ items, resetTrigger }) => {
   const handleCheck = () => {
     const totalMatched = functions.filter(f => f.matchedDescId !== null).length;
     if (totalMatched !== items.length) {
-      setFeedbackMsg(`Belum semua metode dipasangkan. (${totalMatched}/${items.length}) Silakan lengkapi semua pasangan terlebih dahulu.`);
+      setFeedbackMsg(`⚠️ BELUM LENGKAP! Hanya ${totalMatched} dari ${items.length} metode yang sudah dipasangkan. Lengkapi semua pasangan terlebih dahulu. ⚠️`);
       setChecked(false);
       setAllCorrect(false);
       return;
@@ -1178,7 +1206,6 @@ const DragDropMatching = ({ items, resetTrigger }) => {
   };
 
   const getDragItemStyle = (func) => {
-    // Semua drag item memiliki teks putih dan bold (sudah di style dasar)
     if (checked) {
       if (correctFuncIds.has(func.id)) {
         return { backgroundColor: "#28a745", cursor: "default", opacity: 0.8, text: `${func.text} [Benar]` };
@@ -1259,21 +1286,25 @@ const DragDropMatching = ({ items, resetTrigger }) => {
           })}
         </div>
       </div>
-      {feedbackMsg && <div style={styles.feedback}>{feedbackMsg}</div>}
+      {feedbackMsg && (
+        <div style={feedbackMsg.includes("BELUM LENGKAP") || feedbackMsg.includes("lengkapi jawaban") ? styles.warningBox : (feedbackMsg.includes("SELAMAT") ? styles.successBoxLarge : styles.feedback)}>
+          {feedbackMsg}
+        </div>
+      )}
       <div>
         <button 
           style={styles.checkMatchingButton} 
           onClick={handleCheck} 
           disabled={allCorrect}
         >
-          {allCorrect ? "Semua Benar" : "Periksa Jawaban"}
+          {allCorrect ? "✅ Semua Benar" : "🔍 Periksa Jawaban"}
         </button>
         <button 
           style={styles.resetWrongButton} 
           onClick={resetWrongOnly}
           disabled={allCorrect}
         >
-          Reset Jawaban Salah
+          ↻ Reset Jawaban Salah
         </button>
       </div>
     </div>
@@ -1658,7 +1689,7 @@ export default function OperasiManipulasiList() {
             <div style={styles.card}>
               <p style={styles.text}>
                 Sebelum belajar lebih dalam, jawab pertanyaan berikut dengan memilih opsi yang tersedia.
-                <strong style={{ color: "#0d6efd" }}> Materi akan terbuka setelah kedua pertanyaan dijawab (apapun jawabannya).</strong>
+                <strong style={{ color: "#0d6efd" }}> Materi akan terbuka setelah kedua pertanyaan dijawab.</strong>
               </p>
               {eksplorasiQuestions.map((q, idx) => {
                 const isAnswered = eksplorasiSelected[idx] !== null;
@@ -2049,10 +2080,10 @@ export default function OperasiManipulasiList() {
                     Ikuti langkah-langkah berikut untuk menyelesaikan studi kasus ini:
                   </p>
                   <ol style={styles.list}>
-                    <li>Buat list bernama <code>belanja</code> yang berisi <code>["apel", "jeruk", "mangga"]</code>.</li>
-                    <li>Tambahkan <code>"pisang"</code> ke dalam list <code>belanja</code> menggunakan method <code>append()</code>.</li>
-                    <li>Hapus <code>"jeruk"</code> dari list <code>belanja</code> menggunakan <code>remove('jeruk')</code> atau <code>pop(1)</code>.</li>
-                    <li>Cetak isi list <code>belanja</code> yang sudah diperbarui menggunakan <code>print(belanja)</code>.</li>
+                    <li>Buat list bernama <code>belanja</code> yang berisi apel, jeruk, mangga</li>
+                    <li>Tambahkan pisang ke dalam list <code>belanja</code> menggunakan method <code>append()</code>.</li>
+                    <li>Hapus jeruk dari list <code>belanja</code> menggunakan <code>remove()</code> atau <code>pop()</code>.</li>
+                    <li>Cetak isi list <code>belanja</code> yang sudah diperbarui menggunakan <code>print()</code>.</li>
                   </ol>
                   <p style={styles.text}>Buatlah program Python sesuai langkah-langkah di atas!</p>
                   <CodeEditorEditable title="Ayo Praktik" pyodideReady={pyodideReady} runPythonCode={runPythonCode} />
@@ -2062,7 +2093,7 @@ export default function OperasiManipulasiList() {
               <section style={styles.section}>
                 <h2 style={styles.sectionTitle}>Latihan</h2>
                 <div style={styles.card}>
-                  <p>Seret method list ke kegunaan yang sesuai. Setelah semua terisi, klik "Periksa Jawaban". Pasangan yang benar akan terkunci dan tidak bisa diubah. Pasangan yang salah bisa diperbaiki. Tombol "Reset Jawaban Salah" akan mengacak ulang hanya pasangan yang masih salah.</p>
+                  <p>Seret method list ke kegunaan yang sesuai. Klik "Periksa Jawaban" setelah semua pasangan sudah lengkapi. Pasangan yang salah bisa diperbaiki. Tombol "Reset Jawaban Salah" akan mengacak ulang hanya pasangan yang masih salah.</p>
                   <DragDropMatching items={matchingItems} resetTrigger={resetMatching} />
                 </div>
               </section>

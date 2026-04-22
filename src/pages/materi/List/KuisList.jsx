@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from "react";
+import Navbar from "../../komponen/Navbar";
+import SidebarMateri from "../../komponen/SidebarMateri";
 
 export default function KuisList() {
-  // State untuk menampilkan halaman petunjuk
+  // ---------- STATE ----------
   const [quizStarted, setQuizStarted] = useState(false);
-
-  // State kuis
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState(Array(10).fill(null));
   const [flags, setFlags] = useState(Array(10).fill(false));
@@ -15,13 +15,11 @@ export default function KuisList() {
   const [resultsData, setResultsData] = useState(null);
 
   // State untuk jawaban drag-drop (5 soal)
-  const [dragAnswers, setDragAnswers] = useState(
-    Array(5).fill().map(() => [])
-  );
+  const [dragAnswers, setDragAnswers] = useState(Array(5).fill().map(() => []));
 
-  // Data soal (10 soal: 5 Multiple Choice + 5 Drag-Drop)
+  // ---------- DATA SOAL (10 soal: 5 Multiple Choice + 5 Drag-Drop) ----------
   const questions = [
-    // ========== 5 PILIHAN GANDA (termasuk tebak output) ==========
+    // 5 PILIHAN GANDA
     {
       id: 1,
       type: "multiple_choice",
@@ -92,7 +90,7 @@ export default function KuisList() {
       correct: 1,
       explanation: "b merujuk ke list yang sama dengan a, sehingga perubahan pada a juga terlihat pada b."
     },
-    // ========== 5 DRAG AND DROP ==========
+    // 5 DRAG AND DROP
     {
       id: 6,
       type: "dragdrop",
@@ -145,20 +143,30 @@ export default function KuisList() {
     }
   ];
 
-  // Timer hanya berjalan jika kuis sudah dimulai dan belum disubmit
-  useEffect(() => {
-    if (!quizStarted || submitted) return;
+  // ---------- HELPER FUNCTIONS ----------
+  const stopTimer = () => {
+    if (timerRef.current) clearInterval(timerRef.current);
+  };
+
+  const startTimer = () => {
+    stopTimer();
     timerRef.current = setInterval(() => {
       setTimeLeft(prev => {
         if (prev <= 1) {
           clearInterval(timerRef.current);
-          handleSubmit(true);
+          if (!submitted && quizStarted) handleSubmit(true);
           return 0;
         }
         return prev - 1;
       });
     }, 1000);
-    return () => clearInterval(timerRef.current);
+  };
+
+  useEffect(() => {
+    if (quizStarted && !submitted) {
+      startTimer();
+    }
+    return () => stopTimer();
   }, [quizStarted, submitted]);
 
   const formatTime = (seconds) => {
@@ -211,7 +219,7 @@ export default function KuisList() {
 
   const handleSubmit = (auto = false) => {
     if (submitted) return;
-    clearInterval(timerRef.current);
+    stopTimer();
     setSubmitted(true);
     let score = 0;
     const results = [];
@@ -247,10 +255,9 @@ export default function KuisList() {
     setTimeLeft(20 * 60);
     setDragAnswers(Array(5).fill().map(() => []));
     setResultsData(null);
-    if (timerRef.current) clearInterval(timerRef.current);
+    stopTimer();
   };
 
-  // Fungsi untuk memulai kuis
   const startQuiz = () => {
     setQuizStarted(true);
     setTimeLeft(20 * 60);
@@ -261,30 +268,187 @@ export default function KuisList() {
     setUnsures(Array(10).fill(false));
     setDragAnswers(Array(5).fill().map(() => []));
     setResultsData(null);
-    if (timerRef.current) clearInterval(timerRef.current);
+    stopTimer();
+    startTimer();
   };
 
-  // Halaman hasil (skor ditampilkan dalam skala /100)
+  const goToPreviousMaterial = () => {
+    window.location.href = '/List/PendahuluanList';
+  };
+
+  // Efek untuk menambahkan CSS global hover
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.textContent = `
+      .btn-hover-primary:hover {
+        background-color: #FFD43B !important;
+        color: #306998 !important;
+        transform: translateY(-2px);
+        transition: all 0.2s ease;
+      }
+      .btn-hover-flag:hover {
+        background-color: #f59e0b !important;
+        color: white !important;
+        transform: translateY(-2px);
+      }
+      .btn-hover-unsure:hover {
+        background-color: #64748b !important;
+        color: white !important;
+        transform: translateY(-2px);
+      }
+      .btn-hover-nav:hover {
+        background-color: #FFD43B !important;
+        color: #306998 !important;
+        transform: translateY(-2px);
+      }
+      .btn-hover-submit:hover {
+        background-color: #FFD43B !important;
+        color: #306998 !important;
+        transform: translateY(-2px);
+      }
+      .btn-hover-retry:hover {
+        background-color: #e67e22 !important;
+        transform: translateY(-2px);
+      }
+      .btn-hover-back:hover {
+        background-color: #5a6268 !important;
+        transform: translateY(-2px);
+      }
+      .btn-hover-next:hover {
+        background-color: #1e4a76 !important;
+        transform: translateY(-2px);
+      }
+      .nav-box-hover:hover {
+        transform: scale(1.05);
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        transition: all 0.15s ease;
+      }
+    `;
+    document.head.appendChild(style);
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
+
+  // ---------- RENDER HALAMAN PETUNJUK (dengan Navbar & SidebarMateri) ----------
+  if (!quizStarted && !submitted) {
+    return (
+      <>
+        <Navbar />
+        <SidebarMateri />
+        <div className="main-content" style={{ paddingTop: "64px" }}>
+          <div style={styles.page}>
+            <div style={styles.header}>
+              <div style={styles.headerAccent}></div>
+              <h1 style={styles.headerTitle}>KUIS LIST</h1>
+            </div>
+            <div style={styles.cardInstruction}>
+              <h2 style={styles.instructionTitle}>Petunjuk Pengerjaan</h2>
+              <ul style={styles.instructionList}>
+                <li>Kuis terdiri dari 10 soal.</li>
+                <li>Setiap soal bernilai 10 poin (total maksimal 100).</li>
+                <li>Waktu pengerjaan: 20 menit (timer berjalan setelah mulai).</li>
+                <li>Jika waktu habis, jawaban yang sudah terisi akan tersimpan dan terkirim secara otomatis.</li>
+                {/* <li>Gunakan fitur "Flag" (🚩) dan "Ragu" (🤔) untuk menandai soal.</li> */}
+                {/* <li>Navigasi soal melalui panel kotak nomor di sebelah kanan.</li> */}
+                <li>Pastikan semua jawaban sudah dipilih sebelum menekan KUMPULKAN JAWABAN.</li>
+                <li>Pastikan perangkat terhubung dengan koneksi internet yang stabil.</li>
+              </ul>
+              <button 
+                className="btn-hover-primary"
+                style={styles.startButton} 
+                onClick={startQuiz}
+              >MULAI KUIS</button>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  // ---------- RENDER HALAMAN HASIL (fullscreen, tanpa sidebar) ----------
   if (submitted && resultsData) {
     const { finalScore, waktuDigunakan } = resultsData;
     const minutesUsed = Math.floor(waktuDigunakan / 60);
     const secondsUsed = waktuDigunakan % 60;
-    const passed = finalScore >= 7;
-    const statusText = passed ? 'Lulus' : 'Tidak Lulus';
     const skor100 = finalScore * 10;
+    const isPassed = skor100 >= 70;
+    const percentage = skor100;
 
     return (
-      <div style={resultStyles.container}>
-        <div style={resultStyles.card}>
-          <h1 style={resultStyles.title}>Hasil Kuis List</h1>
-          <div style={resultStyles.scoreBox}>
-            <p>Waktu pengerjaan: {minutesUsed} menit {secondsUsed} detik</p>
-            <p>Skor: {skor100} / 100 ({statusText})</p>
+      <div style={styles.fullscreenResult}>
+        <div style={styles.resultCardNew}>
+          <div style={styles.resultHeaderNew}>
+            <h1>HASIL KUIS LIST</h1>
+            <div style={styles.headerAccentResultNew}></div>
           </div>
-          <div style={resultStyles.buttonGroup}>
-            <button onClick={resetQuiz} style={resultStyles.button}>Ulangi Kuis</button>
-            {passed && (
-              <button onClick={() => window.location.href = '/NestedList/PendahuluanNestedList'} style={{...resultStyles.button, backgroundColor: '#28a745'}}>➡️ Lanjut ke Materi Selanjutnya (Nested List)</button>
+          <div style={styles.scoreDisplay}>
+            <span style={styles.scoreNumberNew}>{skor100}</span>
+            <span style={styles.scoreTotalNew}>/100</span>
+          </div>
+          <div style={styles.progressContainer}>
+            <div style={styles.progressBar}>
+              <div
+                style={{
+                  width: `${percentage}%`,
+                  height: "100%",
+                  backgroundColor: isPassed ? "#306998" : "#f59e0b",
+                  borderRadius: "30px",
+                  transition: "width 0.5s",
+                }}
+              ></div>
+            </div>
+            <div style={styles.progressLabel}>{skor100}%</div>
+          </div>
+          <div style={styles.statsGridNew}>
+            <div style={styles.statItemNew}>
+              <div style={styles.statIcon}>✓</div>
+              <div>
+                <div style={styles.statLabelNew}>Benar</div>
+                <div style={styles.statValueNew}>{finalScore}</div>
+              </div>
+            </div>
+            <div style={styles.statItemNew}>
+              <div style={styles.statIcon}>✗</div>
+              <div>
+                <div style={styles.statLabelNew}>Salah</div>
+                <div style={styles.statValueNew}>{10 - finalScore}</div>
+              </div>
+            </div>
+            <div style={styles.statItemNew}>
+              <div style={styles.statIcon}>⏱</div>
+              <div>
+                <div style={styles.statLabelNew}>Waktu</div>
+                <div style={styles.statValueNew}>{minutesUsed}m {secondsUsed}s</div>
+              </div>
+            </div>
+          </div>
+          <div style={styles.resultMessageNew}>
+            {isPassed ? (
+              <div style={styles.passedBoxNew}>SELAMAT! Anda LULUS dengan nilai {skor100}</div>
+            ) : (
+              <div style={styles.failedBoxNew}>MOHON MAAF, Anda TIDAK LULUS (Nilai {skor100} &lt; 70)</div>
+            )}
+          </div>
+          <div style={styles.resultActionsNew}>
+            <button 
+              className="btn-hover-retry"
+              style={styles.retryButtonNew} 
+              onClick={resetQuiz}
+            >Ulangi Kuis</button>
+            {!isPassed && (
+              <button 
+                className="btn-hover-back"
+                style={styles.backMaterialButtonNew} 
+                onClick={goToPreviousMaterial}
+              >Kembali ke Materi Sebelumnya</button>
+            )}
+            {isPassed && (
+              <button 
+                className="btn-hover-next"
+                style={styles.nextMaterialButtonNew}
+                onClick={() => window.location.href = '/NestedList/PendahuluanNestedList'}
+              >Lanjut ke Materi Selanjutnya</button>
             )}
           </div>
         </div>
@@ -292,41 +456,7 @@ export default function KuisList() {
     );
   }
 
-  // Halaman petunjuk (sebelum kuis dimulai)
-  if (!quizStarted) {
-    return (
-      <div style={instructionStyles.container}>
-        <div style={instructionStyles.card}>
-          <h1 style={instructionStyles.title}>Kuis List</h1>
-          <div style={instructionStyles.infoBox}>
-            <p>Durasi: <strong>20 Menit</strong></p>
-            <p>Jumlah Soal: <strong>10 Butir</strong></p>
-            <p>Skor Maksimal: <strong>100</strong></p>
-            <p>Skor Kelulusan Minimum: <strong>70</strong></p>
-          </div>
-          <div style={instructionStyles.petunjuk}>
-            <h3>Petunjuk Pengerjaan</h3>
-            <ol>
-              <li>Aktivitas ini terdiri dari <strong>10 butir soal</strong>.</li>
-              <li>Tekan tombol <strong>MULAI</strong> di bawah untuk masuk ke halaman kuis.</li>
-              <li>Waktu pengerjaan akan <strong>dihitung mundur otomatis</strong> begitu Anda menekan tombol mulai.</li>
-              <li>Pastikan perangkat terhubung dengan <strong>koneksi internet yang stabil</strong>.</li>
-              <li>Kerjakan soal dengan teliti dan jujur.</li>
-              <li>Periksa kembali jawaban sebelum mengirimkan.</li>
-              <li>Jika waktu habis, jawaban yang sudah terisi akan <strong>tersimpan dan terkirim secara otomatis</strong>.</li>
-              <li>Anda dapat menandai soal dengan <strong>Flag</strong> (🚩) atau <strong>Ragu</strong> (🤔) untuk memudahkan navigasi.</li>
-            </ol>
-          </div>
-          <div style={instructionStyles.buttonGroup}>
-            <button onClick={startQuiz} style={instructionStyles.startButton}>Mulai</button>
-            <button onClick={() => window.history.back()} style={instructionStyles.cancelButton}>Batal & Kembali</button>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // ================== Halaman Kuis (setelah mulai) ==================
+  // ---------- RENDER HALAMAN KUIS (fullscreen, dua kolom) ----------
   const q = questions[currentQuestion];
   const isFlagged = flags[currentQuestion];
   const isUnsure = unsures[currentQuestion];
@@ -334,117 +464,153 @@ export default function KuisList() {
   const dragQuestionIdx = currentQuestion - 5;
 
   return (
-    <div style={kuisStyles.container}>
-      {/* Header dengan timer */}
-      <div style={kuisStyles.header}>
-        <div style={kuisStyles.headerAccent}></div>
-        <h1 style={kuisStyles.headerTitle}>KUIS LIST</h1>
-        <div style={kuisStyles.timer}>⏰ {formatTime(timeLeft)}</div>
+    <div style={styles.fullscreenQuiz}>
+      <div style={styles.quizHeader}>
+        <div style={styles.quizTitle}>KUIS LIST</div>
+        <div style={styles.timerBox}>
+          <span style={styles.timerIcon}>⏱</span>
+          <span style={timeLeft < 60 ? styles.timerDanger : styles.timerText}>
+            {formatTime(timeLeft)}
+          </span>
+        </div>
       </div>
 
-      <div style={kuisStyles.mainContent}>
-        {/* Kolom Kiri: Soal */}
-        <div style={kuisStyles.questionColumn}>
-          <div style={kuisStyles.questionCard}>
-            <div style={kuisStyles.questionHeader}>
-              <span style={kuisStyles.questionNumber}>Soal {currentQuestion+1} dari 10</span>
-              <div style={kuisStyles.actions}>
-                <button onClick={toggleFlag} style={{...kuisStyles.actionButton, backgroundColor: isFlagged ? '#FFD43B' : '#eee'}}>
-                  🚩 {isFlagged ? 'Flagged' : 'Flag'}
-                </button>
-                <button onClick={toggleUnsure} style={{...kuisStyles.actionButton, backgroundColor: isUnsure ? '#aaa' : '#eee'}}>
-                  🤔 {isUnsure ? 'Ragu' : 'Ragu?'}
-                </button>
-              </div>
+      <div style={styles.twoColumnLayout}>
+        {/* Kolom Kiri - Soal */}
+        <div style={styles.questionCard}>
+          <div style={styles.questionHeader}>
+            <h3 style={styles.questionNumber}>Soal {currentQuestion + 1} dari 10</h3>
+            <div style={styles.actionButtons}>
+              <button
+                className="btn-hover-flag"
+                style={isFlagged ? styles.flagButtonActive : styles.flagButton}
+                onClick={toggleFlag}
+              >
+                🚩 {isFlagged ? "Flagged" : "Flag"}
+              </button>
+              <button
+                className="btn-hover-unsure"
+                style={isUnsure ? styles.unsureButtonActive : styles.unsureButton}
+                onClick={toggleUnsure}
+              >
+                🤔 {isUnsure ? "Ragu" : "Ragu?"}
+              </button>
             </div>
-            <div style={kuisStyles.questionText}>{q.text}</div>
-            {q.type === "multiple_choice" && (
-              <div style={kuisStyles.options}>
-                {q.options.map((opt, idx) => (
-                  <label key={idx} style={kuisStyles.option}>
-                    <input
-                      type="radio"
-                      name="question"
-                      value={idx}
-                      checked={answers[currentQuestion] === idx}
-                      onChange={() => handleMCAnswer(idx)}
-                    />
-                    <span>{opt}</span>
-                  </label>
+          </div>
+          <p style={styles.questionText}>{q.text}</p>
+
+          {q.type === "multiple_choice" && (
+            <div style={styles.optionsContainer}>
+              {q.options.map((opt, idx) => (
+                <label key={idx} style={styles.optionLabel}>
+                  <input
+                    type="radio"
+                    name="question"
+                    value={idx}
+                    checked={answers[currentQuestion] === idx}
+                    onChange={() => handleMCAnswer(idx)}
+                  />
+                  <span style={styles.optionLetter}>{String.fromCharCode(65 + idx)}.</span> {opt}
+                </label>
+              ))}
+            </div>
+          )}
+
+          {isDragDrop && (
+            <div>
+              <div style={styles.codeBlock}>
+                {q.codeTemplate.split('______').map((part, idx) => (
+                  <span key={idx}>
+                    {part}
+                    {idx < q.placeholders.length && (
+                      <span
+                        style={styles.dropZone}
+                        onDragOver={handleDragOver}
+                        onDrop={(e) => handleDrop(e, dragQuestionIdx, idx)}
+                      >
+                        {dragAnswers[dragQuestionIdx] && dragAnswers[dragQuestionIdx][idx]
+                          ? dragAnswers[dragQuestionIdx][idx]
+                          : '______'}
+                      </span>
+                    )}
+                  </span>
                 ))}
               </div>
-            )}
-            {isDragDrop && (
-              <div>
-                <div style={kuisStyles.codeBlock}>
-                  {q.codeTemplate.split('______').map((part, idx) => (
-                    <span key={idx}>
-                      {part}
-                      {idx < q.placeholders.length && (
-                        <span
-                          style={kuisStyles.dropZone}
-                          onDragOver={handleDragOver}
-                          onDrop={(e) => handleDrop(e, dragQuestionIdx, idx)}
-                        >
-                          {dragAnswers[dragQuestionIdx] && dragAnswers[dragQuestionIdx][idx] ? dragAnswers[dragQuestionIdx][idx] : '______'}
-                        </span>
-                      )}
-                    </span>
-                  ))}
-                </div>
-                <div style={kuisStyles.dragItems}>
-                  {q.dragItems.map((item, idx) => (
-                    <div
-                      key={idx}
-                      draggable
-                      onDragStart={(e) => handleDragStart(e, item)}
-                      style={kuisStyles.dragItem}
-                    >
-                      {item}
-                    </div>
-                  ))}
-                </div>
-                <p style={{ fontSize: '12px', marginTop: '10px', color: '#666' }}>💡 Seret kata/kode ke area kosong di atas.</p>
+              <div style={styles.dragItems}>
+                {q.dragItems.map((item, idx) => (
+                  <div
+                    key={idx}
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, item)}
+                    style={styles.dragItem}
+                  >
+                    {item}
+                  </div>
+                ))}
               </div>
-            )}
+              <p style={{ fontSize: '12px', marginTop: '10px', color: '#666' }}>Seret kata/kode ke area kosong di atas.</p>
+            </div>
+          )}
+
+          <div style={styles.navButtons}>
+            <button
+              className="btn-hover-nav"
+              onClick={() => setCurrentQuestion(prev => Math.max(0, prev - 1))}
+              disabled={currentQuestion === 0}
+              style={currentQuestion === 0 ? styles.navButtonDisabled : styles.navButton}
+            >
+              Sebelumnya
+            </button>
+            <button
+              className="btn-hover-nav"
+              onClick={() => setCurrentQuestion(prev => Math.min(questions.length - 1, prev + 1))}
+              disabled={currentQuestion === questions.length - 1}
+              style={currentQuestion === questions.length - 1 ? styles.navButtonDisabled : styles.navButton}
+            >
+              Selanjutnya
+            </button>
           </div>
-          <div style={kuisStyles.navButtons}>
-            <button onClick={() => setCurrentQuestion(prev => Math.max(0, prev-1))} disabled={currentQuestion === 0} style={kuisStyles.navButton}>◀ Sebelumnya</button>
-            <button onClick={() => setCurrentQuestion(prev => Math.min(questions.length-1, prev+1))} disabled={currentQuestion === questions.length-1} style={kuisStyles.navButton}>Selanjutnya ▶</button>
-            <button onClick={() => handleSubmit()} style={kuisStyles.submitButton}>📤 Kumpulkan Jawaban</button>
+
+          <div style={styles.submitWrapper}>
+            <button 
+              className="btn-hover-submit"
+              onClick={() => handleSubmit()} 
+              style={styles.submitButton}
+            >KUMPULKAN JAWABAN</button>
           </div>
         </div>
 
-        {/* Kolom Kanan: Navigasi Soal */}
-        <div style={kuisStyles.navColumn}>
-          <div style={kuisStyles.navCard}>
-            <h3 style={kuisStyles.navTitle}>Navigasi Soal</h3>
-            <div style={kuisStyles.grid}>
-              {questions.map((_, idx) => {
-                let bgColor = '#f0f0f0';
-                if (answers[idx] !== null && answers[idx] !== "") bgColor = '#306998';
-                if (flags[idx]) bgColor = '#FFD43B';
-                if (unsures[idx]) bgColor = '#aaa';
-                if (idx === currentQuestion) bgColor = '#FF9800';
-                return (
-                  <button
-                    key={idx}
-                    onClick={() => setCurrentQuestion(idx)}
-                    style={{...kuisStyles.gridItem, backgroundColor: bgColor}}
-                    title={`Soal ${idx+1}${flags[idx] ? ' (Ditandai)' : ''}${unsures[idx] ? ' (Ragu)' : ''}`}
-                  >
-                    {idx+1}
-                  </button>
-                );
-              })}
-            </div>
-            <div style={kuisStyles.legend}>
-              <p><span style={{...kuisStyles.legendColor, backgroundColor: '#306998'}}></span> Terjawab</p>
-              <p><span style={{...kuisStyles.legendColor, backgroundColor: '#FFD43B'}}></span> Flag</p>
-              <p><span style={{...kuisStyles.legendColor, backgroundColor: '#aaa'}}></span> Ragu</p>
-              <p><span style={{...kuisStyles.legendColor, backgroundColor: '#FF9800'}}></span> Aktif</p>
-              <p><span style={{...kuisStyles.legendColor, backgroundColor: '#f0f0f0'}}></span> Kosong</p>
-            </div>
+        {/* Kolom Kanan - Navigasi Soal */}
+        <div style={styles.navGridContainer}>
+          <div style={styles.navLabel}>Navigasi Soal</div>
+          <div style={styles.navGrid}>
+            {questions.map((_, idx) => {
+              let boxStyle = styles.navBox;
+              let additionalClass = "nav-box-hover";
+              if (idx === currentQuestion) boxStyle = { ...styles.navBox, ...styles.navBoxActive };
+              else if (flags[idx]) boxStyle = { ...styles.navBox, ...styles.navBoxFlagged };
+              else if (unsures[idx]) boxStyle = { ...styles.navBox, ...styles.navBoxUnsure };
+              else if (answers[idx] !== null && answers[idx] !== "") boxStyle = { ...styles.navBox, ...styles.navBoxAnswered };
+              else boxStyle = styles.navBox;
+
+              return (
+                <div
+                  key={idx}
+                  className={additionalClass}
+                  style={boxStyle}
+                  onClick={() => setCurrentQuestion(idx)}
+                >
+                  {idx + 1}
+                </div>
+              );
+            })}
+          </div>
+          <div style={styles.legend}>
+            <span><span style={styles.legendAnswered}></span> Terjawab</span>
+            <span><span style={styles.legendFlagged}></span> Flag</span>
+            <span><span style={styles.legendUnsure}></span> Ragu</span>
+            <span><span style={styles.legendActive}></span> Aktif</span>
+            <span><span style={styles.legendUnanswered}></span> Kosong</span>
           </div>
         </div>
       </div>
@@ -452,180 +618,210 @@ export default function KuisList() {
   );
 }
 
-// ==================== STYLE UNTUK HALAMAN PETUNJUK ====================
-const instructionStyles = {
-  container: {
-    minHeight: "100vh",
+/* ================== STYLE (RAPI & TERSTRUKTUR) ================== */
+const styles = {
+  // ----- INSTRUCTION PAGE -----
+  page: {
+    padding: "30px 40px",
     backgroundColor: "#f5f7fa",
+    minHeight: "calc(100vh - 64px)",
     fontFamily: "Poppins, sans-serif",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    padding: "20px",
-  },
-  card: {
-    maxWidth: "800px",
-    width: "100%",
-    backgroundColor: "white",
-    borderRadius: "12px",
-    padding: "30px",
-    boxShadow: "0 10px 30px rgba(0,0,0,0.1)",
-  },
-  title: {
-    textAlign: "center",
-    color: "#306998",
-    marginBottom: "20px",
-    fontSize: "28px",
-    fontWeight: "700",
-  },
-  infoBox: {
-    backgroundColor: "#e3f2fd",
-    padding: "15px",
-    borderRadius: "8px",
-    marginBottom: "25px",
-    display: "flex",
-    justifyContent: "space-around",
-    flexWrap: "wrap",
-    gap: "15px",
-    textAlign: "center",
-  },
-  petunjuk: {
-    marginBottom: "30px",
-  },
-  buttonGroup: {
-    display: "flex",
-    gap: "20px",
-    justifyContent: "center",
-  },
-  startButton: {
-    backgroundColor: "#28a745",
-    color: "white",
-    border: "none",
-    padding: "12px 30px",
-    borderRadius: "8px",
-    fontSize: "18px",
-    fontWeight: "bold",
-    cursor: "pointer",
-    transition: "0.2s",
-  },
-  cancelButton: {
-    backgroundColor: "#6c757d",
-    color: "white",
-    border: "none",
-    padding: "12px 30px",
-    borderRadius: "8px",
-    fontSize: "18px",
-    fontWeight: "bold",
-    cursor: "pointer",
-    transition: "0.2s",
-  },
-};
-
-// ==================== STYLE KUIS ====================
-const kuisStyles = {
-  container: {
-    minHeight: "100vh",
-    backgroundColor: "#f5f7fa",
-    fontFamily: "Poppins, sans-serif",
-    padding: "20px",
   },
   header: {
     backgroundColor: "#306998",
     color: "white",
-    padding: "12px 20px",
+    padding: "18px 24px",
     position: "relative",
     marginBottom: "30px",
     borderRadius: "6px",
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    flexWrap: "wrap",
-    gap: "10px",
   },
   headerAccent: {
     position: "absolute",
     left: 0,
     top: 0,
     bottom: 0,
-    width: "6px",
+    width: "8px",
     backgroundColor: "#FFD43B",
     borderRadius: "6px 0 0 6px",
   },
   headerTitle: {
     margin: 0,
-    fontSize: "24px",
+    textAlign: "center",
+    fontSize: "28px",
     fontWeight: "700",
   },
-  timer: {
-    fontSize: "20px",
-    fontWeight: "bold",
-    backgroundColor: "#FFD43B",
+  cardInstruction: {
+    backgroundColor: "white",
+    borderRadius: "16px",
+    padding: "32px",
+    boxShadow: "0 10px 25px rgba(0,0,0,0.05)",
+    maxWidth: "800px",
+    margin: "0 auto",
+  },
+  instructionTitle: {
+    fontSize: "24px",
+    fontWeight: "600",
     color: "#306998",
-    padding: "4px 12px",
-    borderRadius: "8px",
+    marginBottom: "20px",
+    borderLeft: "5px solid #FFD43B",
+    paddingLeft: "16px",
   },
-  mainContent: {
+  instructionList: {
+    lineHeight: "1.9",
+    fontSize: "16px",
+    color: "#2d3748",
+    marginBottom: "32px",
+    paddingLeft: "24px",
+  },
+  startButton: {
+    backgroundColor: "#306998",
+    color: "white",
+    border: "none",
+    padding: "14px 28px",
+    fontSize: "18px",
+    fontWeight: "600",
+    borderRadius: "40px",
+    cursor: "pointer",
+    width: "100%",
+    transition: "0.2s",
+    boxShadow: "0 4px 10px rgba(48,105,152,0.3)",
+  },
+
+  // ----- FULLSCREEN QUIZ (dua kolom) -----
+  fullscreenQuiz: {
+    minHeight: "100vh",
+    backgroundColor: "#f5f7fa",
+    fontFamily: "Poppins, sans-serif",
+    padding: "20px 40px",
+  },
+  quizHeader: {
     display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: "#306998",
+    borderRadius: "20px",
+    padding: "16px 32px",
+    marginBottom: "30px",
+    color: "white",
+    boxShadow: "0 6px 14px rgba(0,0,0,0.1)",
+  },
+  quizTitle: {
+    fontSize: "28px",
+    fontWeight: "bold",
+    letterSpacing: "1px",
+  },
+  timerBox: {
+    display: "flex",
+    alignItems: "center",
+    gap: "12px",
+    backgroundColor: "rgba(0,0,0,0.2)",
+    padding: "8px 20px",
+    borderRadius: "60px",
+  },
+  timerIcon: { fontSize: "24px" },
+  timerText: { fontSize: "28px", fontWeight: "700", fontFamily: "monospace" },
+  timerDanger: {
+    fontSize: "28px",
+    fontWeight: "700",
+    fontFamily: "monospace",
+    color: "#FFD43B",
+  },
+  twoColumnLayout: {
+    display: "grid",
+    gridTemplateColumns: "1fr 320px",
     gap: "30px",
-    flexDirection: "row",
-  },
-  questionColumn: {
-    flex: 2,
-  },
-  navColumn: {
-    flex: 1,
   },
   questionCard: {
     backgroundColor: "white",
-    borderRadius: "10px",
-    padding: "25px",
-    boxShadow: "0 5px 15px rgba(0,0,0,0.08)",
-    marginBottom: "20px",
+    borderRadius: "28px",
+    padding: "32px",
+    boxShadow: "0 12px 30px rgba(0,0,0,0.08)",
   },
   questionHeader: {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: "20px",
-    borderBottom: "1px solid #ddd",
-    paddingBottom: "10px",
     flexWrap: "wrap",
-    gap: "10px",
   },
   questionNumber: {
-    fontSize: "18px",
-    fontWeight: "600",
+    fontSize: "20px",
+    fontWeight: "700",
     color: "#306998",
+    margin: 0,
   },
-  actions: {
-    display: "flex",
-    gap: "10px",
-  },
-  actionButton: {
+  actionButtons: { display: "flex", gap: "10px" },
+  flagButton: {
+    backgroundColor: "#f1f5f9",
     border: "none",
-    padding: "4px 12px",
-    borderRadius: "6px",
-    cursor: "pointer",
-    fontWeight: "500",
+    padding: "8px 18px",
+    borderRadius: "40px",
     fontSize: "14px",
+    fontWeight: "500",
+    cursor: "pointer",
+    color: "#334155",
+  },
+  flagButtonActive: {
+    backgroundColor: "#fef3c7",
+    border: "none",
+    padding: "8px 18px",
+    borderRadius: "40px",
+    fontSize: "14px",
+    fontWeight: "500",
+    cursor: "pointer",
+    color: "#b45309",
+    border: "1px solid #f59e0b",
+  },
+  unsureButton: {
+    backgroundColor: "#f1f5f9",
+    border: "none",
+    padding: "8px 18px",
+    borderRadius: "40px",
+    fontSize: "14px",
+    fontWeight: "500",
+    cursor: "pointer",
+    color: "#334155",
+  },
+  unsureButtonActive: {
+    backgroundColor: "#e2e8f0",
+    border: "none",
+    padding: "8px 18px",
+    borderRadius: "40px",
+    fontSize: "14px",
+    fontWeight: "500",
+    cursor: "pointer",
+    color: "#1e293b",
+    border: "1px solid #94a3b8",
   },
   questionText: {
     fontSize: "18px",
-    lineHeight: "1.6",
-    marginBottom: "20px",
+    lineHeight: "1.5",
+    marginBottom: "28px",
+    color: "#0f172a",
+    fontWeight: "500",
     whiteSpace: "pre-line",
   },
-  options: {
+  optionsContainer: {
     display: "flex",
     flexDirection: "column",
-    gap: "12px",
+    gap: "16px",
+    marginBottom: "36px",
   },
-  option: {
+  optionLabel: {
     display: "flex",
     alignItems: "center",
-    gap: "10px",
-    cursor: "pointer",
+    gap: "12px",
     fontSize: "16px",
+    padding: "10px 16px",
+    borderRadius: "16px",
+    backgroundColor: "#f8fafc",
+    cursor: "pointer",
+    border: "1px solid #e2e8f0",
+  },
+  optionLetter: {
+    fontWeight: "bold",
+    color: "#306998",
+    width: "28px",
   },
   codeBlock: {
     backgroundColor: "#272822",
@@ -667,132 +863,294 @@ const kuisStyles = {
   },
   navButtons: {
     display: "flex",
-    gap: "15px",
-    justifyContent: "center",
+    justifyContent: "space-between",
+    gap: "20px",
     marginTop: "10px",
-    flexWrap: "wrap",
   },
   navButton: {
+    backgroundColor: "#e2e8f0",
+    border: "none",
+    padding: "10px 20px",
+    borderRadius: "40px",
+    fontWeight: "600",
+    cursor: "pointer",
+    fontSize: "15px",
+    flex: 1,
+    maxWidth: "160px",
+  },
+  navButtonDisabled: {
+    backgroundColor: "#cbd5e1",
+    border: "none",
+    padding: "10px 20px",
+    borderRadius: "40px",
+    fontWeight: "600",
+    fontSize: "15px",
+    flex: 1,
+    maxWidth: "160px",
+    cursor: "not-allowed",
+    color: "#64748b",
+  },
+  submitWrapper: { marginTop: "32px", textAlign: "center" },
+  submitButton: {
     backgroundColor: "#306998",
     color: "white",
     border: "none",
-    padding: "10px 20px",
-    borderRadius: "6px",
-    cursor: "pointer",
-    fontSize: "16px",
-  },
-  submitButton: {
-    backgroundColor: "#FFD43B",
-    color: "#306998",
-    border: "none",
-    padding: "10px 20px",
-    borderRadius: "6px",
-    cursor: "pointer",
-    fontSize: "16px",
-    fontWeight: "bold",
-  },
-  navCard: {
-    backgroundColor: "white",
-    borderRadius: "10px",
-    padding: "20px",
-    boxShadow: "0 5px 15px rgba(0,0,0,0.08)",
-  },
-  navTitle: {
-    marginTop: 0,
-    marginBottom: "15px",
-    textAlign: "center",
-    fontSize: "20px",
-  },
-  grid: {
-    display: "grid",
-    gridTemplateColumns: "repeat(5, 1fr)",
-    gap: "12px",
-    marginBottom: "20px",
-  },
-  gridItem: {
-    aspectRatio: "1",
-    border: "none",
-    borderRadius: "8px",
+    padding: "14px 28px",
+    borderRadius: "40px",
     fontSize: "18px",
     fontWeight: "bold",
     cursor: "pointer",
-    transition: "0.2s",
-    color: "#333",
+    width: "100%",
+    maxWidth: "300px",
   },
-  legend: {
+  navGridContainer: {
+    backgroundColor: "white",
+    borderRadius: "20px",
+    padding: "20px",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
+    height: "fit-content",
+  },
+  navLabel: {
+    fontSize: "18px",
+    fontWeight: "600",
+    marginBottom: "15px",
+    color: "#2c3e50",
+  },
+  navGrid: {
     display: "flex",
     flexWrap: "wrap",
     gap: "12px",
-    justifyContent: "center",
-    fontSize: "12px",
+    marginBottom: "20px",
   },
-  legendColor: {
+  navBox: {
+    width: "52px",
+    height: "52px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: "12px",
+    fontWeight: "bold",
+    fontSize: "18px",
+    cursor: "pointer",
+    backgroundColor: "#e2e8f0",
+    color: "#1e293b",
+  },
+  navBoxActive: {
+    backgroundColor: "#306998",
+    color: "white",
+    boxShadow: "0 0 0 3px #FFD43B",
+  },
+  navBoxFlagged: {
+    backgroundColor: "#f59e0b",
+    color: "white",
+  },
+  navBoxUnsure: {
+    backgroundColor: "#94a3b8",
+    color: "white",
+  },
+  navBoxAnswered: {
+    backgroundColor: "#10b981",
+    color: "white",
+  },
+  legend: {
+    display: "flex",
+    gap: "24px",
+    fontSize: "14px",
+    color: "#475569",
+    flexWrap: "wrap",
+  },
+  legendAnswered: {
     display: "inline-block",
     width: "16px",
     height: "16px",
+    backgroundColor: "#10b981",
     borderRadius: "4px",
-    marginRight: "5px",
+    marginRight: "6px",
     verticalAlign: "middle",
   },
-};
+  legendFlagged: {
+    display: "inline-block",
+    width: "16px",
+    height: "16px",
+    backgroundColor: "#f59e0b",
+    borderRadius: "4px",
+    marginRight: "6px",
+    verticalAlign: "middle",
+  },
+  legendUnsure: {
+    display: "inline-block",
+    width: "16px",
+    height: "16px",
+    backgroundColor: "#94a3b8",
+    borderRadius: "4px",
+    marginRight: "6px",
+    verticalAlign: "middle",
+  },
+  legendActive: {
+    display: "inline-block",
+    width: "16px",
+    height: "16px",
+    backgroundColor: "#306998",
+    borderRadius: "4px",
+    marginRight: "6px",
+    verticalAlign: "middle",
+    boxShadow: "0 0 0 1px #FFD43B",
+  },
+  legendUnanswered: {
+    display: "inline-block",
+    width: "16px",
+    height: "16px",
+    backgroundColor: "#e2e8f0",
+    borderRadius: "4px",
+    marginRight: "6px",
+    verticalAlign: "middle",
+  },
 
-const resultStyles = {
-  container: {
+  // ----- FULLSCREEN RESULT -----
+  fullscreenResult: {
     minHeight: "100vh",
     backgroundColor: "#f5f7fa",
-    padding: "20px",
-    fontFamily: "Poppins, sans-serif",
-  },
-  card: {
-    maxWidth: "600px",
-    margin: "0 auto",
-    backgroundColor: "white",
-    borderRadius: "12px",
-    padding: "20px",
-    boxShadow: "0 5px 20px rgba(0,0,0,0.1)",
-  },
-  title: {
-    textAlign: "center",
-    color: "#306998",
-    marginBottom: "20px",
-    fontSize: "24px",
-  },
-  scoreBox: {
-    backgroundColor: "#e7f3ff",
-    padding: "12px",
-    borderRadius: "8px",
-    marginBottom: "20px",
-    textAlign: "center",
-  },
-  buttonGroup: {
     display: "flex",
-    flexWrap: "wrap",
-    gap: "15px",
+    alignItems: "center",
     justifyContent: "center",
+    fontFamily: "Poppins, sans-serif",
+    padding: "20px",
   },
-  button: {
-    backgroundColor: "#306998",
-    color: "white",
+  resultCardNew: {
+    backgroundColor: "white",
+    borderRadius: "32px",
+    padding: "40px 30px",
+    maxWidth: "600px",
+    width: "100%",
+    textAlign: "center",
+    boxShadow: "0 20px 35px -10px rgba(0,0,0,0.1)",
+    borderTop: "6px solid #306998",
+  },
+  resultHeaderNew: { marginBottom: "20px" },
+  headerAccentResultNew: {
+    width: "60px",
+    height: "4px",
+    backgroundColor: "#FFD43B",
+    margin: "12px auto 0",
+    borderRadius: "2px",
+  },
+  scoreDisplay: { marginBottom: "30px" },
+  scoreNumberNew: {
+    fontSize: "72px",
+    fontWeight: "800",
+    color: "#306998",
+    lineHeight: 1,
+  },
+  scoreTotalNew: {
+    fontSize: "28px",
+    fontWeight: "500",
+    color: "#64748b",
+  },
+  progressContainer: { marginBottom: "35px" },
+  progressBar: {
+    backgroundColor: "#e2e8f0",
+    borderRadius: "30px",
+    height: "12px",
+    overflow: "hidden",
+    marginBottom: "8px",
+  },
+  progressLabel: {
+    fontSize: "14px",
+    fontWeight: "600",
+    color: "#306998",
+    textAlign: "right",
+  },
+  statsGridNew: {
+    display: "flex",
+    justifyContent: "space-between",
+    gap: "15px",
+    marginBottom: "30px",
+    flexWrap: "wrap",
+  },
+  statItemNew: {
+    flex: 1,
+    display: "flex",
+    alignItems: "center",
+    gap: "12px",
+    backgroundColor: "#f8fafc",
+    padding: "12px 16px",
+    borderRadius: "20px",
+    border: "1px solid #e2e8f0",
+    textAlign: "left",
+  },
+  statIcon: {
+    fontSize: "28px",
+    fontWeight: "bold",
+    color: "#306998",
+    width: "40px",
+    textAlign: "center",
+  },
+  statLabelNew: {
+    fontSize: "12px",
+    fontWeight: "500",
+    color: "#64748b",
+    textTransform: "uppercase",
+    letterSpacing: "0.5px",
+  },
+  statValueNew: {
+    fontSize: "24px",
+    fontWeight: "700",
+    color: "#0f172a",
+    lineHeight: 1.2,
+  },
+  resultMessageNew: { marginBottom: "30px" },
+  passedBoxNew: {
+    backgroundColor: "#e6f7ec",
+    color: "#2e7d32",
+    padding: "14px",
+    borderRadius: "60px",
+    fontWeight: "600",
+    fontSize: "18px",
+    border: "1px solid #a5d6a7",
+  },
+  failedBoxNew: {
+    backgroundColor: "#fee9e6",
+    color: "#c62828",
+    padding: "14px",
+    borderRadius: "60px",
+    fontWeight: "600",
+    fontSize: "18px",
+    border: "1px solid #ffab91",
+  },
+  resultActionsNew: {
+    display: "flex",
+    justifyContent: "center",
+    gap: "20px",
+    flexWrap: "wrap",
+  },
+  retryButtonNew: {
+    backgroundColor: "#f59e0b",
     border: "none",
-    padding: "10px 20px",
-    borderRadius: "6px",
-    cursor: "pointer",
+    padding: "12px 28px",
+    borderRadius: "40px",
     fontSize: "16px",
+    fontWeight: "bold",
+    color: "white",
+    cursor: "pointer",
+  },
+  backMaterialButtonNew: {
+    backgroundColor: "#6c757d",
+    border: "none",
+    padding: "12px 28px",
+    borderRadius: "40px",
+    fontSize: "16px",
+    fontWeight: "bold",
+    color: "white",
+    cursor: "pointer",
+  },
+  nextMaterialButtonNew: {
+    backgroundColor: "#306998",
+    border: "none",
+    padding: "12px 28px",
+    borderRadius: "40px",
+    fontSize: "16px",
+    fontWeight: "bold",
+    color: "white",
+    cursor: "pointer",
   },
 };
-
-// CSS global untuk responsive
-if (typeof document !== 'undefined') {
-  const styleTag = document.createElement('style');
-  styleTag.textContent = `
-    @media (max-width: 768px) {
-      .kuis-main-content {
-        flex-direction: column !important;
-      }
-    }
-  `;
-  if (!document.querySelector('#kuis-media-style-list')) {
-    styleTag.id = 'kuis-media-style-list';
-    document.head.appendChild(styleTag);
-  }
-}
