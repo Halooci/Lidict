@@ -343,7 +343,7 @@ _buffer.getvalue()
                 Sebelum mempelajari lebih dalam, jawab pertanyaan berikut dengan memilih opsi yang tersedia.
                 <strong style={{ color: "#0d6efd" }}>
                   {" "}
-                  Materi akan terbuka setelah ketiga pertanyaan dijawab (apapun jawabannya).
+                  Materi akan terbuka setelah ketiga pertanyaan dijawab.
                 </strong>
               </p>
               {eksplorasiQuestions.map((q, idx) => {
