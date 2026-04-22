@@ -1197,7 +1197,7 @@ const DragDropMatching = ({ items, resetTrigger }) => {
   const handleCheck = () => {
     const totalMatched = functions.filter(f => f.matchedDescId !== null).length;
     if (totalMatched !== items.length) {
-      setFeedbackMsg(`⚠️ BELUM LENGKAP! Hanya ${totalMatched} dari ${items.length} metode yang sudah dipasangkan. Lengkapi semua pasangan terlebih dahulu. ⚠️`);
+      setFeedbackMsg(`⚠️ Lengkapi semua pasangan terlebih dahulu. ⚠️`);
       setChecked(false);
       setAllCorrect(false);
       return;
@@ -1287,7 +1287,7 @@ const DragDropMatching = ({ items, resetTrigger }) => {
         </div>
       </div>
       {feedbackMsg && (
-        <div style={feedbackMsg.includes("BELUM LENGKAP") || feedbackMsg.includes("lengkapi jawaban") ? styles.warningBox : (feedbackMsg.includes("SELAMAT") ? styles.successBoxLarge : styles.feedback)}>
+        <div style={feedbackMsg.includes("Lengkapi") || feedbackMsg.includes("lengkapi jawaban") ? styles.warningBox : (feedbackMsg.includes("SELAMAT") ? styles.successBoxLarge : styles.feedback)}>
           {feedbackMsg}
         </div>
       )}

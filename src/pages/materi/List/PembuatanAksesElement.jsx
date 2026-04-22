@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import Navbar from "../../komponen/Navbar";
 import SidebarMateri from "../../komponen/SidebarMateri";
 
-// ================= STYLE GLOBAL (sama seperti sebelumnya) =================
+// ================= STYLE GLOBAL =================
 const styles = {
   page: {
     padding: "30px 40px",
@@ -350,10 +350,10 @@ const ListVisualization = ({ data, title, highlightSequence, processExplanation,
   const negativeIndices = data.map((_, i) => -(data.length - i));
 
   const getHoverExplanation = (idx, item) => {
-    let msg = `📌 Elemen: "${item}"`;
-    if (!hidePositive) msg += `\n✅ Indeks positif: ${idx} → data[${idx}]`;
-    if (!hideNegative) msg += `\n✅ Indeks negatif: ${negativeIndices[idx]} → data[${negativeIndices[idx]}]`;
-    if (!hidePositive && !hideNegative) msg += `\n💡 Tip: Indeks negatif dihitung dari akhir list.`;
+    let msg = `Elemen: "${item}"`;
+    if (!hidePositive) msg += `\nIndeks positif: ${idx} -> data[${idx}]`;
+    if (!hideNegative) msg += `\nIndeks negatif: ${negativeIndices[idx]} -> data[${negativeIndices[idx]}]`;
+    if (!hidePositive && !hideNegative) msg += `\nTip: Indeks negatif dihitung dari akhir list.`;
     return msg;
   };
 
@@ -420,12 +420,12 @@ const ListVisualization = ({ data, title, highlightSequence, processExplanation,
       )}
       {explanationText && (
         <div style={visStyles.explanationBox}>
-          <strong>📖 Proses animasi:</strong> {explanationText}
+          <strong>Proses animasi:</strong> {explanationText}
         </div>
       )}
       {!disableHover && (
         <div style={visStyles.note}>
-          💡 <strong>Petunjuk:</strong> Arahkan kursor ke kotak untuk melihat detail indeks.
+          <strong>Petunjuk:</strong> Arahkan kursor ke kotak untuk melihat detail indeks.
         </div>
       )}
     </div>
@@ -479,7 +479,7 @@ const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, highlightM
 
   const handleRun = useCallback(async () => {
     if (!pyodideReady) {
-      setOutput("⏳ Pyodide sedang dimuat...");
+      setOutput("Pyodide sedang dimuat...");
       return;
     }
     setIsRunning(true);
@@ -507,13 +507,13 @@ const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, highlightM
       <div style={styles.codeEditorHeader}>
         <span style={styles.codeEditorTitle}>{title}</span>
         <button style={styles.runButton} onClick={handleRun} disabled={!pyodideReady || isRunning}>
-          {isRunning ? "⏳ Menjalankan..." : pyodideReady ? "▶ Jalankan" : "⏳ Memuat..."}
+          {isRunning ? "Menjalankan..." : pyodideReady ? "Jalankan" : "Memuat..."}
         </button>
       </div>
       <div style={styles.codeInputReadOnly}>
         <pre style={styles.codePre}>{code}</pre>
       </div>
-      <div style={styles.visualHeader}>📊 Visualisasi Kode Program</div>
+      <div style={styles.visualHeader}>Visualisasi Kode Program</div>
       <div style={styles.visualArea}>
         {showVisual && visualData ? (
           <ListVisualization
@@ -539,11 +539,11 @@ const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, highlightM
   );
 };
 
-// ================= KOMPONEN UNTUK LATIHAN PRAKTIK CODING (VALIDASI BERTAHAP TANPA MEMBERI JAWABAN) =================
+// ================= KOMPONEN UNTUK LATIHAN PRAKTIK CODING (VALIDASI BERTAHAP) =================
 const CodeEditorEditable = ({ title, pyodideReady, runPythonCode }) => {
   const [localCode, setLocalCode] = useState("");
   const [output, setOutput] = useState("");
-  const [message, setMessage] = useState(null); // { type: 'error' | 'success', text: string }
+  const [message, setMessage] = useState(null);
   const [isRunning, setIsRunning] = useState(false);
 
   const handleChange = useCallback((e) => {
@@ -551,10 +551,9 @@ const CodeEditorEditable = ({ title, pyodideReady, runPythonCode }) => {
     setMessage(null);
   }, []);
 
-  // Fungsi validasi bertahap tanpa memberi jawaban exact
   const validateAndRun = useCallback(async () => {
     if (!pyodideReady) {
-      setMessage({ type: 'error', text: "⏳ Pyodide sedang dimuat..." });
+      setMessage({ type: 'error', text: "Pyodide sedang dimuat..." });
       return;
     }
     setOutput("");
@@ -563,23 +562,17 @@ const CodeEditorEditable = ({ title, pyodideReady, runPythonCode }) => {
 
     const code = localCode;
     
-    // Cek 1: Apakah ada variabel 'belanja' dengan isi ['apel','jeruk','mangga']?
     const varRegex = /belanja\s*=\s*\[\s*['"]apel['"]\s*,\s*['"]jeruk['"]\s*,\s*['"]mangga['"]\s*\]/;
     const hasCorrectList = varRegex.test(code);
-    
-    // Cek 2: Apakah ada print(belanja[0])?
     const printFirstRegex = /print\s*\(\s*belanja\s*\[\s*0\s*\]\s*\)/;
     const hasPrintFirst = printFirstRegex.test(code);
-    
-    // Cek 3: Apakah ada print(belanja[-1])?
     const printLastRegex = /print\s*\(\s*belanja\s*\[\s*-\s*1\s*\]\s*\)/;
     const hasPrintLast = printLastRegex.test(code);
     
-    // Tentukan pesan error/success sesuai tahap - tanpa menyebutkan indeks spesifik
     if (!hasCorrectList) {
       setMessage({ 
         type: 'error', 
-        text: "❌ Periksa kembali kode Anda. Pastikan Anda membuat variabel 'belanja' dengan isi yang diminta (tiga buah: apel, jeruk, mangga)." 
+        text: "Periksa kembali kode Anda. Pastikan Anda membuat variabel 'belanja' dengan isi yang diminta (tiga buah: apel, jeruk, mangga)." 
       });
       setIsRunning(false);
       return;
@@ -588,7 +581,7 @@ const CodeEditorEditable = ({ title, pyodideReady, runPythonCode }) => {
     if (!hasPrintFirst) {
       setMessage({ 
         type: 'success', 
-        text: "✅ Bagus! Variabel 'belanja' sudah benar. Sekarang, cetak elemen pertama dari list 'belanja'." 
+        text: "Bagus! Variabel 'belanja' sudah benar. Sekarang, cetak elemen pertama dari list 'belanja'." 
       });
       setIsRunning(false);
       return;
@@ -597,19 +590,18 @@ const CodeEditorEditable = ({ title, pyodideReady, runPythonCode }) => {
     if (!hasPrintLast) {
       setMessage({ 
         type: 'success', 
-        text: "✅ Bagus! Elemen pertama sudah dicetak. Lanjut ke instruksi selanjutnya." 
+        text: "Bagus! Elemen pertama sudah dicetak. Lanjut ke instruksi selanjutnya." 
       });
       setIsRunning(false);
       return;
     }
     
-    // Semua sudah benar, jalankan kode dan tampilkan output
     try {
       const result = await runPythonCode(code);
-      setOutput(result + "\n\n✅ SELAMAT! Semua instruksi sudah benar.");
-      setMessage({ type: 'success', text: "✅ Semua instruksi selesai! Kode berjalan dengan baik." });
+      setOutput(result + "\n\nSELAMAT! Semua instruksi sudah benar.");
+      setMessage({ type: 'success', text: "Semua instruksi selesai! Kode berjalan dengan baik." });
     } catch (err) {
-      setMessage({ type: 'error', text: `❌ Terjadi kesalahan saat menjalankan: ${err.message}` });
+      setMessage({ type: 'error', text: `Terjadi kesalahan saat menjalankan: ${err.message}` });
     } finally {
       setIsRunning(false);
     }
@@ -620,7 +612,7 @@ const CodeEditorEditable = ({ title, pyodideReady, runPythonCode }) => {
       <div style={styles.codeEditorHeader}>
         <span style={styles.codeEditorTitle}>{title}</span>
         <button style={styles.runButton} onClick={validateAndRun} disabled={!pyodideReady || isRunning}>
-          {isRunning ? "⏳ Menjalankan..." : pyodideReady ? "▶ Jalankan" : "⏳ Memuat..."}
+          {isRunning ? "Menjalankan..." : pyodideReady ? "Jalankan" : "Memuat..."}
         </button>
       </div>
       {message && (
@@ -645,7 +637,7 @@ const CodeEditorEditable = ({ title, pyodideReady, runPythonCode }) => {
   );
 };
 
-// ================= KOMPONEN SOAL MELENGKAPI KODE (DENGAN RESET PER SOAL & FEEDBACK TANPA JAWABAN BENAR) =================
+// ================= KOMPONEN SOAL MELENGKAPI KODE =================
 const CodeCompletionQuestion = ({ question, codeParts, placeholders, expectedAnswers, index, onCorrectChange }) => {
   const [answers, setAnswers] = useState(placeholders.map(() => ""));
   const [feedback, setFeedback] = useState("");
@@ -685,11 +677,11 @@ const CodeCompletionQuestion = ({ question, codeParts, placeholders, expectedAns
     }
     setChecked(true);
     if (allCorrect) {
-      setFeedback("✅ Benar!");
+      setFeedback("Benar!");
       setIsCorrect(true);
       if (onCorrectChange) onCorrectChange(index, true);
     } else {
-      setFeedback("❌ Salah. Coba lagi!");
+      setFeedback("Salah. Coba lagi!");
       setIsCorrect(false);
       if (onCorrectChange) onCorrectChange(index, false);
     }
@@ -737,7 +729,7 @@ const CodeCompletionQuestion = ({ question, codeParts, placeholders, expectedAns
         </button>
         {showReset && (
           <button style={styles.resetButtonPerSoal} onClick={resetQuestion}>
-            ↻ Reset Jawaban
+            Reset Jawaban
           </button>
         )}
       </div>
@@ -746,7 +738,7 @@ const CodeCompletionQuestion = ({ question, codeParts, placeholders, expectedAns
   );
 };
 
-// ================= KOMPONEN SOAL MENENTUKAN OUTPUT (DENGAN RESET PER SOAL & FEEDBACK TANPA JAWABAN BENAR) =================
+// ================= KOMPONEN SOAL MENENTUKAN OUTPUT =================
 const GuessOutputQuestion = ({ question, codeSnippet, expectedOutput, index, onCorrectChange }) => {
   const [userAnswer, setUserAnswer] = useState("");
   const [feedback, setFeedback] = useState("");
@@ -767,11 +759,11 @@ const GuessOutputQuestion = ({ question, codeSnippet, expectedOutput, index, onC
     const correct = userAnswer.trim() === expectedOutput;
     setChecked(true);
     if (correct) {
-      setFeedback("✅ Benar!");
+      setFeedback("Benar!");
       setIsCorrect(true);
       if (onCorrectChange) onCorrectChange(index, true);
     } else {
-      setFeedback("❌ Salah. Coba lagi!");
+      setFeedback("Salah. Coba lagi!");
       setIsCorrect(false);
       if (onCorrectChange) onCorrectChange(index, false);
     }
@@ -804,7 +796,7 @@ const GuessOutputQuestion = ({ question, codeSnippet, expectedOutput, index, onC
         </button>
         {showReset && (
           <button style={styles.resetButtonPerSoal} onClick={resetQuestion}>
-            ↻ Reset Jawaban
+            Reset Jawaban
           </button>
         )}
       </div>
@@ -817,10 +809,8 @@ const GuessOutputQuestion = ({ question, codeSnippet, expectedOutput, index, onC
 export default function PembuatanAksesElement() {
   const [pyodideReady, setPyodideReady] = useState(false);
   const pyodideRef = useRef(null);
-  // State untuk status benar per soal (5 soal)
   const [correctStatus, setCorrectStatus] = useState([false, false, false, false, false]);
 
-  // ================= EKSPLORASI AWAL (5 OPSI) =================
   const [eksplorasiSelected, setEksplorasiSelected] = useState([null, null]);
   const [eksplorasiFeedback, setEksplorasiFeedback] = useState(["", ""]);
   const [isEksplorasiCompleted, setIsEksplorasiCompleted] = useState(false);
@@ -835,7 +825,7 @@ export default function PembuatanAksesElement() {
         "Indeks length-1",
         "Indeks pertama adalah 1"
       ],
-      correct: 0, // Indeks 0
+      correct: 0,
     },
     {
       text: "Cara yang benar untuk membuat list berisi angka 5, 10, 15 adalah ...",
@@ -846,7 +836,7 @@ export default function PembuatanAksesElement() {
         "angka = <5, 10, 15>",
         "angka = list(5, 10, 15)"
       ],
-      correct: 2, // [5,10,15]
+      correct: 2,
     },
   ];
 
@@ -872,11 +862,9 @@ export default function PembuatanAksesElement() {
     }
   }, [eksplorasiSelected, isEksplorasiCompleted]);
 
-  // Data visual
   const campuranData = ["apel", 100, true, 3.14];
   const angkaData = [10, 20, 30, 40, 50];
 
-  // Kode contoh
   const contohMembuatList = `# List dengan tipe data sama (string)
 buah = ["apel", "jeruk", "mangga"]
 
@@ -913,37 +901,35 @@ print("Elemen pertama dari belakang:", data[-4])`;
   const contohSlicing = `angka = [10, 20, 30, 40, 50]
 print("Indeks 1 sampai 3:", angka[1:4])`;
 
-  // Highlight mapping
   const highlightPositif = () => ({
     indices: [0, 1, 2, 3],
     explanations: [
-      "📌 Perintah `data[0]` → mengambil elemen indeks 0, yaitu 'apel'.",
-      "📌 Perintah `data[1]` → mengambil elemen indeks 1, yaitu 100.",
-      "📌 Perintah `data[2]` → mengambil elemen indeks 2, yaitu True.",
-      "📌 Perintah `data[3]` → mengambil elemen indeks 3, yaitu 3.14."
+      "Perintah `data[0]` -> mengambil elemen indeks 0, yaitu 'apel'.",
+      "Perintah `data[1]` -> mengambil elemen indeks 1, yaitu 100.",
+      "Perintah `data[2]` -> mengambil elemen indeks 2, yaitu True.",
+      "Perintah `data[3]` -> mengambil elemen indeks 3, yaitu 3.14."
     ]
   });
 
   const highlightNegatif = () => ({
     indices: [3, 2, 1, 0],
     explanations: [
-      "🔹 `data[-1]` → indeks -1 sama dengan indeks positif 3, yaitu 3.14.",
-      "🔹 `data[-2]` → indeks -2 sama dengan indeks positif 2, yaitu True.",
-      "🔹 `data[-3]` → indeks -3 sama dengan indeks positif 1, yaitu 100.",
-      "🔹 `data[-4]` → indeks -4 sama dengan indeks positif 0, yaitu 'apel'."
+      "`data[-1]` -> indeks -1 sama dengan indeks positif 3, yaitu 3.14.",
+      "`data[-2]` -> indeks -2 sama dengan indeks positif 2, yaitu True.",
+      "`data[-3]` -> indeks -3 sama dengan indeks positif 1, yaitu 100.",
+      "`data[-4]` -> indeks -4 sama dengan indeks positif 0, yaitu 'apel'."
     ]
   });
 
   const highlightSlicing = () => ({
     indices: [1, 2, 3],
     explanations: [
-      "✂️ Slicing `angka[1:4]` → mulai dari indeks 1 (nilai 20), berhenti SEBELUM indeks 4 (nilai 50 tidak termasuk).",
-      "✂️ Mengambil elemen indeks 2 (nilai 30).",
-      "✂️ Mengambil elemen indeks 3 (nilai 40). Hasil slicing adalah list baru [20,30,40]."
+      "Slicing `angka[1:4]` -> mulai dari indeks 1 (nilai 20), berhenti SEBELUM indeks 4 (nilai 50 tidak termasuk).",
+      "Mengambil elemen indeks 2 (nilai 30).",
+      "Mengambil elemen indeks 3 (nilai 40). Hasil slicing adalah list baru [20,30,40]."
     ]
   });
 
-  // Soal interaktif (5 soal) - diperjelas menggunakan indeks positif untuk soal 1 dan 2
   const soal1CodeParts = ["buah = [\"apel\", \"jeruk\", \"mangga\"]\nprint(buah[", "])"];
   const soal1Placeholders = [""];
   const soal1Expected = ["1"];
@@ -961,7 +947,6 @@ print(buah[1])`;
   const soal5Code = `angka = [100, 200, 300]
 print(angka[-2])`;
 
-  // Callback untuk update status benar
   const handleCorrectChange = (index, isCorrect) => {
     setCorrectStatus(prev => {
       const newStatus = [...prev];
@@ -972,7 +957,6 @@ print(angka[-2])`;
 
   const allCorrect = correctStatus.every(v => v === true);
 
-  // Load Pyodide
   useEffect(() => {
     const loadPyodide = async () => {
       if (!window.loadPyodide) {
@@ -995,7 +979,7 @@ print(angka[-2])`;
   }, []);
 
   const runPythonCode = useCallback(async (code) => {
-    if (!pyodideRef.current) return "⏳ Pyodide sedang dimuat...";
+    if (!pyodideRef.current) return "Pyodide sedang dimuat...";
     try {
       const pyodide = pyodideRef.current;
       await pyodide.runPythonAsync(`
@@ -1008,7 +992,7 @@ sys.stdout = StringIO()
       await pyodide.runPythonAsync("sys.stdout = sys.__stdout__");
       return output || "(Tidak ada output)";
     } catch (error) {
-      return `❌ Error: ${error.message}`;
+      return `Error: ${error.message}`;
     }
   }, []);
 
@@ -1018,13 +1002,11 @@ sys.stdout = StringIO()
       <SidebarMateri />
       <div className="main-content" style={{ paddingTop: "64px" }}>
         <div style={styles.page}>
-          {/* HEADER */}
           <div style={styles.header}>
             <div style={styles.headerAccent}></div>
             <h1 style={styles.headerTitle}>PEMBUATAN DAN AKSES ELEMEN LIST</h1>
           </div>
 
-          {/* TUJUAN PEMBELAJARAN */}
           <section style={styles.section}>
             <h2 style={styles.sectionTitle}>Tujuan Pembelajaran</h2>
             <div style={styles.card}>
@@ -1035,13 +1017,12 @@ sys.stdout = StringIO()
             </div>
           </section>
 
-          {/* EKSPLORASI AWAL (5 OPSI) */}
           <section style={styles.section}>
-            <h2 style={styles.sectionTitle}>🔍 Eksplorasi Awal</h2>
+            <h2 style={styles.sectionTitle}>Eksplorasi Awal</h2>
             <div style={styles.card}>
               <p style={styles.text}>
                 Sebelum belajar lebih dalam, jawab pertanyaan berikut dengan memilih opsi yang tersedia.
-                <strong style={{ color: "#0d6efd" }}> Materi akan terbuka setelah kedua pertanyaan dijawab (apapun jawabannya).</strong>
+                <strong style={{ color: "#0d6efd" }}> Materi akan terbuka setelah kedua pertanyaan dijawab.</strong>
               </p>
               {eksplorasiQuestions.map((q, idx) => {
                 const isAnswered = eksplorasiSelected[idx] !== null;
@@ -1087,18 +1068,16 @@ sys.stdout = StringIO()
               })}
               {!isEksplorasiCompleted && (
                 <div style={styles.infoMessage}>
-                  ℹ️ Jawab kedua pertanyaan di atas untuk membuka materi pembelajaran.
+                  Jawab kedua pertanyaan di atas untuk membuka materi pembelajaran.
                 </div>
               )}
             </div>
           </section>
 
-          {/* MATERI UTAMA (muncul otomatis setelah eksplorasi selesai) */}
           {isEksplorasiCompleted && (
             <>
-              {/* MEMBUAT LIST */}
               <section style={styles.section}>
-                <h2 style={styles.sectionTitle}>📝 Membuat List</h2>
+                <h2 style={styles.sectionTitle}>Membuat List</h2>
                 <div style={styles.card}>
                   <p style={styles.text}>
                     List dibuat dengan tanda kurung siku <code>[]</code> dan elemen dipisahkan koma. 
@@ -1116,9 +1095,8 @@ sys.stdout = StringIO()
                 </div>
               </section>
 
-              {/* AKSES ELEMEN (INDEKS POSITIF) */}
               <section style={styles.section}>
-                <h2 style={styles.sectionTitle}>🔍 Akses Elemen (Indeks Positif)</h2>
+                <h2 style={styles.sectionTitle}>Akses Elemen (Indeks Positif)</h2>
                 <div style={styles.card}>
                   <p style={styles.text}>
                     Indeks dimulai dari <strong>0</strong> untuk elemen pertama. Contoh di bawah menggunakan list dengan tipe data campuran.
@@ -1136,9 +1114,8 @@ sys.stdout = StringIO()
                 </div>
               </section>
 
-              {/* AKSES ELEMEN (INDEKS NEGATIF) */}
               <section style={styles.section}>
-                <h2 style={styles.sectionTitle}>🔍 Akses Elemen (Indeks Negatif)</h2>
+                <h2 style={styles.sectionTitle}>Akses Elemen (Indeks Negatif)</h2>
                 <div style={styles.card}>
                   <p style={styles.text}>
                     Python juga mendukung indeks negatif untuk mengakses elemen dari belakang. 
@@ -1157,9 +1134,8 @@ sys.stdout = StringIO()
                 </div>
               </section>
 
-              {/* SLICING LIST */}
               <section style={styles.section}>
-                <h2 style={styles.sectionTitle}>✂️ Slicing List</h2>
+                <h2 style={styles.sectionTitle}>Slicing List</h2>
                 <div style={styles.card}>
                   <p style={styles.text}>
                     <strong>Slicing</strong> adalah teknik untuk mengambil sebagian elemen dari list. 
@@ -1188,9 +1164,8 @@ sys.stdout = StringIO()
                 </div>
               </section>
 
-              {/* MENGAPA PERLU LIST */}
               <section style={styles.section}>
-                <h2 style={styles.sectionTitle}>📚 Mengapa Perlu List?</h2>
+                <h2 style={styles.sectionTitle}>Mengapa Perlu List?</h2>
                 <div style={styles.card}>
                   <p style={styles.text}>
                     Tanpa list, kita harus membuat banyak variabel terpisah yang tidak efisien.
@@ -1214,9 +1189,8 @@ nilai3 = 78
                 </div>
               </section>
 
-              {/* AYO PRAKTIK */}
               <section style={styles.section}>
-                <h2 style={styles.sectionTitle}>💻 Ayo Praktik!</h2>
+                <h2 style={styles.sectionTitle}>Ayo Praktik!</h2>
                 <div style={styles.card}>
                   <p style={styles.text}>
                     <strong>Studi Kasus: Daftar Belanja</strong><br />
@@ -1235,9 +1209,8 @@ nilai3 = 78
                 </div>
               </section>
 
-              {/* LATIHAN INTERAKTIF (tanpa tombol reset global) */}
               <section style={styles.section}>
-                <h2 style={styles.sectionTitle}>🧩 Latihan</h2>
+                <h2 style={styles.sectionTitle}>Latihan</h2>
                 <div style={styles.card}>
                   <p style={styles.text}>Isilah bagian yang kosong pada kode di bawah ini dengan mengetikkan jawaban pada kotak yang tersedia.</p>
 
@@ -1286,7 +1259,7 @@ nilai3 = 78
 
                   {allCorrect && (
                     <div style={styles.finalSuccessBox}>
-                      🎉 Selamat! Anda telah menyelesaikan semua soal dengan benar.
+                      Selamat! Anda telah menyelesaikan semua soal dengan benar.
                     </div>
                   )}
                 </div>

@@ -288,7 +288,7 @@ const CodeEditor = ({ code, title, pyodideReady, runPythonCode }) => {
 
   const handleRun = useCallback(async () => {
     if (!pyodideReady) {
-      setOutput("⏳ Pyodide sedang dimuat, harap tunggu...");
+      setOutput("Pyodide sedang dimuat, harap tunggu...");
       return;
     }
     setIsRunning(true);
@@ -302,7 +302,7 @@ const CodeEditor = ({ code, title, pyodideReady, runPythonCode }) => {
       <div style={styles.codeEditorHeader}>
         <span style={styles.codeEditorTitle}>{title}</span>
         <button style={styles.runButton} onClick={handleRun} disabled={!pyodideReady || isRunning}>
-          {isRunning ? "⏳ Menjalankan..." : pyodideReady ? "▶ Jalankan" : "⏳ Memuat..."}
+          {isRunning ? "Menjalankan..." : pyodideReady ? "Jalankan" : "Memuat..."}
         </button>
       </div>
       <div style={styles.codeInputReadOnly}>
@@ -413,7 +413,7 @@ print(buah[-1])  # elemen terakhir`,
   }, []);
 
   const runPythonCode = useCallback(async (code) => {
-    if (!pyodideRef.current) return "⏳ Pyodide sedang dimuat...";
+    if (!pyodideRef.current) return "Pyodide sedang dimuat...";
     try {
       const pyodide = pyodideRef.current;
       await pyodide.runPythonAsync(`
@@ -426,7 +426,7 @@ sys.stdout = StringIO()
       await pyodide.runPythonAsync("sys.stdout = sys.__stdout__");
       return output || "(Tidak ada output)";
     } catch (error) {
-      return `❌ Error: ${error.message}`;
+      return `Error: ${error.message}`;
     }
   }, []);
 
@@ -506,7 +506,7 @@ sys.stdout = StringIO()
 
   const checkQuizAnswer = () => {
     if (quizSelected[quizCurrent] === null) {
-      setQuizWarning("⚠️ Pilih jawaban terlebih dahulu!");
+      setQuizWarning("Pilih jawaban terlebih dahulu!");
       return;
     }
     setQuizWarning(null);
@@ -565,11 +565,11 @@ sys.stdout = StringIO()
 
           {/* EKSPLORASI AWAL */}
           <section style={styles.section}>
-            <h2 style={styles.sectionTitle}>🔍 Eksplorasi Awal</h2>
+            <h2 style={styles.sectionTitle}>Eksplorasi Awal</h2>
             <div style={styles.card}>
               <p style={styles.text}>
                 Sebelum mempelajari lebih dalam, jawab pertanyaan berikut dengan memilih opsi yang tersedia.
-                <strong style={{ color: "#0d6efd" }}> Materi akan terbuka setelah kedua pertanyaan dijawab (apapun jawabannya).</strong>
+                <strong style={{ color: "#0d6efd" }}> Materi akan terbuka setelah kedua pertanyaan dijawab.</strong>
               </p>
               {eksplorasiQuestions.map((q, idx) => {
                 const isAnswered = eksplorasiSelected[idx] !== null;
@@ -615,7 +615,7 @@ sys.stdout = StringIO()
               })}
               {!isEksplorasiCompleted && (
                 <div style={styles.infoMessage}>
-                  ℹ️ Jawab kedua pertanyaan di atas untuk membuka materi pembelajaran.
+                  Jawab kedua pertanyaan di atas untuk membuka materi pembelajaran.
                 </div>
               )}
             </div>
@@ -724,8 +724,8 @@ nilai3 = 78
                       );
                     })}
                     {quizWarning && <div style={styles.quizWarning}>{quizWarning}</div>}
-                    {quizFeedback[quizCurrent] === "salah" && <div style={styles.quizError}>❌ Salah! Coba periksa kembali.</div>}
-                    {quizFeedback[quizCurrent] === "benar" && <div style={styles.quizSuccess}>✅ Benar! Jawaban tepat.</div>}
+                    {quizFeedback[quizCurrent] === "salah" && <div style={styles.quizError}>Salah! Coba periksa kembali.</div>}
+                    {quizFeedback[quizCurrent] === "benar" && <div style={styles.quizSuccess}>Benar! Jawaban tepat.</div>}
                   </div>
                   <div style={styles.quizFooter}>
                     <button
@@ -772,7 +772,7 @@ nilai3 = 78
                   </div>
                   {isAllCorrect && (
                     <div style={styles.finalSuccessBox}>
-                      🎉 Selamat! Anda telah menyelesaikan semua soal dengan benar.
+                      Selamat! Anda telah menyelesaikan semua soal dengan benar.
                     </div>
                   )}
                 </div>
