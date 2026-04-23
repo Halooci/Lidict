@@ -340,57 +340,50 @@ const DragDropCompletionQuestion = ({ question, codeTemplate, placeholders, opti
   );
 };
 
-// ===================== EKSPLORASI AWAL (DIREVISI) =====================
+// ===================== EKSPLORASI (DENGAN STYLE BARU) =====================
 const Eksplorasi = ({ onComplete }) => {
-  const [selected, setSelected] = useState([null, null]); // pilihan user (index opsi)
+  const [selected, setSelected] = useState([null, null]);
   const [feedback, setFeedback] = useState(["", ""]);
-  const [hasAnswered, setHasAnswered] = useState([false, false]); // apakah sudah menjawab (terkunci)
+  const [hasAnswered, setHasAnswered] = useState([false, false]);
 
   const questions = [
     {
-      text: "Apa yang dimaksud dengan nested list?",
+      text: "Untuk menambahkan baris baru (list) di akhir nested list, method yang tepat adalah ...",
       options: [
-        "A. List yang hanya berisi angka",
-        "B. List yang di dalamnya terdapat list lain sebagai elemen",
-        "C. List yang tidak memiliki indeks",
-        "D. List yang hanya memiliki satu elemen",
-        "E. List yang berisi tipe data campuran"
+        "insert()",
+        "append()",
+        "pop()",
+        "remove()",
+        "extend()"
       ],
-      correct: 1,
+      correct: 1, // append()
     },
     {
-      text: "Untuk mengakses elemen pada baris ke-2 dan kolom ke-3 dari nested list `data`, sintaks yang tepat adalah...",
+      text: "Jika ingin menghapus baris dengan indeks 1 dari nested list `data`, perintah yang tepat adalah ...",
       options: [
-        "A. data[2][3]",
-        "B. data[1][2]",
-        "C. data[3][2]",
-        "D. data[2][1]",
-        "E. data[1][3]"
+        "data.remove(1)",
+        "data.pop(1)",
+        "data.del(1)",
+        "delete data[1]",
+        "data[1].pop()"
       ],
-      correct: 1,
+      correct: 1, // data.pop(1)
     }
   ];
 
-  // Fungsi menangani klik opsi (sekali pilih, langsung terkunci)
   const handleAnswer = (qIdx, optIdx) => {
-    if (hasAnswered[qIdx]) return; // sudah terjawab, tidak bisa diubah
-
-    // Simpan pilihan
+    if (hasAnswered[qIdx]) return;
     setSelected(prev => {
       const newSel = [...prev];
       newSel[qIdx] = optIdx;
       return newSel;
     });
-
-    // Tentukan feedback Benar/Salah
     const isCorrect = (optIdx === questions[qIdx].correct);
     setFeedback(prev => {
       const newFb = [...prev];
       newFb[qIdx] = isCorrect ? "Benar" : "Salah";
       return newFb;
     });
-
-    // Tandai sudah dijawab
     setHasAnswered(prev => {
       const newAns = [...prev];
       newAns[qIdx] = true;
@@ -398,70 +391,62 @@ const Eksplorasi = ({ onComplete }) => {
     });
   };
 
-  // Memantau apakah semua pertanyaan sudah dijawab
   useEffect(() => {
-    const allAnswered = hasAnswered.every(v => v === true);
-    if (allAnswered) {
+    if (hasAnswered.every(v => v === true)) {
       onComplete();
     }
   }, [hasAnswered, onComplete]);
 
   return (
-    <div style={styles.eksplorasiContainer}>
-      <h3 style={styles.eksplorasiTitle}>🔍 Eksplorasi Awal</h3>
-      <p style={styles.text}>
-        Sebelum mempelajari materi, jawab pertanyaan berikut dengan memilih opsi yang tersedia.
-        <strong style={{ color: "#0d6efd" }}> Materi akan terbuka setelah kedua pertanyaan dijawab.</strong>
-      </p>
-      {questions.map((q, idx) => {
-        const isAnswered = hasAnswered[idx];
-        const selectedIdx = selected[idx];
-        return (
-          <div key={idx} style={styles.eksplorasiCard}>
-            <p style={styles.questionText}>{idx+1}. {q.text}</p>
-            <div style={{ display: "block", marginBottom: "15px" }}>
-              {q.options.map((opt, optIdx) => {
-                let optionStyle = { display: "block", marginBottom: "8px", cursor: "pointer" };
-                if (isAnswered) {
-                  optionStyle = { ...optionStyle, opacity: 0.7, cursor: "not-allowed" };
-                  if (selectedIdx === optIdx) {
-                    const isCorrect = (selectedIdx === q.correct);
-                    optionStyle.backgroundColor = isCorrect ? "#d4edda" : "#f8d7da";
-                    optionStyle.borderColor = isCorrect ? "#28a745" : "#dc3545";
-                    optionStyle.color = isCorrect ? "#155724" : "#842029";
-                    optionStyle.padding = "5px 10px";
-                    optionStyle.borderRadius = "6px";
+    <div>
+      <h2 style={styles.sectionTitle}>Eksplorasi Awal</h2>
+      <div style={styles.card}>
+        <p style={styles.text}>
+          Sebelum mempelajari lebih dalam, jawab pertanyaan berikut dengan memilih opsi yang tersedia.
+          <strong style={{ color: "#0d6efd" }}> Materi akan terbuka setelah kedua pertanyaan dijawab.</strong>
+        </p>
+        {questions.map((q, idx) => {
+          const isAnswered = hasAnswered[idx];
+          const selectedIdx = selected[idx];
+          return (
+            <div key={idx} style={{ marginBottom: "30px", borderBottom: "1px solid #e0e0e0", paddingBottom: "20px" }}>
+              <p style={{ fontWeight: "600", marginBottom: "12px" }}>{idx + 1}. {q.text}</p>
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                {q.options.map((opt, optIdx) => {
+                  let optionStyle = styles.eksplorasiOption;
+                  if (isAnswered) {
+                    optionStyle = { ...styles.eksplorasiOptionDisabled };
+                    if (selectedIdx === optIdx) {
+                      const isCorrect = (selectedIdx === q.correct);
+                      optionStyle = {
+                        ...optionStyle,
+                        backgroundColor: isCorrect ? "#d4edda" : "#f8d7da",
+                        borderColor: isCorrect ? "#28a745" : "#dc3545",
+                        color: isCorrect ? "#155724" : "#842029",
+                      };
+                    }
                   }
-                }
-                return (
-                  <label key={optIdx} style={optionStyle}>
-                    <input
-                      type="radio"
-                      name={`eksplorasi${idx}`}
-                      value={optIdx}
-                      checked={selectedIdx === optIdx}
-                      onChange={() => handleAnswer(idx, optIdx)}
-                      disabled={isAnswered}
-                      style={{ marginRight: "8px" }}
-                    />
-                    <span>{opt}</span>
-                  </label>
-                );
-              })}
-            </div>
-            {feedback[idx] && (
-              <div style={{
-                marginTop: "8px",
-                fontSize: "14px",
-                fontStyle: "italic",
-                color: feedback[idx] === "Benar" ? "#28a745" : "#dc3545"
-              }}>
-                {feedback[idx] === "Benar" ? "✅ Benar" : "❌ Salah"}
+                  return (
+                    <div
+                      key={optIdx}
+                      onClick={() => !isAnswered && handleAnswer(idx, optIdx)}
+                      style={optionStyle}
+                    >
+                      {opt}
+                    </div>
+                  );
+                })}
               </div>
-            )}
-          </div>
-        );
-      })}
+              {feedback[idx] && (
+                <div style={feedback[idx] === "Benar" ? styles.feedbackCorrect : styles.feedbackWrong}>
+                  {feedback[idx]}
+                </div>
+              )}
+            </div>
+          );
+        })}
+        {/* Pesan "Jawab kedua pertanyaan..." dihapus */}
+      </div>
     </div>
   );
 };
@@ -905,9 +890,8 @@ const styles = {
     padding: "25px",
     boxShadow: "0 5px 15px rgba(0,0,0,0.08)",
   },
+  text: { lineHeight: "1.8", color: "#333", marginBottom: "15px" },
   list: { paddingLeft: "20px", lineHeight: "1.8" },
-  text: { lineHeight: "1.8", color: "#333" },
-  subTitle: { marginTop: "20px", marginBottom: "10px", color: "#306998" },
   alertBox: {
     backgroundColor: "#fff3cd",
     border: "1px solid #ffc107",
@@ -919,28 +903,44 @@ const styles = {
   lockMessage: {
     marginTop: "20px",
     padding: "15px",
-    backgroundColor: "#fef3c7",
-    borderLeft: "5px solid #f59e0b",
+    backgroundColor: "#cfe2ff",
+    borderLeft: "5px solid #0d6efd",
     borderRadius: "8px",
     textAlign: "center",
-    color: "#92400e",
+    color: "#084298",
   },
-  eksplorasiContainer: {
-    marginBottom: "30px",
+  eksplorasiOption: {
+    padding: "12px",
+    borderRadius: "8px",
+    cursor: "pointer",
+    transition: "all 0.2s",
+    border: "1px solid #ddd",
+    backgroundColor: "#f9f9f9",
   },
-  eksplorasiTitle: {
-    fontSize: "22px",
-    fontWeight: "700",
-    marginBottom: "15px",
-    borderLeft: "5px solid #306998",
-    paddingLeft: "12px",
+  eksplorasiOptionDisabled: {
+    padding: "12px",
+    borderRadius: "8px",
+    border: "1px solid #ccc",
+    backgroundColor: "#e9ecef",
+    color: "#6c757d",
+    cursor: "not-allowed",
+    opacity: 0.7,
   },
-  eksplorasiCard: {
-    backgroundColor: "white",
-    borderRadius: "10px",
-    padding: "20px",
-    marginBottom: "20px",
-    boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
+  feedbackCorrect: {
+    marginTop: "10px",
+    padding: "8px 12px",
+    backgroundColor: "#d1e7dd",
+    color: "#0f5132",
+    borderRadius: "6px",
+    fontWeight: "500",
+  },
+  feedbackWrong: {
+    marginTop: "10px",
+    padding: "8px 12px",
+    backgroundColor: "#f8d7da",
+    color: "#842029",
+    borderRadius: "6px",
+    fontWeight: "500",
   },
   codeEditorContainer: {
     border: "2px solid #306998",

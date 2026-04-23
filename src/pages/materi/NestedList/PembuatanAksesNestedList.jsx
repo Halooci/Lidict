@@ -225,7 +225,7 @@ const GuessOutputQuestion = ({ question, codeSnippet, expectedOutput, onCheck, r
   );
 };
 
-// ===================== EKSPLORASI (DENGAN SOAL SESUAI TOPIK, TANPA PESAN INFO) =====================
+// ===================== EKSPLORASI (DENGAN SOAL SESUAI TOPIK) =====================
 const Eksplorasi = ({ onComplete }) => {
   const [selected, setSelected] = useState([null, null]);
   const [feedback, setFeedback] = useState(["", ""]);
@@ -330,8 +330,129 @@ const Eksplorasi = ({ onComplete }) => {
             </div>
           );
         })}
-        {/* Pesan "Jawab kedua pertanyaan..." telah dihapus */}
       </div>
+    </div>
+  );
+};
+
+// ===================== VISUALISASI INTERAKTIF STRUKTUR NESTED LIST (DIPINDAHKAN DARI PENDAHULUAN) =====================
+const StrukturInteraktif = () => {
+  const [selectedElement, setSelectedElement] = useState(null);
+
+  const data = [[85, 90, 78], [88, 92, 80]];
+
+  const handleClick = (row, col) => {
+    if (row === null && col === null) {
+      setSelectedElement({ type: "seluruh", text: "nilai_siswa → [[85, 90, 78], [88, 92, 80]] (seluruh nested list)" });
+    } else if (col === null) {
+      setSelectedElement({ type: "baris", row, text: `nilai_siswa[${row}] → [${data[row].join(", ")}] (seluruh baris ke-${row+1})` });
+    } else {
+      setSelectedElement({ type: "elemen", row, col, value: data[row][col], text: `nilai_siswa[${row}][${col}] → ${data[row][col]} (baris ${row+1}, kolom ${col+1})` });
+    }
+  };
+
+  return (
+    <div style={{ margin: "20px 0", padding: "15px", backgroundColor: "#f0f4f8", borderRadius: "12px" }}>
+      <h4 style={{ marginBottom: "15px", color: "#306998" }}>Visualisasi Struktur Nested List (Klik pada elemen)</h4>
+      <p style={{ marginBottom: "10px", fontSize: "14px", fontStyle: "italic" }}>
+        💡 Petunjuk: Klik pada kotak "nilai_siswa", pada setiap judul baris, atau pada setiap angka dalam tabel untuk melihat penjelasan strukturnya.
+      </p>
+      <div style={{ display: "flex", justifyContent: "center", marginBottom: "20px" }}>
+        <div style={{ textAlign: "center" }}>
+          <pre style={{ fontSize: "16px", fontWeight: "bold", backgroundColor: "#fff", padding: "10px", borderRadius: "8px", display: "inline-block" }}>
+            nilai_siswa = [[85, 90, 78], [88, 92, 80]]
+          </pre>
+        </div>
+      </div>
+
+      {/* Tabel interaktif */}
+      <div style={{ display: "flex", justifyContent: "center", gap: "30px", flexWrap: "wrap" }}>
+        {/* Seluruh list */}
+        <div style={{ textAlign: "center", cursor: "pointer" }} onClick={() => handleClick(null, null)}>
+          <div style={{
+            padding: "20px",
+            backgroundColor: selectedElement?.type === "seluruh" ? "#FFD43B" : "#306998",
+            color: "white",
+            borderRadius: "12px",
+            fontWeight: "bold",
+            transition: "all 0.2s",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+            minWidth: "150px",
+          }}>
+            Klik untuk info seluruh data
+          </div>
+          <div style={{ marginTop: "8px", fontSize: "13px", fontWeight: "500" }}>nilai_siswa</div>
+        </div>
+
+        {/* Tabel nested list */}
+        <table style={{ borderCollapse: "collapse", backgroundColor: "white", borderRadius: "10px", overflow: "hidden", boxShadow: "0 2px 8px rgba(0,0,0,0.05)" }}>
+          <thead>
+            <tr style={{ backgroundColor: "#e9ecef" }}>
+              <th style={{ padding: "8px 12px", border: "1px solid #dee2e6" }}></th>
+              <th style={{ padding: "8px 12px", border: "1px solid #dee2e6" }}>Kolom 0</th>
+              <th style={{ padding: "8px 12px", border: "1px solid #dee2e6" }}>Kolom 1</th>
+              <th style={{ padding: "8px 12px", border: "1px solid #dee2e6" }}>Kolom 2</th>
+            </tr>
+          </thead>
+          <tbody>
+            {data.map((row, rowIdx) => (
+              <tr key={rowIdx}>
+                <td style={{ padding: "8px 12px", border: "1px solid #dee2e6", fontWeight: "bold", backgroundColor: "#f8f9fa" }}>
+                  <div style={{ cursor: "pointer" }} onClick={() => handleClick(rowIdx, null)}>
+                    Baris {rowIdx+1} (siswa {rowIdx+1})<br/><span style={{ fontSize: "11px" }}>(nilai_siswa[{rowIdx}])</span>
+                  </div>
+                </td>
+                {row.map((val, colIdx) => (
+                  <td key={colIdx} style={{ padding: "12px", border: "1px solid #dee2e6", textAlign: "center", cursor: "pointer" }}
+                      onClick={() => handleClick(rowIdx, colIdx)}>
+                    <div style={{
+                      width: "40px",
+                      height: "40px",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      borderRadius: "8px",
+                      backgroundColor: selectedElement?.type === "elemen" && selectedElement.row === rowIdx && selectedElement.col === colIdx ? "#FFD43B" : "#f1f3f5",
+                      transition: "all 0.2s",
+                      fontWeight: "bold",
+                    }}>
+                      {val}
+                    </div>
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Panel info */}
+      {selectedElement && (
+        <div style={{
+          marginTop: "20px",
+          padding: "12px 20px",
+          backgroundColor: "#fff3cd",
+          borderLeft: "5px solid #FFD43B",
+          borderRadius: "8px",
+          fontFamily: "monospace",
+          fontSize: "15px",
+        }}>
+          <strong>Informasi:</strong> {selectedElement.text}
+        </div>
+      )}
+      {!selectedElement && (
+        <div style={{
+          marginTop: "20px",
+          padding: "12px 20px",
+          backgroundColor: "#e2e3e5",
+          borderRadius: "8px",
+          textAlign: "center",
+          color: "#495057",
+          fontStyle: "italic",
+        }}>
+          Klik pada "nilai_siswa", "Baris", atau angka di tabel untuk melihat penjelasan strukturnya.
+        </div>
+      )}
     </div>
   );
 };
@@ -478,9 +599,27 @@ _buffer.getvalue()
           {/* MATERI UTAMA (TERKUNCI SAMPAI EKSPLORASI SELESAI) */}
           {isEksplorasiCompleted && (
             <>
+              {/* ========= BAGIAN STRUKTUR NESTED LIST (DIPINDAHKAN DARI PENDAHULUAN) ========= */}
               <section style={styles.section}>
                 <div style={styles.card}>
-                  <h3 style={styles.subTitle}>1. Membuat Nested List</h3>
+                  <h3 style={styles.subTitle}>Struktur Nested List</h3>
+                  <p style={styles.text}>
+                    Secara visual, nested list dapat dipandang sebagai tabel atau matriks. Setiap list di dalamnya mewakili satu baris, dan elemen-elemen dalam baris tersebut mewakili kolom. Indeks pertama digunakan untuk memilih baris, indeks kedua untuk memilih kolom.
+                  </p>
+                  <p style={styles.text}>
+                    Misalnya, jika kita memiliki nested list <code>nilai_siswa = [[85, 90, 78], [88, 92, 80]]</code>, maka:
+                  </p>
+                  <StrukturInteraktif />
+                  <p style={styles.text}>
+                    Pada contoh di atas, <code>nilai_siswa</code> adalah sebuah nested list yang terdiri dari dua list (baris). Baris pertama berisi nilai untuk tiga mata pelajaran (kolom) milik siswa pertama, baris kedua berisi nilai siswa kedua. Dengan struktur ini, kita dapat dengan mudah mengetahui nilai siswa pertama dan kedua secara terpisah.
+                  </p>
+                </div>
+              </section>
+
+              {/* MEMBUAT NESTED LIST (tanpa nomor) */}
+              <section style={styles.section}>
+                <div style={styles.card}>
+                  <h3 style={styles.subTitle}>Membuat Nested List</h3>
                   <p style={styles.text}>
                     Nested list dibuat dengan menuliskan list di dalam list, dipisahkan koma. Setiap list dalam dapat memiliki panjang yang berbeda (ragged array).
                   </p>
@@ -496,8 +635,13 @@ _buffer.getvalue()
                     pyodideReady={pyodideReady}
                     runPythonCode={runPythonCode}
                   />
+                </div>
+              </section>
 
-                  <h3 style={styles.subTitle}>2. Mengakses Elemen Nested List</h3>
+              {/* MENGAKSES ELEMEN NESTED LIST (tanpa nomor) */}
+              <section style={styles.section}>
+                <div style={styles.card}>
+                  <h3 style={styles.subTitle}>Mengakses Elemen Nested List</h3>
                   <p style={styles.text}>
                     Gunakan dua indeks: <code>nama_list[indeks_baris][indeks_kolom]</code>. Indeks dimulai dari 0.
                   </p>
@@ -540,7 +684,6 @@ _buffer.getvalue()
                   <p style={styles.text}>Isilah bagian yang kosong pada kode di bawah ini dengan mengetikkan jawaban pada kotak yang tersedia.</p>
                   <button style={styles.resetButton} onClick={resetInteractiveQuestions}>↻ Reset Jawaban</button>
                   
-                  {/* Soal 1: Akses elemen 20 */}
                   <CodeCompletionQuestion
                     question="1. Lengkapi kode berikut untuk mengakses elemen 20 dari nested list di bawah ini:"
                     codeParts={soal1CodeParts}
@@ -549,7 +692,6 @@ _buffer.getvalue()
                     resetTrigger={resetInteractives}
                   />
 
-                  {/* Soal 2: Membuat nested list baris kedua */}
                   <CodeCompletionQuestion
                     question="2. Lengkapi kode untuk membuat nested list yang berisi dua baris: baris pertama [1,2], baris kedua [3,4]:"
                     codeParts={soal2CodeParts}
@@ -558,7 +700,6 @@ _buffer.getvalue()
                     resetTrigger={resetInteractives}
                   />
 
-                  {/* Soal 3: Akses elemen terakhir (60) */}
                   <CodeCompletionQuestion
                     question="3. Lengkapi kode untuk mencetak elemen terakhir (60) dari nested list berikut:"
                     codeParts={soal3CodeParts}
@@ -567,7 +708,6 @@ _buffer.getvalue()
                     resetTrigger={resetInteractives}
                   />
 
-                  {/* Soal 4: Menentukan output */}
                   <GuessOutputQuestion
                     question="4. Output dari kode berikut adalah ..."
                     codeSnippet={`nilai = [[5, 7], [9, 11]]
@@ -576,7 +716,6 @@ print(nilai[1][0])`}
                     resetTrigger={resetInteractives}
                   />
 
-                  {/* Soal 5: Menentukan output */}
                   <GuessOutputQuestion
                     question="5. Jika kita menjalankan kode berikut, maka yang akan tercetak adalah ..."
                     codeSnippet={`a = [[2, 4], [6, 8]]
@@ -653,7 +792,15 @@ const styles = {
   },
   list: { paddingLeft: "20px", lineHeight: "1.8" },
   text: { lineHeight: "1.8", color: "#333", marginBottom: "15px" },
-  subTitle: { marginTop: "20px", marginBottom: "10px", color: "#306998", fontSize: "18px", fontWeight: "600" },
+  subTitle: { 
+    marginTop: "20px", 
+    marginBottom: "15px", 
+    color: "#306998", 
+    fontSize: "22px", 
+    fontWeight: "700",
+    borderLeft: "4px solid #FFD43B",
+    paddingLeft: "12px",
+  },
   alertBox: {
     backgroundColor: "#fff3cd",
     border: "1px solid #ffc107",

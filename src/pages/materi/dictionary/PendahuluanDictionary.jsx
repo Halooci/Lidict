@@ -2,265 +2,368 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import Navbar from "../../komponen/Navbar";
 import SidebarMateri from "../../komponen/SidebarMateri";
 
-// ===================== KOMPONEN LATIHAN INTERAKTIF (DENGAN LOCK PER SOAL) =====================
-const InteractiveLatihan = () => {
-  const [answers, setAnswers] = useState([null, null, null, null, null]);
-  const [feedback, setFeedback] = useState(["", "", "", "", ""]);
-  const [locked, setLocked] = useState([false, false, false, false, false]);
-  const [globalError, setGlobalError] = useState("");
+// ===================== KOMPONEN EDITOR READ-ONLY DENGAN VISUALISASI DAN PENJELASAN =====================
+const DictionaryVisualization = ({ data, accessSequence = [], title }) => {
+  const [highlightedKey, setHighlightedKey] = useState(null);
+  const [animationStep, setAnimationStep] = useState(0);
 
-  const questions = [
-    {
-      text: "Struktur data yang digunakan untuk menyimpan pasangan key-value di Python adalah ...",
-      options: ["List", "Tuple", "Dictionary", "Set", "Semua benar"],
-      correct: 2,
-    },
-    {
-      text: "Pernyataan berikut yang benar tentang key pada dictionary adalah ...",
-      options: [
-        "Key boleh duplikat",
-        "Key harus berupa tipe data yang mutable",
-        "Key harus unik dan immutable",
-        "Key hanya bisa berupa string",
-        "Key bisa berupa list",
-      ],
-      correct: 2,
-    },
-    {
-      text: "Pernyataan yang BENAR tentang sifat dictionary di Python adalah ...",
-      options: [
-        "Dictionary bersifat immutable (tidak bisa diubah)",
-        "Dictionary tidak mempertahankan urutan item",
-        "Dictionary hanya bisa menyimpan satu tipe data",
-        "Dictionary mempertahankan urutan item sesuai urutan penyisipan",
-        "Key dalam dictionary boleh berupa list",
-      ],
-      correct: 3,
-    },
-    {
-      text: "Tipe data berikut yang TIDAK bisa dijadikan key dalam dictionary adalah ...",
-      options: ["String", "Integer", "List", "Tuple", "Float"],
-      correct: 2,
-    },
-    {
-      text: "Yang terjadi jika kita menggunakan key yang sama dua kali saat membuat dictionary adalah ...",
-      options: [
-        "Akan menghasilkan error (SyntaxError)",
-        "Nilai pertama akan dipertahankan, nilai kedua diabaikan",
-        "Nilai kedua akan menimpa nilai pertama",
-        "Dictionary akan menyimpan kedua nilai dalam bentuk list",
-        "Program akan berhenti (crash)",
-      ],
-      correct: 2,
-    },
-  ];
+  useEffect(() => {
+    if (!accessSequence || accessSequence.length === 0) return;
+    let step = 0;
+    const interval = setInterval(() => {
+      if (step < accessSequence.length) {
+        setHighlightedKey(accessSequence[step]);
+        setAnimationStep(step + 1);
+        step++;
+      } else {
+        clearInterval(interval);
+        setTimeout(() => {
+          setHighlightedKey(null);
+          setAnimationStep(0);
+        }, 500);
+      }
+    }, 1500);
+    return () => clearInterval(interval);
+  }, [accessSequence]);
 
-  const handleAnswerChange = (qIdx, optIdx) => {
-    if (locked[qIdx]) return;
-    const newAnswers = [...answers];
-    newAnswers[qIdx] = optIdx;
-    setAnswers(newAnswers);
-    const newFeedback = [...feedback];
-    newFeedback[qIdx] = "";
-    setFeedback(newFeedback);
-    setGlobalError("");
-  };
+  return (
+    <div style={visStyles.container}>
+      <div style={visStyles.title}>{title}</div>
+      <div style={visStyles.dictContainer}>
+        {Object.entries(data).map(([key, value]) => {
+          const isHighlighted = highlightedKey === key;
+          const isLast = accessSequence && animationStep === accessSequence.length && highlightedKey === null;
+          return (
+            <div key={key} style={{ ...visStyles.card, backgroundColor: isHighlighted ? "#FFD43B" : "#306998", transform: isHighlighted ? "scale(1.05)" : "scale(1)", transition: "all 0.3s ease" }}>
+              <div style={visStyles.key}>{key}</div>
+              <div style={visStyles.arrow}>→</div>
+              <div style={visStyles.value}>{typeof value === 'string' ? value : JSON.stringify(value)}</div>
+            </div>
+          );
+        })}
+      </div>
+      {accessSequence.length > 0 && (
+        <div style={visStyles.info}>
+          {highlightedKey ? (
+            <span>🔍 Mengakses key <strong>"{highlightedKey}"</strong> → nilai: <strong>{data[highlightedKey] !== undefined ? data[highlightedKey] : "Tidak ditemukan (None)"}</strong></span>
+          ) : animationStep === accessSequence.length ? (
+            <span>✅ Semua akses selesai!</span>
+          ) : (
+            <span>🎬 Animasi akan berjalan... Klik Jalankan</span>
+          )}
+        </div>
+      )}
+      {accessSequence.length === 0 && <div style={visStyles.info}>📦 Dictionary siap digunakan</div>}
+    </div>
+  );
+};
 
-  const handleCheckAll = () => {
-    const allAnswered = answers.every((ans) => ans !== null);
-    if (!allAnswered) {
-      setGlobalError("Anda harus menjawab semua soal terlebih dahulu!");
+const visStyles = {
+  container: {
+    backgroundColor: "#f8f9fa",
+    borderRadius: "12px",
+    padding: "15px",
+    margin: "15px 0",
+    border: "1px solid #dee2e6",
+  },
+  title: {
+    fontSize: "16px",
+    fontWeight: "bold",
+    marginBottom: "15px",
+    color: "#306998",
+    textAlign: "center",
+  },
+  dictContainer: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "10px",
+    alignItems: "center",
+  },
+  card: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    width: "80%",
+    padding: "10px 20px",
+    borderRadius: "10px",
+    color: "white",
+    fontWeight: "500",
+  },
+  key: {
+    fontWeight: "bold",
+    fontSize: "14px",
+  },
+  arrow: {
+    fontSize: "18px",
+    margin: "0 15px",
+  },
+  value: {
+    fontSize: "14px",
+  },
+  info: {
+    marginTop: "15px",
+    textAlign: "center",
+    fontSize: "13px",
+    color: "#555",
+    backgroundColor: "#e9ecef",
+    padding: "8px",
+    borderRadius: "8px",
+  },
+};
+
+const CodeEditor = ({ code, codeKey, pyodideReady, runPythonCode, explanations, visualizationData }) => {
+  const [output, setOutput] = useState("");
+  const [hasRun, setHasRun] = useState(false);
+  const [showVisual, setShowVisual] = useState(false);
+
+  const handleRun = useCallback(async () => {
+    if (!pyodideReady) {
+      setOutput("Pyodide sedang dimuat, harap tunggu...");
       return;
     }
-    setGlobalError("");
+    setShowVisual(false);
+    setHasRun(false);
+    const result = await runPythonCode(code);
+    setOutput(result);
+    setHasRun(true);
+    setShowVisual(true);
+  }, [pyodideReady, code, runPythonCode]);
 
-    const newFeedback = answers.map((ans, idx) => {
-      if (ans === questions[idx].correct) {
-        return "Benar";
-      } else {
-        return "Salah. Coba lagi!";
-      }
-    });
-    setFeedback(newFeedback);
-    const newLocked = answers.map((ans, idx) => ans === questions[idx].correct);
-    setLocked(newLocked);
+  const codeLines = code.split('\n');
+  const hasExplanations = explanations && explanations.length === codeLines.length;
+
+  return (
+    <div style={styles.codeEditorContainer}>
+      <div style={styles.codeEditorHeader}>
+        <span style={styles.codeEditorTitle}>Contoh Kode Program</span>
+        <button style={styles.runButton} onClick={handleRun} disabled={!pyodideReady}>
+          {pyodideReady ? "Jalankan" : "Memuat..."}
+        </button>
+      </div>
+      <div style={styles.codeInputReadOnly}>
+        <pre style={styles.codePre}>{code}</pre>
+      </div>
+      {showVisual && visualizationData && (
+        <DictionaryVisualization
+          data={visualizationData.dictionary}
+          accessSequence={visualizationData.accessSequence || []}
+          title={visualizationData.title || "Visualisasi Dictionary"}
+        />
+      )}
+      <div style={styles.outputHeader}>
+        <span style={styles.outputTitle}>Output</span>
+      </div>
+      <div style={styles.codeOutput}>
+        <pre style={styles.outputContent}>{output || "(Klik 'Jalankan' untuk melihat hasil)"}</pre>
+      </div>
+      {hasRun && hasExplanations && (
+        <div style={styles.explanationsContainer}>
+          <div style={styles.explanationsHeader}>
+            <span style={styles.explanationsTitle}>Penjelasan Kode (per baris)</span>
+          </div>
+          <div style={styles.explanationsContent}>
+            {codeLines.map((line, idx) => {
+              if (line.trim() === "" && !explanations[idx]) return null;
+              return (
+                <div key={idx} style={styles.explanationItem}>
+                  <span style={styles.lineNumber}>Baris {idx+1}:</span>
+                  <code style={styles.lineCode}>{line}</code>
+                  <span style={styles.lineExplanation}>→ {explanations[idx]}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ===================== KOMPONEN LATIHAN PRAKTIK (VALIDASI TOLERAN) =====================
+const CodeEditorEditable = ({ codeKey, title, pyodideReady, runPythonCode, expectedOutput }) => {
+  const [localCode, setLocalCode] = useState("");
+  const [output, setOutput] = useState("");
+  const [error, setError] = useState("");
+
+  const handleChange = useCallback((e) => {
+    setLocalCode(e.target.value);
+    setError("");
+  }, []);
+
+  const validateCode = useCallback((code) => {
+    const trimmedCode = code.trim();
+    if (!/\bdata_mahasiswa\s*=\s*\{[^}]*\}/.test(trimmedCode)) {
+      return { valid: false, message: "ERROR: Buatlah dictionary dengan nama 'data_mahasiswa'." };
+    }
+    const printNamaRegex = /print\s*\(\s*data_mahasiswa\s*\[\s*["']nama["']\s*\]\s*\)/;
+    if (!printNamaRegex.test(trimmedCode)) {
+      return { valid: false, message: "ERROR: Tampilkan nilai dari key 'nama' dengan print(data_mahasiswa['nama'])." };
+    }
+    const printUsiaRegex = /print\s*\(\s*data_mahasiswa\s*\[\s*["']usia["']\s*\]\s*\)/;
+    if (!printUsiaRegex.test(trimmedCode)) {
+      return { valid: false, message: "ERROR: Tampilkan nilai dari key 'usia' dengan print(data_mahasiswa['usia'])." };
+    }
+    return { valid: true };
+  }, []);
+
+  const handleRun = useCallback(async () => {
+    if (!pyodideReady) {
+      setOutput("Pyodide sedang dimuat, harap tunggu...");
+      return;
+    }
+    setOutput("");
+    setError("");
+
+    const validation = validateCode(localCode);
+    if (!validation.valid) {
+      setError(validation.message);
+      return;
+    }
+
+    const result = await runPythonCode(localCode);
+    setOutput(result);
+    
+    const lines = result.trim().split('\n').filter(l => l.trim() !== "");
+    if (expectedOutput && lines[0] === expectedOutput[0] && lines[1] === expectedOutput[1]) {
+      setOutput(result + "\n\nSELAMAT! Kode kamu benar!");
+    } else if (expectedOutput) {
+      setOutput(result + "\n\nOutput tidak sesuai. Cek kembali nilai yang dicetak.");
+    }
+  }, [pyodideReady, localCode, runPythonCode, validateCode, expectedOutput]);
+
+  return (
+    <div style={styles.codeEditorContainer}>
+      <div style={styles.codeEditorHeader}>
+        <span style={styles.codeEditorTitle}>{title}</span>
+        <button style={styles.runButton} onClick={handleRun} disabled={!pyodideReady}>
+          {pyodideReady ? "Jalankan" : "Memuat..."}
+        </button>
+      </div>
+      {error && <div style={styles.errorBox}>{error}</div>}
+      <textarea
+        style={{ ...styles.codeInputEditable, border: error ? "2px solid #ff4444" : "none" }}
+        value={localCode}
+        onChange={handleChange}
+        placeholder="Tulis kode Python kamu di sini..."
+        spellCheck={false}
+        autoComplete="off"
+      />
+      <div style={styles.outputHeader}>
+        <span style={styles.outputTitle}>Output</span>
+      </div>
+      <div style={styles.codeOutput}>
+        <pre style={styles.outputContent}>{output || "(Klik 'Jalankan' untuk melihat hasil)"}</pre>
+      </div>
+    </div>
+  );
+};
+
+// ===================== KOMPONEN SOAL MELENGKAPI KODE =====================
+const CodeCompletionQuestion = ({ question, codeParts, placeholders, expectedAnswers }) => {
+  const [answers, setAnswers] = useState(placeholders.map(() => ""));
+  const [feedback, setFeedback] = useState("");
+  const [checked, setChecked] = useState(false);
+  const [isEmptyError, setIsEmptyError] = useState(false);
+
+  const resetQuestion = () => {
+    setAnswers(placeholders.map(() => ""));
+    setFeedback("");
+    setChecked(false);
+    setIsEmptyError(false);
   };
 
-  const allCorrect = locked.every((v) => v === true);
-
-  return (
-    <div>
-      {questions.map((q, idx) => (
-        <div key={idx} style={{ marginBottom: "30px", borderBottom: "1px solid #e0e0e0", paddingBottom: "20px" }}>
-          <p style={{ fontWeight: "600", marginBottom: "12px" }}>{idx + 1}. {q.text}</p>
-          <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-            {q.options.map((opt, optIdx) => (
-              <div
-                key={optIdx}
-                onClick={() => handleAnswerChange(idx, optIdx)}
-                style={{
-                  ...styles.eksplorasiOption,
-                  backgroundColor: answers[idx] === optIdx ? "#2fa69a" : "#f9f9f9",
-                  color: answers[idx] === optIdx ? "white" : "#1f2937",
-                  cursor: locked[idx] ? "not-allowed" : "pointer",
-                  opacity: locked[idx] ? 0.7 : 1,
-                }}
-              >
-                <strong>{String.fromCharCode(65 + optIdx)}.</strong> {opt}
-              </div>
-            ))}
-          </div>
-          {feedback[idx] && (
-            <div style={{ marginTop: "12px", padding: "10px", borderRadius: "8px", backgroundColor: feedback[idx] === "Benar" ? "#d1e7dd" : "#f8d7da" }}>
-              {feedback[idx] === "Benar" ? "✅ Benar" : "❌ Salah"}
-            </div>
-          )}
-        </div>
-      ))}
-      {globalError && (
-        <div style={{ marginTop: "10px", marginBottom: "15px", padding: "12px", borderRadius: "8px", backgroundColor: "#f8d7da", color: "#842029" }}>
-          {globalError}
-        </div>
-      )}
-      <button style={styles.checkAllButton} onClick={handleCheckAll} disabled={allCorrect}>
-        {allCorrect ? "Semua Jawaban Benar" : "Periksa Semua Jawaban"}
-      </button>
-      {allCorrect && (
-        <div style={{ marginTop: "15px", padding: "12px", borderRadius: "8px", backgroundColor: "#d1e7dd", color: "#0f5132", textAlign: "center" }}>
-          🎉 Selamat! Semua jawaban Anda benar.
-        </div>
-      )}
-    </div>
-  );
-};
-
-// ===================== KOMPONEN VISUALISASI ANALOGI DICTIONARY =====================
-const KamusAnalogiVisual = () => {
-  const [selectedKey, setSelectedKey] = useState(null);
-
-  const data = [
-    { key: "apel", value: "merah" },
-    { key: "pisang", value: "kuning" },
-    { key: "anggur", value: "ungu" },
-  ];
-
-  return (
-    <div style={{ margin: "20px 0", padding: "15px", backgroundColor: "#fef9e6", borderRadius: "12px", borderLeft: "5px solid #f4c542" }}>
-      <p style={{ fontWeight: "bold", marginBottom: "15px", textAlign: "center" }}>Analogi Dictionary: Key → Value</p>
-      <div style={{ display: "flex", gap: "30px", justifyContent: "center", flexWrap: "wrap" }}>
-        {/* Kolom Key */}
-        <div style={{ flex: 1, minWidth: "150px", backgroundColor: "#fff3cf", borderRadius: "10px", padding: "10px" }}>
-          <p style={{ textAlign: "center", fontWeight: "bold", backgroundColor: "#f4c542", padding: "8px", borderRadius: "8px", marginTop: 0 }}>Key (Kunci)</p>
-          {data.map((item, idx) => (
-            <div
-              key={idx}
-              onClick={() => setSelectedKey(selectedKey === idx ? null : idx)}
-              style={{
-                padding: "12px",
-                marginBottom: "10px",
-                backgroundColor: selectedKey === idx ? "#306998" : "#ffffff",
-                color: selectedKey === idx ? "white" : "#333",
-                borderRadius: "8px",
-                cursor: "pointer",
-                transition: "0.2s",
-                textAlign: "center",
-                fontWeight: "bold",
-                border: selectedKey === idx ? "1px solid #FFD43B" : "1px solid #ddd",
-              }}
-            >
-              {item.key}
-            </div>
-          ))}
-        </div>
-        {/* Kolom Value */}
-        <div style={{ flex: 1, minWidth: "150px", backgroundColor: "#fff3cf", borderRadius: "10px", padding: "10px" }}>
-          <p style={{ textAlign: "center", fontWeight: "bold", backgroundColor: "#f4c542", padding: "8px", borderRadius: "8px", marginTop: 0 }}>Value (Nilai)</p>
-          {selectedKey !== null ? (
-            <div style={{ padding: "15px", backgroundColor: "#e8f1ff", borderRadius: "8px", minHeight: "100px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "18px", fontWeight: "bold" }}>
-              {data[selectedKey].value}
-            </div>
-          ) : (
-            <div style={{ padding: "15px", backgroundColor: "#e9ecef", borderRadius: "8px", minHeight: "100px", display: "flex", alignItems: "center", justifyContent: "center", color: "#6c757d" }}>
-              Klik key untuk melihat value
-            </div>
-          )}
-        </div>
-      </div>
-      <div style={{ marginTop: "15px", backgroundColor: "#e8f1ff", padding: "10px", borderRadius: "8px" }}>
-        <strong>📌 Dalam Python:</strong>
-        <pre style={{ backgroundColor: "#272822", color: "#f8f8f2", padding: "10px", borderRadius: "6px", overflow: "auto", fontSize: "13px", marginTop: "8px" }}>
-{`warna = {"apel": "merah", "pisang": "kuning", "anggur": "ungu"}
-print(warna["apel"])  # output: merah`}
-        </pre>
-      </div>
-      <p style={{ fontSize: "13px", marginTop: "15px", textAlign: "center", color: "#555" }}>
-        💡 Klik pada key (apel, pisang, atau anggur) → value (warna) akan muncul. Ini simulasi cara dictionary bekerja.
-      </p>
-    </div>
-  );
-};
-
-// ===================== KOMPONEN KARAKTERISTIK INTERAKTIF =====================
-const KarakteristikList = () => {
-  const [activeIndex, setActiveIndex] = useState(null);
-
-  const karakteristik = [
-    {
-      judul: "Key unik",
-      penjelasan: "Tidak boleh ada dua key yang sama. Jika kamu menuliskan key yang sama lagi, nilai sebelumnya akan tertimpa. Ini seperti di kamus: satu kata hanya punya satu arti."
-    },
-    {
-      judul: "Key harus immutable (tidak bisa diubah)",
-      penjelasan: "Key hanya boleh menggunakan tipe data yang nilainya tetap setelah dibuat. Contoh key yang boleh: string (\"nama\"), integer (10), tuple ((\"x\", \"y\")). Mengapa list tidak bisa dijadikan key? Karena list bersifat mutable (bisa diubah-ubah isinya). Jika list dijadikan key lalu isinya diubah, maka dictionary akan bingung karena key-nya berubah."
-    },
-    {
-      judul: "Value boleh mutable (bisa diubah)",
-      penjelasan: "Berbeda dengan key, nilai (value) dalam dictionary bisa berupa tipe data apa pun, termasuk yang mutable seperti list atau dictionary lain. Kamu bisa mengubah isi value kapan saja."
-    },
-    {
-      judul: "Dictionary itu sendiri mutable",
-      penjelasan: "Kamu bisa menambah, mengubah, atau menghapus pasangan key-value setelah dictionary dibuat. Ukuran dictionary otomatis menyesuaikan."
-    },
-    {
-      judul: "Urutan item terjaga sesuai urutan penyisipan",
-      penjelasan: "Dictionary 'mengingat' urutan saat kamu memasukkan item. Misalnya kamu tambah key 'nama' dulu, lalu 'umur', maka saat dilihat atau diiterasi, urutannya tetap 'nama' dulu baru 'umur'."
+  const handleAnswerChange = (idx, value) => {
+    if (checked && feedback === "Benar!") return;
+    if (checked) {
+      setChecked(false);
+      setFeedback("");
     }
-  ];
+    const newAnswers = [...answers];
+    newAnswers[idx] = value;
+    setAnswers(newAnswers);
+    if (isEmptyError) setIsEmptyError(false);
+  };
+
+  const handleCheck = () => {
+    const allFilled = answers.every(ans => ans.trim() !== "");
+    if (!allFilled) {
+      setIsEmptyError(true);
+      setFeedback("Lengkapi semua isian terlebih dahulu!");
+      setChecked(false);
+      return;
+    }
+    setIsEmptyError(false);
+
+    let allCorrect = true;
+    for (let i = 0; i < expectedAnswers.length; i++) {
+      const userAnswer = answers[i].trim().replace(/["']/g, '"');
+      const expected = expectedAnswers[i].replace(/["']/g, '"');
+      if (userAnswer !== expected) {
+        allCorrect = false;
+        break;
+      }
+    }
+    setChecked(true);
+    if (allCorrect) {
+      setFeedback("Benar!");
+    } else {
+      setFeedback("Jawaban Kamu Salah. Coba lagi!");
+    }
+  };
+
+  const getInputSize = (answer, placeholder) => {
+    const length = Math.max(answer.length, placeholder?.length || 0, 10);
+    return length + 2;
+  };
+
+  const renderCodeWithInputs = () => {
+    const result = [];
+    for (let i = 0; i < codeParts.length; i++) {
+      result.push(<span key={`text-${i}`}>{codeParts[i]}</span>);
+      if (i < placeholders.length) {
+        const isCorrectAndLocked = (checked && feedback === "Benar!");
+        result.push(
+          <input
+            key={`input-${i}`}
+            type="text"
+            size={getInputSize(answers[i], placeholders[i])}
+            style={styles.inlineInput}
+            value={answers[i]}
+            onChange={(e) => handleAnswerChange(i, e.target.value)}
+            disabled={isCorrectAndLocked}
+            placeholder={placeholders[i] || "..."}
+          />
+        );
+      }
+    }
+    return result;
+  };
+
+  const showReset = checked && feedback && feedback !== "Benar!";
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: "15px", marginTop: "15px" }}>
-      {karakteristik.map((item, idx) => (
-        <div key={idx} style={{ border: "1px solid #306998", borderRadius: "10px", overflow: "hidden", transition: "0.2s" }}>
-          <div
-            onClick={() => setActiveIndex(activeIndex === idx ? null : idx)}
-            style={{
-              padding: "15px",
-              backgroundColor: activeIndex === idx ? "#306998" : "#f0f6ff",
-              color: activeIndex === idx ? "white" : "#306998",
-              fontWeight: "bold",
-              cursor: "pointer",
-              transition: "0.2s",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center"
-            }}
-          >
-            <span>{item.judul}</span>
-            <span style={{ fontSize: "18px" }}>{activeIndex === idx ? "▲" : "▼"}</span>
-          </div>
-          {activeIndex === idx && (
-            <div style={{ padding: "15px", backgroundColor: "#ffffff", borderTop: "1px solid #306998", lineHeight: "1.6" }}>
-              {item.penjelasan}
-            </div>
-          )}
-        </div>
-      ))}
+    <div style={styles.questionCard}>
+      <p style={styles.questionText}>{question}</p>
+      <pre style={styles.codeTemplateInline}>
+        {renderCodeWithInputs()}
+      </pre>
+      <div style={{ display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap" }}>
+        <button style={styles.checkButton} onClick={handleCheck} disabled={checked && feedback === "Benar!"}>
+          Periksa
+        </button>
+        {showReset && (
+          <button style={styles.resetButtonPerSoal} onClick={resetQuestion}>
+            Reset Jawaban
+          </button>
+        )}
+      </div>
+      {feedback && <div style={styles.feedback}>{feedback}</div>}
     </div>
   );
 };
 
-// ===================== MAIN COMPONENT =====================
-export default function PendahuluanDictionary() {
+// ===================== KOMPONEN UTAMA =====================
+export default function PembuatanAksesElementDictionary() {
   const [pyodideReady, setPyodideReady] = useState(false);
   const pyodideRef = useRef(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -273,31 +376,25 @@ export default function PendahuluanDictionary() {
 
   const eksplorasiQuestions = [
     {
-      text: "Dictionary dalam Python adalah ...",
-      options: [
-        "Kumpulan data berurutan yang diakses dengan indeks angka",
-        "Kumpulan pasangan key-value yang memiliki key unik",
-        "Kumpulan data yang hanya bisa menyimpan tipe angka",
-        "Struktur data yang hanya bisa diubah sekali (immutable)",
-        "Sama seperti list tetapi lebih cepat",
-      ],
+      text: "Berikut ini cara membuat dictionary kosong yang benar di Python adalah ...",
+      options: ["data = []", "data = ()", "data = {}", "data = dict[]", "data = set()"],
+      correct: 2,
+    },
+    {
+      text: "Perhatikan kode berikut:\n\n`mahasiswa = {\"nama\": \"Budi\", \"nim\": \"123\"}`\n\nApa output dari `print(mahasiswa[\"nama\"])`?",
+      options: ["mahasiswa", "Budi", "nama", "123", "Error"],
       correct: 1,
     },
     {
-      text: "Tipe data berikut yang TIDAK boleh digunakan sebagai key dalam dictionary adalah ...",
-      options: ["String", "Integer", "Tuple", "List", "Float"],
-      correct: 3,
-    },
-    {
-      text: "Sifat dictionary di Python yang benar adalah ...",
+      text: "Berikut ini cara mengakses nilai dictionary dengan aman (tidak menyebabkan error jika key tidak ada) adalah ...",
       options: [
-        "Dictionary bersifat immutable (tidak bisa diubah)",
-        "Dictionary tidak mempertahankan urutan item",
-        "Dictionary bersifat mutable dan mempertahankan urutan item sesuai penyisipan",
-        "Dictionary hanya bisa menyimpan data bertipe string",
-        "Dictionary memiliki indeks numerik seperti list",
+        "dict[key]",
+        "dict.get(key)",
+        "dict[key] if key in dict",
+        "dict.key",
+        "dict[key] else default"
       ],
-      correct: 2,
+      correct: 1,
     },
   ];
 
@@ -328,11 +425,118 @@ export default function PendahuluanDictionary() {
     }
   }, [eksplorasiHasAnswered, isEksplorasiCompleted]);
 
-  // Pyodide (tetap untuk kebutuhan lain)
+  // Data untuk visualisasi
+  const dictMembuat = {
+    nama: "Budi Santoso",
+    nim: "12345678",
+    jurusan: "Informatika"
+  };
+  const dictAkses = {
+    nama: "Budi Santoso",
+    nim: "12345678",
+    jurusan: "Informatika",
+    alamat: "Tidak tersedia" // untuk keperluan get default, tapi di visualisasi tetap sama
+  };
+  // Untuk akses, sequence key sesuai urutan di kode: "nama", "nim", "jurusan", "alamat" (walaupun alamat tidak ada)
+  const accessSequence = ["nama", "nim", "jurusan", "alamat"];
+
+  const exampleCodes = {
+    membuatDict: `mahasiswa = {
+    "nama": "Budi Santoso",
+    "nim": "12345678",
+    "jurusan": "Informatika"
+}
+print("Dictionary mahasiswa:")
+print(mahasiswa)
+
+data = dict(nama="Ani", usia=20, kota="Jakarta")
+print("\\nDictionary data:")
+print(data)`,
+    aksesDict: `mahasiswa = {
+    "nama": "Budi Santoso",
+    "nim": "12345678",
+    "jurusan": "Informatika"
+}
+
+print("Nama:", mahasiswa["nama"])
+print("NIM:", mahasiswa["nim"])
+
+print("Jurusan:", mahasiswa.get("jurusan"))
+print("Alamat:", mahasiswa.get("alamat", "Tidak tersedia"))`,
+  };
+
+  const explanations = {
+    membuatDict: [
+      "Mendeklarasikan dictionary dengan nama 'mahasiswa' menggunakan kurung kurawal.",
+      "Key 'nama' dengan value 'Budi Santoso' (string).",
+      "Key 'nim' dengan value '12345678' (string).",
+      "Key 'jurusan' dengan value 'Informatika' (string).",
+      "Menutup kurung kurawal dictionary.",
+      "Mencetak teks 'Dictionary mahasiswa:' ke layar.",
+      "Mencetak isi dictionary 'mahasiswa' (menampilkan semua pasangan key-value).",
+      "Baris kosong sebagai pemisah output.",
+      "Membuat dictionary 'data' menggunakan fungsi dict() dengan argumen keyword: nama='Ani', usia=20, kota='Jakarta'.",
+      "Mencetak teks '\\nDictionary data:' (newline di awal).",
+      "Mencetak isi dictionary 'data'."
+    ],
+    aksesDict: [
+      "Mendeklarasikan dictionary 'mahasiswa' dengan 3 pasangan key-value.",
+      "Key 'nama' dengan value 'Budi Santoso'.",
+      "Key 'nim' dengan value '12345678'.",
+      "Key 'jurusan' dengan value 'Informatika'.",
+      "Menutup kurung kurawal.",
+      "Baris kosong.",
+      "Mencetak teks 'Nama:' diikuti dengan nilai dari key 'nama' menggunakan tanda kurung siku (akses langsung).",
+      "Mencetak teks 'NIM:' diikuti dengan nilai dari key 'nim'.",
+      "Baris kosong.",
+      "Mencetak 'Jurusan:' dengan nilai dari key 'jurusan' menggunakan metode get(). get() akan mengembalikan None jika key tidak ada, tapi di sini key ada.",
+      "Mencetak 'Alamat:' dengan nilai dari key 'alamat'. Karena key 'alamat' tidak ada, get() mengembalikan nilai default 'Tidak tersedia'."
+    ],
+  };
+
+  // Soal latihan
+  const soal1CodeParts = [
+    "data = {\n    \"nama\": \"Budi\",\n    ",
+    ": 20,\n    \"kota\": \"Jakarta\"\n}\nprint(data)"
+  ];
+  const soal1Placeholders = ["..."];
+  const soal1Expected = ["\"usia\""];
+
+  const soal2CodeParts = [
+    "data = dict(",
+    "=\"Andi\", umur=22, kota=\"Bandung\")\nprint(data[\"",
+    "\"])"
+  ];
+  const soal2Placeholders = ["...", "..."];
+  const soal2Expected = ["nama", "nama"];
+
+  const soal3CodeParts = [
+    "nilai = {\n    \"Matematika\": 85,\n    \"Fisika\": 90,\n    \"Kimia\": 78\n}\nprint(\"Nilai Fisika:\", nilai[",
+    "])"
+  ];
+  const soal3Placeholders = ["..."];
+  const soal3Expected = ["\"Fisika\""];
+
+  const soal4CodeParts = [
+    "data = {\"nama\": \"Citra\", \"usia\": 19}\nprint(data.get(",
+    ", \"Tidak ditemukan\"))  # akan mencetak \"Tidak ditemukan\" karena key tidak ada"
+  ];
+  const soal4Placeholders = ["..."];
+  const soal4Expected = ["\"alamat\""];
+
+  const soal5CodeParts = [
+    "siswa = {\n    \"nama\": \"Rina\",\n    \"kelas\": \"XII\",\n    ",
+    ": 17\n}\nprint(\"Nama:\", siswa[",
+    "])"
+  ];
+  const soal5Placeholders = ["...", "..."];
+  const soal5Expected = ["\"usia\"", "\"nama\""];
+
+  // Load Pyodide
   useEffect(() => {
     const loadPyodide = async () => {
       if (!window.loadPyodide) {
-        const script = document.createElement("script");
+        const script = document.createElement('script');
         script.src = "https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js";
         script.async = true;
         script.onload = async () => {
@@ -354,7 +558,7 @@ export default function PendahuluanDictionary() {
     if (!pyodideRef.current) return "Pyodide sedang dimuat...";
     try {
       const pyodide = pyodideRef.current;
-      const escapedCode = code.replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\n/g, "\\n");
+      const escapedCode = code.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n');
       const result = await pyodide.runPythonAsync(`
 import sys
 from io import StringIO
@@ -378,19 +582,28 @@ _buffer.getvalue()
     <>
       <Navbar />
       <SidebarMateri isOpen={isSidebarOpen} onToggle={() => setIsSidebarOpen(!isSidebarOpen)} />
-      <div className="main-content" style={{ marginLeft: isSidebarOpen ? "280px" : "0", transition: "margin-left 0.3s ease", paddingTop: "64px", minHeight: "100vh", width: "auto" }}>
+      <div 
+        className="main-content"
+        style={{ 
+          marginLeft: isSidebarOpen ? "280px" : "0",
+          transition: "margin-left 0.3s ease",
+          paddingTop: "64px",
+          minHeight: "100vh",
+          width: "auto",
+        }}
+      >
         <div style={styles.page}>
           <div style={styles.header}>
             <div style={styles.headerAccent}></div>
-            <h1 style={styles.headerTitle}>PENDAHULUAN DICTIONARY</h1>
+            <h1 style={styles.headerTitle}>PEMBUATAN DAN AKSES ELEMEN DICTIONARY</h1>
           </div>
 
           <section style={styles.section}>
             <h2 style={styles.sectionTitle}>Tujuan Pembelajaran</h2>
             <div style={styles.card}>
               <ul style={styles.list}>
-                <li>Mahasiswa mampu memahami pengertian dan konsep dasar dictionary dalam Python.</li>
-                <li>Mahasiswa mampu mengidentifikasi karakteristik dictionary.</li>
+                <li>Mahasiswa mampu membuat dictionary.</li>
+                <li>Mahasiswa mampu mengakses nilai dari dictionary.</li>
               </ul>
             </div>
           </section>
@@ -436,14 +649,14 @@ _buffer.getvalue()
                     </div>
                     {eksplorasiFeedback[idx] && (
                       <div style={{ marginTop: "12px", padding: "10px", borderRadius: "8px", backgroundColor: eksplorasiFeedback[idx] === "Benar" ? "#d1e7dd" : "#f8d7da", color: eksplorasiFeedback[idx] === "Benar" ? "#0f5132" : "#842029" }}>
-                        {eksplorasiFeedback[idx] === "Benar" ? "✅ Benar" : "❌ Salah"}
+                        {eksplorasiFeedback[idx] === "Benar" ? "Benar" : "Salah"}
                       </div>
                     )}
                   </div>
                 );
               })}
               {!isEksplorasiCompleted && (
-                <div style={styles.lockMessage}>🔒 Materi terkunci. Jawab semua pertanyaan di atas untuk membuka materi.</div>
+                <div style={styles.lockMessage}>Materi terkunci. Jawab semua pertanyaan di atas untuk membuka materi.</div>
               )}
             </div>
           </section>
@@ -451,78 +664,103 @@ _buffer.getvalue()
           {isEksplorasiCompleted && (
             <>
               <section style={styles.section}>
-                <h2 style={styles.sectionTitle}>Apa Itu Dictionary?</h2>
                 <div style={styles.card}>
-                  <p style={styles.text}>
-                    <strong>Dictionary</strong> adalah struktur data dalam Python yang digunakan untuk menyimpan kumpulan data dalam
-                    bentuk <strong>pasangan key (kunci) dan value (nilai)</strong>. Setiap key bersifat unik dan digunakan untuk mengakses
-                    nilai yang terkait. Dictionary bersifat <strong>mutable</strong> (dapat diubah) dan tidak memiliki
-                    indeks numerik seperti list, melainkan menggunakan key sebagai pengganti indeks.
-                  </p>
-                  <p style={styles.text}>
-                    Dictionary didefinisikan dengan kurung kurawal <code style={styles.inlineCode}>{`{}`}</code> dan setiap
-                    pasangan key-value dipisahkan oleh titik dua <code style={styles.inlineCode}>:</code>. Key harus berupa
-                    tipe data yang immutable (string, integer, tuple), sedangkan value dapat berupa tipe data apa pun (list, dictionary lain,
-                    fungsi, dll).
-                  </p>
-                  <div style={styles.infoBox}>
-                    <strong>📖 Analogi:</strong> Seperti kamus, kita mencari arti (value) berdasarkan kata (key). Di bawah ini adalah simulasi interaktif:
-                  </div>
-                  <KamusAnalogiVisual />
+                  <h3 style={styles.subTitle}>1. Membuat Dictionary</h3>
+                  <p style={styles.text}>Dictionary dapat dibuat dengan dua cara: menggunakan kurung kurawal <code>{`{}`}</code> atau fungsi <code>dict()</code>.</p>
+                  <CodeEditor 
+                    code={exampleCodes.membuatDict} 
+                    codeKey="membuatDict" 
+                    pyodideReady={pyodideReady} 
+                    runPythonCode={runPythonCode} 
+                    explanations={explanations.membuatDict}
+                    visualizationData={{
+                      dictionary: dictMembuat,
+                      accessSequence: [],
+                      title: "Visualisasi Dictionary setelah dibuat"
+                    }}
+                  />
+                  <h3 style={styles.subTitle}>2. Mengakses Nilai Dictionary</h3>
+                  <p style={styles.text}>Ada dua cara mengakses nilai: menggunakan <code>nama_dict["key"]</code> (akan error jika key tidak ada) atau metode <code>.get("key", default)</code> (lebih aman).</p>
+                  <CodeEditor 
+                    code={exampleCodes.aksesDict} 
+                    codeKey="aksesDict" 
+                    pyodideReady={pyodideReady} 
+                    runPythonCode={runPythonCode} 
+                    explanations={explanations.aksesDict}
+                    visualizationData={{
+                      dictionary: dictAkses,
+                      accessSequence: accessSequence,
+                      title: "Visualisasi Akses Dictionary (animasi)"
+                    }}
+                  />
                 </div>
               </section>
 
               <section style={styles.section}>
-                <h2 style={styles.sectionTitle}>Karakteristik Dasar Dictionary</h2>
+                <h2 style={styles.sectionTitle}>Ayo Praktik</h2>
                 <div style={styles.card}>
-                  <KarakteristikList />
-                  <div style={{ ...styles.infoBox, marginTop: "20px" }}>
-                    <strong>💡 Ringkasan:</strong> Key = <strong>immutable</strong> (tidak boleh berubah), Value = <strong>bebas</strong> (bisa mutable atau immutable),
-                    Dictionary = <strong>mutable</strong> (bisa diubah struktur dan isinya).
+                  <div style={styles.alertBox}>
+                    <strong>Studi Kasus: Data Mahasiswa</strong>
+                    <p style={{ marginTop: "10px", marginBottom: "10px" }}>
+                      Seorang dosen ingin menyimpan data mahasiswa secara terstruktur. Ia membutuhkan sebuah wadah yang bisa menyimpan informasi seperti nama, usia, dan jurusan dengan mudah diakses. 
+                      Python menyediakan dictionary untuk kebutuhan ini, di mana setiap data memiliki label (key) sehingga memudahkan pencarian.
+                    </p>
+                    <p style={{ marginBottom: "5px" }}>Ikuti langkah-langkah berikut untuk menyelesaikan studi kasus ini:</p>
+                    <ul style={{ paddingLeft: "20px" }}>
+                      <li>Buatlah dictionary dengan nama <code>data_mahasiswa</code> yang berisi key: <code>"nama"</code> dengan value <code>"Citra"</code>, key <code>"usia"</code> dengan value <code>22</code>, dan key <code>"jurusan"</code> dengan value <code>"Sistem Informasi"</code>.</li>
+                      <li>Tampilkan nilai dari key <code>"nama"</code> menggunakan <code>print()</code>.</li>
+                      <li>Tampilkan nilai dari key <code>"usia"</code> menggunakan <code>print()</code>.</li>
+                    </ul>
                   </div>
-                </div>
-              </section>
-
-              <section style={styles.section}>
-                <h2 style={styles.sectionTitle}>Perbandingan Dictionary vs List</h2>
-                <div style={styles.card}>
-                  <p style={styles.text}>Agar lebih paham, mari bandingkan dictionary dengan list.</p>
-                  <table style={styles.table}>
-                    <thead>
-                      <tr style={styles.tableHeader}>
-                        <th style={styles.tableCell}>Aspek</th>
-                        <th style={styles.tableCell}>List</th>
-                        <th style={styles.tableCell}>Dictionary</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      <tr>
-                        <td style={styles.tableCell}>Cara mengakses data</td>
-                        <td style={styles.tableCell}>Menggunakan nomor urut (indeks): <code>data[0]</code>, <code>data[1]</code>, dst.</td>
-                        <td style={styles.tableCell}>Menggunakan kunci (key): <code>data["nama"]</code>, <code>data["umur"]</code>.</td>
-                      </tr>
-                      <tr>
-                        <td style={styles.tableCell}>Urutan data</td>
-                        <td style={styles.tableCell}>Urutan pasti sesuai indeks. Bisa dipotong (slice).</td>
-                        <td style={styles.tableCell}>Urutan diingat sesuai urutan penyisipan (tidak bisa slice).</td>
-                      </tr>
-                      <tr>
-                        <td style={styles.tableCell}>Batasan “kunci”</td>
-                        <td style={styles.tableCell}>Tidak ada konsep kunci, hanya indeks angka.</td>
-                        <td style={styles.tableCell}>Key harus unik dan immutable (string, integer, tuple).</td>
-                      </tr>
-                    </tbody>
-                  </table>
-                  <div style={styles.infoBox}>
-                    <strong>💡 Analogi sederhana:</strong> List seperti rak buku bernomor. Dictionary seperti lemari berlabel.
-                  </div>
+                  <CodeEditorEditable 
+                    codeKey="latihan" 
+                    title="Ayo Praktik: Membuat dan Mengakses Dictionary" 
+                    pyodideReady={pyodideReady} 
+                    runPythonCode={runPythonCode} 
+                    expectedOutput={["Citra", "22"]} 
+                  />
                 </div>
               </section>
 
               <section style={styles.section}>
                 <h2 style={styles.sectionTitle}>Latihan</h2>
                 <div style={styles.card}>
-                  <InteractiveLatihan />
+                  <p style={styles.text}>Lengkapi kode berikut dengan mengetikkan jawaban pada kotak yang tersedia. Latihan ini akan menguji kemampuan Anda dalam membuat dictionary dan mengakses elemennya.</p>
+                  
+                  <CodeCompletionQuestion 
+                    question="1. Lengkapi kode untuk membuat dictionary dengan key 'usia' yang bernilai 20." 
+                    codeParts={soal1CodeParts} 
+                    placeholders={soal1Placeholders} 
+                    expectedAnswers={soal1Expected} 
+                  />
+
+                  <CodeCompletionQuestion 
+                    question="2. Lengkapi kode untuk membuat dictionary menggunakan fungsi dict() dengan key 'nama' dan menampilkan nilai 'nama'." 
+                    codeParts={soal2CodeParts} 
+                    placeholders={soal2Placeholders} 
+                    expectedAnswers={soal2Expected} 
+                  />
+
+                  <CodeCompletionQuestion 
+                    question="3. Lengkapi kode untuk mengakses nilai dari key 'Fisika' menggunakan tanda kurung siku []." 
+                    codeParts={soal3CodeParts} 
+                    placeholders={soal3Placeholders} 
+                    expectedAnswers={soal3Expected} 
+                  />
+
+                  <CodeCompletionQuestion 
+                    question="4. Lengkapi kode untuk mengakses nilai dari key 'alamat' menggunakan metode get() (key tidak ada, akan mencetak 'Tidak ditemukan')." 
+                    codeParts={soal4CodeParts} 
+                    placeholders={soal4Placeholders} 
+                    expectedAnswers={soal4Expected} 
+                  />
+
+                  <CodeCompletionQuestion 
+                    question="5. Lengkapi kode untuk menambahkan key 'usia' dan mengakses key 'nama' pada dictionary siswa." 
+                    codeParts={soal5CodeParts} 
+                    placeholders={soal5Placeholders} 
+                    expectedAnswers={soal5Expected} 
+                  />
                 </div>
               </section>
             </>
@@ -533,6 +771,7 @@ _buffer.getvalue()
   );
 }
 
+/* ================== STYLE ================== */
 const styles = {
   page: {
     padding: "30px 40px",
@@ -583,51 +822,196 @@ const styles = {
   },
   list: { paddingLeft: "20px", lineHeight: "1.8" },
   text: { lineHeight: "1.8", color: "#333" },
-  inlineCode: {
-    backgroundColor: "#f0f0f0",
-    padding: "2px 6px",
-    borderRadius: "4px",
-    fontFamily: "monospace",
-  },
-  infoBox: {
-    backgroundColor: "#e7f3ff",
-    borderLeft: "5px solid #306998",
-    padding: "12px 15px",
-    margin: "15px 0",
+  subTitle: { marginTop: "20px", marginBottom: "10px", color: "#306998" },
+  alertBox: {
+    backgroundColor: "#fff3cd",
+    border: "1px solid #ffc107",
     borderRadius: "6px",
+    padding: "15px",
+    marginBottom: "15px",
+    color: "#856404",
   },
-  table: {
-    width: "100%",
-    borderCollapse: "collapse",
-    lineHeight: "1.8",
+  codeEditorContainer: {
+    border: "2px solid #306998",
+    borderRadius: "10px",
+    overflow: "hidden",
+    marginBottom: "20px",
+    backgroundColor: "#1e1e1e",
+    marginTop: "15px"
   },
-  tableHeader: {
+  codeEditorHeader: {
     backgroundColor: "#306998",
     color: "white",
+    padding: "12px 15px",
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center"
   },
-  tableCell: {
+  codeEditorTitle: { fontWeight: "600", fontSize: "15px", display: "flex", alignItems: "center", gap: "8px" },
+  runButton: {
+    backgroundColor: "#FFD43B",
+    color: "#306998",
+    border: "none",
+    padding: "8px 20px",
+    borderRadius: "6px",
+    cursor: "pointer",
+    fontWeight: "600",
+    fontSize: "14px",
+  },
+  errorBox: {
+    backgroundColor: "#ff4444",
+    color: "white",
+    padding: "12px 15px",
+    fontSize: "14px",
+    fontWeight: "500",
+    borderBottom: "2px solid #cc0000",
+  },
+  codeInputReadOnly: {
+    width: "100%",
+    minHeight: "100px",
+    backgroundColor: "#272822",
+    color: "#f8f8f2",
+    border: "none",
+    padding: "15px",
+    fontFamily: "monospace",
+    fontSize: "14px",
+    overflow: "auto"
+  },
+  codePre: { margin: 0, whiteSpace: "pre-wrap", wordWrap: "break-word", fontFamily: "monospace" },
+  codeInputEditable: {
+    width: "100%",
+    minHeight: "250px",
+    backgroundColor: "#272822",
+    color: "#f8f8f2",
+    border: "none",
+    padding: "15px",
+    fontFamily: "monospace",
+    fontSize: "14px",
+    resize: "vertical",
+    outline: "none",
+    boxSizing: "border-box",
+    tabSize: 4,
+  },
+  outputHeader: {
+    backgroundColor: "#306998",
+    color: "white",
+    padding: "10px 15px",
+    borderTop: "2px solid #1e1e1e"
+  },
+  outputTitle: { fontWeight: "600", fontSize: "15px" },
+  codeOutput: { backgroundColor: "#1e1e1e", padding: "15px", minHeight: "80px" },
+  outputContent: {
+    color: "#4af",
+    fontFamily: "monospace",
+    fontSize: "14px",
+    margin: 0,
+    whiteSpace: "pre-wrap",
+    wordWrap: "break-word",
+    lineHeight: "1.5"
+  },
+  explanationsContainer: {
+    borderTop: "1px solid #444",
+    backgroundColor: "#2d2d2d",
+    marginTop: "0",
+  },
+  explanationsHeader: {
+    backgroundColor: "#306998",
+    color: "white",
+    padding: "10px 15px",
+  },
+  explanationsTitle: {
+    fontWeight: "600",
+    fontSize: "15px",
+  },
+  explanationsContent: {
+    padding: "15px",
+    fontFamily: "monospace",
+    fontSize: "13px",
+    lineHeight: "1.6",
+    color: "#ddd",
+  },
+  explanationItem: {
+    marginBottom: "8px",
+    display: "flex",
+    flexWrap: "wrap",
+    alignItems: "baseline",
+    gap: "8px",
+  },
+  lineNumber: {
+    color: "#FFD43B",
+    fontWeight: "bold",
+    minWidth: "60px",
+  },
+  lineCode: {
+    backgroundColor: "#3c3c3c",
+    padding: "2px 6px",
+    borderRadius: "4px",
+    color: "#f8f8f2",
+    fontFamily: "monospace",
+  },
+  lineExplanation: {
+    color: "#ccc",
+    flex: "1",
+  },
+  questionCard: {
+    backgroundColor: "#f9f9f9",
+    borderRadius: "8px",
+    padding: "15px",
+    marginBottom: "20px",
+    border: "1px solid #ddd"
+  },
+  questionText: { fontWeight: "500", marginBottom: "10px" },
+  codeTemplateInline: {
+    backgroundColor: "#272822",
+    color: "#f8f8f2",
     padding: "10px",
-    border: "1px solid #ddd",
-    verticalAlign: "top",
+    borderRadius: "6px",
+    fontFamily: "monospace",
+    fontSize: "14px",
+    overflowX: "auto",
+    whiteSpace: "pre-wrap",
+    wordBreak: "break-word",
+    marginBottom: "10px"
   },
+  inlineInput: {
+    backgroundColor: "#fff",
+    color: "#000",
+    border: "1px solid #ccc",
+    borderRadius: "4px",
+    padding: "4px 8px",
+    margin: "0 2px",
+    fontFamily: "monospace",
+    fontSize: "14px",
+    textAlign: "center",
+    outline: "none",
+    boxSizing: "content-box",
+  },
+  checkButton: {
+    backgroundColor: "#28a745",
+    color: "white",
+    border: "none",
+    padding: "8px 16px",
+    borderRadius: "6px",
+    cursor: "pointer",
+    fontSize: "14px",
+    marginRight: "10px"
+  },
+  resetButtonPerSoal: {
+    backgroundColor: "#ffc107",
+    color: "#212529",
+    border: "none",
+    padding: "8px 16px",
+    borderRadius: "6px",
+    cursor: "pointer",
+    fontSize: "14px",
+  },
+  feedback: { marginTop: "8px", fontSize: "14px", fontStyle: "italic", color: "#333" },
   eksplorasiOption: {
     padding: "12px",
     borderRadius: "8px",
     transition: "all 0.2s",
     border: "1px solid #ddd",
     backgroundColor: "#f9f9f9",
-  },
-  checkAllButton: {
-    marginTop: "20px",
-    backgroundColor: "#306998",
-    color: "white",
-    border: "none",
-    padding: "12px 24px",
-    borderRadius: "8px",
-    cursor: "pointer",
-    fontWeight: "600",
-    fontSize: "16px",
-    width: "100%",
   },
   lockMessage: {
     marginTop: "20px",
