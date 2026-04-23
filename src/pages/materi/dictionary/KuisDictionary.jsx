@@ -276,14 +276,14 @@ export default function KuisDictionary() {
             <div style={styles.cardInstruction}>
               <h2 style={styles.instructionTitle}>Petunjuk Pengerjaan</h2>
               <ul style={styles.instructionList}>
-                <li>Kuis terdiri dari 10 soal (5 pilihan ganda + 5 drag-drop).</li>
+                <li>Kuis terdiri dari 10 soal.</li>
                 <li>Setiap soal bernilai 10 poin (total maksimal 100).</li>
                 <li>Waktu pengerjaan: 20 menit (timer berjalan setelah mulai).</li>
                 <li>Jika waktu habis, jawaban yang sudah terisi akan tersimpan dan terkirim secara otomatis.</li>
-                <li>Gunakan fitur "Flag" (🚩) dan "Ragu" (🤔) untuk menandai soal.</li>
-                <li>Navigasi soal melalui panel kotak nomor di sebelah kanan.</li>
+                {/* <li>Gunakan fitur "Flag" (🚩) dan "Ragu" (🤔) untuk menandai soal.</li> */}
+                {/* <li>Navigasi soal melalui panel kotak nomor di sebelah kanan.</li> */}
                 <li>Pastikan semua jawaban sudah dipilih sebelum menekan KUMPULKAN JAWABAN.</li>
-                <li>Nilai minimal kelulusan (KKM) adalah 70.</li>
+                <li>Pastikan perangkat terhubung dengan koneksi internet yang stabil.</li>
               </ul>
               <button className="btn-hover-primary" style={styles.startButton} onClick={startQuiz}>MULAI KUIS</button>
             </div>

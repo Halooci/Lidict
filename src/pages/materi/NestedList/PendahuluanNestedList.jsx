@@ -36,10 +36,122 @@ const CodeEditor = ({ code, codeKey, pyodideReady, runPythonCode }) => {
   );
 };
 
-// ===================== KOMPONEN LATIHAN (PILIHAN GANDA) DENGAN SATU TOMBOL CEK =====================
+// ===================== EKSPLORASI =====================
+const Eksplorasi = ({ onComplete }) => {
+  const [selected, setSelected] = useState([null, null]);
+  const [feedback, setFeedback] = useState(["", ""]);
+  const [hasAnswered, setHasAnswered] = useState([false, false]);
+
+  const questions = [
+    {
+      text: "Kita memerlukan nested list dalam pemrograman karena ...",
+      options: [
+        "Nested list lebih cepat dari list biasa",
+        "Untuk menyimpan data yang memiliki struktur bertingkat atau tabel (dua dimensi)",
+        "Program lebih hemat memori",
+        "Nested list tidak dapat diubah",
+        "Untuk menggantikan fungsi percabangan"
+      ],
+      correct: 1,
+    },
+    {
+      text: "Pernyataan yang PALING TEPAT tentang nested list adalah ...",
+      options: [
+        "Nested list adalah list yang hanya berisi angka",
+        "Nested list tidak dapat diakses menggunakan indeks",
+        "Nested list adalah list di dalam list, berguna untuk data dua dimensi atau lebih",
+        "Nested list hanya bisa memiliki satu tingkat",
+        "Nested list sama dengan tuple"
+      ],
+      correct: 2,
+    }
+  ];
+
+  const handleAnswer = (qIdx, optIdx) => {
+    if (hasAnswered[qIdx]) return;
+    setSelected(prev => {
+      const newSel = [...prev];
+      newSel[qIdx] = optIdx;
+      return newSel;
+    });
+    const isCorrect = optIdx === questions[qIdx].correct;
+    setFeedback(prev => {
+      const newFb = [...prev];
+      newFb[qIdx] = isCorrect ? "Benar" : "Salah";
+      return newFb;
+    });
+    setHasAnswered(prev => {
+      const newAns = [...prev];
+      newAns[qIdx] = true;
+      return newAns;
+    });
+  };
+
+  useEffect(() => {
+    if (hasAnswered.every(v => v === true)) {
+      onComplete();
+    }
+  }, [hasAnswered, onComplete]);
+
+  return (
+    <div>
+      <h2 style={styles.sectionTitle}>Eksplorasi Awal</h2>
+      <div style={styles.card}>
+        <p style={styles.text}>
+          Sebelum mempelajari lebih dalam, jawab pertanyaan berikut dengan memilih opsi yang tersedia.
+          <strong style={{ color: "#0d6efd" }}> Materi akan terbuka setelah kedua pertanyaan dijawab.</strong>
+        </p>
+        {questions.map((q, idx) => {
+          const isAnswered = hasAnswered[idx];
+          const selectedIdx = selected[idx];
+          return (
+            <div key={idx} style={{ marginBottom: "30px", borderBottom: "1px solid #e0e0e0", paddingBottom: "20px" }}>
+              <p style={{ fontWeight: "600", marginBottom: "12px" }}>{idx + 1}. {q.text}</p>
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                {q.options.map((opt, optIdx) => {
+                  let optionStyle = styles.eksplorasiOption;
+                  if (isAnswered) {
+                    optionStyle = { ...styles.eksplorasiOptionDisabled };
+                    if (selectedIdx === optIdx) {
+                      const isCorrect = selectedIdx === q.correct;
+                      optionStyle = {
+                        ...optionStyle,
+                        backgroundColor: isCorrect ? "#d4edda" : "#f8d7da",
+                        borderColor: isCorrect ? "#28a745" : "#dc3545",
+                        color: isCorrect ? "#155724" : "#842029",
+                      };
+                    }
+                  }
+                  return (
+                    <div
+                      key={optIdx}
+                      onClick={() => !isAnswered && handleAnswer(idx, optIdx)}
+                      style={optionStyle}
+                    >
+                      {String.fromCharCode(65 + optIdx)}. {opt}
+                    </div>
+                  );
+                })}
+              </div>
+              {feedback[idx] && (
+                <div style={feedback[idx] === "Benar" ? styles.feedbackCorrect : styles.feedbackWrong}>
+                  {feedback[idx]}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+// ===================== LATIHAN (DENGAN LOGIKA CEK ULANG) =====================
 const LatihanNestedList = () => {
   const [selected, setSelected] = useState([null, null, null, null, null]);
-  const [status, setStatus] = useState([null, null, null, null, null]); // null: belum dicek, true: benar, false: salah
+  const [locked, setLocked] = useState([false, false, false, false, false]);
+  const [feedbackMsg, setFeedbackMsg] = useState(["", "", "", "", ""]);
+  const [warning, setWarning] = useState(null);
   const [allCorrect, setAllCorrect] = useState(false);
 
   const questions = [
@@ -100,202 +212,131 @@ const LatihanNestedList = () => {
   ];
 
   const handleSelect = (qId, optionIndex) => {
+    if (locked[qId]) return;
     const newSelected = [...selected];
     newSelected[qId] = optionIndex;
     setSelected(newSelected);
-    // Reset status soal tersebut jika sudah pernah dicek
-    if (status[qId] !== null) {
-      const newStatus = [...status];
-      newStatus[qId] = null;
-      setStatus(newStatus);
-      setAllCorrect(false);
-    }
+    if (allCorrect) setAllCorrect(false);
+    const newFeedback = [...feedbackMsg];
+    newFeedback[qId] = "";
+    setFeedbackMsg(newFeedback);
+    setWarning(null);
   };
 
   const handleCheckAll = () => {
-    let allTrue = true;
-    const newStatus = [...status];
+    const allAnswered = selected.every(sel => sel !== null);
+    if (!allAnswered) {
+      setWarning("⚠️ Semua soal harus dijawab terlebih dahulu sebelum diperiksa.");
+      return;
+    }
+    setWarning(null);
+
+    let newLocked = [...locked];
+    let newFeedback = [...feedbackMsg];
+    let allNowCorrect = true;
+
     for (let i = 0; i < questions.length; i++) {
+      if (locked[i]) {
+        newFeedback[i] = "benar";
+        continue;
+      }
       const isCorrect = (selected[i] === questions[i].correct);
-      newStatus[i] = isCorrect;
-      if (!isCorrect) allTrue = false;
+      if (isCorrect) {
+        newLocked[i] = true;
+        newFeedback[i] = "benar";
+      } else {
+        newLocked[i] = false;
+        newFeedback[i] = "salah";
+        allNowCorrect = false;
+      }
     }
-    setStatus(newStatus);
-    setAllCorrect(allTrue);
-  };
-
-  const handleReset = () => {
-    setSelected([null, null, null, null, null]);
-    setStatus([null, null, null, null, null]);
-    setAllCorrect(false);
+    setLocked(newLocked);
+    setFeedbackMsg(newFeedback);
+    setAllCorrect(allNowCorrect);
   };
 
   return (
-    <div style={styles.quizContainer}>
-      <h3 style={styles.quizTitle}>Latihan: Pilihan Ganda</h3>
-      <p style={styles.text}>Jawab semua soal dengan memilih opsi yang benar. Klik "Cek Semua Jawaban" untuk memeriksa. Jawaban yang salah dapat diperbaiki dan dicek kembali.</p>
-      {questions.map((q, idx) => (
-        <div key={idx} style={styles.questionCard}>
-          <p style={styles.questionText}>{idx+1}. {q.text}</p>
-          <div style={styles.options}>
-            {q.options.map((opt, optIdx) => (
-              <label key={optIdx} style={styles.optionLabel}>
-                <input
-                  type="radio"
-                  name={`q${idx}`}
-                  value={optIdx}
-                  checked={selected[idx] === optIdx}
-                  onChange={() => handleSelect(idx, optIdx)}
-                  style={styles.radio}
-                />
-                <span style={{ marginLeft: "8px" }}>{opt}</span>
-              </label>
-            ))}
-          </div>
-          {status[idx] !== null && (
-            <div style={{ marginTop: "8px", fontSize: "14px", fontStyle: "italic", color: status[idx] ? "#28a745" : "#dc3545" }}>
-              {status[idx] ? "✅ Benar" : "❌ Salah"}
-            </div>
-          )}
-        </div>
-      ))}
-      <div style={{ display: "flex", gap: "10px", marginTop: "15px" }}>
-        <button style={styles.checkAllButton} onClick={handleCheckAll}>🔍 Cek Semua Jawaban</button>
-        <button style={styles.resetButton} onClick={handleReset}>↻ Reset Semua Jawaban</button>
-      </div>
-      {allCorrect && (
-        <div style={styles.resultBox}>
-          <strong>🎉 Selamat! Semua jawaban benar. Anda telah menguasai materi nested list.</strong>
-        </div>
-      )}
-    </div>
-  );
-};
-
-// ===================== EKSPLORASI (PRA TES) - DIREVISI =====================
-const Eksplorasi = ({ onComplete }) => {
-  const [selected, setSelected] = useState([null, null]); // pilihan user (index opsi)
-  const [feedback, setFeedback] = useState(["", ""]);
-  const [hasAnswered, setHasAnswered] = useState([false, false]); // apakah sudah menjawab (terkunci)
-
-  const questions = [
-    {
-      text: "Kita memerlukan nested list dalam pemrograman karena ...",
-      options: [
-        "Nested list lebih cepat dari list biasa",
-        "Untuk menyimpan data yang memiliki struktur bertingkat atau tabel (dua dimensi)",
-        "Program lebih hemat memori",
-        "Nested list tidak dapat diubah",
-        "Untuk menggantikan fungsi percabangan"
-      ],
-      correct: 1,
-    },
-    {
-      text: "Pernyataan yang PALING TEPAT tentang nested list adalah ...",
-      options: [
-        "Nested list adalah list yang hanya berisi angka",
-        "Nested list tidak dapat diakses menggunakan indeks",
-        "Nested list adalah list di dalam list, berguna untuk data dua dimensi atau lebih",
-        "Nested list hanya bisa memiliki satu tingkat",
-        "Nested list sama dengan tuple"
-      ],
-      correct: 2,
-    }
-  ];
-
-  // Fungsi menangani klik opsi (sekali pilih, langsung terkunci)
-  const handleAnswer = (qIdx, optIdx) => {
-    if (hasAnswered[qIdx]) return; // sudah terjawab, tidak bisa diubah
-
-    // Simpan pilihan
-    setSelected(prev => {
-      const newSel = [...prev];
-      newSel[qIdx] = optIdx;
-      return newSel;
-    });
-
-    // Tentukan feedback Benar/Salah
-    const isCorrect = (optIdx === questions[qIdx].correct);
-    setFeedback(prev => {
-      const newFb = [...prev];
-      newFb[qIdx] = isCorrect ? "Benar" : "Salah";
-      return newFb;
-    });
-
-    // Tandai sudah dijawab
-    setHasAnswered(prev => {
-      const newAns = [...prev];
-      newAns[qIdx] = true;
-      return newAns;
-    });
-  };
-
-  // Memantau apakah semua pertanyaan sudah dijawab
-  useEffect(() => {
-    const allAnswered = hasAnswered.every(v => v === true);
-    if (allAnswered) {
-      onComplete();
-    }
-  }, [hasAnswered, onComplete]);
-
-  return (
-    <div style={styles.eksplorasiContainer}>
-      <h3 style={styles.eksplorasiTitle}>🔍 Eksplorasi</h3>
-      <p style={styles.text}>
-        Sebelum mempelajari materi, jawab pertanyaan berikut dengan memilih opsi yang tersedia.
-        <strong style={{ color: "#0d6efd" }}> Materi akan terbuka setelah kedua pertanyaan dijawab.</strong>
-      </p>
-      {questions.map((q, idx) => {
-        const isAnswered = hasAnswered[idx];
-        const selectedIdx = selected[idx];
-        return (
-          <div key={idx} style={styles.eksplorasiCard}>
-            <p style={styles.questionText}>{idx+1}. {q.text}</p>
-            <div style={styles.options}>
-              {q.options.map((opt, optIdx) => {
-                // Gaya opsi: jika sudah dijawab, semua opsi dinonaktifkan dan opsi yang dipilih diberi warna khusus
-                let optionStyle = {};
-                if (isAnswered) {
-                  optionStyle = { opacity: 0.7, cursor: "not-allowed" };
-                  if (selectedIdx === optIdx) {
-                    const isCorrect = (selectedIdx === q.correct);
-                    optionStyle.backgroundColor = isCorrect ? "#d4edda" : "#f8d7da";
-                    optionStyle.borderColor = isCorrect ? "#28a745" : "#dc3545";
-                    optionStyle.color = isCorrect ? "#155724" : "#842029";
+    <div>
+      <h2 style={styles.sectionTitle}>Latihan</h2>
+      <div style={styles.card}>
+        <p style={styles.text}>
+          Jawab semua soal dengan memilih opsi yang benar. Klik "Cek Semua Jawaban" untuk memeriksa.
+          Soal yang sudah benar akan terkunci. Soal yang salah dapat diperbaiki, lalu periksa kembali.
+        </p>
+        {questions.map((q, idx) => {
+          const isLocked = locked[idx];
+          const selectedIdx = selected[idx];
+          const fb = feedbackMsg[idx];
+          return (
+            <div key={idx} style={{ marginBottom: "30px", borderBottom: "1px solid #e0e0e0", paddingBottom: "20px" }}>
+              <p style={styles.questionText}>{idx+1}. {q.text}</p>
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                {q.options.map((opt, optIdx) => {
+                  let optionStyle = styles.quizOption;
+                  if (isLocked) {
+                    optionStyle = { ...styles.quizOptionDisabled };
+                    if (selectedIdx === optIdx) {
+                      optionStyle = {
+                        ...optionStyle,
+                        backgroundColor: "#d4edda",
+                        borderColor: "#28a745",
+                        color: "#155724",
+                      };
+                    }
+                  } else {
+                    if (selectedIdx === optIdx) {
+                      optionStyle = { ...optionStyle, backgroundColor: "#306998", color: "white", borderColor: "#306998" };
+                    }
                   }
-                }
-                return (
-                  <label
-                    key={optIdx}
-                    style={{ ...styles.optionLabel, ...optionStyle }}
-                  >
-                    <input
-                      type="radio"
-                      name={`eksplorasi${idx}`}
-                      value={optIdx}
-                      checked={selectedIdx === optIdx}
-                      onChange={() => handleAnswer(idx, optIdx)}
-                      disabled={isAnswered}
-                      style={styles.radio}
-                    />
-                    <span style={{ marginLeft: "8px" }}>{opt}</span>
-                  </label>
-                );
-              })}
-            </div>
-            {feedback[idx] && (
-              <div style={{
-                marginTop: "8px",
-                fontSize: "14px",
-                fontStyle: "italic",
-                color: feedback[idx] === "Benar" ? "#28a745" : "#dc3545"
-              }}>
-                {feedback[idx] === "Benar" ? "✅ Benar" : "❌ Salah"}
+                  return (
+                    <div
+                      key={optIdx}
+                      onClick={() => !isLocked && handleSelect(idx, optIdx)}
+                      style={optionStyle}
+                      onMouseEnter={(e) => {
+                        if (!isLocked && selectedIdx !== optIdx) {
+                          e.currentTarget.style.backgroundColor = "#fef9e6";
+                          e.currentTarget.style.borderColor = "#FFD43B";
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!isLocked && selectedIdx !== optIdx) {
+                          e.currentTarget.style.backgroundColor = "#fff";
+                          e.currentTarget.style.borderColor = "#306998";
+                        }
+                      }}
+                    >
+                      {String.fromCharCode(65 + optIdx)}. {opt}
+                    </div>
+                  );
+                })}
               </div>
-            )}
+              {fb === "benar" && (
+                <div style={{ marginTop: "8px", fontSize: "14px", color: "#28a745", fontWeight: "500" }}>
+                  ✓ Benar
+                </div>
+              )}
+              {fb === "salah" && (
+                <div style={{ marginTop: "8px", fontSize: "14px", color: "#dc3545", fontWeight: "500" }}>
+                  ✗ Salah, coba pilih jawaban lain
+                </div>
+              )}
+            </div>
+          );
+        })}
+        {/* Peringatan ditampilkan di sini, tepat di atas tombol */}
+        {warning && <div style={styles.quizWarning}>{warning}</div>}
+        <div style={{ display: "flex", gap: "10px", marginTop: "15px", justifyContent: "center" }}>
+          <button style={styles.checkAllButton} onClick={handleCheckAll}>
+            🔍 Cek Semua Jawaban
+          </button>
+        </div>
+        {allCorrect && (
+          <div style={styles.resultBox}>
+            🎉 Selamat! Semua jawaban sudah dijawab dengan benar.
           </div>
-        );
-      })}
+        )}
+      </div>
     </div>
   );
 };
@@ -405,7 +446,7 @@ _buffer.getvalue()
             <Eksplorasi onComplete={handleEksplorasiComplete} />
           </section>
 
-          {/* MATERI UTAMA (TERKUNCI SAMPAI EKSPLORASI SELESAI) */}
+          {/* MATERI UTAMA */}
           {isEksplorasiCompleted && (
             <>
               <section style={styles.section}>
@@ -466,12 +507,9 @@ _buffer.getvalue()
                 </div>
               </section>
 
-              {/* LATIHAN (PILIHAN GANDA) */}
+              {/* LATIHAN */}
               <section style={styles.section}>
-                <h2 style={styles.sectionTitle}>Latihan</h2>
-                <div style={styles.card}>
-                  <LatihanNestedList />
-                </div>
+                <LatihanNestedList />
               </section>
             </>
           )}
@@ -488,7 +526,7 @@ _buffer.getvalue()
   );
 }
 
-/* ================== STYLE ================== */
+/* ================== STYLE GLOBAL ================== */
 const styles = {
   page: {
     padding: "30px 40px",
@@ -542,14 +580,14 @@ const styles = {
     boxShadow: "0 5px 15px rgba(0,0,0,0.08)",
   },
   list: { paddingLeft: "20px", lineHeight: "1.8" },
-  text: { lineHeight: "1.8", color: "#333" },
-  subTitle: { marginTop: "20px", marginBottom: "10px", color: "#306998" },
+  text: { lineHeight: "1.8", color: "#333", marginBottom: "15px" },
+  subTitle: { marginTop: "20px", marginBottom: "10px", color: "#306998", fontSize: "18px", fontWeight: "600" },
   infoBox: {
-    backgroundColor: "#e7f3ff",
-    borderLeft: "5px solid #306998",
-    padding: "12px 15px",
+    backgroundColor: "#e3f2fd",
+    borderLeft: "4px solid #2196f3",
+    padding: "15px",
     margin: "15px 0",
-    borderRadius: "6px",
+    borderRadius: "0 8px 8px 0",
   },
   inlineCode: {
     backgroundColor: "#f0f0f0",
@@ -560,38 +598,46 @@ const styles = {
   lockMessage: {
     marginTop: "20px",
     padding: "15px",
-    backgroundColor: "#fef3c7",
-    borderLeft: "5px solid #f59e0b",
+    backgroundColor: "#cfe2ff",
+    borderLeft: "5px solid #0d6efd",
     borderRadius: "8px",
     textAlign: "center",
-    color: "#92400e",
+    color: "#084298",
   },
-  eksplorasiContainer: {
-    marginBottom: "30px",
-  },
-  eksplorasiTitle: {
-    fontSize: "22px",
-    fontWeight: "700",
-    marginBottom: "15px",
-    borderLeft: "5px solid #306998",
-    paddingLeft: "12px",
-  },
-  eksplorasiCard: {
-    backgroundColor: "white",
-    borderRadius: "10px",
-    padding: "20px",
-    marginBottom: "20px",
-    boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
-  },
-  checkEksplorasiButton: {
-    backgroundColor: "#306998",
-    color: "white",
-    border: "none",
-    padding: "6px 16px",
-    borderRadius: "6px",
+
+  // Eksplorasi styles
+  eksplorasiOption: {
+    padding: "12px",
+    borderRadius: "8px",
     cursor: "pointer",
-    fontSize: "14px",
+    transition: "all 0.2s",
+    border: "1px solid #ddd",
+    backgroundColor: "#f9f9f9",
+  },
+  eksplorasiOptionDisabled: {
+    padding: "12px",
+    borderRadius: "8px",
+    border: "1px solid #ccc",
+    backgroundColor: "#e9ecef",
+    color: "#6c757d",
+    cursor: "not-allowed",
+    opacity: 0.7,
+  },
+  feedbackCorrect: {
     marginTop: "10px",
+    padding: "8px 12px",
+    backgroundColor: "#d1e7dd",
+    color: "#0f5132",
+    borderRadius: "6px",
+    fontWeight: "500",
+  },
+  feedbackWrong: {
+    marginTop: "10px",
+    padding: "8px 12px",
+    backgroundColor: "#f8d7da",
+    color: "#842029",
+    borderRadius: "6px",
+    fontWeight: "500",
   },
 
   // Code editor styles
@@ -675,66 +721,58 @@ const styles = {
     lineHeight: "1.5"
   },
 
-  // Quiz styles (untuk latihan)
-  quizContainer: {
-    marginTop: "20px"
-  },
-  quizTitle: {
-    fontSize: "18px",
-    fontWeight: "600",
-    marginBottom: "15px"
-  },
-  questionCard: {
-    backgroundColor: "#f9f9f9",
-    borderRadius: "8px",
-    padding: "15px",
-    marginBottom: "15px",
-    border: "1px solid #ddd"
-  },
+  // Latihan styles
   questionText: {
-    fontWeight: "500",
-    marginBottom: "10px"
+    fontWeight: "600",
+    marginBottom: "12px",
+    fontSize: "15px",
   },
-  options: {
-    display: "flex",
-    flexDirection: "column",
-    gap: "8px",
-    marginBottom: "10px"
+  quizOption: {
+    padding: "12px",
+    borderRadius: "8px",
+    cursor: "pointer",
+    transition: "all 0.2s",
+    border: "1px solid #306998",
+    backgroundColor: "#fff",
+    marginBottom: "8px",
   },
-  optionLabel: {
-    display: "flex",
-    alignItems: "center",
-    cursor: "pointer"
-  },
-  radio: {
-    marginRight: "5px"
+  quizOptionDisabled: {
+    padding: "12px",
+    borderRadius: "8px",
+    border: "1px solid #ccc",
+    backgroundColor: "#e9ecef",
+    color: "#6c757d",
+    cursor: "not-allowed",
+    opacity: 0.7,
+    marginBottom: "8px",
   },
   checkAllButton: {
     backgroundColor: "#306998",
     color: "white",
     border: "none",
-    padding: "8px 16px",
+    padding: "10px 24px",
     borderRadius: "6px",
     cursor: "pointer",
+    fontWeight: "600",
     fontSize: "14px",
-    marginTop: "10px",
+    transition: "all 0.2s",
   },
-  resetButton: {
-    backgroundColor: "#6c757d",
-    color: "white",
-    border: "none",
-    padding: "8px 16px",
-    borderRadius: "6px",
-    cursor: "pointer",
-    fontSize: "14px",
-    marginTop: "10px",
+  quizWarning: {
+    marginTop: "15px",
+    marginBottom: "10px",
+    padding: "12px",
+    backgroundColor: "#fff3cd",
+    color: "#856404",
+    borderRadius: "8px",
+    textAlign: "center",
   },
   resultBox: {
-    marginTop: "15px",
-    padding: "10px",
-    backgroundColor: "#d4edda",
-    borderRadius: "6px",
+    marginTop: "20px",
+    padding: "15px",
+    backgroundColor: "#d1e7dd",
+    borderRadius: "8px",
     textAlign: "center",
-    color: "#155724"
-  }
+    color: "#0f5132",
+    fontWeight: "bold",
+  },
 };

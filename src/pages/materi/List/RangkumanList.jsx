@@ -3,15 +3,12 @@ import Navbar from "../../komponen/Navbar";
 import SidebarMateri from "../../komponen/SidebarMateri";
 
 export default function RangkumanList() {
-  /* ================= PYODIDE SETUP ================= */
   const [pyodideReady, setPyodideReady] = useState(false);
   const pyodideRef = useRef(null);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true); // State untuk sidebar
-  
-  // State untuk setiap editor kode
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [codeOutputs, setCodeOutputs] = useState({});
   const [codeInputs, setCodeInputs] = useState({
-    // Karakteristik List (tanpa nested)
+    // Karakteristik List
     ordered: `buah = ["durian", "nanas", "mangga", "rambutan"]
 print(buah)`,
     indexed: `data = ["durian", "nanas", "mangga", "rambutan"]
@@ -39,7 +36,7 @@ print("buah:", buah)
 print("angka:", angka)
 print("campuran:", campuran)`,
 
-    // Akses Indeks Positif & Negatif
+    // Akses Elemen (Indeks Positif & Negatif)
     aksesPositif: `data = ["apel", 100, True, 3.14]
 print("data[0]:", data[0])
 print("data[1]:", data[1])
@@ -105,7 +102,6 @@ del angka[1:4]
 print(angka)`,
   });
 
-  // Load Pyodide
   useEffect(() => {
     const loadPyodide = async () => {
       if (!window.loadPyodide) {
@@ -127,19 +123,16 @@ print(angka)`,
     loadPyodide();
   }, []);
 
-  // Fungsi menjalankan kode Python dengan metode StringIO (agar newline tetap terjaga)
   const runPythonCode = async (codeKey) => {
     if (!pyodideReady || !pyodideRef.current) {
       setCodeOutputs(prev => ({
         ...prev,
-        [codeKey]: "⏳ Pyodide sedang dimuat, harap tunggu..."
+        [codeKey]: "Pyodide sedang dimuat, harap tunggu..."
       }));
       return;
     }
-
     try {
       const pyodide = pyodideRef.current;
-      // Redirect stdout ke StringIO
       await pyodide.runPythonAsync(`
 import sys
 from io import StringIO
@@ -147,18 +140,16 @@ sys.stdout = StringIO()
       `);
       await pyodide.runPythonAsync(codeInputs[codeKey]);
       const output = await pyodide.runPythonAsync("sys.stdout.getvalue()");
-      // Kembalikan stdout ke default
       await pyodide.runPythonAsync("sys.stdout = sys.__stdout__");
       setCodeOutputs(prev => ({ ...prev, [codeKey]: output || "(Tidak ada output)" }));
     } catch (error) {
       setCodeOutputs(prev => ({
         ...prev,
-        [codeKey]: `❌ Error: ${error.message}`
+        [codeKey]: `Error: ${error.message}`
       }));
     }
   };
 
-  // Komponen editor read-only
   const CodeEditor = ({ codeKey, title }) => (
     <div style={styles.codeEditorContainer}>
       <div style={styles.codeEditorHeader}>
@@ -168,7 +159,7 @@ sys.stdout = StringIO()
           onClick={() => runPythonCode(codeKey)}
           disabled={!pyodideReady}
         >
-          {pyodideReady ? "▶ Jalankan" : "⏳ Memuat..."}
+          {pyodideReady ? "Jalankan" : "Memuat..."}
         </button>
       </div>
       <div style={styles.codeInputReadOnly}>
@@ -200,7 +191,6 @@ sys.stdout = StringIO()
         }}
       >
         <div style={styles.page}>
-          {/* HEADER */}
           <div style={styles.header}>
             <div style={styles.headerAccent}></div>
             <h1 style={styles.headerTitle}>RANGKUMAN LIST</h1>
@@ -320,7 +310,6 @@ sys.stdout = StringIO()
   );
 }
 
-/* ================= STYLE ================= */
 const styles = {
   page: {
     padding: "30px 40px",

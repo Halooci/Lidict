@@ -57,13 +57,11 @@ export default function SidebarMateri() {
           activeAccordion={activeAccordion}
           setActiveAccordion={setActiveAccordion}
         >
-          {/* Anak 1: Peta Konsep */}
           <SubItem 
             label="Peta Konsep" 
             to="/PetaKonsep" 
             currentPath={currentPath} 
           />
-          {/* Anak 2: Apersepsi */}
           <SubItem 
             label="Apersepsi" 
             to="/Apersepsi" 
@@ -133,25 +131,33 @@ function Accordion({ id, title, children, activeAccordion, setActiveAccordion })
       <div
         style={{
           ...styles.accordionHeader,
-          backgroundColor: isOpen ? "#e8f1ff" : "#ffffff",
+          backgroundColor: isOpen ? "#eef2ff" : "#ffffff",
+          borderBottom: isOpen ? "2px solid #FFD43B" : "1px solid #e9ecef",
+          boxShadow: isOpen ? "0 2px 6px rgba(0,0,0,0.05)" : "none",
         }}
         onClick={() => setActiveAccordion(isOpen ? null : id)}
         onMouseEnter={(e) => {
-          if (!isOpen) e.currentTarget.style.backgroundColor = "#fef9e6";
+          if (!isOpen) {
+            e.currentTarget.style.backgroundColor = "#fffbeb";
+            e.currentTarget.style.borderLeftColor = "#FFD43B";
+          }
         }}
         onMouseLeave={(e) => {
-          if (!isOpen) e.currentTarget.style.backgroundColor = "#ffffff";
+          if (!isOpen) {
+            e.currentTarget.style.backgroundColor = "#ffffff";
+            e.currentTarget.style.borderLeftColor = "transparent";
+          }
         }}
       >
-        <span>{title}</span>
-        <span>{isOpen ? "▲" : "▼"}</span>
+        <span style={{ fontWeight: isOpen ? "600" : "500" }}>{title}</span>
+        <span style={styles.accordionIcon}>{isOpen ? "▲" : "▼"}</span>
       </div>
       {isOpen && <div style={styles.accordionContent}>{children}</div>}
     </div>
   );
 }
 
-/* ================= SUB ITEM (dengan outline, hover, active) ================= */
+/* ================= SUB ITEM (dengan efek tombol, tanpa indikator titik) ================= */
 function SubItem({ label, to, currentPath }) {
   const isActive = currentPath === to;
 
@@ -160,25 +166,29 @@ function SubItem({ label, to, currentPath }) {
       <div
         style={{
           ...styles.subItem,
-          backgroundColor: isActive ? "#FFD43B" : "transparent",
+          backgroundColor: isActive ? "#FFD43B" : "#f8fafc",
           color: isActive ? "#081527" : "#2c7be5",
-          fontWeight: isActive ? "600" : "400",
-          borderLeft: isActive ? "4px solid #081527" : "4px solid transparent",
+          fontWeight: isActive ? "600" : "500",
+          border: "1px solid #e2e8f0",
+          boxShadow: isActive ? "0 2px 4px rgba(0,0,0,0.05)" : "none",
         }}
         onMouseEnter={(e) => {
           if (!isActive) {
             e.currentTarget.style.backgroundColor = "#fef9e6";
-            e.currentTarget.style.color = "#081527";
+            e.currentTarget.style.borderColor = "#FFD43B";
+            e.currentTarget.style.transform = "translateX(4px)";
           }
         }}
         onMouseLeave={(e) => {
           if (!isActive) {
-            e.currentTarget.style.backgroundColor = "transparent";
-            e.currentTarget.style.color = "#2c7be5";
+            e.currentTarget.style.backgroundColor = "#f8fafc";
+            e.currentTarget.style.borderColor = "#e2e8f0";
+            e.currentTarget.style.transform = "translateX(0)";
           }
         }}
       >
         <span>{label}</span>
+        {/* Indikator titik (●) telah dihapus */}
       </div>
     </Link>
   );
@@ -192,67 +202,81 @@ const styles = {
     left: 0,
     height: "calc(100vh - 64px)",
     backgroundColor: "#ffffff",
-    borderRight: "1px solid #e0e0e0",
+    borderRight: "1px solid #eef2f6",
     fontFamily: "Poppins, sans-serif",
     overflowY: "auto",
     overflowX: "hidden",
     transition: "width 0.3s ease, padding 0.3s ease",
     zIndex: 1000,
-    boxShadow: "2px 0 5px rgba(0,0,0,0.05)",
+    boxShadow: "4px 0 12px rgba(0,0,0,0.03)",
   },
   hamburgerInside: {
-    fontSize: "24px",
+    fontSize: "22px",
     cursor: "pointer",
     padding: "8px 12px",
     display: "inline-block",
-    color: "#2c7be5",
-    marginBottom: "10px",
+    color: "#306998",
+    marginBottom: "16px",
     width: "fit-content",
-    borderRadius: "8px",
-    transition: "background 0.2s",
+    borderRadius: "12px",
+    transition: "all 0.2s",
+    backgroundColor: "#f8fafc",
+    border: "1px solid #e2e8f0",
   },
   floatingHamburger: {
     position: "fixed",
     top: "74px",
-    left: "10px",
-    fontSize: "24px",
+    left: "16px",
+    fontSize: "22px",
     background: "#ffffff",
-    border: "1px solid #e0e0e0",
-    borderRadius: "8px",
+    border: "1px solid #e2e8f0",
+    borderRadius: "12px",
     cursor: "pointer",
-    padding: "6px 12px",
+    padding: "8px 14px",
     zIndex: 1100,
-    color: "#2c7be5",
-    boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
+    color: "#306998",
+    boxShadow: "0 4px 10px rgba(0,0,0,0.05)",
     transition: "all 0.2s",
   },
   accordion: {
-    marginBottom: "8px",
-    borderRadius: "8px",
+    marginBottom: "10px",
+    borderRadius: "14px",
     overflow: "hidden",
-    border: "1px solid #e5e7eb",
+    backgroundColor: "#ffffff",
+    transition: "all 0.2s",
   },
   accordionHeader: {
-    padding: "12px 16px",
-    fontWeight: "600",
+    padding: "14px 18px",
+    fontSize: "15px",
+    fontWeight: "500",
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
     cursor: "pointer",
     transition: "all 0.2s ease",
+    borderLeft: "3px solid transparent",
+    borderRadius: "14px 14px 0 0",
+  },
+  accordionIcon: {
+    fontSize: "14px",
+    fontWeight: "600",
+    color: "#306998",
+    transition: "transform 0.2s",
   },
   accordionContent: {
-    padding: "4px 0",
-    backgroundColor: "#fafafa",
+    padding: "10px 8px 14px 8px",
+    backgroundColor: "#fefefc",
+    borderTop: "1px solid #f0f2f5",
   },
   subItem: {
-    padding: "10px 16px 10px 28px",
-    fontSize: "14px",
+    padding: "12px 16px",
+    margin: "6px 4px",
+    fontSize: "14.5px",
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
     cursor: "pointer",
     transition: "all 0.2s ease",
-    borderBottom: "1px solid #e5e7eb",
+    borderRadius: "12px",
   },
 };

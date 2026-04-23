@@ -6,14 +6,14 @@ import SidebarMateri from "../../komponen/SidebarMateri";
 const InteractiveLatihan = () => {
   const [answers, setAnswers] = useState([null, null, null, null, null]);
   const [feedback, setFeedback] = useState(["", "", "", "", ""]);
-  const [locked, setLocked] = useState([false, false, false, false, false]); // status terkunci per soal
+  const [locked, setLocked] = useState([false, false, false, false, false]);
   const [globalError, setGlobalError] = useState("");
 
   const questions = [
     {
       text: "Struktur data yang digunakan untuk menyimpan pasangan key-value di Python adalah ...",
       options: ["List", "Tuple", "Dictionary", "Set", "Semua benar"],
-      correct: 2, // Dictionary
+      correct: 2,
     },
     {
       text: "Pernyataan berikut yang benar tentang key pada dictionary adalah ...",
@@ -24,7 +24,7 @@ const InteractiveLatihan = () => {
         "Key hanya bisa berupa string",
         "Key bisa berupa list",
       ],
-      correct: 2, // Key harus unik dan immutable
+      correct: 2,
     },
     {
       text: "Pernyataan yang BENAR tentang sifat dictionary di Python adalah ...",
@@ -35,12 +35,12 @@ const InteractiveLatihan = () => {
         "Dictionary mempertahankan urutan item sesuai urutan penyisipan",
         "Key dalam dictionary boleh berupa list",
       ],
-      correct: 3, // Mempertahankan urutan item sesuai urutan penyisipan
+      correct: 3,
     },
     {
       text: "Tipe data berikut yang TIDAK bisa dijadikan key dalam dictionary adalah ...",
       options: ["String", "Integer", "List", "Tuple", "Float"],
-      correct: 2, // List
+      correct: 2,
     },
     {
       text: "Yang terjadi jika kita menggunakan key yang sama dua kali saat membuat dictionary adalah ...",
@@ -51,14 +51,12 @@ const InteractiveLatihan = () => {
         "Dictionary akan menyimpan kedua nilai dalam bentuk list",
         "Program akan berhenti (crash)",
       ],
-      correct: 2, // Nilai kedua menimpa nilai pertama
+      correct: 2,
     },
   ];
 
   const handleAnswerChange = (qIdx, optIdx) => {
-    // Jika soal sudah terkunci (jawaban sudah benar), tidak boleh diubah
     if (locked[qIdx]) return;
-
     const newAnswers = [...answers];
     newAnswers[qIdx] = optIdx;
     setAnswers(newAnswers);
@@ -71,21 +69,19 @@ const InteractiveLatihan = () => {
   const handleCheckAll = () => {
     const allAnswered = answers.every((ans) => ans !== null);
     if (!allAnswered) {
-      setGlobalError("❌ Anda harus menjawab semua soal terlebih dahulu!");
+      setGlobalError("Anda harus menjawab semua soal terlebih dahulu!");
       return;
     }
     setGlobalError("");
 
     const newFeedback = answers.map((ans, idx) => {
       if (ans === questions[idx].correct) {
-        return "✅ Benar";
+        return "Benar";
       } else {
-        return "❌ Salah. Coba lagi!";
+        return "Salah. Coba lagi!";
       }
     });
     setFeedback(newFeedback);
-
-    // Tentukan soal mana yang benar, lalu kunci
     const newLocked = answers.map((ans, idx) => ans === questions[idx].correct);
     setLocked(newLocked);
   };
@@ -95,17 +91,8 @@ const InteractiveLatihan = () => {
   return (
     <div>
       {questions.map((q, idx) => (
-        <div
-          key={idx}
-          style={{
-            marginBottom: "30px",
-            borderBottom: "1px solid #e0e0e0",
-            paddingBottom: "20px",
-          }}
-        >
-          <p style={{ fontWeight: "600", marginBottom: "12px" }}>
-            {idx + 1}. {q.text}
-          </p>
+        <div key={idx} style={{ marginBottom: "30px", borderBottom: "1px solid #e0e0e0", paddingBottom: "20px" }}>
+          <p style={{ fontWeight: "600", marginBottom: "12px" }}>{idx + 1}. {q.text}</p>
           <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
             {q.options.map((opt, optIdx) => (
               <div
@@ -124,54 +111,150 @@ const InteractiveLatihan = () => {
             ))}
           </div>
           {feedback[idx] && (
-            <div
-              style={{
-                marginTop: "12px",
-                padding: "10px",
-                borderRadius: "8px",
-                backgroundColor: feedback[idx].includes("Benar") ? "#d1e7dd" : "#f8d7da",
-              }}
-            >
-              {feedback[idx]}
+            <div style={{ marginTop: "12px", padding: "10px", borderRadius: "8px", backgroundColor: feedback[idx] === "Benar" ? "#d1e7dd" : "#f8d7da" }}>
+              {feedback[idx] === "Benar" ? "✅ Benar" : "❌ Salah"}
             </div>
           )}
         </div>
       ))}
       {globalError && (
-        <div
-          style={{
-            marginTop: "10px",
-            marginBottom: "15px",
-            padding: "12px",
-            borderRadius: "8px",
-            backgroundColor: "#f8d7da",
-            color: "#842029",
-          }}
-        >
+        <div style={{ marginTop: "10px", marginBottom: "15px", padding: "12px", borderRadius: "8px", backgroundColor: "#f8d7da", color: "#842029" }}>
           {globalError}
         </div>
       )}
-      <button
-        style={styles.checkAllButton}
-        onClick={handleCheckAll}
-        disabled={allCorrect}
-      >
-        {allCorrect ? "✅ Semua Jawaban Benar" : "Periksa Semua Jawaban"}
+      <button style={styles.checkAllButton} onClick={handleCheckAll} disabled={allCorrect}>
+        {allCorrect ? "Semua Jawaban Benar" : "Periksa Semua Jawaban"}
       </button>
       {allCorrect && (
-        <div
-          style={{
-            marginTop: "15px",
-            padding: "12px",
-            borderRadius: "8px",
-            backgroundColor: "#d1e7dd",
-            color: "#0f5132",
-            textAlign: "center",
-          }}
-        >
+        <div style={{ marginTop: "15px", padding: "12px", borderRadius: "8px", backgroundColor: "#d1e7dd", color: "#0f5132", textAlign: "center" }}>
           🎉 Selamat! Semua jawaban Anda benar.
         </div>
       )}
+    </div>
+  );
+};
+
+// ===================== KOMPONEN VISUALISASI ANALOGI DICTIONARY =====================
+const KamusAnalogiVisual = () => {
+  const [selectedKey, setSelectedKey] = useState(null);
+
+  const data = [
+    { key: "apel", value: "merah" },
+    { key: "pisang", value: "kuning" },
+    { key: "anggur", value: "ungu" },
+  ];
+
+  return (
+    <div style={{ margin: "20px 0", padding: "15px", backgroundColor: "#fef9e6", borderRadius: "12px", borderLeft: "5px solid #f4c542" }}>
+      <p style={{ fontWeight: "bold", marginBottom: "15px", textAlign: "center" }}>Analogi Dictionary: Key → Value</p>
+      <div style={{ display: "flex", gap: "30px", justifyContent: "center", flexWrap: "wrap" }}>
+        {/* Kolom Key */}
+        <div style={{ flex: 1, minWidth: "150px", backgroundColor: "#fff3cf", borderRadius: "10px", padding: "10px" }}>
+          <p style={{ textAlign: "center", fontWeight: "bold", backgroundColor: "#f4c542", padding: "8px", borderRadius: "8px", marginTop: 0 }}>Key (Kunci)</p>
+          {data.map((item, idx) => (
+            <div
+              key={idx}
+              onClick={() => setSelectedKey(selectedKey === idx ? null : idx)}
+              style={{
+                padding: "12px",
+                marginBottom: "10px",
+                backgroundColor: selectedKey === idx ? "#306998" : "#ffffff",
+                color: selectedKey === idx ? "white" : "#333",
+                borderRadius: "8px",
+                cursor: "pointer",
+                transition: "0.2s",
+                textAlign: "center",
+                fontWeight: "bold",
+                border: selectedKey === idx ? "1px solid #FFD43B" : "1px solid #ddd",
+              }}
+            >
+              {item.key}
+            </div>
+          ))}
+        </div>
+        {/* Kolom Value */}
+        <div style={{ flex: 1, minWidth: "150px", backgroundColor: "#fff3cf", borderRadius: "10px", padding: "10px" }}>
+          <p style={{ textAlign: "center", fontWeight: "bold", backgroundColor: "#f4c542", padding: "8px", borderRadius: "8px", marginTop: 0 }}>Value (Nilai)</p>
+          {selectedKey !== null ? (
+            <div style={{ padding: "15px", backgroundColor: "#e8f1ff", borderRadius: "8px", minHeight: "100px", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "18px", fontWeight: "bold" }}>
+              {data[selectedKey].value}
+            </div>
+          ) : (
+            <div style={{ padding: "15px", backgroundColor: "#e9ecef", borderRadius: "8px", minHeight: "100px", display: "flex", alignItems: "center", justifyContent: "center", color: "#6c757d" }}>
+              Klik key untuk melihat value
+            </div>
+          )}
+        </div>
+      </div>
+      <div style={{ marginTop: "15px", backgroundColor: "#e8f1ff", padding: "10px", borderRadius: "8px" }}>
+        <strong>📌 Dalam Python:</strong>
+        <pre style={{ backgroundColor: "#272822", color: "#f8f8f2", padding: "10px", borderRadius: "6px", overflow: "auto", fontSize: "13px", marginTop: "8px" }}>
+{`warna = {"apel": "merah", "pisang": "kuning", "anggur": "ungu"}
+print(warna["apel"])  # output: merah`}
+        </pre>
+      </div>
+      <p style={{ fontSize: "13px", marginTop: "15px", textAlign: "center", color: "#555" }}>
+        💡 Klik pada key (apel, pisang, atau anggur) → value (warna) akan muncul. Ini simulasi cara dictionary bekerja.
+      </p>
+    </div>
+  );
+};
+
+// ===================== KOMPONEN KARAKTERISTIK INTERAKTIF =====================
+const KarakteristikList = () => {
+  const [activeIndex, setActiveIndex] = useState(null);
+
+  const karakteristik = [
+    {
+      judul: "Key unik",
+      penjelasan: "Tidak boleh ada dua key yang sama. Jika kamu menuliskan key yang sama lagi, nilai sebelumnya akan tertimpa. Ini seperti di kamus: satu kata hanya punya satu arti."
+    },
+    {
+      judul: "Key harus immutable (tidak bisa diubah)",
+      penjelasan: "Key hanya boleh menggunakan tipe data yang nilainya tetap setelah dibuat. Contoh key yang boleh: string (\"nama\"), integer (10), tuple ((\"x\", \"y\")). Mengapa list tidak bisa dijadikan key? Karena list bersifat mutable (bisa diubah-ubah isinya). Jika list dijadikan key lalu isinya diubah, maka dictionary akan bingung karena key-nya berubah."
+    },
+    {
+      judul: "Value boleh mutable (bisa diubah)",
+      penjelasan: "Berbeda dengan key, nilai (value) dalam dictionary bisa berupa tipe data apa pun, termasuk yang mutable seperti list atau dictionary lain. Kamu bisa mengubah isi value kapan saja."
+    },
+    {
+      judul: "Dictionary itu sendiri mutable",
+      penjelasan: "Kamu bisa menambah, mengubah, atau menghapus pasangan key-value setelah dictionary dibuat. Ukuran dictionary otomatis menyesuaikan."
+    },
+    {
+      judul: "Urutan item terjaga sesuai urutan penyisipan",
+      penjelasan: "Dictionary 'mengingat' urutan saat kamu memasukkan item. Misalnya kamu tambah key 'nama' dulu, lalu 'umur', maka saat dilihat atau diiterasi, urutannya tetap 'nama' dulu baru 'umur'."
+    }
+  ];
+
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: "15px", marginTop: "15px" }}>
+      {karakteristik.map((item, idx) => (
+        <div key={idx} style={{ border: "1px solid #306998", borderRadius: "10px", overflow: "hidden", transition: "0.2s" }}>
+          <div
+            onClick={() => setActiveIndex(activeIndex === idx ? null : idx)}
+            style={{
+              padding: "15px",
+              backgroundColor: activeIndex === idx ? "#306998" : "#f0f6ff",
+              color: activeIndex === idx ? "white" : "#306998",
+              fontWeight: "bold",
+              cursor: "pointer",
+              transition: "0.2s",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center"
+            }}
+          >
+            <span>{item.judul}</span>
+            <span style={{ fontSize: "18px" }}>{activeIndex === idx ? "▲" : "▼"}</span>
+          </div>
+          {activeIndex === idx && (
+            <div style={{ padding: "15px", backgroundColor: "#ffffff", borderTop: "1px solid #306998", lineHeight: "1.6" }}>
+              {item.penjelasan}
+            </div>
+          )}
+        </div>
+      ))}
     </div>
   );
 };
@@ -182,7 +265,7 @@ export default function PendahuluanDictionary() {
   const pyodideRef = useRef(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
-  // ================= EKSPLORASI (DIREVISI) =================
+  // EKSPLORASI
   const [eksplorasiSelected, setEksplorasiSelected] = useState([null, null, null]);
   const [eksplorasiFeedback, setEksplorasiFeedback] = useState(["", "", ""]);
   const [eksplorasiHasAnswered, setEksplorasiHasAnswered] = useState([false, false, false]);
@@ -220,20 +303,17 @@ export default function PendahuluanDictionary() {
 
   const handleEksplorasiSelect = (questionIdx, optionIdx) => {
     if (eksplorasiHasAnswered[questionIdx]) return;
-
     setEksplorasiSelected(prev => {
       const newSel = [...prev];
       newSel[questionIdx] = optionIdx;
       return newSel;
     });
-
     const isCorrect = optionIdx === eksplorasiQuestions[questionIdx].correct;
     setEksplorasiFeedback(prev => {
       const newFb = [...prev];
       newFb[questionIdx] = isCorrect ? "Benar" : "Salah";
       return newFb;
     });
-
     setEksplorasiHasAnswered(prev => {
       const newAns = [...prev];
       newAns[questionIdx] = true;
@@ -248,7 +328,7 @@ export default function PendahuluanDictionary() {
     }
   }, [eksplorasiHasAnswered, isEksplorasiCompleted]);
 
-  // Load Pyodide (tetap ada meskipun tidak digunakan)
+  // Pyodide (tetap untuk kebutuhan lain)
   useEffect(() => {
     const loadPyodide = async () => {
       if (!window.loadPyodide) {
@@ -271,60 +351,40 @@ export default function PendahuluanDictionary() {
   }, []);
 
   const runPythonCode = useCallback(async (code) => {
-    if (!pyodideRef.current) return "⏳ Pyodide sedang dimuat...";
+    if (!pyodideRef.current) return "Pyodide sedang dimuat...";
     try {
       const pyodide = pyodideRef.current;
-      const escapedCode = code
-        .replace(/\\/g, "\\\\")
-        .replace(/"/g, '\\"')
-        .replace(/\n/g, "\\n");
+      const escapedCode = code.replace(/\\/g, "\\\\").replace(/"/g, '\\"').replace(/\n/g, "\\n");
       const result = await pyodide.runPythonAsync(`
 import sys
 from io import StringIO
-
 _old_stdout = sys.stdout
 sys.stdout = _buffer = StringIO()
-
 try:
     exec("""
 ${escapedCode}
 """)
 finally:
     sys.stdout = _old_stdout
-
 _buffer.getvalue()
       `);
       return result;
     } catch (error) {
-      return `❌ Error: ${error.message}`;
+      return `Error: ${error.message}`;
     }
   }, []);
 
   return (
     <>
       <Navbar />
-      <SidebarMateri
-        isOpen={isSidebarOpen}
-        onToggle={() => setIsSidebarOpen(!isSidebarOpen)}
-      />
-      <div
-        className="main-content"
-        style={{
-          marginLeft: isSidebarOpen ? "280px" : "0",
-          transition: "margin-left 0.3s ease",
-          paddingTop: "64px",
-          minHeight: "100vh",
-          width: "auto",
-        }}
-      >
+      <SidebarMateri isOpen={isSidebarOpen} onToggle={() => setIsSidebarOpen(!isSidebarOpen)} />
+      <div className="main-content" style={{ marginLeft: isSidebarOpen ? "280px" : "0", transition: "margin-left 0.3s ease", paddingTop: "64px", minHeight: "100vh", width: "auto" }}>
         <div style={styles.page}>
-          {/* HEADER */}
           <div style={styles.header}>
             <div style={styles.headerAccent}></div>
             <h1 style={styles.headerTitle}>PENDAHULUAN DICTIONARY</h1>
           </div>
 
-          {/* TUJUAN PEMBELAJARAN */}
           <section style={styles.section}>
             <h2 style={styles.sectionTitle}>Tujuan Pembelajaran</h2>
             <div style={styles.card}>
@@ -335,38 +395,22 @@ _buffer.getvalue()
             </div>
           </section>
 
-          {/* EKSPLORASI AWAL */}
           <section style={styles.section}>
-            <h2 style={styles.sectionTitle}>🔍 Eksplorasi</h2>
+            <h2 style={styles.sectionTitle}>Eksplorasi</h2>
             <div style={styles.card}>
               <p style={styles.text}>
                 Sebelum mempelajari lebih dalam, jawab pertanyaan berikut dengan memilih opsi yang tersedia.
-                <strong style={{ color: "#0d6efd" }}>
-                  {" "}
-                  Materi akan terbuka setelah ketiga pertanyaan dijawab.
-                </strong>
+                <strong style={{ color: "#0d6efd" }}> Materi akan terbuka setelah ketiga pertanyaan dijawab.</strong>
               </p>
               {eksplorasiQuestions.map((q, idx) => {
                 const isAnswered = eksplorasiHasAnswered[idx];
                 const selectedIdx = eksplorasiSelected[idx];
                 return (
-                  <div
-                    key={idx}
-                    style={{
-                      marginBottom: "30px",
-                      borderBottom: "1px solid #e0e0e0",
-                      paddingBottom: "20px",
-                    }}
-                  >
-                    <p style={{ fontWeight: "600", marginBottom: "12px" }}>
-                      {idx + 1}. {q.text}
-                    </p>
+                  <div key={idx} style={{ marginBottom: "30px", borderBottom: "1px solid #e0e0e0", paddingBottom: "20px" }}>
+                    <p style={{ fontWeight: "600", marginBottom: "12px" }}>{idx + 1}. {q.text}</p>
                     <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                       {q.options.map((opt, optIdx) => {
-                        let optionStyle = {
-                          ...styles.eksplorasiOption,
-                          cursor: "pointer",
-                        };
+                        let optionStyle = { ...styles.eksplorasiOption, cursor: "pointer" };
                         if (isAnswered) {
                           optionStyle.cursor = "not-allowed";
                           optionStyle.opacity = 0.7;
@@ -384,26 +428,14 @@ _buffer.getvalue()
                           optionStyle.color = eksplorasiSelected[idx] === optIdx ? "white" : "#1f2937";
                         }
                         return (
-                          <div
-                            key={optIdx}
-                            onClick={() => !isAnswered && handleEksplorasiSelect(idx, optIdx)}
-                            style={optionStyle}
-                          >
+                          <div key={optIdx} onClick={() => !isAnswered && handleEksplorasiSelect(idx, optIdx)} style={optionStyle}>
                             <strong>{String.fromCharCode(65 + optIdx)}.</strong> {opt}
                           </div>
                         );
                       })}
                     </div>
                     {eksplorasiFeedback[idx] && (
-                      <div
-                        style={{
-                          marginTop: "12px",
-                          padding: "10px",
-                          borderRadius: "8px",
-                          backgroundColor: eksplorasiFeedback[idx] === "Benar" ? "#d1e7dd" : "#f8d7da",
-                          color: eksplorasiFeedback[idx] === "Benar" ? "#0f5132" : "#842029",
-                        }}
-                      >
+                      <div style={{ marginTop: "12px", padding: "10px", borderRadius: "8px", backgroundColor: eksplorasiFeedback[idx] === "Benar" ? "#d1e7dd" : "#f8d7da", color: eksplorasiFeedback[idx] === "Benar" ? "#0f5132" : "#842029" }}>
                         {eksplorasiFeedback[idx] === "Benar" ? "✅ Benar" : "❌ Salah"}
                       </div>
                     )}
@@ -411,110 +443,50 @@ _buffer.getvalue()
                 );
               })}
               {!isEksplorasiCompleted && (
-                <div style={styles.lockMessage}>
-                  🔒 Materi terkunci. Jawab semua pertanyaan di atas untuk membuka materi.
-                </div>
+                <div style={styles.lockMessage}>🔒 Materi terkunci. Jawab semua pertanyaan di atas untuk membuka materi.</div>
               )}
             </div>
           </section>
 
-          {/* MATERI UTAMA (hanya tampil jika eksplorasi selesai) */}
           {isEksplorasiCompleted && (
             <>
-              {/* PENGERTIAN DICTIONARY */}
               <section style={styles.section}>
                 <h2 style={styles.sectionTitle}>Apa Itu Dictionary?</h2>
                 <div style={styles.card}>
                   <p style={styles.text}>
-                    <strong>Dictionary</strong> adalah struktur data dalam
-                    Python yang digunakan untuk menyimpan kumpulan data dalam
-                    bentuk <strong>pasangan key (kunci) dan value (nilai)</strong>
-                    . Setiap key bersifat unik dan digunakan untuk mengakses
-                    nilai yang terkait. Dictionary bersifat{" "}
-                    <strong>mutable</strong> (dapat diubah) dan tidak memiliki
-                    indeks numerik seperti list, melainkan menggunakan key
-                    sebagai pengganti indeks.
+                    <strong>Dictionary</strong> adalah struktur data dalam Python yang digunakan untuk menyimpan kumpulan data dalam
+                    bentuk <strong>pasangan key (kunci) dan value (nilai)</strong>. Setiap key bersifat unik dan digunakan untuk mengakses
+                    nilai yang terkait. Dictionary bersifat <strong>mutable</strong> (dapat diubah) dan tidak memiliki
+                    indeks numerik seperti list, melainkan menggunakan key sebagai pengganti indeks.
                   </p>
                   <p style={styles.text}>
-                    Dictionary didefinisikan dengan kurung kurawal{" "}
-                    <code style={styles.inlineCode}>{`{}`}</code> dan setiap
-                    pasangan key-value dipisahkan oleh titik dua{" "}
-                    <code style={styles.inlineCode}>:</code>. Key harus berupa
-                    tipe data yang immutable (string, integer, tuple), sedangkan
-                    value dapat berupa tipe data apa pun (list, dictionary lain,
+                    Dictionary didefinisikan dengan kurung kurawal <code style={styles.inlineCode}>{`{}`}</code> dan setiap
+                    pasangan key-value dipisahkan oleh titik dua <code style={styles.inlineCode}>:</code>. Key harus berupa
+                    tipe data yang immutable (string, integer, tuple), sedangkan value dapat berupa tipe data apa pun (list, dictionary lain,
                     fungsi, dll).
                   </p>
                   <div style={styles.infoBox}>
-                    <strong>📖 Analogi:</strong> Seperti kamus bahasa, kita
-                    mencari arti (value) berdasarkan kata (key).
+                    <strong>📖 Analogi:</strong> Seperti kamus, kita mencari arti (value) berdasarkan kata (key). Di bawah ini adalah simulasi interaktif:
                   </div>
+                  <KamusAnalogiVisual />
                 </div>
               </section>
 
-              {/* KARAKTERISTIK DASAR DICTIONARY */}
               <section style={styles.section}>
                 <h2 style={styles.sectionTitle}>Karakteristik Dasar Dictionary</h2>
                 <div style={styles.card}>
-                  <ul style={styles.list}>
-                    <li>
-                      <strong>Key unik</strong> → Tidak boleh ada dua key yang
-                      sama. Jika kamu menuliskan key yang sama lagi, nilai
-                      sebelumnya akan tertimpa. Ini seperti di kamus: satu kata
-                      hanya punya satu arti.
-                    </li>
-                    <li>
-                      <strong>Key harus immutable (tidak bisa diubah)</strong> →
-                      Key hanya boleh menggunakan tipe data yang nilainya tetap
-                      setelah dibuat. Contoh key yang boleh: string (
-                      <code>"nama"</code>), integer (<code>10</code>), tuple (
-                      <code>("x", "y")</code>). <br />
-                      <strong>Mengapa list tidak bisa dijadikan key?</strong>{" "}
-                      Karena list bersifat mutable (bisa diubah-ubah isinya).
-                      Jika list dijadikan key lalu isinya diubah, maka
-                      dictionary akan bingung karena key-nya berubah. Bayangkan
-                      kamu menyimpan barang di lemari dengan label yang bisa
-                      berubah sendiri – pasti kacau. Maka Python melarang list
-                      sebagai key.
-                    </li>
-                    <li>
-                      <strong>Value boleh mutable (bisa diubah)</strong> →
-                      Berbeda dengan key, nilai (value) dalam dictionary bisa
-                      berupa tipe data apa pun, termasuk yang mutable seperti
-                      list atau dictionary lain. Kamu bisa mengubah isi value
-                      kapan saja.
-                    </li>
-                    <li>
-                      <strong>Dictionary itu sendiri mutable</strong> → Kamu
-                      bisa menambah, mengubah, atau menghapus pasangan key-value
-                      setelah dictionary dibuat. Ukuran dictionary otomatis
-                      menyesuaikan.
-                    </li>
-                    <li>
-                      <strong>Urutan item terjaga sesuai urutan penyisipan</strong>{" "}
-                      → Dictionary “mengingat” urutan saat kamu memasukkan item.
-                      Misalnya kamu tambah key 'nama' dulu, lalu 'umur', maka
-                      saat dilihat atau diiterasi, urutannya tetap 'nama' dulu
-                      baru 'umur'.
-                    </li>
-                  </ul>
-                  <div style={styles.infoBox}>
-                    <strong>💡 Ringkasan:</strong> Key ={" "}
-                    <strong>immutable</strong> (tidak boleh berubah), Value ={" "}
-                    <strong>bebas</strong> (bisa mutable atau immutable),
-                    Dictionary = <strong>mutable</strong> (bisa diubah struktur
-                    dan isinya).
+                  <KarakteristikList />
+                  <div style={{ ...styles.infoBox, marginTop: "20px" }}>
+                    <strong>💡 Ringkasan:</strong> Key = <strong>immutable</strong> (tidak boleh berubah), Value = <strong>bebas</strong> (bisa mutable atau immutable),
+                    Dictionary = <strong>mutable</strong> (bisa diubah struktur dan isinya).
                   </div>
                 </div>
               </section>
 
-              {/* PERBANDINGAN DICTIONARY VS LIST */}
               <section style={styles.section}>
                 <h2 style={styles.sectionTitle}>Perbandingan Dictionary vs List</h2>
                 <div style={styles.card}>
-                  <p style={styles.text}>
-                    Agar lebih paham, mari bandingkan dictionary dengan list
-                    (struktur data yang mungkin sudah kamu kenal).
-                  </p>
+                  <p style={styles.text}>Agar lebih paham, mari bandingkan dictionary dengan list.</p>
                   <table style={styles.table}>
                     <thead>
                       <tr style={styles.tableHeader}>
@@ -526,49 +498,27 @@ _buffer.getvalue()
                     <tbody>
                       <tr>
                         <td style={styles.tableCell}>Cara mengakses data</td>
-                        <td style={styles.tableCell}>
-                          Menggunakan nomor urut (indeks): <code>data[0]</code>,{" "}
-                          <code>data[1]</code>, dst.
-                        </td>
-                        <td style={styles.tableCell}>
-                          Menggunakan kunci (key) yang kita tentukan sendiri:{" "}
-                          <code>data["nama"]</code>, <code>data["umur"]</code>.
-                        </td>
+                        <td style={styles.tableCell}>Menggunakan nomor urut (indeks): <code>data[0]</code>, <code>data[1]</code>, dst.</td>
+                        <td style={styles.tableCell}>Menggunakan kunci (key): <code>data["nama"]</code>, <code>data["umur"]</code>.</td>
                       </tr>
                       <tr>
                         <td style={styles.tableCell}>Urutan data</td>
-                        <td style={styles.tableCell}>
-                          Urutan pasti sesuai indeks. Bisa dipotong (slice).
-                        </td>
-                        <td style={styles.tableCell}>
-                          Urutan diingat sesuai urutan saat kita memasukkan
-                          (tidak bisa dipotong seperti list).
-                        </td>
+                        <td style={styles.tableCell}>Urutan pasti sesuai indeks. Bisa dipotong (slice).</td>
+                        <td style={styles.tableCell}>Urutan diingat sesuai urutan penyisipan (tidak bisa slice).</td>
                       </tr>
                       <tr>
                         <td style={styles.tableCell}>Batasan “kunci”</td>
-                        <td style={styles.tableCell}>
-                          Tidak ada konsep kunci, hanya indeks angka.
-                        </td>
-                        <td style={styles.tableCell}>
-                          Key harus unik dan tidak boleh berubah (immutable).
-                          Contoh yang boleh: string, integer, tuple. Yang tidak
-                          boleh: list (karena bisa berubah).
-                        </td>
+                        <td style={styles.tableCell}>Tidak ada konsep kunci, hanya indeks angka.</td>
+                        <td style={styles.tableCell}>Key harus unik dan immutable (string, integer, tuple).</td>
                       </tr>
                     </tbody>
                   </table>
                   <div style={styles.infoBox}>
-                    <strong>💡 Analogi sederhana:</strong> List seperti rak buku
-                    bernomor (indeks 0,1,2,...). Dictionary seperti lemari
-                    dengan label (key) seperti "buku resep", "novel", dsb.
-                    Mencari buku di rak bernomor harus hitung urutan, tapi
-                    mencari di lemari berlabel langsung lihat labelnya.
+                    <strong>💡 Analogi sederhana:</strong> List seperti rak buku bernomor. Dictionary seperti lemari berlabel.
                   </div>
                 </div>
               </section>
 
-              {/* LATIHAN INTERAKTIF */}
               <section style={styles.section}>
                 <h2 style={styles.sectionTitle}>Latihan</h2>
                 <div style={styles.card}>
@@ -583,7 +533,6 @@ _buffer.getvalue()
   );
 }
 
-/* ================== STYLE ================== */
 const styles = {
   page: {
     padding: "30px 40px",
@@ -667,16 +616,6 @@ const styles = {
     transition: "all 0.2s",
     border: "1px solid #ddd",
     backgroundColor: "#f9f9f9",
-  },
-  checkEksplorasiButton: {
-    marginTop: "12px",
-    backgroundColor: "#306998",
-    color: "white",
-    border: "none",
-    padding: "8px 16px",
-    borderRadius: "6px",
-    cursor: "pointer",
-    fontWeight: "500",
   },
   checkAllButton: {
     marginTop: "20px",
