@@ -125,7 +125,6 @@ const styles = {
     backgroundColor: "#306998",
     color: "white",
     padding: "10px 15px",
-    borderTop: "2px solid #1e1e1e",
   },
   outputTitle: { fontWeight: "600", fontSize: "15px" },
   codeOutput: { backgroundColor: "#1e1e1e", padding: "15px", minHeight: "80px" },
@@ -137,6 +136,93 @@ const styles = {
     whiteSpace: "pre-wrap",
     wordWrap: "break-word",
     lineHeight: "1.5",
+  },
+  // Style penjelasan DARK THEME dengan header BIRU (tanpa emoji)
+  explanationHeader: {
+    backgroundColor: "#306998", // Biru seperti contoh gambar
+    color: "white",
+    padding: "10px 15px",
+    fontWeight: "600",
+  },
+  explanationContent: {
+    backgroundColor: "#1e1e1e",
+    padding: "15px",
+    fontSize: "14px",
+    lineHeight: "1.7",
+    color: "#f8f8f2",
+    fontFamily: "'Segoe UI', Roboto, sans-serif",
+    borderTop: "1px solid #333",
+  },
+  explanationLine: {
+    marginBottom: "12px",
+    paddingBottom: "8px",
+    borderBottom: "1px solid #333",
+    fontFamily: "'Segoe UI', Roboto, sans-serif",
+  },
+  explanationLineNumber: {
+    fontWeight: "bold",
+    color: "#61afef", // Biru terang
+    marginRight: "8px",
+  },
+  explanationCode: {
+    fontFamily: "'Consolas', 'Monaco', 'Courier New', monospace",
+    backgroundColor: "#2d2d2d",
+    padding: "2px 6px",
+    borderRadius: "4px",
+    fontSize: "13px",
+    color: "#e5c07b",
+  },
+  explanationArrow: {
+    margin: "0 6px",
+    color: "#abb2bf",
+  },
+  explanationText: {
+    color: "#abb2bf",
+  },
+  visualHeader: {
+    backgroundColor: "#306998",
+    color: "white",
+    padding: "10px 15px",
+    fontWeight: "600",
+    fontSize: "15px",
+  },
+  visualArea: {
+    backgroundColor: "#1e1e1e",
+    padding: "15px",
+    minHeight: "200px",
+  },
+  visualPlaceholder: {
+    color: "#aaa",
+    fontFamily: "monospace",
+    fontSize: "14px",
+    textAlign: "center",
+    margin: "20px 0",
+  },
+  feedbackCorrect: {
+    marginTop: "10px",
+    padding: "8px 12px",
+    backgroundColor: "#d1e7dd",
+    color: "#0f5132",
+    borderRadius: "6px",
+    fontWeight: "500",
+  },
+  feedbackWrong: {
+    marginTop: "10px",
+    padding: "8px 12px",
+    backgroundColor: "#f8d7da",
+    color: "#842029",
+    borderRadius: "6px",
+    fontWeight: "500",
+  },
+  finalSuccessBox: {
+    marginTop: "20px",
+    padding: "15px",
+    backgroundColor: "#d1e7dd",
+    color: "#0f5132",
+    borderRadius: "8px",
+    textAlign: "center",
+    fontSize: "16px",
+    fontWeight: "bold",
   },
   eksplorasiOption: {
     padding: "12px",
@@ -154,15 +240,6 @@ const styles = {
     color: "#6c757d",
     cursor: "not-allowed",
     opacity: 0.7,
-  },
-  lockMessage: {
-    marginTop: "20px",
-    padding: "15px",
-    backgroundColor: "#fef3c7",
-    borderLeft: "5px solid #f59e0b",
-    borderRadius: "8px",
-    textAlign: "center",
-    color: "#92400e",
   },
   infoMessage: {
     marginTop: "20px",
@@ -273,51 +350,6 @@ const styles = {
     fontSize: "14px",
   },
   feedback: { marginTop: "8px", fontSize: "14px", fontStyle: "italic", color: "#333" },
-  visualHeader: {
-    backgroundColor: "#306998",
-    color: "white",
-    padding: "10px 15px",
-    fontWeight: "600",
-    fontSize: "15px",
-  },
-  visualArea: {
-    backgroundColor: "#1e1e1e",
-    padding: "15px",
-    minHeight: "200px",
-  },
-  visualPlaceholder: {
-    color: "#aaa",
-    fontFamily: "monospace",
-    fontSize: "14px",
-    textAlign: "center",
-    margin: "20px 0",
-  },
-  feedbackCorrect: {
-    marginTop: "10px",
-    padding: "8px 12px",
-    backgroundColor: "#d1e7dd",
-    color: "#0f5132",
-    borderRadius: "6px",
-    fontWeight: "500",
-  },
-  feedbackWrong: {
-    marginTop: "10px",
-    padding: "8px 12px",
-    backgroundColor: "#f8d7da",
-    color: "#842029",
-    borderRadius: "6px",
-    fontWeight: "500",
-  },
-  finalSuccessBox: {
-    marginTop: "20px",
-    padding: "15px",
-    backgroundColor: "#d1e7dd",
-    color: "#0f5132",
-    borderRadius: "8px",
-    textAlign: "center",
-    fontSize: "16px",
-    fontWeight: "bold",
-  },
 };
 
 // ================= KOMPONEN VISUALISASI LIST =================
@@ -469,13 +501,14 @@ const visStyles = {
   note: { fontSize: "12px", color: "#666", marginTop: "10px", textAlign: "center" },
 };
 
-// ================= KOMPONEN CODE EDITOR DENGAN VISUALISASI =================
-const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, highlightMapping, pyodideReady, runPythonCode, hidePositive = false, hideNegative = false, disableHover = false }) => {
+// ================= KOMPONEN CODE EDITOR (URUTAN: KODE -> VISUAL -> OUTPUT -> PENJELASAN) =================
+const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, highlightMapping, pyodideReady, runPythonCode, hidePositive = false, hideNegative = false, disableHover = false, lineExplanations }) => {
   const [output, setOutput] = useState("");
   const [isRunning, setIsRunning] = useState(false);
   const [showVisual, setShowVisual] = useState(false);
   const [highlightSequence, setHighlightSequence] = useState([]);
   const [explanationSteps, setExplanationSteps] = useState([]);
+  const [showExplanations, setShowExplanations] = useState(false);
 
   const handleRun = useCallback(async () => {
     if (!pyodideReady) {
@@ -484,23 +517,48 @@ const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, highlightM
     }
     setIsRunning(true);
     setShowVisual(false);
+    setShowExplanations(false);
     const result = await runPythonCode(code);
     setOutput(result);
     setIsRunning(false);
     setShowVisual(true);
+    setShowExplanations(true);
 
     if (highlightMapping) {
       const { indices, explanations } = highlightMapping();
-      const totalSteps = indices.length;
-      const totalDuration = totalSteps * 3000 + 500;
+      const totalSteps = indices.length * 3000 + 500;
       setHighlightSequence(indices.map((i) => ({ index: i })));
       setExplanationSteps(explanations);
       setTimeout(() => {
         setHighlightSequence([]);
         setExplanationSteps([]);
-      }, totalDuration);
+      }, totalSteps);
     }
   }, [pyodideReady, code, runPythonCode, highlightMapping]);
+
+  // Render penjelasan per baris dengan dark theme, header biru, tanpa emoji
+  const renderLineExplanations = () => {
+    if (!lineExplanations || lineExplanations.length === 0) return null;
+    const lines = code.split("\n");
+    const explanations = lineExplanations;
+    return (
+      <div>
+        {lines.map((line, idx) => {
+          const explanation = explanations[idx] || "";
+          if (!explanation.trim() && !line.trim()) return null;
+          const lineNumber = idx + 1;
+          return (
+            <div key={idx} style={styles.explanationLine}>
+              <span style={styles.explanationLineNumber}>Baris {lineNumber}:</span>
+              <code style={styles.explanationCode}>{line}</code>
+              <span style={styles.explanationArrow}> → </span>
+              <span style={styles.explanationText}>{explanation}</span>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
 
   return (
     <div style={styles.codeEditorContainer}>
@@ -510,9 +568,13 @@ const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, highlightM
           {isRunning ? "Menjalankan..." : pyodideReady ? "Jalankan" : "Memuat..."}
         </button>
       </div>
+
+      {/* CONTOH KODE PROGRAM */}
       <div style={styles.codeInputReadOnly}>
         <pre style={styles.codePre}>{code}</pre>
       </div>
+
+      {/* VISUALISASI */}
       <div style={styles.visualHeader}>Visualisasi Kode Program</div>
       <div style={styles.visualArea}>
         {showVisual && visualData ? (
@@ -529,12 +591,26 @@ const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, highlightM
           <div style={styles.visualPlaceholder}>(Klik 'Jalankan' untuk melihat hasil)</div>
         )}
       </div>
+
+      {/* OUTPUT */}
       <div style={styles.outputHeader}>
         <span style={styles.outputTitle}>Output</span>
       </div>
       <div style={styles.codeOutput}>
         <pre style={styles.outputContent}>{output || "(Klik tombol di atas untuk menjalankan kode)"}</pre>
       </div>
+
+      {/* PENJELASAN PER BARIS (setelah output) - TANPA EMOJI, HEADER BIRU */}
+      {showExplanations && lineExplanations && lineExplanations.length > 0 && (
+        <>
+          <div style={styles.explanationHeader}>
+            <span style={styles.outputTitle}>Penjelasan Kode (per baris)</span>
+          </div>
+          <div style={styles.explanationContent}>
+            {renderLineExplanations()}
+          </div>
+        </>
+      )}
     </div>
   );
 };
@@ -930,6 +1006,40 @@ print("Indeks 1 sampai 3:", angka[1:4])`;
     ]
   });
 
+  // Penjelasan per baris (dark theme)
+  const lineExplanationsPositif = [
+    "Komentar: Memberi tahu bahwa list ini berisi tipe data campuran.",
+    "Membuat list bernama 'data' dengan elemen: string 'apel', integer 100, boolean True, float 3.14.",
+    "",
+    "Komentar: Akan mengakses elemen pertama (indeks 0).",
+    "Mencetak string 'Elemen pertama:' diikuti nilai dari data[0] yaitu 'apel'.",
+    "Komentar: Akan mengakses elemen kedua (indeks 1).",
+    "Mencetak 'Elemen kedua:' dan data[1] yaitu 100.",
+    "Komentar: Akan mengakses elemen ketiga (indeks 2).",
+    "Mencetak 'Elemen ketiga:' dan data[2] yaitu True.",
+    "Komentar: Akan mengakses elemen keempat (indeks 3).",
+    "Mencetak 'Elemen keempat:' dan data[3] yaitu 3.14."
+  ];
+
+  const lineExplanationsNegatif = [
+    "Komentar: List dengan tipe data campuran.",
+    "Membuat list 'data' dengan 4 elemen.",
+    "",
+    "Komentar: Akan mengakses elemen terakhir menggunakan indeks -1.",
+    "Mencetak 'Elemen terakhir:' dan data[-1] (indeks -1 sama dengan indeks 3) yaitu 3.14.",
+    "Komentar: Akan mengakses elemen kedua dari belakang (indeks -2).",
+    "Mencetak 'Elemen kedua dari belakang:' dan data[-2] (indeks -2 = indeks 2) yaitu True.",
+    "Komentar: Akan mengakses elemen ketiga dari belakang (indeks -3).",
+    "Mencetak 'Elemen ketiga dari belakang:' dan data[-3] (indeks -3 = indeks 1) yaitu 100.",
+    "Komentar: Akan mengakses elemen pertama dari belakang (indeks -4).",
+    "Mencetak 'Elemen pertama dari belakang:' dan data[-4] (indeks -4 = indeks 0) yaitu 'apel'."
+  ];
+
+  const lineExplanationsSlicing = [
+    "Membuat list 'angka' berisi 5 bilangan: 10, 20, 30, 40, 50.",
+    "Melakukan slicing dari indeks 1 sampai sebelum indeks 4, sehingga mengambil elemen indeks 1 (20), indeks 2 (30), indeks 3 (40). Hasilnya dicetak."
+  ];
+
   const soal1CodeParts = ["buah = [\"apel\", \"jeruk\", \"mangga\"]\nprint(buah[", "])"];
   const soal1Placeholders = [""];
   const soal1Expected = ["1"];
@@ -1110,6 +1220,7 @@ sys.stdout = StringIO()
                     pyodideReady={pyodideReady}
                     runPythonCode={runPythonCode}
                     hideNegative={true}
+                    lineExplanations={lineExplanationsPositif}
                   />
                 </div>
               </section>
@@ -1130,6 +1241,7 @@ sys.stdout = StringIO()
                     pyodideReady={pyodideReady}
                     runPythonCode={runPythonCode}
                     hidePositive={true}
+                    lineExplanations={lineExplanationsNegatif}
                   />
                 </div>
               </section>
@@ -1160,6 +1272,7 @@ sys.stdout = StringIO()
                     highlightMapping={highlightSlicing}
                     pyodideReady={pyodideReady}
                     runPythonCode={runPythonCode}
+                    lineExplanations={lineExplanationsSlicing}
                   />
                 </div>
               </section>

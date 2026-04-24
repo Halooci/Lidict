@@ -2,19 +2,264 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import Navbar from "../../komponen/Navbar";
 import SidebarMateri from "../../komponen/SidebarMateri";
 
-// ===================== KOMPONEN EDITOR READ-ONLY =====================
-const CodeEditor = ({ code, codeKey, pyodideReady, runPythonCode, explanations }) => {
+// ===================== KOMPONEN VISUALISASI DICTIONARY =====================
+const DictionaryVisualization = ({ data, title, changedKeys = [], accessSequence = [], showClickDetail = true }) => {
+  const [highlightedKey, setHighlightedKey] = useState(null);
+  const [animationStep, setAnimationStep] = useState(0);
+  const [selectedKey, setSelectedKey] = useState(null);
+  const intervalRef = useRef(null);
+
+  useEffect(() => {
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    setHighlightedKey(null);
+    setAnimationStep(0);
+
+    if (!accessSequence || accessSequence.length === 0) return;
+
+    let step = 0;
+    intervalRef.current = setInterval(() => {
+      if (step < accessSequence.length) {
+        setHighlightedKey(accessSequence[step]);
+        setAnimationStep(step + 1);
+        step++;
+      } else {
+        clearInterval(intervalRef.current);
+        setTimeout(() => {
+          setHighlightedKey(null);
+          setAnimationStep(0);
+        }, 500);
+      }
+    }, 1500);
+
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [accessSequence]);
+
+  const handleCardClick = (key) => {
+    if (showClickDetail) setSelectedKey(selectedKey === key ? null : key);
+  };
+
+  const selectedDetail = selectedKey ? {
+    key: selectedKey,
+    value: data[selectedKey] !== undefined ? data[selectedKey] : "Tidak ditemukan",
+    type: typeof data[selectedKey]
+  } : null;
+
+  const isChanged = (key) => changedKeys.includes(key);
+
+  return (
+    <div style={visStyles.container}>
+      <div style={visStyles.title}>{title}</div>
+      <div style={visStyles.dictContainer}>
+        {Object.entries(data).map(([key, value]) => {
+          const isHighlighted = highlightedKey === key;
+          const isSelected = selectedKey === key;
+          const hasChanged = isChanged(key);
+          return (
+            <div
+              key={key}
+              style={{
+                ...visStyles.card,
+                backgroundColor: isHighlighted ? "#FFD43B" : (isSelected ? "#2fa69a" : "#306998"),
+                transform: isHighlighted ? "scale(1.02)" : "scale(1)",
+                transition: "all 0.3s ease",
+                cursor: showClickDetail ? "pointer" : "default",
+                border: isSelected ? "2px solid #FFD43B" : (hasChanged ? "2px solid #28a745" : "none"),
+                position: "relative",
+              }}
+              onClick={() => handleCardClick(key)}
+            >
+              <div style={visStyles.key}>{key}</div>
+              <div style={visStyles.arrow}>→</div>
+              <div style={visStyles.value}>{typeof value === 'string' ? value : JSON.stringify(value)}</div>
+              {hasChanged && (
+                <div style={visStyles.checkmark}>✓</div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+      {selectedDetail && (
+        <div style={visStyles.detailPanel}>
+          <div style={visStyles.detailTitle}>Detail Elemen</div>
+          <div style={visStyles.detailItem}><strong>Key:</strong> {selectedDetail.key}</div>
+          <div style={visStyles.detailItem}><strong>Value:</strong> {selectedDetail.value}</div>
+          <div style={visStyles.detailItem}><strong>Tipe Data:</strong> {selectedDetail.type}</div>
+        </div>
+      )}
+      {accessSequence.length > 0 && (
+        <div style={visStyles.info}>
+          {highlightedKey ? (
+            <span>🔍 Mengakses key <strong>"{highlightedKey}"</strong> → nilai: <strong>{data[highlightedKey] !== undefined ? data[highlightedKey] : "Tidak ditemukan"}</strong></span>
+          ) : animationStep === accessSequence.length ? (
+            <span>✅ Semua akses selesai!</span>
+          ) : (
+            <span>🎬 Animasi akan berjalan... Klik Jalankan</span>
+          )}
+        </div>
+      )}
+      {accessSequence.length === 0 && <div style={visStyles.info}>📦 Klik pada elemen untuk melihat detail.</div>}
+    </div>
+  );
+};
+
+const visStyles = {
+  container: {
+    backgroundColor: "#f8f9fa",
+    borderRadius: "12px",
+    padding: "15px",
+    margin: "10px 0",
+    border: "1px solid #dee2e6",
+  },
+  title: {
+    fontSize: "16px",
+    fontWeight: "bold",
+    marginBottom: "15px",
+    color: "#306998",
+    textAlign: "center",
+  },
+  dictContainer: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "10px",
+    alignItems: "center",
+  },
+  card: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    width: "80%",
+    padding: "10px 20px",
+    borderRadius: "10px",
+    color: "white",
+    fontWeight: "500",
+    position: "relative",
+  },
+  key: { fontWeight: "bold", fontSize: "14px" },
+  arrow: { fontSize: "18px", margin: "0 15px" },
+  value: { fontSize: "14px" },
+  checkmark: {
+    position: "absolute",
+    top: "-8px",
+    right: "-8px",
+    backgroundColor: "#28a745",
+    color: "white",
+    borderRadius: "50%",
+    width: "20px",
+    height: "20px",
+    fontSize: "12px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontWeight: "bold",
+  },
+  info: {
+    marginTop: "15px",
+    textAlign: "center",
+    fontSize: "13px",
+    color: "#555",
+    backgroundColor: "#e9ecef",
+    padding: "8px",
+    borderRadius: "8px",
+  },
+  detailPanel: {
+    marginTop: "15px",
+    padding: "12px",
+    backgroundColor: "#e8f1ff",
+    borderRadius: "8px",
+    borderLeft: "4px solid #306998",
+  },
+  detailTitle: { fontWeight: "bold", marginBottom: "8px", color: "#306998" },
+  detailItem: { fontSize: "13px", marginBottom: "4px", color: "#333" },
+};
+
+// ===================== KOMPONEN PERBANDINGAN SEBELUM DAN SESUDAH =====================
+const DictionaryComparison = ({ beforeData, afterData, beforeTitle, afterTitle, addedKeys = [], removedKeys = [], accessSequenceAfter = [], showClickDetail = true }) => {
+  // Tandai key yang ditambahkan di after
+  const afterChangedKeys = addedKeys;
+  // Tandai key yang dihapus di before (akan tampil merah)
+  const beforeChangedKeys = removedKeys;
+
+  return (
+    <div>
+      <div style={{ display: "flex", gap: "20px", justifyContent: "space-between", flexWrap: "wrap", marginBottom: "15px" }}>
+        <div style={{ flex: 1, minWidth: "250px" }}>
+          <DictionaryVisualization 
+            data={beforeData} 
+            title={beforeTitle} 
+            changedKeys={beforeChangedKeys}
+            accessSequence={[]} 
+            showClickDetail={showClickDetail} 
+          />
+        </div>
+        <div style={{ flex: 1, minWidth: "250px" }}>
+          <DictionaryVisualization 
+            data={afterData} 
+            title={afterTitle} 
+            changedKeys={afterChangedKeys}
+            accessSequence={accessSequenceAfter} 
+            showClickDetail={showClickDetail} 
+          />
+        </div>
+      </div>
+      {/* Keterangan perubahan yang lebih besar dan jelas */}
+      {(removedKeys.length > 0 || addedKeys.length > 0) && (
+        <div style={{
+          marginTop: "15px",
+          padding: "12px",
+          borderRadius: "8px",
+          backgroundColor: "#f8f9fa",
+          border: "1px solid #dee2e6"
+        }}>
+          {removedKeys.length > 0 && (
+            <div style={{
+              fontSize: "15px",
+              fontWeight: "500",
+              color: "#dc3545",
+              marginBottom: addedKeys.length > 0 ? "8px" : "0",
+              padding: "5px 10px",
+              backgroundColor: "#fff5f5",
+              borderRadius: "6px"
+            }}>
+              🔴 Elemen yang dihapus: <strong>{removedKeys.join(", ")}</strong>
+            </div>
+          )}
+          {addedKeys.length > 0 && (
+            <div style={{
+              fontSize: "15px",
+              fontWeight: "500",
+              color: "#28a745",
+              padding: "5px 10px",
+              backgroundColor: "#f0fff0",
+              borderRadius: "6px"
+            }}>
+              🟢 Elemen yang ditambahkan: <strong>{addedKeys.join(", ")}</strong>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+// ===================== KOMPONEN EDITOR READ-ONLY DENGAN VISUALISASI PERBANDINGAN =====================
+const CodeEditor = ({ code, codeKey, pyodideReady, runPythonCode, explanations, beforeData, afterData, beforeTitle, afterTitle, addedKeys = [], removedKeys = [], accessSequenceAfter = [] }) => {
   const [output, setOutput] = useState("");
   const [hasRun, setHasRun] = useState(false);
+  const [showVisual, setShowVisual] = useState(false);
 
   const handleRun = useCallback(async () => {
     if (!pyodideReady) {
-      setOutput("⏳ Pyodide sedang dimuat, harap tunggu...");
+      setOutput("Pyodide sedang dimuat, harap tunggu...");
       return;
     }
+    setShowVisual(false);
+    setHasRun(false);
     const result = await runPythonCode(code);
     setOutput(result);
     setHasRun(true);
+    setShowVisual(true);
   }, [pyodideReady, code, runPythonCode]);
 
   const codeLines = code.split('\n');
@@ -25,12 +270,24 @@ const CodeEditor = ({ code, codeKey, pyodideReady, runPythonCode, explanations }
       <div style={styles.codeEditorHeader}>
         <span style={styles.codeEditorTitle}>Contoh Kode Program</span>
         <button style={styles.runButton} onClick={handleRun} disabled={!pyodideReady}>
-          {pyodideReady ? "▶ Jalankan" : "⏳ Memuat..."}
+          {pyodideReady ? "Jalankan" : "Memuat..."}
         </button>
       </div>
       <div style={styles.codeInputReadOnly}>
         <pre style={styles.codePre}>{code}</pre>
       </div>
+      {showVisual && beforeData && afterData && (
+        <DictionaryComparison
+          beforeData={beforeData}
+          afterData={afterData}
+          beforeTitle={beforeTitle || "Sebelum"}
+          afterTitle={afterTitle || "Sesudah"}
+          addedKeys={addedKeys}
+          removedKeys={removedKeys}
+          accessSequenceAfter={accessSequenceAfter}
+          showClickDetail={true}
+        />
+      )}
       <div style={styles.outputHeader}>
         <span style={styles.outputTitle}>Output</span>
       </div>
@@ -60,68 +317,112 @@ const CodeEditor = ({ code, codeKey, pyodideReady, runPythonCode, explanations }
   );
 };
 
-// ===================== KOMPONEN LATIHAN PRAKTIK (VALIDASI TOLERAN) =====================
+// ===================== KOMPONEN LATIHAN PRAKTIK (VALIDASI BERTAHAP) =====================
 const CodeEditorEditable = ({ codeKey, title, pyodideReady, runPythonCode, expectedOutput, successMessage }) => {
   const [localCode, setLocalCode] = useState("");
   const [output, setOutput] = useState("");
-  const [error, setError] = useState("");
+  const [message, setMessage] = useState(null);
+  const [isRunning, setIsRunning] = useState(false);
 
   const handleChange = useCallback((e) => {
     setLocalCode(e.target.value);
-    setError("");
+    setMessage(null);
   }, []);
 
-  const validateCode = useCallback((code) => {
-    const trimmedCode = code.trim();
-    if (!/\binventaris\s*=\s*\{[^}]*\}/.test(trimmedCode)) {
-      return { valid: false, message: "❌ ERROR: Buatlah dictionary dengan nama 'inventaris'." };
-    }
-    if (!/inventaris\.update\s*\(/.test(trimmedCode)) {
-      return { valid: false, message: "❌ ERROR: Gunakan metode update() untuk menambah stok barang baru." };
-    }
-    if (!/inventaris\.pop\s*\(/.test(trimmedCode)) {
-      return { valid: false, message: "❌ ERROR: Gunakan metode pop() untuk menghapus barang yang habis." };
-    }
-    if (!/print\s*\(\s*inventaris\s*\)/.test(trimmedCode)) {
-      return { valid: false, message: "❌ ERROR: Tampilkan isi inventaris dengan print(inventaris) di akhir." };
-    }
-    return { valid: true };
-  }, []);
-
-  const handleRun = useCallback(async () => {
+  const validateAndRun = useCallback(async () => {
     if (!pyodideReady) {
-      setOutput("⏳ Pyodide sedang dimuat, harap tunggu...");
+      setMessage({ type: 'error', text: "Pyodide sedang dimuat, harap tunggu..." });
       return;
     }
     setOutput("");
-    setError("");
+    setMessage(null);
+    setIsRunning(true);
 
-    const validation = validateCode(localCode);
-    if (!validation.valid) {
-      setError(validation.message);
+    const code = localCode;
+    
+    if (code.trim() === "") {
+      setMessage({ type: 'error', text: "Silakan isi jawaban Anda terlebih dahulu." });
+      setIsRunning(false);
       return;
     }
-
-    const result = await runPythonCode(localCode);
-    setOutput(result);
-    if (expectedOutput && result.includes(expectedOutput)) {
-      setOutput(result + `\n\n✅ ${successMessage || "SELAMAT! Kode kamu benar!"}`);
-    } else if (expectedOutput) {
-      setOutput(result + "\n\n⚠️ Output tidak sesuai. Cek kembali operasi manipulasi dictionary Anda.");
+    
+    const varRegex = /inventaris\s*=\s*\{\s*(?:"|')\s*Python\s+Dasar\s*(?:"|')\s*:\s*\d+\s*,\s*(?:"|')\s*Data\s+Science\s*(?:"|')\s*:\s*\d+\s*,\s*(?:"|')\s*Web\s+Programming\s*(?:"|')\s*:\s*\d+\s*\}/is;
+    const hasCorrectDict = varRegex.test(code);
+    const updateRegex = /inventaris\.update\s*\(\s*\{\s*(?:"|')\s*Machine\s+Learning\s*(?:"|')\s*:\s*\d+\s*\}\s*\)/;
+    const hasUpdate = updateRegex.test(code);
+    const popRegex = /inventaris\.pop\s*\(\s*(?:"|')\s*Data\s+Science\s*(?:"|')\s*\)/;
+    const hasPop = popRegex.test(code);
+    const printRegex = /print\s*\(\s*inventaris\s*\)/;
+    const hasPrint = printRegex.test(code);
+    
+    if (!hasCorrectDict) {
+      setMessage({ 
+        type: 'error', 
+        text: "Periksa kembali kode Anda. Pastikan Anda membuat dictionary 'inventaris' dengan stok awal: 'Python Dasar', 'Data Science', 'Web Programming'." 
+      });
+      setIsRunning(false);
+      return;
     }
-  }, [pyodideReady, localCode, runPythonCode, validateCode, expectedOutput, successMessage]);
+    
+    if (!hasUpdate) {
+      setMessage({ 
+        type: 'success', 
+        text: "Bagus! Dictionary 'inventaris' sudah benar. Sekarang, tambahkan buku 'Machine Learning' dengan stok 3 menggunakan update()." 
+      });
+      setIsRunning(false);
+      return;
+    }
+    
+    if (!hasPop) {
+      setMessage({ 
+        type: 'success', 
+        text: "Bagus! Buku 'Machine Learning' sudah ditambahkan. Sekarang, hapus buku 'Data Science' dari inventaris menggunakan pop()." 
+      });
+      setIsRunning(false);
+      return;
+    }
+    
+    if (!hasPrint) {
+      setMessage({ 
+        type: 'success', 
+        text: "Bagus! Penghapusan 'Data Science' sudah dilakukan. Terakhir, cetak isi inventaris menggunakan print(inventaris)." 
+      });
+      setIsRunning(false);
+      return;
+    }
+    
+    try {
+      const result = await runPythonCode(code);
+      setOutput(result);
+      if (result.includes("Python Dasar") && result.includes("Web Programming") && result.includes("Machine Learning") && !result.includes("Data Science")) {
+        setOutput(result + "\n\nSELAMAT! Semua instruksi sudah benar.");
+        setMessage({ type: 'success', text: "Semua instruksi selesai! Kode berjalan dengan baik." });
+      } else {
+        setOutput(result + "\n\nOutput tidak sesuai. Pastikan inventaris akhir berisi 'Python Dasar', 'Web Programming', dan 'Machine Learning'.");
+        setMessage({ type: 'error', text: "Output akhir tidak sesuai. Periksa kembali urutan operasi Anda." });
+      }
+    } catch (err) {
+      setMessage({ type: 'error', text: `Terjadi kesalahan saat menjalankan: ${err.message}` });
+    } finally {
+      setIsRunning(false);
+    }
+  }, [localCode, pyodideReady, runPythonCode]);
 
   return (
     <div style={styles.codeEditorContainer}>
       <div style={styles.codeEditorHeader}>
         <span style={styles.codeEditorTitle}>{title}</span>
-        <button style={styles.runButton} onClick={handleRun} disabled={!pyodideReady}>
-          {pyodideReady ? "▶ Jalankan" : "⏳ Memuat..."}
+        <button style={styles.runButton} onClick={validateAndRun} disabled={!pyodideReady || isRunning}>
+          {isRunning ? "Menjalankan..." : pyodideReady ? "Jalankan" : "Memuat..."}
         </button>
       </div>
-      {error && <div style={styles.errorBox}>{error}</div>}
+      {message && (
+        <div style={message.type === 'error' ? styles.errorBox : styles.successBox}>
+          {message.text}
+        </div>
+      )}
       <textarea
-        style={{ ...styles.codeInputEditable, border: error ? "2px solid #ff4444" : "none" }}
+        style={{ ...styles.codeInputEditable, border: message?.type === 'error' && message.text.includes("Periksa") ? "2px solid #ff4444" : "none" }}
         value={localCode}
         onChange={handleChange}
         placeholder="Tulis kode Python untuk memanipulasi dictionary di sini..."
@@ -138,7 +439,7 @@ const CodeEditorEditable = ({ codeKey, title, pyodideReady, runPythonCode, expec
   );
 };
 
-// ===================== KOMPONEN LATIHAN (DENGAN LOCK PER SOAL) =====================
+// ===================== KOMPONEN LATIHAN SOAL (LOCK PER SOAL) =====================
 const LatihanSoal = ({ questions, resetTrigger }) => {
   const [answers, setAnswers] = useState(questions.map(() => null));
   const [feedback, setFeedback] = useState(questions.map(() => ""));
@@ -146,7 +447,6 @@ const LatihanSoal = ({ questions, resetTrigger }) => {
   const [globalError, setGlobalError] = useState("");
   const [allCorrect, setAllCorrect] = useState(false);
 
-  // Reset semua state ketika resetTrigger berubah (dari tombol reset di parent, tapi kita tidak menyediakan tombol reset di UI, namun tetap support jika ada)
   useEffect(() => {
     setAnswers(questions.map(() => null));
     setFeedback(questions.map(() => ""));
@@ -156,41 +456,34 @@ const LatihanSoal = ({ questions, resetTrigger }) => {
   }, [resetTrigger, questions]);
 
   const handleAnswerChange = (qIdx, optIdx) => {
-    // Jika soal sudah terkunci (jawaban sudah benar), tidak boleh diubah
     if (locked[qIdx]) return;
-
     const newAnswers = [...answers];
     newAnswers[qIdx] = optIdx;
     setAnswers(newAnswers);
-    // Hapus feedback untuk soal ini karena jawaban berubah
     const newFeedback = [...feedback];
     newFeedback[qIdx] = "";
     setFeedback(newFeedback);
     setGlobalError("");
-    // Jika sebelumnya semua benar, sekarang tidak lagi
     if (allCorrect) setAllCorrect(false);
   };
 
   const handleCheckAll = () => {
-    // Cek apakah semua soal sudah dijawab
     const allAnswered = answers.every(ans => ans !== null);
     if (!allAnswered) {
-      setGlobalError("❌ Anda harus menjawab semua soal terlebih dahulu!");
+      setGlobalError("Anda harus menjawab semua soal terlebih dahulu!");
       return;
     }
     setGlobalError("");
 
-    // Evaluasi semua jawaban
     const newFeedback = answers.map((ans, idx) => {
       if (ans === questions[idx].correctIndex) {
-        return "✅ Benar";
+        return "Benar";
       } else {
-        return "❌ Salah. Coba lagi!";
+        return "Salah. Coba lagi!";
       }
     });
     setFeedback(newFeedback);
 
-    // Tentukan soal mana yang benar, lalu kunci
     const newLocked = answers.map((ans, idx) => ans === questions[idx].correctIndex);
     setLocked(newLocked);
 
@@ -221,8 +514,8 @@ const LatihanSoal = ({ questions, resetTrigger }) => {
             ))}
           </div>
           {feedback[idx] && (
-            <div style={{ marginTop: "12px", padding: "10px", borderRadius: "8px", backgroundColor: feedback[idx].includes("Benar") ? "#d1e7dd" : "#f8d7da" }}>
-              {feedback[idx]}
+            <div style={{ marginTop: "12px", padding: "10px", borderRadius: "8px", backgroundColor: feedback[idx] === "Benar" ? "#d1e7dd" : "#f8d7da" }}>
+              {feedback[idx] === "Benar" ? "Benar" : "Salah"}
             </div>
           )}
         </div>
@@ -233,11 +526,11 @@ const LatihanSoal = ({ questions, resetTrigger }) => {
         </div>
       )}
       <button style={styles.checkAllButton} onClick={handleCheckAll} disabled={allCorrect}>
-        {allCorrect ? "✅ Semua Jawaban Benar" : "Periksa Semua Jawaban"}
+        {allCorrect ? "Semua Jawaban Benar" : "Periksa Semua Jawaban"}
       </button>
       {allCorrect && (
-        <div style={styles.successBox}>
-          🎉 Selamat! Semua jawaban Anda benar.
+        <div style={styles.successBoxFinal}>
+          Selamat! Semua jawaban Anda benar.
         </div>
       )}
     </div>
@@ -302,6 +595,22 @@ export default function ManipulasiDictionary() {
     }
   }, [eksplorasiHasAnswered, isEksplorasiCompleted]);
 
+  // Data untuk visualisasi perbandingan
+  const dataUpdateBefore = { a: 1, b: 2 };
+  const dataUpdateAfter = { a: 1, b: 2, c: 3, d: 4 };
+  const dataPopBefore = { apel: 5000, mangga: 8000, jeruk: 6000 };
+  const dataPopAfter = { apel: 5000, jeruk: 6000 };
+  const dataPopitemBefore = { x: 100, y: 200, z: 300 };
+  const dataPopitemAfter = { x: 100, y: 200 };
+  const dataClearBefore = { nama: "Andi", usia: 25, kota: "Jakarta" };
+  const dataClearAfter = {};
+
+  // Access sequences untuk animasi pada kolom "Sesudah"
+  const accessUpdate = ["c", "d"];
+  const accessPop = ["mangga"];
+  const accessPopitem = ["z"];
+  const accessClear = [];
+
   // Kode contoh
   const exampleCodes = {
     update: `data = {"a": 1, "b": 2}
@@ -318,19 +627,12 @@ print("Dictionary setelah popitem:", data)`,
     clear: `data = {"nama": "Andi", "usia": 25, "kota": "Jakarta"}
 data.clear()
 print("Setelah clear:", data)`,
-    copy: `asli = {"a": 1, "b": 2, "c": 3}
-salinan = asli.copy()
-salinan["a"] = 99
-print("Dictionary asli:", asli)
-print("Dictionary salinan:", salinan)`,
-    dictComp: `kuadrat = {x: x**2 for x in range(1, 6)}
-print("Dictionary kuadrat:", kuadrat)`,
   };
 
   const explanations = {
     update: [
       "Membuat dictionary 'data' dengan key 'a':1 dan 'b':2.",
-      "Menggunakan metode update() untuk menambah atau mengupdate beberapa key sekaligus. Menambah key 'c':3 dan 'd':4.",
+      "Menggunakan metode update() untuk menambah beberapa key sekaligus. Menambah key 'c':3 dan 'd':4.",
       "Mencetak teks 'Setelah update:' diikuti isi dictionary 'data'."
     ],
     pop: [
@@ -350,20 +652,9 @@ print("Dictionary kuadrat:", kuadrat)`,
       "Menghapus semua item menggunakan metode clear().",
       "Mencetak dictionary kosong {}."
     ],
-    copy: [
-      "Membuat dictionary 'asli' dengan tiga key.",
-      "Membuat salinan (shallow copy) menggunakan metode copy().",
-      "Mengubah nilai key 'a' pada dictionary salinan menjadi 99.",
-      "Mencetak dictionary asli (tidak berubah).",
-      "Mencetak dictionary salinan (key 'a' berubah jadi 99)."
-    ],
-    dictComp: [
-      "Dictionary comprehension: membuat dictionary dengan key dari 1 sampai 5 dan nilai berupa kuadrat key.",
-      "Mencetak dictionary yang dihasilkan."
-    ]
   };
 
-  // Data latihan (5 soal)
+  // Latihan soal
   const latihanQuestions = [
     {
       text: "Kode yang BENAR untuk menambahkan pasangan key-value baru 'kota': 'Bandung' ke dalam dictionary `data` yang sudah ada adalah ...",
@@ -439,7 +730,7 @@ print("Dictionary kuadrat:", kuadrat)`,
   }, []);
 
   const runPythonCode = useCallback(async (code) => {
-    if (!pyodideRef.current) return "⏳ Pyodide sedang dimuat...";
+    if (!pyodideRef.current) return "Pyodide sedang dimuat...";
     try {
       const pyodide = pyodideRef.current;
       const escapedCode = code.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n');
@@ -458,15 +749,9 @@ _buffer.getvalue()
       `);
       return result;
     } catch (error) {
-      return `❌ Error: ${error.message}`;
+      return `Error: ${error.message}`;
     }
   }, []);
-
-  // Fungsi reset untuk latihan (tetap ada karena dipanggil dari tombol reset yang tidak ada? kita bisa hapus tombol reset, tapi state resetTrigger masih bisa digunakan jika diperlukan)
-  // Karena tidak ada tombol reset, kita tidak perlu memanggil resetLatihan. Namun kita tetap menyediakan resetTrigger untuk kemungkinan lain.
-  // Tapi di UI kita tidak menampilkan tombol reset. Jadi kita bisa hapus tombol reset dari render.
-  // Namun agar kode tidak error, kita tetap definisikan fungsi tapi tidak digunakan.
-  // Atau kita hapus saja tombol reset dari bagian Latihan di render.
 
   return (
     <>
@@ -488,7 +773,6 @@ _buffer.getvalue()
             <h1 style={styles.headerTitle}>MANIPULASI DICTIONARY</h1>
           </div>
 
-          {/* TUJUAN PEMBELAJARAN */}
           <section style={styles.section}>
             <h2 style={styles.sectionTitle}>Tujuan Pembelajaran</h2>
             <div style={styles.card}>
@@ -499,9 +783,8 @@ _buffer.getvalue()
             </div>
           </section>
 
-          {/* EKSPLORASI AWAL */}
           <section style={styles.section}>
-            <h2 style={styles.sectionTitle}>🔍 Eksplorasi</h2>
+            <h2 style={styles.sectionTitle}>Eksplorasi</h2>
             <div style={styles.card}>
               <p style={styles.text}>
                 Sebelum mempelajari lebih dalam, jawab pertanyaan berikut dengan memilih opsi yang tersedia.
@@ -544,69 +827,108 @@ _buffer.getvalue()
                     </div>
                     {eksplorasiFeedback[idx] && (
                       <div style={{ marginTop: "12px", padding: "10px", borderRadius: "8px", backgroundColor: eksplorasiFeedback[idx] === "Benar" ? "#d1e7dd" : "#f8d7da", color: eksplorasiFeedback[idx] === "Benar" ? "#0f5132" : "#842029" }}>
-                        {eksplorasiFeedback[idx] === "Benar" ? "✅ Benar" : "❌ Salah"}
+                        {eksplorasiFeedback[idx] === "Benar" ? "Benar" : "Salah"}
                       </div>
                     )}
                   </div>
                 );
               })}
               {!isEksplorasiCompleted && (
-                <div style={styles.lockMessageInfo}>🔒 Materi terkunci. Jawab semua pertanyaan di atas untuk membuka materi.</div>
+                <div style={styles.lockMessageInfo}>Materi terkunci. Jawab semua pertanyaan di atas untuk membuka materi.</div>
               )}
             </div>
           </section>
 
-          {/* MATERI UTAMA */}
           {isEksplorasiCompleted && (
             <>
               <section style={styles.section}>
                 <div style={styles.card}>
                   <h3 style={styles.subTitle}>1. Menambah/Mengupdate dengan update()</h3>
                   <p style={styles.text}>Metode <code>update()</code> digunakan untuk menambah atau memperbarui beberapa pasangan key-value sekaligus.</p>
-                  <CodeEditor code={exampleCodes.update} codeKey="update" pyodideReady={pyodideReady} runPythonCode={runPythonCode} explanations={explanations.update} />
+                  <CodeEditor 
+                    code={exampleCodes.update} 
+                    codeKey="update" 
+                    pyodideReady={pyodideReady} 
+                    runPythonCode={runPythonCode} 
+                    explanations={explanations.update}
+                    beforeData={dataUpdateBefore}
+                    afterData={dataUpdateAfter}
+                    beforeTitle="Sebelum update()"
+                    afterTitle="Sesudah update()"
+                    addedKeys={["c", "d"]}
+                    removedKeys={[]}
+                    accessSequenceAfter={accessUpdate}
+                  />
 
                   <h3 style={styles.subTitle}>2. Menghapus dengan pop()</h3>
                   <p style={styles.text}><code>pop(key)</code> menghapus item dengan key tertentu dan mengembalikan nilainya.</p>
-                  <CodeEditor code={exampleCodes.pop} codeKey="pop" pyodideReady={pyodideReady} runPythonCode={runPythonCode} explanations={explanations.pop} />
+                  <CodeEditor 
+                    code={exampleCodes.pop} 
+                    codeKey="pop" 
+                    pyodideReady={pyodideReady} 
+                    runPythonCode={runPythonCode} 
+                    explanations={explanations.pop}
+                    beforeData={dataPopBefore}
+                    afterData={dataPopAfter}
+                    beforeTitle="Sebelum pop('mangga')"
+                    afterTitle="Sesudah pop('mangga')"
+                    addedKeys={[]}
+                    removedKeys={["mangga"]}
+                    accessSequenceAfter={accessPop}
+                  />
 
                   <h3 style={styles.subTitle}>3. Menghapus Item Terakhir dengan popitem()</h3>
                   <p style={styles.text}><code>popitem()</code> menghapus item terakhir (berdasarkan urutan penyisipan) dan mengembalikan tuple (key, value).</p>
-                  <CodeEditor code={exampleCodes.popitem} codeKey="popitem" pyodideReady={pyodideReady} runPythonCode={runPythonCode} explanations={explanations.popitem} />
+                  <CodeEditor 
+                    code={exampleCodes.popitem} 
+                    codeKey="popitem" 
+                    pyodideReady={pyodideReady} 
+                    runPythonCode={runPythonCode} 
+                    explanations={explanations.popitem}
+                    beforeData={dataPopitemBefore}
+                    afterData={dataPopitemAfter}
+                    beforeTitle="Sebelum popitem()"
+                    afterTitle="Sesudah popitem()"
+                    addedKeys={[]}
+                    removedKeys={["z"]}
+                    accessSequenceAfter={accessPopitem}
+                  />
 
                   <h3 style={styles.subTitle}>4. Menghapus Semua Item dengan clear()</h3>
                   <p style={styles.text}><code>clear()</code> menghapus semua item dalam dictionary, menghasilkan dictionary kosong.</p>
-                  <CodeEditor code={exampleCodes.clear} codeKey="clear" pyodideReady={pyodideReady} runPythonCode={runPythonCode} explanations={explanations.clear} />
-
-                  <h3 style={styles.subTitle}>5. Menyalin Dictionary dengan copy()</h3>
-                  <p style={styles.text}><code>copy()</code> membuat salinan dangkal (shallow copy) dari dictionary.</p>
-                  <CodeEditor code={exampleCodes.copy} codeKey="copy" pyodideReady={pyodideReady} runPythonCode={runPythonCode} explanations={explanations.copy} />
-
-                  <h3 style={styles.subTitle}>6. Dictionary Comprehension</h3>
-                  <p style={styles.text}>Dictionary comprehension adalah cara ringkas membuat dictionary dengan ekspresi dan perulangan.</p>
-                  <CodeEditor code={exampleCodes.dictComp} codeKey="dictComp" pyodideReady={pyodideReady} runPythonCode={runPythonCode} explanations={explanations.dictComp} />
+                  <CodeEditor 
+                    code={exampleCodes.clear} 
+                    codeKey="clear" 
+                    pyodideReady={pyodideReady} 
+                    runPythonCode={runPythonCode} 
+                    explanations={explanations.clear}
+                    beforeData={dataClearBefore}
+                    afterData={dataClearAfter}
+                    beforeTitle="Sebelum clear()"
+                    afterTitle="Sesudah clear()"
+                    addedKeys={[]}
+                    removedKeys={["nama", "usia", "kota"]}
+                    accessSequenceAfter={accessClear}
+                  />
                 </div>
               </section>
 
-              {/* AYO PRAKTIK */}
               <section style={styles.section}>
                 <h2 style={styles.sectionTitle}>Ayo Praktik</h2>
                 <div style={styles.card}>
                   <div style={styles.alertBox}>
-                    <strong>📖 Cerita Kasus: Inventaris Toko Buku</strong>
+                    <strong>Cerita Kasus: Inventaris Toko Buku</strong>
                     <p style={{ marginTop: "8px" }}>
                       Sebuah toko buku memiliki dictionary <code>inventaris</code> yang menyimpan stok buku dengan format <code>{"{'judul buku': jumlah_stok}"}</code>. 
                       Saat ini inventaris berisi: <code>{"{'Python Dasar': 10, 'Data Science': 5, 'Web Programming': 7}"}</code>.
                     </p>
-                    <p>Lakukan operasi berikut secara berurutan:</p>
-                    <ol style={{ marginLeft: "20px", lineHeight: "1.8" }}>
-                      <li>Buat dictionary <code>inventaris</code> sesuai data awal.</li>
-                      <li>Tambah stok buku baru <code>"Machine Learning"</code> sebanyak 3 eksemplar menggunakan <code>update()</code>.</li>
+                    <p><strong>Petunjuk:</strong> Ikuti instruksi secara berurutan. Kode Anda akan diperiksa langkah demi langkah. Pastikan Anda mengikuti setiap instruksi.</p>
+                    <ol style={{ marginLeft: "20px", lineHeight: "1.8", marginTop: "8px" }}>
+                      <li>Buat dictionary <code>inventaris</code> dengan stok awal: 'Python Dasar':10, 'Data Science':5, 'Web Programming':7.</li>
+                      <li>Tambah stok buku baru <code>"Machine Learning"</code> sebanyak 3 eksemplar menggunakan metode <code>update()</code>.</li>
                       <li>Buku <code>"Data Science"</code> habis terjual, hapus buku tersebut dari inventaris menggunakan <code>pop()</code>.</li>
-                      <li>Tampilkan isi <code>inventaris</code> terakhir.</li>
+                      <li>Tampilkan isi <code>inventaris</code> terakhir menggunakan <code>print()</code>.</li>
                     </ol>
-                    <p style={{ marginTop: "8px" }}>
-                      <strong>Petunjuk:</strong> Gunakan metode <code>update()</code> untuk menambah, <code>pop()</code> untuk menghapus, dan <code>print(inventaris)</code> di akhir.
-                    </p>
                   </div>
                   <CodeEditorEditable
                     codeKey="latihan_inventaris"
@@ -619,7 +941,6 @@ _buffer.getvalue()
                 </div>
               </section>
 
-              {/* LATIHAN (tanpa tombol reset) */}
               <section style={styles.section}>
                 <h2 style={styles.sectionTitle}>Latihan</h2>
                 <div style={styles.card}>
@@ -689,7 +1010,7 @@ const styles = {
     lineHeight: "1.8",
   },
   text: { lineHeight: "1.8", color: "#333" },
-  subTitle: { marginTop: "20px", marginBottom: "10px", color: "#306998" },
+  subTitle: { marginTop: "20px", marginBottom: "10px", color: "#306998", fontSize: "1.2rem", fontWeight: "600" },
   alertBox: {
     backgroundColor: "#fff3cd",
     border: "1px solid #ffc107",
@@ -732,6 +1053,14 @@ const styles = {
     fontSize: "14px",
     fontWeight: "500",
     borderBottom: "2px solid #cc0000",
+  },
+  successBox: {
+    backgroundColor: "#28a745",
+    color: "white",
+    padding: "12px 15px",
+    fontSize: "14px",
+    fontWeight: "500",
+    borderBottom: "2px solid #1e7e34",
   },
   codeInputReadOnly: {
     width: "100%",
@@ -865,7 +1194,7 @@ const styles = {
     fontSize: "16px",
     width: "100%",
   },
-  successBox: {
+  successBoxFinal: {
     marginTop: "15px",
     padding: "12px",
     borderRadius: "8px",
@@ -873,16 +1202,5 @@ const styles = {
     color: "#0f5132",
     textAlign: "center",
     fontWeight: "bold"
-  },
-  resetQuizButton: {
-    backgroundColor: "#6c757d",
-    color: "white",
-    border: "none",
-    padding: "8px 16px",
-    borderRadius: "6px",
-    cursor: "pointer",
-    fontSize: "14px",
-    marginBottom: "20px",
-    marginRight: "10px"
   },
 };

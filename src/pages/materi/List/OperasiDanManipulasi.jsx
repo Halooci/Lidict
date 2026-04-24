@@ -325,23 +325,53 @@ const styles = {
     borderRadius: "6px",
     fontWeight: "500",
   },
-  explanationBox: {
-    backgroundColor: "#2d2d2d",
-    color: "#e0e0e0",
-    padding: "15px",
-    fontSize: "13px",
-    fontFamily: "'Consolas', monospace",
+  // PERBAIKAN: header penjelasan menjadi biru, teks putih
+  explanationHeader: {
+    backgroundColor: "#306998", // biru seperti contoh gambar
+    color: "white",
+    padding: "10px 15px",
+    fontWeight: "600",
     borderTop: "1px solid #444",
-    marginTop: "0",
+  },
+  explanationContent: {
+    backgroundColor: "#1e1e1e", // tetap gelap
+    padding: "15px",
+    fontSize: "14px",
+    lineHeight: "1.7",
+    color: "#f8f8f2",
+    fontFamily: "'Segoe UI', Roboto, sans-serif",
+    borderTop: "1px solid #333",
+  },
+  explanationLine: {
+    marginBottom: "12px",
+    paddingBottom: "8px",
+    borderBottom: "1px solid #333",
+    fontFamily: "'Segoe UI', Roboto, sans-serif",
+  },
+  explanationLineNumber: {
+    fontWeight: "bold",
+    color: "#61afef",
+    marginRight: "8px",
+  },
+  explanationCode: {
+    fontFamily: "'Consolas', 'Monaco', 'Courier New', monospace",
+    backgroundColor: "#2d2d2d",
+    padding: "2px 6px",
+    borderRadius: "4px",
+    fontSize: "13px",
+    color: "#e5c07b",
+  },
+  explanationArrow: {
+    margin: "0 6px",
+    color: "#abb2bf",
+  },
+  explanationText: {
+    color: "#abb2bf",
   },
   explanationTitle: {
     fontWeight: "bold",
     marginBottom: "10px",
-    color: "#FFD43B",
-  },
-  explanationLine: {
-    marginBottom: "5px",
-    whiteSpace: "pre-wrap",
+    color: "white", // putih di atas biru
   },
 };
 
@@ -939,15 +969,19 @@ const CodeEditorWithVisual = ({
         <pre style={styles.outputContent}>{output || "(Klik 'Jalankan' untuk melihat hasil)"}</pre>
       </div>
       {showExplanation && codeExplanation && (
-        <div style={styles.explanationBox}>
-          <div style={styles.explanationTitle}>Penjelasan baris kode program</div>
-          {Array.isArray(codeExplanation) ? (
-            codeExplanation.map((line, idx) => (
-              <div key={idx} style={styles.explanationLine}>{line}</div>
-            ))
-          ) : (
-            <div style={styles.explanationLine}>{codeExplanation}</div>
-          )}
+        <div>
+          <div style={styles.explanationHeader}>
+            <span style={styles.outputTitle}>Penjelasan baris kode program</span>
+          </div>
+          <div style={styles.explanationContent}>
+            {Array.isArray(codeExplanation) ? (
+              codeExplanation.map((line, idx) => (
+                <div key={idx} style={styles.explanationLine}>{line}</div>
+              ))
+            ) : (
+              <div style={styles.explanationLine}>{codeExplanation}</div>
+            )}
+          </div>
         </div>
       )}
     </div>

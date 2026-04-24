@@ -1,18 +1,24 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Navbar from "../../komponen/Navbar";
 import SidebarMateri from "../../komponen/SidebarMateri";
 
 export default function Apersepsi() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
-  // ========== STATE DRAG & DROP TIPE DATA ==========
+  // ==================== MATERI 1: VARIABEL & TIPE DATA ====================
   const [dragDropAnswers, setDragDropAnswers] = useState({
     "3.14": null,
     "True": null,
     "'Python'": null,
     "42": null,
   });
-  const [dragDropFeedback, setDragDropFeedback] = useState("");
+  const [dragDropStatus, setDragDropStatus] = useState({
+    "3.14": false,
+    "True": false,
+    "'Python'": false,
+    "42": false,
+  });
+  const [dragDropAllDone, setDragDropAllDone] = useState(false);
   const dragItems = ["int", "float", "str", "bool"];
   const targets = ["3.14", "True", "'Python'", "42"];
   const correctMatches = {
@@ -33,56 +39,139 @@ export default function Apersepsi() {
   const handleDrop = (e, targetKey) => {
     e.preventDefault();
     const draggedItem = e.dataTransfer.getData("text/plain");
-    setDragDropAnswers((prev) => ({ ...prev, [targetKey]: draggedItem }));
-  };
-  const checkDragDrop = () => {
+    const newAnswers = { ...dragDropAnswers, [targetKey]: draggedItem };
+    setDragDropAnswers(newAnswers);
+    const newStatus = { ...dragDropStatus };
     let allCorrect = true;
     for (const [target, expected] of Object.entries(correctMatches)) {
-      if (dragDropAnswers[target] !== expected) allCorrect = false;
+      const isCorrect = newAnswers[target] === expected;
+      newStatus[target] = isCorrect;
+      if (!isCorrect) allCorrect = false;
     }
-    setDragDropFeedback(allCorrect ? "✅ Benar! Semua tipe data cocok." : "❌ Masih ada yang salah. Coba perbaiki.");
+    setDragDropStatus(newStatus);
+    setDragDropAllDone(allCorrect);
   };
 
-  // ========== STATE PILIHAN GANDA OPERATOR ==========
+  const [varPilihanAnswer, setVarPilihanAnswer] = useState(null);
+  const [varPilihanFeedback, setVarPilihanFeedback] = useState("");
+  const varPilihanQuestion = "Manakah penulisan variabel yang benar di Python?";
+  const varPilihanOptions = [
+    "1nama = 'Andi'",
+    "nama = 'Andi'",
+    "nama-siswa = 'Andi'",
+    "def = 10",
+    "nama siswa = 'Andi'"
+  ];
+  const varPilihanCorrect = 1;
+  const handleVarPilihan = (idx) => {
+    setVarPilihanAnswer(idx);
+    setVarPilihanFeedback(
+      idx === varPilihanCorrect
+        ? "Benar! Variabel harus diawali huruf atau underscore, tidak boleh angka di awal atau mengandung spasi."
+        : "Salah. Perhatikan aturan penamaan variabel di Python."
+    );
+  };
+
+  const [tipeNilaiAnswer, setTipeNilaiAnswer] = useState("");
+  const [tipeNilaiFeedback, setTipeNilaiFeedback] = useState("");
+  const checkTipeNilai = () => {
+    const jawaban = tipeNilaiAnswer.trim().toLowerCase();
+    setTipeNilaiFeedback(
+      jawaban === "int" || jawaban === "integer"
+        ? "Benar! 5 adalah bilangan bulat (integer)."
+        : "Coba lagi. 5 termasuk tipe data integer."
+    );
+  };
+
+  // ==================== MATERI 2: OPERATOR ====================
   const [operatorAnswer, setOperatorAnswer] = useState(null);
   const [operatorFeedback, setOperatorFeedback] = useState("");
   const operatorQuestion = "Berapakah hasil dari 15 // 4 ?";
   const operatorOptions = ["3.75", "3", "4", "1", "Error"];
   const operatorCorrect = 1;
-  const checkOperator = () => {
-    if (operatorAnswer === null) {
-      setOperatorFeedback("❌ Pilih jawaban terlebih dahulu!");
-      return;
-    }
-    setOperatorFeedback(operatorAnswer === operatorCorrect ? "✅ Benar! // adalah pembagian bulat, 15 // 4 = 3." : "❌ Salah. Ingat: // floor division membulatkan ke bawah.");
+  const handleOperator = (idx) => {
+    setOperatorAnswer(idx);
+    setOperatorFeedback(
+      idx === operatorCorrect
+        ? "Benar! // adalah pembagian bulat, 15 // 4 = 3."
+        : "Salah. Ingat: // floor division membulatkan ke bawah."
+    );
   };
 
-  // ========== STATE ISIAN INPUT/OUTPUT ==========
+  const [modulusAnswer, setModulusAnswer] = useState(null);
+  const [modulusFeedback, setModulusFeedback] = useState("");
+  const modulusQuestion = "Hasil dari 10 % 3 adalah ...";
+  const modulusOptions = ["3", "1", "0", "3.33", "Error"];
+  const modulusCorrect = 1;
+  const handleModulus = (idx) => {
+    setModulusAnswer(idx);
+    setModulusFeedback(
+      idx === modulusCorrect
+        ? "Benar! 10 % 3 = 1 (sisa bagi)."
+        : "Salah. Operator % menghasilkan sisa pembagian."
+    );
+  };
+
+  const [pangkatAnswer, setPangkatAnswer] = useState("");
+  const [pangkatFeedback, setPangkatFeedback] = useState("");
+  const checkPangkat = () => {
+    const jawaban = pangkatAnswer.trim();
+    setPangkatFeedback(
+      jawaban === "8"
+        ? "Benar! 2 ** 3 = 8."
+        : "Salah. ** adalah operator pangkat. 2 pangkat 3 = 8."
+    );
+  };
+
+  // ==================== MATERI 3: INPUT / OUTPUT ====================
   const [ioAnswer, setIoAnswer] = useState("");
   const [ioFeedback, setIoFeedback] = useState("");
   const checkIO = () => {
     const jawaban = ioAnswer.trim().toLowerCase();
-    setIoFeedback(jawaban === "int" || jawaban === "int()" ? "✅ Benar! int() mengubah string menjadi integer." : "❌ Salah. Gunakan fungsi int() untuk konversi.");
+    setIoFeedback(
+      jawaban === "int" || jawaban === "int()"
+        ? "Benar! int() mengubah string menjadi integer."
+        : "Salah. Gunakan fungsi int() untuk konversi ke integer."
+    );
   };
 
-  // ========== STATE PILIHAN GANDA FUNGSI ==========
-  const [fungsiAnswer, setFungsiAnswer] = useState(null);
-  const [fungsiFeedback, setFungsiFeedback] = useState("");
-  const fungsiOptions = [
-    "def kuadrat(x): return x*x",
-    "function kuadrat(x) { return x*x }",
-    "def kuadrat(x): x*x",
-    "kuadrat(x) = x*x",
-    "def kuadrat(x) -> x*x",
-  ];
-  const fungsiCorrect = 0;
-  const checkFungsi = () => {
-    if (fungsiAnswer === null) {
-      setFungsiFeedback("❌ Pilih jawaban terlebih dahulu!");
-      return;
-    }
-    setFungsiFeedback(fungsiAnswer === fungsiCorrect ? "✅ Benar! Itulah cara mendefinisikan fungsi dengan return." : "❌ Salah. Fungsi di Python diawali 'def' dan diakhiri 'return' untuk mengembalikan nilai.");
+  const [outputAnswer, setOutputAnswer] = useState(null);
+  const [outputFeedback, setOutputFeedback] = useState("");
+  const outputQuestion = "Fungsi untuk menampilkan teks ke layar adalah ...";
+  const outputOptions = ["input()", "print()", "output()", "display()", "write()"];
+  const outputCorrect = 1;
+  const handleOutput = (idx) => {
+    setOutputAnswer(idx);
+    setOutputFeedback(
+      idx === outputCorrect
+        ? "Benar! print() digunakan untuk mencetak output."
+        : "Salah. Fungsi yang benar adalah print()."
+    );
   };
+
+  const [printVarAnswer, setPrintVarAnswer] = useState("");
+  const [printVarFeedback, setPrintVarFeedback] = useState("");
+  const checkPrintVar = () => {
+    const jawaban = printVarAnswer.trim().toLowerCase();
+    setPrintVarFeedback(
+      jawaban === "nama"
+        ? "Benar! Variabel 'nama' akan dicetak setelah 'Halo'."
+        : "Coba lagi. Variabel yang berisi input nama adalah 'nama'."
+    );
+  };
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) entry.target.classList.add("fade-in-visible");
+        });
+      },
+      { threshold: 0.1 }
+    );
+    document.querySelectorAll(".fade-in").forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, []);
 
   return (
     <>
@@ -98,30 +187,41 @@ export default function Apersepsi() {
         }}
       >
         <div style={styles.page}>
-          {/* HEADER */}
           <div style={styles.header}>
             <div style={styles.headerAccent}></div>
             <h1 style={styles.headerTitle}>APERSEPSI</h1>
           </div>
 
-          {/* PENGANTAR */}
+          {/* PERTANYAAN PEMANTIK YANG MENARIK */}
           <section style={styles.section}>
-            <div style={styles.card}>
+            <div style={styles.card} className="fade-in">
+              <h3 style={styles.subTitle}>Mari Berpikir Sejenak</h3>
               <p style={styles.text}>
-                Sebelum mempelajari <strong>List, Nested List, dan Dictionary</strong> dalam Struktur Data,
-                mari kita segarkan kembali materi dasar pemrograman Python. Setiap bagian berisi penjelasan dan aktivitas interaktif.
+                Bayangkan Anda sedang merencanakan perjalanan jauh. Anda perlu membawa banyak barang: pakaian, perlengkapan mandi, makanan ringan, dan dokumen penting. 
+                Jika Anda hanya menggunakan satu tas kecil, barang-barang akan berantakan dan sulit ditemukan. Namun, jika Anda memiliki tas ransel dengan kompartemen-kompartemen berbeda, 
+                Anda dapat mengatur barang sesuai kategorinya. Begitu pula dalam pemrograman: ketika kita perlu menyimpan dan mengelola banyak data yang saling terkait, 
+                kita memerlukan struktur data yang tepat seperti <strong>list</strong>, <strong>nested list</strong>, atau <strong>dictionary</strong>.
               </p>
+              <p style={styles.text}>
+                Namun, sebelum kita melangkah lebih jauh, ada baiknya kita mengingat kembali <strong>pondasi dasar</strong> yang akan sangat membantu: 
+                bagaimana cara kita menyimpan nilai (variabel), apa saja jenis data yang bisa disimpan (tipe data), bagaimana melakukan perhitungan (operator), 
+                dan bagaimana berinteraksi dengan pengguna (input-output). Tanpa pemahaman yang kuat tentang hal-hal tersebut, akan sulit bagi kita untuk mengatur data-data kompleks nantinya.
+              </p>
+              <div style={styles.explanationBox}>
+                <p style={styles.text}>
+                  <strong>Yuk, kita segarkan kembali:</strong> Ikuti aktivitas-aktivitas interaktif di bawah ini tentang variabel & tipe data, operator aritmatika, serta input-output. 
+                  Setelah ini, Anda akan lebih siap menjelajahi struktur data yang lebih kaya.
+                </p>
+              </div>
             </div>
           </section>
 
-          {/* 1. VARIABEL & TIPE DATA */}
+          {/* MATERI 1: VARIABEL & TIPE DATA */}
           <section style={styles.section}>
-            <div style={styles.card}>
+            <div style={styles.card} className="fade-in">
               <h3 style={styles.subTitle}>1. Variabel dan Tipe Data</h3>
               <p style={styles.text}>
-                Variabel adalah wadah untuk menyimpan data. Setiap data memiliki tipe (type): 
-                <code> int </code> (bilangan bulat), <code> float </code> (bilangan desimal), 
-                <code> str </code> (teks), <code> bool </code> (True/False).
+                Variabel adalah wadah untuk menyimpan data. Tipe data dasar: int (bilangan bulat), float (bilangan desimal), str (teks), bool (True/False).
               </p>
               <pre style={styles.codeBlock}>
                 {`x = 10       # integer
@@ -129,9 +229,8 @@ y = 3.14     # float
 nama = "Andi" # string
 status = True # boolean`}
               </pre>
-              <p style={styles.text}>
-                <strong>Aktivitas:</strong> Seret tipe data ke nilai yang sesuai.
-              </p>
+
+              <p style={styles.text}><strong>Aktivitas 1.1:</strong> Seret tipe data ke nilai yang sesuai.</p>
               <div style={styles.dragContainer}>
                 <div style={styles.dragItems}>
                   {dragItems.map((item) => (
@@ -142,25 +241,65 @@ status = True # boolean`}
                 </div>
                 <div style={styles.dropZones}>
                   {targets.map((target) => (
-                    <div key={target} onDragOver={handleDragOver} onDrop={(e) => handleDrop(e, target)} style={styles.dropZone}>
+                    <div
+                      key={target}
+                      onDragOver={handleDragOver}
+                      onDrop={(e) => handleDrop(e, target)}
+                      style={{
+                        ...styles.dropZone,
+                        backgroundColor: dragDropStatus[target] ? "#e6f7ec" : "#f8fafc",
+                        borderColor: dragDropStatus[target] ? "#28a745" : "#306998",
+                      }}
+                    >
                       <span style={styles.targetValue}>{target}</span>
-                      <span style={styles.dropAnswer}>{dragDropAnswers[target] ? ` → ${dragDropAnswers[target]}` : " (kosong)"}</span>
+                      <span style={styles.dropAnswer}>
+                        {dragDropAnswers[target] ? ` → ${dragDropAnswers[target]}` : " (kosong)"}
+                        {dragDropStatus[target] && " ✓"}
+                        {dragDropAnswers[target] && !dragDropStatus[target] && " ✗"}
+                      </span>
                     </div>
                   ))}
                 </div>
               </div>
-              <button style={styles.smallButton} onClick={checkDragDrop}>Periksa Drag & Drop</button>
-              {dragDropFeedback && <div style={styles.feedbackBox}>{dragDropFeedback}</div>}
+              {dragDropAllDone && <div style={{ ...styles.feedbackBox, backgroundColor: "#d4edda", color: "#155724" }}>Semua benar! Selamat.</div>}
+
+              <p style={styles.text}><strong>Aktivitas 1.2:</strong> {varPilihanQuestion}</p>
+              <div style={styles.options}>
+                {varPilihanOptions.map((opt, idx) => (
+                  <div
+                    key={idx}
+                    onClick={() => handleVarPilihan(idx)}
+                    style={{
+                      ...styles.option,
+                      backgroundColor: varPilihanAnswer === idx ? "#2fa69a" : "#fff",
+                      color: varPilihanAnswer === idx ? "white" : "#1f2937",
+                    }}
+                  >
+                    <strong>{String.fromCharCode(65 + idx)}.</strong> {opt}
+                  </div>
+                ))}
+              </div>
+              {varPilihanFeedback && <div style={styles.feedbackBox}>{varPilihanFeedback}</div>}
+
+              <p style={styles.text}><strong>Aktivitas 1.3:</strong> Tentukan tipe data dari nilai <code>5</code> (tulis dalam huruf kecil).</p>
+              <input
+                type="text"
+                placeholder="Jawaban"
+                value={tipeNilaiAnswer}
+                onChange={(e) => setTipeNilaiAnswer(e.target.value)}
+                onBlur={checkTipeNilai}
+                style={styles.inputText}
+              />
+              {tipeNilaiFeedback && <div style={styles.feedbackBox}>{tipeNilaiFeedback}</div>}
             </div>
           </section>
 
-          {/* 2. OPERATOR */}
+          {/* MATERI 2: OPERATOR */}
           <section style={styles.section}>
-            <div style={styles.card}>
+            <div style={styles.card} className="fade-in">
               <h3 style={styles.subTitle}>2. Operator Aritmatika</h3>
               <p style={styles.text}>
-                Operator digunakan untuk melakukan operasi matematika. Yang perlu diingat:
-                <code> / </code> menghasilkan float, <code> // </code> pembagian bulat, <code> % </code> sisa bagi, <code> ** </code> pangkat.
+                Operator dasar: + (tambah), - (kurang), * (kali), / (bagi float), // (bagi bulat), % (sisa bagi), ** (pangkat).
               </p>
               <pre style={styles.codeBlock}>
                 {`+   penjumlahan
@@ -171,17 +310,16 @@ status = True # boolean`}
 %   sisa bagi
 **  pangkat`}
               </pre>
-              <p style={styles.text}>
-                <strong>Aktivitas:</strong> {operatorQuestion}
-              </p>
+
+              <p style={styles.text}><strong>Aktivitas 2.1:</strong> {operatorQuestion}</p>
               <div style={styles.options}>
                 {operatorOptions.map((opt, idx) => (
                   <div
                     key={idx}
-                    onClick={() => setOperatorAnswer(idx)}
+                    onClick={() => handleOperator(idx)}
                     style={{
                       ...styles.option,
-                      backgroundColor: operatorAnswer === idx ? "#2fa69a" : "#f9f9f9",
+                      backgroundColor: operatorAnswer === idx ? "#2fa69a" : "#fff",
                       color: operatorAnswer === idx ? "white" : "#1f2937",
                     }}
                   >
@@ -189,82 +327,119 @@ status = True # boolean`}
                   </div>
                 ))}
               </div>
-              <button style={styles.smallButton} onClick={checkOperator}>Periksa Jawaban</button>
               {operatorFeedback && <div style={styles.feedbackBox}>{operatorFeedback}</div>}
-            </div>
-          </section>
 
-          {/* 3. INPUT / OUTPUT */}
-          <section style={styles.section}>
-            <div style={styles.card}>
-              <h3 style={styles.subTitle}>3. Input dan Output</h3>
-              <p style={styles.text}>
-                <code>print()</code> menampilkan data ke layar. <code>input()</code> membaca masukan dari pengguna (selalu menghasilkan string). 
-                Untuk bilangan, konversi dengan <code>int()</code> atau <code>float()</code>.
-              </p>
-              <pre style={styles.codeBlock}>
-                {`nama = input("Nama: ")
-print("Halo", nama)
-umur = int(input("Umur: "))  # konversi ke integer`}
-              </pre>
-              <p style={styles.text}>
-                <strong>Aktivitas:</strong> Lengkapi kode agar variabel <code>umur</code> bertipe integer.
-              </p>
-              <pre style={styles.codeBlock}>{`umur = ______(input("Umur: "))`}</pre>
-              <input type="text" placeholder="Tulis fungsi yang tepat" value={ioAnswer} onChange={(e) => setIoAnswer(e.target.value)} style={styles.inputText} />
-              <button style={styles.smallButton} onClick={checkIO}>Periksa Jawaban</button>
-              {ioFeedback && <div style={styles.feedbackBox}>{ioFeedback}</div>}
-            </div>
-          </section>
-
-          {/* 4. FUNGSI */}
-          <section style={styles.section}>
-            <div style={styles.card}>
-              <h3 style={styles.subTitle}>4. Fungsi (def)</h3>
-              <p style={styles.text}>
-                Fungsi adalah blok kode yang dapat dipanggil berulang. Dibuat dengan keyword <code>def</code>, diikuti nama fungsi dan parameter.
-                Gunakan <code>return</code> untuk mengembalikan nilai.
-              </p>
-              <pre style={styles.codeBlock}>
-                {`def kuadrat(x):
-    return x * x
-
-print(kuadrat(5))  # Output: 25`}
-              </pre>
-              <p style={styles.text}>
-                <strong>Aktivitas:</strong> Manakah definisi fungsi yang benar untuk menghitung kuadrat?
-              </p>
+              <p style={styles.text}><strong>Aktivitas 2.2:</strong> {modulusQuestion}</p>
               <div style={styles.options}>
-                {fungsiOptions.map((opt, idx) => (
+                {modulusOptions.map((opt, idx) => (
                   <div
                     key={idx}
-                    onClick={() => setFungsiAnswer(idx)}
+                    onClick={() => handleModulus(idx)}
                     style={{
                       ...styles.option,
-                      backgroundColor: fungsiAnswer === idx ? "#2fa69a" : "#f9f9f9",
-                      color: fungsiAnswer === idx ? "white" : "#1f2937",
+                      backgroundColor: modulusAnswer === idx ? "#2fa69a" : "#fff",
+                      color: modulusAnswer === idx ? "white" : "#1f2937",
                     }}
                   >
                     <strong>{String.fromCharCode(65 + idx)}.</strong> {opt}
                   </div>
                 ))}
               </div>
-              <button style={styles.smallButton} onClick={checkFungsi}>Periksa Jawaban</button>
-              {fungsiFeedback && <div style={styles.feedbackBox}>{fungsiFeedback}</div>}
+              {modulusFeedback && <div style={styles.feedbackBox}>{modulusFeedback}</div>}
+
+              <p style={styles.text}><strong>Aktivitas 2.3:</strong> Hasil dari <code>2 ** 3</code> adalah ...</p>
+              <input
+                type="text"
+                placeholder="Jawaban angka"
+                value={pangkatAnswer}
+                onChange={(e) => setPangkatAnswer(e.target.value)}
+                onBlur={checkPangkat}
+                style={styles.inputText}
+              />
+              {pangkatFeedback && <div style={styles.feedbackBox}>{pangkatFeedback}</div>}
+            </div>
+          </section>
+
+          {/* MATERI 3: INPUT / OUTPUT */}
+          <section style={styles.section}>
+            <div style={styles.card} className="fade-in">
+              <h3 style={styles.subTitle}>3. Input dan Output</h3>
+              <p style={styles.text}>
+                <code>print()</code> digunakan untuk menampilkan data. <code>input()</code> untuk menerima masukan (selalu menghasilkan string). Konversi ke integer/float menggunakan <code>int()</code> atau <code>float()</code>.
+              </p>
+              <pre style={styles.codeBlock}>
+                {`nama = input("Nama: ")
+print("Halo", nama)
+umur = int(input("Umur: "))  # konversi ke integer`}
+              </pre>
+
+              <p style={styles.text}><strong>Aktivitas 3.1:</strong> Lengkapi kode agar <code>umur</code> bertipe integer: <code>umur = ______(input("Umur: "))</code></p>
+              <input
+                type="text"
+                placeholder="Fungsi yang tepat"
+                value={ioAnswer}
+                onChange={(e) => setIoAnswer(e.target.value)}
+                onBlur={checkIO}
+                style={styles.inputText}
+              />
+              {ioFeedback && <div style={styles.feedbackBox}>{ioFeedback}</div>}
+
+              <p style={styles.text}><strong>Aktivitas 3.2:</strong> {outputQuestion}</p>
+              <div style={styles.options}>
+                {outputOptions.map((opt, idx) => (
+                  <div
+                    key={idx}
+                    onClick={() => handleOutput(idx)}
+                    style={{
+                      ...styles.option,
+                      backgroundColor: outputAnswer === idx ? "#2fa69a" : "#fff",
+                      color: outputAnswer === idx ? "white" : "#1f2937",
+                    }}
+                  >
+                    <strong>{String.fromCharCode(65 + idx)}.</strong> {opt}
+                  </div>
+                ))}
+              </div>
+              {outputFeedback && <div style={styles.feedbackBox}>{outputFeedback}</div>}
+
+              <p style={styles.text}><strong>Aktivitas 3.3:</strong> Lengkapi kode agar program mencetak "Halo Andi":</p>
+              <pre style={styles.codeBlock}>{`nama = input("Nama: ")
+print("Halo", ______)`}</pre>
+              <input
+                type="text"
+                placeholder="Variabel yang tepat"
+                value={printVarAnswer}
+                onChange={(e) => setPrintVarAnswer(e.target.value)}
+                onBlur={checkPrintVar}
+                style={styles.inputText}
+              />
+              {printVarFeedback && <div style={styles.feedbackBox}>{printVarFeedback}</div>}
             </div>
           </section>
 
           {/* PENUTUP */}
           <section style={styles.section}>
-            {/* <div style={styles.card}>
+            <div style={styles.card} className="fade-in">
               <p style={styles.text}>
-                Setelah menyelesaikan semua aktivitas, Anda telah mengingat kembali materi prasyarat. 
-                Sekarang Anda siap mempelajari List, Nested List, dan Dictionary. Selamat belajar!
+                Selamat! Anda telah menyelesaikan semua aktivitas. Sekarang fondasi Anda sudah lebih kokoh. 
+                Mari lanjutkan ke materi inti tentang <strong>List, Nested List, dan Dictionary</strong>.
               </p>
-            </div> */}
+            </div>
           </section>
         </div>
       </div>
+
+      <style>{`
+        .fade-in {
+          opacity: 0;
+          transform: translateY(20px);
+          transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+        .fade-in-visible {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      `}</style>
     </>
   );
 }
@@ -305,75 +480,88 @@ const styles = {
   section: { marginBottom: "40px" },
   card: {
     backgroundColor: "white",
-    borderRadius: "10px",
+    borderRadius: "16px",
     padding: "25px",
-    boxShadow: "0 5px 15px rgba(0,0,0,0.08)",
+    boxShadow: "0 10px 25px -5px rgba(0,0,0,0.05), 0 8px 10px -6px rgba(0,0,0,0.02)",
+    border: "1px solid #eef2f6",
   },
-  subTitle: { marginTop: "0", marginBottom: "15px", color: "#306998", fontSize: "20px" },
-  text: { lineHeight: "1.8", color: "#333", marginBottom: "12px" },
+  subTitle: {
+    marginTop: "0",
+    marginBottom: "15px",
+    color: "#306998",
+    fontSize: "22px",
+    fontWeight: "600",
+  },
+  text: { lineHeight: "1.8", color: "#334155", marginBottom: "12px" },
+  explanationBox: {
+    backgroundColor: "#f0f7ff",
+    padding: "15px 20px",
+    borderRadius: "12px",
+    borderLeft: "4px solid #306998",
+    marginTop: "10px",
+  },
   codeBlock: {
-    backgroundColor: "#272822",
-    color: "#f8f8f2",
-    padding: "12px",
-    borderRadius: "8px",
+    backgroundColor: "#1e293b",
+    color: "#f8fafc",
+    padding: "16px",
+    borderRadius: "12px",
     fontFamily: "monospace",
     fontSize: "14px",
     overflow: "auto",
     margin: "15px 0",
+    lineHeight: "1.5",
   },
   dragContainer: { display: "flex", flexDirection: "column", gap: "20px", marginBottom: "15px" },
-  dragItems: { display: "flex", flexWrap: "wrap", gap: "10px", justifyContent: "center" },
+  dragItems: { display: "flex", flexWrap: "wrap", gap: "12px", justifyContent: "center" },
   dragItem: {
     backgroundColor: "#306998",
     color: "white",
-    padding: "8px 16px",
-    borderRadius: "8px",
+    padding: "8px 20px",
+    borderRadius: "40px",
     cursor: "grab",
     userSelect: "none",
+    fontWeight: "500",
+    boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
   },
-  dropZones: { display: "flex", flexDirection: "column", gap: "10px" },
+  dropZones: { display: "flex", flexDirection: "column", gap: "12px" },
   dropZone: {
-    backgroundColor: "#f0f0f0",
+    backgroundColor: "#f8fafc",
     border: "2px dashed #306998",
-    borderRadius: "8px",
-    padding: "12px",
+    borderRadius: "12px",
+    padding: "12px 16px",
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
+    transition: "all 0.2s",
   },
-  targetValue: { fontWeight: "bold", fontFamily: "monospace" },
+  targetValue: { fontWeight: "bold", fontFamily: "monospace", fontSize: "16px", color: "#0f172a" },
   dropAnswer: { color: "#306998", fontStyle: "italic" },
-  options: { display: "flex", flexDirection: "column", gap: "10px", marginBottom: "10px" },
+  options: { display: "flex", flexDirection: "column", gap: "12px", marginBottom: "16px" },
   option: {
-    padding: "10px",
-    borderRadius: "8px",
+    padding: "12px 16px",
+    borderRadius: "12px",
     cursor: "pointer",
     transition: "all 0.2s",
-    border: "1px solid #ddd",
-  },
-  smallButton: {
-    backgroundColor: "#306998",
-    color: "white",
-    border: "none",
-    padding: "8px 16px",
-    borderRadius: "6px",
-    cursor: "pointer",
-    fontSize: "14px",
-    marginTop: "8px",
+    border: "1px solid #e2e8f0",
+    backgroundColor: "#fff",
+    fontWeight: "500",
   },
   inputText: {
     width: "100%",
-    padding: "10px",
-    borderRadius: "6px",
-    border: "1px solid #ccc",
+    padding: "12px 16px",
+    borderRadius: "12px",
+    border: "1px solid #e2e8f0",
     marginTop: "8px",
     fontSize: "14px",
+    fontFamily: "monospace",
   },
   feedbackBox: {
     marginTop: "12px",
-    padding: "10px",
-    borderRadius: "8px",
-    backgroundColor: "#f0f0f0",
-    color: "#333",
+    padding: "12px 16px",
+    borderRadius: "12px",
+    backgroundColor: "#f1f5f9",
+    color: "#1e293b",
+    borderLeft: "4px solid #306998",
+    fontWeight: "500",
   },
 };
