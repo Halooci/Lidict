@@ -17,27 +17,261 @@ export default function EvaluasiAkhir() {
 
   const timerIntervalRef = useRef(null);
 
-  // ---------- DUMMY DATA SOAL ----------
-  const questions = Array.from({ length: 20 }, (_, i) => ({
-    id: i,
-    text: `Soal ${i + 1}: Berikut ini yang merupakan fungsi dari print() dalam Python adalah?`,
-    options: [
-      "A. Menampilkan output ke layar",
-      "B. Membaca input dari user",
-      "C. Mengubah tipe data",
-      "D. Membuat fungsi baru",
-      "E. Mengimpor modul",
-    ],
-  }));
+  // ---------- SOAL PILIHAN GANDA (List, Nested List, Dictionary) ----------
+  // 20 soal dengan taksonomi Bloom (C1 s.d. C6)
+  const questions = [
+    // ==================== LIST (7 soal) ====================
+    {
+      id: 0,
+      text: "Perhatikan pernyataan berikut tentang list pada Python:\n(1) List dapat menyimpan elemen dengan tipe data berbeda.\n(2) List bersifat immutable (tidak bisa diubah).\n(3) List didefinisikan dengan tanda kurung siku [].\n(4) Elemen list dapat diakses menggunakan indeks mulai dari 0.\nManakah pernyataan yang benar?",
+      options: [
+        "A. (1), (2), dan (3)",
+        "B. (1), (3), dan (4)",
+        "C. (2) dan (4)",
+        "D. (1), (2), dan (4)",
+        "E. Semua benar"
+      ]
+    },
+    {
+      id: 1,
+      text: "Diberikan kode berikut:\nbuah = ['apel', 'pisang', 'jeruk', 'mangga']\nprint(buah[-2])\nApa output yang dihasilkan?",
+      options: [
+        "A. apel",
+        "B. pisang",
+        "C. jeruk",
+        "D. mangga",
+        "E. Error"
+      ]
+    },
+    {
+      id: 2,
+      text: "Manakah cara yang tepat untuk membuat list berisi angka 1, 2, 3, 4, 5 secara berurutan?",
+      options: [
+        "A. list(1,2,3,4,5)",
+        "B. [1;2;3;4;5]",
+        "C. {1,2,3,4,5}",
+        "D. [1,2,3,4,5]",
+        "E. (1,2,3,4,5)"
+      ]
+    },
+    {
+      id: 3,
+      text: "Perhatikan potongan kode berikut:\nnilai = [80, 75, 90, 85]\nnilai.append(95)\nnilai.insert(1, 70)\nBerapakah panjang list `nilai` setelah kedua operasi tersebut?",
+      options: [
+        "A. 4",
+        "B. 5",
+        "C. 6",
+        "D. 7",
+        "E. Error"
+      ]
+    },
+    {
+      id: 4,
+      text: "Jika ingin menghapus elemen terakhir dari list sekaligus mengembalikan nilainya, method apa yang paling tepat digunakan?",
+      options: [
+        "A. remove()",
+        "B. pop()",
+        "C. delete()",
+        "D. discard()",
+        "E. clear()"
+      ]
+    },
+    {
+      id: 5,
+      text: "Analisislah kode berikut:\ndata = [3, 1, 4, 1, 5]\ndata.sort(reverse=True)\nprint(data[2])\nApa output yang dihasilkan?",
+      options: [
+        "A. 1",
+        "B. 4",
+        "C. 3",
+        "D. 5",
+        "E. Error"
+      ]
+    },
+    {
+      id: 6,
+      text: "Manakah dari operasi berikut yang menghasilkan list baru [10, 20, 30, 40] jika diketahui list awal `a = [10, 20, 30]`?",
+      options: [
+        "A. a.append(40)",
+        "B. a + [40]",
+        "C. a.extend([40])",
+        "D. a.insert(3, 40)",
+        "E. a.add(40)"
+      ]
+    },
 
-  const correctAnswers = [
-    "A", "B", "C", "D", "E",
-    "A", "B", "C", "D", "E",
-    "A", "B", "C", "D", "E",
-    "A", "B", "C", "D", "E",
+    // ==================== NESTED LIST (7 soal) ====================
+    {
+      id: 7,
+      text: "Apa yang dimaksud dengan nested list dalam Python?",
+      options: [
+        "A. List yang hanya berisi tipe data numerik",
+        "B. List yang di dalamnya terdapat list lain sebagai elemen",
+        "C. List yang didefinisikan di dalam fungsi",
+        "D. List yang tidak memiliki indeks",
+        "E. List yang hanya memiliki satu elemen"
+      ]
+    },
+    {
+      id: 8,
+      text: "Diberikan nested list: matrix = [[1,2,3], [4,5,6], [7,8,9]]\nBagaimana cara mengakses angka 5?",
+      options: [
+        "A. matrix[1][1]",
+        "B. matrix[2][1]",
+        "C. matrix[1][2]",
+        "D. matrix[2][2]",
+        "E. matrix[0][1]"
+      ]
+    },
+    {
+      id: 9,
+      text: "Manakah kode yang benar untuk membuat nested list dengan tiga baris dan dua kolom, semua elemen bernilai 0?",
+      options: [
+        "A. [[0]*2]*3",
+        "B. [[0 for _ in range(2)] for _ in range(3)]",
+        "C. [0,0] * 3",
+        "D. A dan B benar",
+        "E. Hanya B yang benar"
+      ]
+    },
+    {
+      id: 10,
+      text: "Perhatikan kode berikut:\nA = [[1,2], [3,4]]\nB = A[0]\nB.append(5)\nprint(A)\nApa output yang dihasilkan?",
+      options: [
+        "A. [[1,2], [3,4]]",
+        "B. [[1,2,5], [3,4]]",
+        "C. Error",
+        "D. [[1,2], [3,4,5]]",
+        "E. [[1,2,5], [3,4,5]]"
+      ]
+    },
+    {
+      id: 11,
+      text: "Jika diketahui nested list `data = [['a','b'], ['c','d'], ['e','f']]`, manakah perintah yang akan mengubah elemen 'd' menjadi 'z'?",
+      options: [
+        "A. data[1][1] = 'z'",
+        "B. data[2][1] = 'z'",
+        "C. data[1][2] = 'z'",
+        "D. data[2][2] = 'z'",
+        "E. data[0][1] = 'z'"
+      ]
+    },
+    {
+      id: 12,
+      text: "Manakah dari pernyataan berikut yang tepat tentang operasi pada nested list?",
+      options: [
+        "A. Kita dapat menggunakan perulangan bersarang (nested loop) untuk mengakses setiap elemen",
+        "B. Nested list tidak bisa digabung dengan operator +",
+        "C. Method append() hanya dapat menambah elemen di level paling luar",
+        "D. Nested list bersifat immutable seperti string",
+        "E. Semua pernyataan salah"
+      ]
+    },
+    {
+      id: 13,
+      text: "Analisislah kode berikut:\nmatrix = [[i*j for j in range(3)] for i in range(2)]\nprint(matrix[1][2])\nBerapakah output yang dihasilkan?",
+      options: [
+        "A. 0",
+        "B. 1",
+        "C. 2",
+        "D. 3",
+        "E. Error"
+      ]
+    },
+
+    // ==================== DICTIONARY (6 soal) ====================
+    {
+      id: 14,
+      text: "Manakah pernyataan yang benar tentang dictionary di Python?",
+      options: [
+        "A. Dictionary menyimpan data dalam pasangan key-value",
+        "B. Key dalam dictionary harus unik dan immutable",
+        "C. Dictionary didefinisikan dengan tanda kurung siku []",
+        "D. A dan B benar",
+        "E. Semua benar"
+      ]
+    },
+    {
+      id: 15,
+      text: "Diberikan kode:\nsiswa = {'nama': 'Andi', 'umur': 17}\nprint(siswa.get('kelas', 'Tidak ada'))\nApa output yang dihasilkan?",
+      options: [
+        "A. Error",
+        "B. None",
+        "C. Tidak ada",
+        "D. kelas",
+        "E. '' (string kosong)"
+      ]
+    },
+    {
+      id: 16,
+      text: "Manakah cara yang benar untuk mengubah nilai dari key 'hobi' menjadi 'membaca' pada dictionary `profil = {'nama': 'Budi', 'hobi': 'berenang'}`?",
+      options: [
+        "A. profil['hobi'] = 'membaca'",
+        "B. profil.update(hobi='membaca')",
+        "C. profil.setdefault('hobi', 'membaca')",
+        "D. A dan B benar",
+        "E. Hanya A yang benar"
+      ]
+    },
+    {
+      id: 17,
+      text: "Perhatikan kode berikut:\ndata = {'a':1, 'b':2, 'c':3}\ndel data['b']\ndata['d'] = 4\nprint(len(data))\nBerapakah outputnya?",
+      options: [
+        "A. 2",
+        "B. 3",
+        "C. 4",
+        "D. Error",
+        "E. 5"
+      ]
+    },
+    {
+      id: 18,
+      text: "Manakah method yang digunakan untuk mengambil semua key dari dictionary?",
+      options: [
+        "A. values()",
+        "B. items()",
+        "C. keys()",
+        "D. get()",
+        "E. pop()"
+      ]
+    },
+    {
+      id: 19,
+      text: "Analisislah potongan kode berikut:\ncounter = {}\nkata = 'python'\nfor huruf in kata:\n    counter[huruf] = counter.get(huruf, 0) + 1\nprint(counter['p'])\nApa output yang dihasilkan?",
+      options: [
+        "A. 0",
+        "B. 1",
+        "C. 2",
+        "D. Error",
+        "E. None"
+      ]
+    }
   ];
 
-  // ---------- HELPER FUNCTIONS ----------
+  // Kunci jawaban (A, B, C, D, E) sesuai dengan soal di atas
+  const correctAnswers = [
+    "B", // soal0: (1),(3),(4) benar
+    "C", // soal1: jeruk (indeks -2)
+    "D", // soal2: [1,2,3,4,5]
+    "C", // soal3: panjang 6 (awal 4, append+1, insert+1 =6)
+    "B", // soal4: pop()
+    "C", // soal5: sort reverse -> [5,4,3,1,1] index2 = 3
+    "B", // soal6: a + [40] menghasilkan list baru
+    "B", // soal7: nested list adalah list di dalam list
+    "A", // soal8: matrix[1][1] = 5
+    "E", // soal9: Hanya B yang benar (A menghasilkan referensi sama, tidak disarankan)
+    "B", // soal10: [[1,2,5], [3,4]]
+    "A", // soal11: data[1][1] = 'z'
+    "A", // soal12: perulangan bersarang tepat
+    "C", // soal13: matrix[1][2] = 1*2 = 2
+    "D", // soal14: A dan B benar
+    "C", // soal15: get('kelas','Tidak ada') -> 'Tidak ada'
+    "D", // soal16: A dan B benar
+    "B", // soal17: setelah del b dan tambah d, panjang 3
+    "C", // soal18: keys()
+    "B"  // soal19: huruf 'p' muncul 1 kali
+  ];
+
+  // ---------- HELPER FUNCTIONS (sama seperti asli) ----------
   const stopTimer = () => {
     if (timerIntervalRef.current) {
       clearInterval(timerIntervalRef.current);
@@ -160,7 +394,7 @@ export default function EvaluasiAkhir() {
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
-  // ---------- RENDER INSTRUCTION PAGE (mengikuti struktur referensi) ----------
+  // ---------- RENDER INSTRUCTION PAGE ----------
   if (!quizStarted && !quizSubmitted) {
     return (
       <>
@@ -192,7 +426,7 @@ export default function EvaluasiAkhir() {
     );
   }
 
-  // ---------- RENDER RESULT PAGE (fullscreen, tanpa sidebar) ----------
+  // ---------- RENDER RESULT PAGE ----------
   if (quizSubmitted) {
     const isPassed = score >= 70;
     const minutesTaken = Math.floor(duration / 60);
@@ -273,7 +507,7 @@ export default function EvaluasiAkhir() {
     );
   }
 
-  // ---------- RENDER QUIZ PAGE (fullscreen, dua kolom, tanpa sidebar) ----------
+  // ---------- RENDER QUIZ PAGE ----------
   const currentQuestion = questions[currentIndex];
   const selectedAnswer = answers[currentIndex];
   const isFlagged = flags[currentIndex];
@@ -367,9 +601,9 @@ export default function EvaluasiAkhir() {
   );
 }
 
-/* ================== STYLE ================== */
+/* ================== STYLE (tidak diubah) ================== */
 const styles = {
-  // ----- INSTRUCTION PAGE (sama seperti referensi) -----
+  // ----- INSTRUCTION PAGE -----
   page: {
     padding: "30px 40px",
     backgroundColor: "#f5f7fa",
@@ -436,7 +670,7 @@ const styles = {
     boxShadow: "0 4px 10px rgba(48,105,152,0.3)",
   },
 
-  // ----- FULLSCREEN QUIZ (dua kolom) -----
+  // ----- FULLSCREEN QUIZ -----
   fullscreenQuiz: {
     minHeight: "100vh",
     backgroundColor: "#f5f7fa",
@@ -510,7 +744,7 @@ const styles = {
     color: "#b45309",
     border: "1px solid #f59e0b",
   },
-  questionText: { fontSize: "18px", lineHeight: "1.5", marginBottom: "28px", color: "#0f172a", fontWeight: "500" },
+  questionText: { fontSize: "18px", lineHeight: "1.5", marginBottom: "28px", color: "#0f172a", fontWeight: "500", whiteSpace: "pre-line" },
   optionsContainer: { display: "flex", flexDirection: "column", gap: "16px", marginBottom: "36px" },
   optionLabel: {
     display: "flex",
@@ -580,7 +814,7 @@ const styles = {
   legendActive: { display: "inline-block", width: "16px", height: "16px", backgroundColor: "#306998", borderRadius: "4px", marginRight: "6px", verticalAlign: "middle", boxShadow: "0 0 0 1px #FFD43B" },
   legendUnanswered: { display: "inline-block", width: "16px", height: "16px", backgroundColor: "#e2e8f0", borderRadius: "4px", marginRight: "6px", verticalAlign: "middle" },
 
-  // ----- FULLSCREEN RESULT (desain baru) -----
+  // ----- FULLSCREEN RESULT -----
   fullscreenResult: {
     minHeight: "100vh",
     backgroundColor: "#f5f7fa",

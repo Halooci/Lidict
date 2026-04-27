@@ -2,67 +2,137 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import Navbar from "../../komponen/Navbar";
 import SidebarMateri from "../../komponen/SidebarMateri";
 
-// ===================== PENJELASAN PER BARIS =====================
+// ===================== PENJELASAN PER BARIS (format seperti gambar) =====================
 const PenjelasanPerBaris = ({ code }) => {
   const lines = code.split('\n').filter(l => l.trim().length > 0);
-  const penjelasan = lines.map(line => {
-    if (line.includes('=') && line.includes('[[')) return "Membuat nested list dan menyimpannya ke variabel.";
-    if (line.includes('print') && line.includes('[0][0]')) return "Mencetak elemen baris pertama kolom pertama (indeks 0,0).";
-    if (line.includes('print') && line.includes('[1][2]')) return "Mencetak elemen baris kedua kolom ketiga (indeks 1,2).";
-    if (line.includes('print')) return "Mencetak nilai ke layar.";
-    return "Baris kode Python biasa.";
-  });
+  const getPenjelasan = (line, index) => {
+    if (line.trim().startsWith('#')) return null;
+    if (line.includes('=') && line.includes('[[')) {
+      return `Membuat nested list dengan nama variabel dan struktur baris/kolom.`;
+    }
+    if (line.includes('print')) {
+      if (line.includes('[0][0]')) return `Mencetak elemen baris pertama kolom pertama (indeks 0,0) → nilai 1.`;
+      if (line.includes('[1][2]')) return `Mencetak elemen baris kedua kolom ketiga (indeks 1,2) → nilai 6.`;
+      return `Mencetak nilai atau struktur data ke layar.`;
+    }
+    if (line.includes('data = [')) return `Membuat nested list dengan panjang baris berbeda (ragged array).`;
+    return `Baris kode Python: ${line}`;
+  };
+
+  const filteredLines = lines.filter((line, idx) => !line.trim().startsWith('#'));
   return (
-    <div style={{ marginTop: "15px", padding: "10px", backgroundColor: "#f9f9f9", borderRadius: "8px", borderLeft: "4px solid #306998" }}>
-      <h4 style={{ margin: "0 0 10px 0", fontSize: "16px" }}>Penjelasan per baris:</h4>
-      {lines.map((line, idx) => (
-        <div key={idx} style={{ marginBottom: "8px" }}>
-          <code style={{ backgroundColor: "#f0f0f0", padding: "2px 4px" }}>{line}</code>
-          <span style={{ marginLeft: "10px" }}>→ {penjelasan[idx]}</span>
-        </div>
-      ))}
+    <div style={styles.penjelasanBox}>
+      <h4 style={styles.penjelasanTitle}>Penjelasan Kode (per baris)</h4>
+      {filteredLines.map((line, idx) => {
+        const penjelasan = getPenjelasan(line, idx);
+        if (!penjelasan) return null;
+        const lineNumber = idx + 1;
+        return (
+          <div key={idx} style={styles.penjelasanItem}>
+            <div style={styles.penjelasanBaris}><strong>Baris {lineNumber}:</strong></div>
+            <div style={styles.penjelasanKode}>{line}</div>
+            <div style={styles.penjelasanArrow}>→</div>
+            <div style={styles.penjelasanDeskripsi}>{penjelasan}</div>
+          </div>
+        );
+      })}
     </div>
   );
 };
 
-// ===================== VISUALISASI CONTOH KODE =====================
-const VisualisasiContoh = ({ codeKey }) => {
+// ===================== VISUALISASI CONTOH KODE (dengan animasi lambat pada tabel) =====================
+const VisualisasiContoh = ({ codeKey, output }) => {
+  const [animate, setAnimate] = useState(false);
+
+  useEffect(() => {
+    if (output) {
+      setAnimate(true);
+      const timer = setTimeout(() => setAnimate(false), 3000);
+      return () => clearTimeout(timer);
+    }
+  }, [output]);
+
   if (codeKey === 'pembuatan' || codeKey === 'akses') {
+    const cellStyle = (value) => ({
+      border: "1px solid #306998",
+      padding: "8px 12px",
+      textAlign: "center",
+      transition: "all 0.3s ease",
+      backgroundColor: animate ? "#FFD43B" : "#f1f3f5",
+      color: animate ? "#306998" : "inherit",
+    });
+
     return (
-      <div style={{ marginTop: "15px", padding: "10px", backgroundColor: "#eef2fa", borderRadius: "8px", border: "1px solid #306998" }}>
-        <h4 style={{ margin: "0 0 10px 0", color: "#306998" }}>📊 Visualisasi Nested List</h4>
+      <div style={styles.visualisasiContainer}>
+        <h4 style={styles.visualisasiTitle}>Visualisasi Nested List</h4>
         <table style={{ borderCollapse: "collapse", margin: "10px 0" }}>
           <tbody>
-            <tr><td style={styles.cell}>1</td><td style={styles.cell}>2</td><td style={styles.cell}>3</td></tr>
-            <tr><td style={styles.cell}>4</td><td style={styles.cell}>5</td><td style={styles.cell}>6</td></tr>
+            <tr><td style={cellStyle(1)}>1</td><td style={cellStyle(2)}>2</td><td style={cellStyle(3)}>3</td></tr>
+            <tr><td style={cellStyle(4)}>4</td><td style={cellStyle(5)}>5</td><td style={cellStyle(6)}>6</td></tr>
           </tbody>
         </table>
-        {codeKey === 'pembuatan' && <p>✅ Membuat matriks 2x3 dengan nama <code>matriks</code></p>}
+        {codeKey === 'pembuatan' && (
+          <p style={styles.visualisasiText}>Membuat matriks 2x3 dengan nama <code>matriks</code></p>
+        )}
         {codeKey === 'akses' && (
-          <>
-            <p>✅ <code>matriks[0][0]</code> → <strong>1</strong> (baris 1, kolom 1)</p>
-            <p>✅ <code>matriks[1][2]</code> → <strong>6</strong> (baris 2, kolom 3)</p>
-          </>
+          <div>
+            <p style={styles.visualisasiText}><code>matriks[0][0]</code> → <strong>1</strong> (baris 1, kolom 1)</p>
+            <p style={styles.visualisasiText}><code>matriks[1][2]</code> → <strong>6</strong> (baris 2, kolom 3)</p>
+          </div>
         )}
       </div>
     );
   }
   if (codeKey === 'panjangBerbeda') {
     return (
-      <div style={{ marginTop: "15px", padding: "10px", backgroundColor: "#eef2fa", borderRadius: "8px", border: "1px solid #306998" }}>
-        <h4 style={{ margin: "0 0 10px 0", color: "#306998" }}>📊 Visualisasi Ragged Array</h4>
-        <pre style={{ backgroundColor: "#fff", padding: "8px", borderRadius: "6px" }}>[[1, 2], [3, 4, 5, 6], [7, 8, 9]]</pre>
-        <p>Baris 0: 2 kolom, Baris 1: 4 kolom, Baris 2: 3 kolom</p>
+      <div style={styles.visualisasiContainer}>
+        <h4 style={styles.visualisasiTitle}>Visualisasi Ragged Array</h4>
+        <div style={{ display: "flex", flexDirection: "column", gap: "8px", margin: "10px 0" }}>
+          <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+            <span style={{ fontWeight: "bold", width: "60px" }}>Baris 0:</span>
+            <div style={{ display: "flex", gap: "4px" }}>
+              <div style={styles.raggedCell}>1</div>
+              <div style={styles.raggedCell}>2</div>
+            </div>
+            <span style={{ marginLeft: "10px", fontSize: "12px" }}>(2 kolom)</span>
+          </div>
+          <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+            <span style={{ fontWeight: "bold", width: "60px" }}>Baris 1:</span>
+            <div style={{ display: "flex", gap: "4px", flexWrap: "wrap" }}>
+              <div style={styles.raggedCell}>3</div>
+              <div style={styles.raggedCell}>4</div>
+              <div style={styles.raggedCell}>5</div>
+              <div style={styles.raggedCell}>6</div>
+            </div>
+            <span style={{ marginLeft: "10px", fontSize: "12px" }}>(4 kolom)</span>
+          </div>
+          <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+            <span style={{ fontWeight: "bold", width: "60px" }}>Baris 2:</span>
+            <div style={{ display: "flex", gap: "4px" }}>
+              <div style={styles.raggedCell}>7</div>
+              <div style={styles.raggedCell}>8</div>
+              <div style={styles.raggedCell}>9</div>
+            </div>
+            <span style={{ marginLeft: "10px", fontSize: "12px" }}>(3 kolom)</span>
+          </div>
+        </div>
+        <p style={styles.visualisasiText}>Setiap baris bisa memiliki jumlah kolom berbeda.</p>
       </div>
     );
   }
   return null;
 };
 
+// ===================== HAPUS KOMENTAR DARI KODE =====================
+const removeComments = (code) => {
+  return code.split('\n').filter(line => !line.trim().startsWith('#')).join('\n');
+};
+
 // ===================== CODE EDITOR READ-ONLY =====================
 const CodeEditor = ({ code, codeKey, pyodideReady, runPythonCode }) => {
   const [output, setOutput] = useState("");
   const [showDetail, setShowDetail] = useState(false);
+  const cleanCode = removeComments(code);
 
   const handleRun = useCallback(async () => {
     if (!pyodideReady) {
@@ -70,10 +140,10 @@ const CodeEditor = ({ code, codeKey, pyodideReady, runPythonCode }) => {
       setShowDetail(true);
       return;
     }
-    const result = await runPythonCode(code);
+    const result = await runPythonCode(cleanCode);
     setOutput(result);
     setShowDetail(true);
-  }, [pyodideReady, code, runPythonCode]);
+  }, [pyodideReady, cleanCode, runPythonCode]);
 
   return (
     <div style={styles.codeEditorContainer}>
@@ -84,11 +154,11 @@ const CodeEditor = ({ code, codeKey, pyodideReady, runPythonCode }) => {
         </button>
       </div>
       <div style={styles.codeInputReadOnly}>
-        <pre style={styles.codePre}>{code}</pre>
+        <pre style={styles.codePre}>{cleanCode}</pre>
       </div>
       {showDetail && (
         <>
-          <VisualisasiContoh codeKey={codeKey} />
+          <VisualisasiContoh codeKey={codeKey} output={output} />
           <div style={styles.outputBox}>
             <div style={styles.outputHeader}>
               <span style={styles.outputTitle}>Output</span>
@@ -97,11 +167,11 @@ const CodeEditor = ({ code, codeKey, pyodideReady, runPythonCode }) => {
               <pre style={styles.outputContent}>{output || "(Tidak ada output)"}</pre>
             </div>
           </div>
-          <PenjelasanPerBaris code={code} />
+          <PenjelasanPerBaris code={cleanCode} />
         </>
       )}
       {!showDetail && (
-        <div style={{ padding: "15px", textAlign: "center", color: "#666" }}>
+        <div style={styles.promptBox}>
           ⚡ Klik tombol "Jalankan" untuk melihat visualisasi, output, dan penjelasan.
         </div>
       )}
@@ -193,19 +263,12 @@ const CodeEditorEditable = ({ pyodideReady, runPythonCode }) => {
   );
 };
 
-// ===================== SOAL MELENGKAPI KODE =====================
-const CodeCompletionQuestion = ({ question, codeParts, placeholders, expectedAnswers, resetTrigger, onCheck }) => {
+// ===================== SOAL MELENGKAPI KODE (dengan input inline yang lebih lebar) =====================
+const CodeCompletionQuestion = ({ id, question, codeParts, placeholders, expectedAnswers, onCheck }) => {
   const [answers, setAnswers] = useState(placeholders.map(() => ""));
   const [feedback, setFeedback] = useState("");
   const [checked, setChecked] = useState(false);
   const [showReset, setShowReset] = useState(false);
-
-  useEffect(() => {
-    setAnswers(placeholders.map(() => ""));
-    setFeedback("");
-    setChecked(false);
-    setShowReset(false);
-  }, [resetTrigger]);
 
   const handleAnswerChange = (idx, value) => {
     const newAnswers = [...answers];
@@ -229,11 +292,11 @@ const CodeCompletionQuestion = ({ question, codeParts, placeholders, expectedAns
     if (allCorrect) {
       setFeedback("✅ Benar!");
       setShowReset(false);
-      if (onCheck) onCheck(true);
+      if (onCheck) onCheck(id, true);
     } else {
       setFeedback("❌ Salah, coba lagi.");
       setShowReset(true);
-      if (onCheck) onCheck(false);
+      if (onCheck) onCheck(id, false);
     }
   };
 
@@ -242,6 +305,7 @@ const CodeCompletionQuestion = ({ question, codeParts, placeholders, expectedAns
     setFeedback("");
     setChecked(false);
     setShowReset(false);
+    if (onCheck) onCheck(id, false);
   };
 
   const renderCodeWithInputs = () => {
@@ -249,11 +313,14 @@ const CodeCompletionQuestion = ({ question, codeParts, placeholders, expectedAns
     for (let i = 0; i < codeParts.length; i++) {
       result.push(<span key={`text-${i}`}>{codeParts[i]}</span>);
       if (i < placeholders.length) {
+        // Tentukan ukuran input berdasarkan panjang expected answer (ditambah padding)
+        let inputSize = Math.max(placeholders[i]?.length || 8, 12);
+        if (expectedAnswers[i] && expectedAnswers[i].length > inputSize) inputSize = expectedAnswers[i].length + 2;
         result.push(
           <input
             key={`input-${i}`}
             type="text"
-            size={placeholders[i]?.length || 10}
+            size={inputSize}
             style={styles.inlineInput}
             value={answers[i]}
             onChange={(e) => handleAnswerChange(i, e.target.value)}
@@ -270,7 +337,7 @@ const CodeCompletionQuestion = ({ question, codeParts, placeholders, expectedAns
     <div style={styles.questionCard}>
       <p style={styles.questionText}>{question}</p>
       <pre style={styles.codeTemplateInline}>{renderCodeWithInputs()}</pre>
-      <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+      <div style={styles.buttonGroup}>
         <button style={styles.checkButton} onClick={handleCheck} disabled={checked && feedback === "✅ Benar!"}>Periksa</button>
         {showReset && <button style={styles.resetButtonSmall} onClick={handleReset}>Reset Jawaban</button>}
       </div>
@@ -280,18 +347,11 @@ const CodeCompletionQuestion = ({ question, codeParts, placeholders, expectedAns
 };
 
 // ===================== SOAL TEBAK OUTPUT =====================
-const GuessOutputQuestion = ({ question, codeSnippet, expectedOutput, resetTrigger, onCheck }) => {
+const GuessOutputQuestion = ({ id, question, codeSnippet, expectedOutput, onCheck }) => {
   const [userAnswer, setUserAnswer] = useState("");
   const [feedback, setFeedback] = useState("");
   const [checked, setChecked] = useState(false);
   const [showReset, setShowReset] = useState(false);
-
-  useEffect(() => {
-    setUserAnswer("");
-    setFeedback("");
-    setChecked(false);
-    setShowReset(false);
-  }, [resetTrigger]);
 
   const handleCheck = () => {
     if (userAnswer.trim() === "") { setFeedback("⚠️ Isi jawaban Anda terlebih dahulu."); return; }
@@ -300,11 +360,11 @@ const GuessOutputQuestion = ({ question, codeSnippet, expectedOutput, resetTrigg
     if (isCorrect) {
       setFeedback("✅ Benar!");
       setShowReset(false);
-      if (onCheck) onCheck(true);
+      if (onCheck) onCheck(id, true);
     } else {
       setFeedback("❌ Salah, coba lagi.");
       setShowReset(true);
-      if (onCheck) onCheck(false);
+      if (onCheck) onCheck(id, false);
     }
   };
 
@@ -313,14 +373,22 @@ const GuessOutputQuestion = ({ question, codeSnippet, expectedOutput, resetTrigg
     setFeedback("");
     setChecked(false);
     setShowReset(false);
+    if (onCheck) onCheck(id, false);
   };
 
   return (
     <div style={styles.questionCard}>
       <p style={styles.questionText}>{question}</p>
       <pre style={styles.codeTemplate}>{codeSnippet}</pre>
-      <input type="text" style={styles.fillInput} value={userAnswer} onChange={(e) => setUserAnswer(e.target.value)} placeholder="Ketik output yang dihasilkan..." disabled={checked && feedback === "✅ Benar!"} />
-      <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
+      <input
+        type="text"
+        style={styles.fillInput}
+        value={userAnswer}
+        onChange={(e) => setUserAnswer(e.target.value)}
+        placeholder="Ketik output yang dihasilkan..."
+        disabled={checked && feedback === "✅ Benar!"}
+      />
+      <div style={styles.buttonGroup}>
         <button style={styles.checkButton} onClick={handleCheck} disabled={checked && feedback === "✅ Benar!"}>Periksa</button>
         {showReset && <button style={styles.resetButtonSmall} onClick={handleReset}>Reset Jawaban</button>}
       </div>
@@ -359,9 +427,9 @@ const Eksplorasi = ({ onComplete }) => {
           const isAnswered = hasAnswered[idx];
           const selectedIdx = selected[idx];
           return (
-            <div key={idx} style={{ marginBottom: "30px", borderBottom: "1px solid #e0e0e0", paddingBottom: "20px" }}>
-              <p style={{ fontWeight: "600", marginBottom: "12px" }}>{idx+1}. {q.text}</p>
-              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+            <div key={idx} style={styles.eksplorasiItem}>
+              <p style={styles.eksplorasiQuestion}>{idx+1}. {q.text}</p>
+              <div style={styles.eksplorasiOptions}>
                 {q.options.map((opt, optIdx) => {
                   let optionStyle = styles.eksplorasiOption;
                   if (isAnswered) {
@@ -399,36 +467,38 @@ const StrukturInteraktif = () => {
   };
 
   return (
-    <div style={{ margin: "20px 0", padding: "15px", backgroundColor: "#f0f4f8", borderRadius: "12px" }}>
-      <h4 style={{ marginBottom: "15px", color: "#306998" }}>Visualisasi Struktur Nested List (Klik pada elemen)</h4>
-      <p style={{ marginBottom: "10px", fontSize: "14px", fontStyle: "italic" }}>💡 Petunjuk: Klik pada kotak "nilai_siswa", pada setiap judul baris, atau pada setiap angka dalam tabel.</p>
-      <div style={{ display: "flex", justifyContent: "center", marginBottom: "20px" }}>
-        <pre style={{ fontSize: "16px", fontWeight: "bold", backgroundColor: "#fff", padding: "10px", borderRadius: "8px" }}>nilai_siswa = [[85, 90, 78], [88, 92, 80]]</pre>
+    <div style={styles.strukturContainer}>
+      <h4 style={styles.strukturTitle}>Visualisasi Struktur Nested List (Klik pada elemen)</h4>
+      <p style={styles.strukturPetunjuk}>💡 Petunjuk: Klik pada kotak "nilai_siswa", pada setiap judul baris, atau pada setiap angka dalam tabel.</p>
+      <div style={styles.strukturKode}>
+        <pre style={styles.strukturPre}>nilai_siswa = [[85, 90, 78], [88, 92, 80]]</pre>
       </div>
-      <div style={{ display: "flex", justifyContent: "center", gap: "30px", flexWrap: "wrap" }}>
-        <div style={{ textAlign: "center", cursor: "pointer" }} onClick={() => handleClick(null, null)}>
-          <div style={{ padding: "20px", backgroundColor: selectedElement?.text?.includes("seluruh") ? "#FFD43B" : "#306998", color: "white", borderRadius: "12px", minWidth: "150px" }}>Klik untuk info seluruh data</div>
-          <div style={{ marginTop: "8px" }}>nilai_siswa</div>
+      <div style={styles.strukturWrapper}>
+        <div style={styles.strukturSeluruh} onClick={() => handleClick(null, null)}>
+          <div style={selectedElement?.text?.includes("seluruh") ? styles.strukturSeluruhActive : styles.strukturSeluruhButton}>
+            Klik untuk info seluruh data
+          </div>
+          <div style={styles.strukturLabel}>nilai_siswa</div>
         </div>
-        <table style={{ borderCollapse: "collapse", backgroundColor: "white" }}>
+        <table style={styles.strukturTable}>
           <thead>
-            <tr style={{ backgroundColor: "#e9ecef" }}>
+            <tr style={styles.strukturTableHeader}>
               <th></th><th>Kolom 0</th><th>Kolom 1</th><th>Kolom 2</th>
             </tr>
           </thead>
           <tbody>
             {data.map((row, rowIdx) => (
               <tr key={rowIdx}>
-                <td style={{ fontWeight: "bold", cursor: "pointer" }} onClick={() => handleClick(rowIdx, null)}>Baris {rowIdx+1}</td>
+                <td style={styles.strukturTableRowLabel} onClick={() => handleClick(rowIdx, null)}>Baris {rowIdx+1}</td>
                 {row.map((val, colIdx) => (
-                  <td key={colIdx} style={{ padding: "12px", cursor: "pointer", backgroundColor: "#f1f3f5" }} onClick={() => handleClick(rowIdx, colIdx)}>{val}</td>
+                  <td key={colIdx} style={styles.strukturTableCell} onClick={() => handleClick(rowIdx, colIdx)}>{val}</td>
                 ))}
               </tr>
             ))}
           </tbody>
         </table>
       </div>
-      {selectedElement && <div style={{ marginTop: "20px", padding: "12px", backgroundColor: "#fff3cd", borderLeft: "5px solid #FFD43B", borderRadius: "8px" }}><strong>Informasi:</strong> {selectedElement.text}</div>}
+      {selectedElement && <div style={styles.strukturInfo}>{selectedElement.text}</div>}
     </div>
   );
 };
@@ -437,10 +507,9 @@ const StrukturInteraktif = () => {
 export default function PembuatanAksesNestedList() {
   const [pyodideReady, setPyodideReady] = useState(false);
   const pyodideRef = useRef(null);
-  const [resetInteractives, setResetInteractives] = useState(0);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isEksplorasiCompleted, setIsEksplorasiCompleted] = useState(false);
-  const [allExercisesCorrect, setAllExercisesCorrect] = useState(false);
+  const [exerciseStatus, setExerciseStatus] = useState([false, false, false, false, false]);
 
   const exampleCodes = {
     pembuatan: `# Membuat nested list 2 baris 3 kolom
@@ -508,9 +577,15 @@ _buffer.getvalue()`);
     }
   }, []);
 
-  const resetInteractiveQuestions = () => { setResetInteractives(prev => prev+1); setAllExercisesCorrect(false); };
   const handleEksplorasiComplete = () => setIsEksplorasiCompleted(true);
-  const handleExerciseCorrect = () => setAllExercisesCorrect(true);
+  const handleExerciseCheck = (id, isCorrect) => {
+    setExerciseStatus(prev => {
+      const newStatus = [...prev];
+      newStatus[id] = isCorrect;
+      return newStatus;
+    });
+  };
+  const allExercisesCorrect = exerciseStatus.every(v => v === true);
 
   return (
     <>
@@ -518,23 +593,75 @@ _buffer.getvalue()`);
       <SidebarMateri isOpen={isSidebarOpen} onToggle={() => setIsSidebarOpen(!isSidebarOpen)} />
       <div style={{ marginLeft: isSidebarOpen ? "280px" : "0", transition: "margin-left 0.3s ease", paddingTop: "64px", minHeight: "100vh", width: "auto" }}>
         <div style={styles.page}>
-          <div style={styles.header}><div style={styles.headerAccent}></div><h1 style={styles.headerTitle}>PEMBUATAN DAN AKSES ELEMEN NESTED LIST</h1></div>
-          <section style={styles.section}><h2 style={styles.sectionTitle}>Tujuan Pembelajaran</h2><div style={styles.card}><ol style={styles.list}><li>Mahasiswa mampu membuat nested list sesuai kebutuhan representasi data.</li><li>Mahasiswa mampu mengakses elemen nested list menggunakan indeks baris dan kolom.</li></ol></div></section>
-          <section style={styles.section}><Eksplorasi onComplete={handleEksplorasiComplete} /></section>
+          <div style={styles.header}>
+            <div style={styles.headerAccent}></div>
+            <h1 style={styles.headerTitle}>PEMBUATAN DAN AKSES ELEMEN NESTED LIST</h1>
+          </div>
+          <section style={styles.section}>
+            <h2 style={styles.sectionTitle}>Tujuan Pembelajaran</h2>
+            <div style={styles.card}>
+              <ol style={styles.list}>
+                <li>Mahasiswa mampu membuat nested list sesuai kebutuhan representasi data.</li>
+                <li>Mahasiswa mampu mengakses elemen nested list menggunakan indeks baris dan kolom.</li>
+              </ol>
+            </div>
+          </section>
+          <section style={styles.section}>
+            <Eksplorasi onComplete={handleEksplorasiComplete} />
+          </section>
           {isEksplorasiCompleted && (
             <>
-              <section style={styles.section}><div style={styles.card}><h3 style={styles.subTitle}>Struktur Nested List</h3><p>Nested list dapat dipandang sebagai tabel/matriks. Indeks pertama = baris, kedua = kolom.</p><StrukturInteraktif /></div></section>
-              <section style={styles.section}><div style={styles.card}><h3 style={styles.subTitle}>Membuat Nested List</h3><p>Nested list = list di dalam list.</p><CodeEditor code={exampleCodes.pembuatan} codeKey="pembuatan" pyodideReady={pyodideReady} runPythonCode={runPythonCode} /><CodeEditor code={exampleCodes.panjangBerbeda} codeKey="panjangBerbeda" pyodideReady={pyodideReady} runPythonCode={runPythonCode} /></div></section>
-              <section style={styles.section}><div style={styles.card}><h3 style={styles.subTitle}>Mengakses Elemen</h3><p>Gunakan dua indeks.</p><CodeEditor code={exampleCodes.akses} codeKey="akses" pyodideReady={pyodideReady} runPythonCode={runPythonCode} /></div></section>
-              <section style={styles.section}><h2 style={styles.sectionTitle}>Ayo Praktik!</h2><div style={styles.card}><div style={styles.alertBox}><strong>📘 Cerita Studi Kasus:</strong><p>Data: Siswa A=[3,6,9], Siswa B=[12,15,18]. Buat nested list 'matriks', cetak 3 dan 18.</p><p><strong>Instruksi:</strong></p><ol><li>Buat matriks = [[3,6,9],[12,15,18]]</li><li>Cetak matriks[0][0]</li><li>Cetak matriks[1][2]</li></ol><p style={{fontStyle:"italic",color:"#d9534f"}}>⚠️ Ikuti instruksi. Error tidak memberi jawaban benar.</p></div><CodeEditorEditable pyodideReady={pyodideReady} runPythonCode={runPythonCode} /></div></section>
-              <section style={styles.section}><h2 style={styles.sectionTitle}>Latihan</h2><div style={styles.card}><button style={styles.resetButton} onClick={resetInteractiveQuestions}>↻ Reset Semua Jawaban</button>
-                <CodeCompletionQuestion question="1. Akses elemen 20" codeParts={soal1CodeParts} placeholders={["",""]} expectedAnswers={soal1Expected} resetTrigger={resetInteractives} onCheck={handleExerciseCorrect} />
-                <CodeCompletionQuestion question="2. Lengkapi baris kedua [3,4]" codeParts={soal2CodeParts} placeholders={["..."]} expectedAnswers={soal2Expected} resetTrigger={resetInteractives} onCheck={handleExerciseCorrect} />
-                <CodeCompletionQuestion question="3. Cetak elemen terakhir (60)" codeParts={soal3CodeParts} placeholders={["",""]} expectedAnswers={soal3Expected} resetTrigger={resetInteractives} onCheck={handleExerciseCorrect} />
-                <GuessOutputQuestion question="4. Output dari kode?" codeSnippet={`nilai = [[5,7],[9,11]]\nprint(nilai[1][0])`} expectedOutput="9" resetTrigger={resetInteractives} onCheck={handleExerciseCorrect} />
-                <GuessOutputQuestion question="5. Output dari kode?" codeSnippet={`a = [[2,4],[6,8]]\nb = a[0][1]\nprint(b)`} expectedOutput="4" resetTrigger={resetInteractives} onCheck={handleExerciseCorrect} />
-                {allExercisesCorrect && <div style={styles.finalSuccessBox}>🎉 Selamat! Semua jawaban benar.</div>}
-              </div></section>
+              <section style={styles.section}>
+                <div style={styles.card}>
+                  <h3 style={styles.subTitle}>Struktur Nested List</h3>
+                  <p style={styles.text}>Nested list dapat dipandang sebagai tabel/matriks. Indeks pertama = baris, kedua = kolom.</p>
+                  <StrukturInteraktif />
+                </div>
+              </section>
+              <section style={styles.section}>
+                <div style={styles.card}>
+                  <h3 style={styles.subTitle}>Membuat Nested List</h3>
+                  <p style={styles.text}>Nested list = list di dalam list.</p>
+                  <CodeEditor code={exampleCodes.pembuatan} codeKey="pembuatan" pyodideReady={pyodideReady} runPythonCode={runPythonCode} />
+                  <CodeEditor code={exampleCodes.panjangBerbeda} codeKey="panjangBerbeda" pyodideReady={pyodideReady} runPythonCode={runPythonCode} />
+                </div>
+              </section>
+              <section style={styles.section}>
+                <div style={styles.card}>
+                  <h3 style={styles.subTitle}>Mengakses Elemen</h3>
+                  <p style={styles.text}>Gunakan dua indeks.</p>
+                  <CodeEditor code={exampleCodes.akses} codeKey="akses" pyodideReady={pyodideReady} runPythonCode={runPythonCode} />
+                </div>
+              </section>
+              <section style={styles.section}>
+                <h2 style={styles.sectionTitle}>Ayo Praktik!</h2>
+                <div style={styles.card}>
+                  <div style={styles.alertBox}>
+                    <strong>📘 Cerita Studi Kasus:</strong>
+                    <p>Data: Siswa A=[3,6,9], Siswa B=[12,15,18]. Buat nested list 'matriks', cetak 3 dan 18.</p>
+                    <p><strong>Instruksi:</strong></p>
+                    <ol style={styles.instruksiList}>
+                      <li>Buat matriks = [[3,6,9],[12,15,18]]</li>
+                      <li>Cetak matriks[0][0]</li>
+                      <li>Cetak matriks[1][2]</li>
+                    </ol>
+                    <p style={styles.warningText}>⚠️ Ikuti instruksi. Error tidak memberi jawaban benar.</p>
+                  </div>
+                  <CodeEditorEditable pyodideReady={pyodideReady} runPythonCode={runPythonCode} />
+                </div>
+              </section>
+              <section style={styles.section}>
+                <h2 style={styles.sectionTitle}>Latihan</h2>
+                <div style={styles.card}>
+                  <p style={styles.text}>Isilah bagian kosong pada kode. Jawab semua soal. Jika salah, Anda bisa mereset per soal. Setelah semua benar, akan muncul ucapan selamat.</p>
+                  <CodeCompletionQuestion id={0} question="1. Akses elemen 20" codeParts={soal1CodeParts} placeholders={["",""]} expectedAnswers={soal1Expected} onCheck={handleExerciseCheck} />
+                  <CodeCompletionQuestion id={1} question="2. Lengkapi baris kedua dengan angka 3 dan 4" codeParts={soal2CodeParts} placeholders={["..."]} expectedAnswers={soal2Expected} onCheck={handleExerciseCheck} />
+                  <CodeCompletionQuestion id={2} question="3. Cetak elemen terakhir (60)" codeParts={soal3CodeParts} placeholders={["",""]} expectedAnswers={soal3Expected} onCheck={handleExerciseCheck} />
+                  <GuessOutputQuestion id={3} question="4. Output dari kode?" codeSnippet={`nilai = [[5,7],[9,11]]\nprint(nilai[1][0])`} expectedOutput="9" onCheck={handleExerciseCheck} />
+                  <GuessOutputQuestion id={4} question="5. Output dari kode?" codeSnippet={`a = [[2,4],[6,8]]\nb = a[0][1]\nprint(b)`} expectedOutput="4" onCheck={handleExerciseCheck} />
+                  {allExercisesCorrect && <div style={styles.finalSuccessBox}>🎉 Selamat! Semua jawaban benar.</div>}
+                </div>
+              </section>
             </>
           )}
           {!isEksplorasiCompleted && <div style={styles.lockMessage}>🔒 Materi terkunci. Selesaikan eksplorasi di atas.</div>}
@@ -557,11 +684,27 @@ const styles = {
   text: { lineHeight: "1.8", color: "#333", marginBottom: "15px" },
   subTitle: { marginTop: "20px", marginBottom: "15px", color: "#306998", fontSize: "22px", fontWeight: "700", borderLeft: "4px solid #FFD43B", paddingLeft: "12px" },
   alertBox: { backgroundColor: "#fff3cd", border: "1px solid #ffc107", borderRadius: "6px", padding: "15px", marginBottom: "15px", color: "#856404" },
+  instruksiList: { marginLeft: "20px" },
+  warningText: { fontStyle: "italic", color: "#d9534f", marginTop: "8px" },
   lockMessage: { marginTop: "20px", padding: "15px", backgroundColor: "#cfe2ff", borderLeft: "5px solid #0d6efd", borderRadius: "8px", textAlign: "center", color: "#084298" },
+  eksplorasiItem: { marginBottom: "30px", borderBottom: "1px solid #e0e0e0", paddingBottom: "20px" },
+  eksplorasiQuestion: { fontWeight: "600", marginBottom: "12px" },
+  eksplorasiOptions: { display: "flex", flexDirection: "column", gap: "10px" },
   eksplorasiOption: { padding: "12px", borderRadius: "8px", cursor: "pointer", transition: "all 0.2s", border: "1px solid #ddd", backgroundColor: "#f9f9f9" },
   eksplorasiOptionDisabled: { padding: "12px", borderRadius: "8px", border: "1px solid #ccc", backgroundColor: "#e9ecef", color: "#6c757d", cursor: "not-allowed", opacity: 0.7 },
   feedbackCorrect: { marginTop: "10px", padding: "8px 12px", backgroundColor: "#d1e7dd", color: "#0f5132", borderRadius: "6px", fontWeight: "500" },
   feedbackWrong: { marginTop: "10px", padding: "8px 12px", backgroundColor: "#f8d7da", color: "#842029", borderRadius: "6px", fontWeight: "500" },
+  penjelasanBox: { marginTop: "15px", padding: "12px", backgroundColor: "#f8f9fa", borderRadius: "8px", borderLeft: "4px solid #306998", fontFamily: "monospace" },
+  penjelasanTitle: { margin: "0 0 12px 0", fontSize: "16px", fontWeight: "bold", color: "#306998" },
+  penjelasanItem: { marginBottom: "12px", padding: "8px", backgroundColor: "#fff", borderRadius: "6px", border: "1px solid #e9ecef", display: "flex", flexWrap: "wrap", alignItems: "baseline", gap: "8px" },
+  penjelasanBaris: { fontWeight: "bold", color: "#306998", minWidth: "60px" },
+  penjelasanKode: { fontFamily: "monospace", backgroundColor: "#f0f0f0", padding: "2px 6px", borderRadius: "4px", color: "#d63384" },
+  penjelasanArrow: { color: "#6c757d", fontWeight: "bold" },
+  penjelasanDeskripsi: { color: "#333", flex: 1 },
+  visualisasiContainer: { marginTop: "15px", padding: "10px", backgroundColor: "#eef2fa", borderRadius: "8px", border: "1px solid #306998" },
+  visualisasiTitle: { margin: "0 0 10px 0", color: "#306998", fontWeight: "bold" },
+  visualisasiText: { marginTop: "8px", fontSize: "14px" },
+  raggedCell: { display: "inline-block", padding: "6px 12px", backgroundColor: "#f1f3f5", border: "1px solid #306998", borderRadius: "6px", margin: "2px" },
   codeEditorContainer: { border: "2px solid #306998", borderRadius: "10px", overflow: "hidden", marginBottom: "20px", backgroundColor: "#1e1e1e", marginTop: "15px" },
   codeEditorHeader: { backgroundColor: "#306998", color: "white", padding: "12px 15px", display: "flex", justifyContent: "space-between", alignItems: "center" },
   codeEditorTitle: { fontWeight: "600", fontSize: "15px" },
@@ -575,19 +718,34 @@ const styles = {
   codePre: { margin: 0, whiteSpace: "pre-wrap", wordWrap: "break-word" },
   errorBox: { backgroundColor: "#ff4444", color: "white", padding: "12px 15px", fontSize: "14px" },
   codeInputEditable: { width: "100%", minHeight: "250px", backgroundColor: "#272822", color: "#f8f8f2", padding: "15px", fontFamily: "monospace", fontSize: "14px", resize: "vertical", outline: "none" },
+  promptBox: { padding: "15px", textAlign: "center", color: "#666" },
   questionCard: { backgroundColor: "#f9f9f9", borderRadius: "8px", padding: "15px", marginBottom: "20px", border: "1px solid #ddd" },
   questionText: { fontWeight: "500", marginBottom: "10px" },
   codeTemplate: { backgroundColor: "#272822", color: "#f8f8f2", padding: "10px", borderRadius: "6px", fontFamily: "monospace", fontSize: "14px", overflowX: "auto", marginBottom: "10px" },
   codeTemplateInline: { backgroundColor: "#272822", color: "#f8f8f2", padding: "10px", borderRadius: "6px", fontFamily: "monospace", fontSize: "14px", whiteSpace: "pre-wrap", marginBottom: "10px" },
-  inlineInput: { backgroundColor: "#fff", color: "#000", border: "1px solid #ccc", borderRadius: "4px", padding: "2px 6px", margin: "0 2px", fontFamily: "monospace", fontSize: "14px", textAlign: "center" },
+  inlineInput: { backgroundColor: "#fff", color: "#000", border: "1px solid #ccc", borderRadius: "4px", padding: "2px 6px", margin: "0 2px", fontFamily: "monospace", fontSize: "14px", textAlign: "center", minWidth: "120px" },
   fillInput: { width: "100%", padding: "10px", fontSize: "14px", borderRadius: "6px", border: "1px solid #ccc", marginBottom: "10px" },
-  checkButton: { backgroundColor: "#28a745", color: "white", border: "none", padding: "8px 16px", borderRadius: "6px", cursor: "pointer", fontSize: "14px", marginRight: "10px" },
-  resetButton: { backgroundColor: "#6c757d", color: "white", border: "none", padding: "8px 16px", borderRadius: "6px", cursor: "pointer", fontSize: "14px", marginBottom: "20px" },
+  buttonGroup: { display: "flex", gap: "10px", alignItems: "center" },
+  checkButton: { backgroundColor: "#28a745", color: "white", border: "none", padding: "8px 16px", borderRadius: "6px", cursor: "pointer", fontSize: "14px" },
   resetButtonSmall: { backgroundColor: "#6c757d", color: "white", border: "none", padding: "6px 12px", borderRadius: "6px", cursor: "pointer", fontSize: "12px" },
   feedbackSuccess: { marginTop: "8px", fontSize: "14px", color: "#155724", backgroundColor: "#d4edda", padding: "8px", borderRadius: "6px" },
   feedbackError: { marginTop: "8px", fontSize: "14px", color: "#721c24", backgroundColor: "#f8d7da", padding: "8px", borderRadius: "6px" },
   successBox: { marginTop: "12px", padding: "10px", backgroundColor: "#d4edda", color: "#155724", borderRadius: "6px", textAlign: "center" },
   warningBox: { marginTop: "12px", padding: "10px", backgroundColor: "#fff3cd", color: "#856404", borderRadius: "6px", textAlign: "center" },
   finalSuccessBox: { marginTop: "20px", padding: "15px", backgroundColor: "#d1e7dd", borderRadius: "8px", textAlign: "center", color: "#0f5132", fontWeight: "bold" },
-  cell: { border: "1px solid #306998", padding: "8px 12px", textAlign: "center" },
+  strukturContainer: { margin: "20px 0", padding: "15px", backgroundColor: "#f0f4f8", borderRadius: "12px" },
+  strukturTitle: { marginBottom: "15px", color: "#306998" },
+  strukturPetunjuk: { marginBottom: "10px", fontSize: "14px", fontStyle: "italic" },
+  strukturKode: { display: "flex", justifyContent: "center", marginBottom: "20px" },
+  strukturPre: { fontSize: "16px", fontWeight: "bold", backgroundColor: "#fff", padding: "10px", borderRadius: "8px" },
+  strukturWrapper: { display: "flex", justifyContent: "center", gap: "30px", flexWrap: "wrap" },
+  strukturSeluruh: { textAlign: "center", cursor: "pointer" },
+  strukturSeluruhButton: { padding: "20px", backgroundColor: "#306998", color: "white", borderRadius: "12px", minWidth: "150px" },
+  strukturSeluruhActive: { padding: "20px", backgroundColor: "#FFD43B", color: "#306998", borderRadius: "12px", minWidth: "150px" },
+  strukturLabel: { marginTop: "8px" },
+  strukturTable: { borderCollapse: "collapse", backgroundColor: "white" },
+  strukturTableHeader: { backgroundColor: "#e9ecef" },
+  strukturTableRowLabel: { fontWeight: "bold", cursor: "pointer", padding: "8px" },
+  strukturTableCell: { padding: "12px", cursor: "pointer", backgroundColor: "#f1f3f5" },
+  strukturInfo: { marginTop: "20px", padding: "12px", backgroundColor: "#fff3cd", borderLeft: "5px solid #FFD43B", borderRadius: "8px" },
 };

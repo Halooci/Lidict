@@ -2,18 +2,199 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import Navbar from "../../komponen/Navbar";
 import SidebarMateri from "../../komponen/SidebarMateri";
 
-// ===================== KOMPONEN EDITOR READ-ONLY =====================
-const CodeEditor = ({ code, codeKey, pyodideReady, runPythonCode }) => {
+// ===================== PENJELASAN PER BARIS =====================
+const PenjelasanPerBaris = ({ code }) => {
+  const lines = code.split('\n').filter(l => l.trim().length > 0);
+  const getPenjelasan = (line) => {
+    if (line.includes('=') && line.includes('[[')) return "Membuat nested list dan menyimpannya ke variabel.";
+    if (line.includes('print')) {
+      if (line.includes('[0][1]')) return "Mencetak elemen baris 1 kolom 2 (indeks 0,1).";
+      if (line.includes('[2][2]')) return "Mencetak elemen baris 3 kolom 3 (indeks 2,2).";
+      if (line.includes('data[2][1]')) return "Mencetak elemen baris 3 kolom 2 (indeks 2,1).";
+      return "Mencetak nilai ke layar.";
+    }
+    if (line.includes('=') && line.includes('data[0][0] = 99')) return "Mengubah elemen baris 1 kolom 1 menjadi 99.";
+    if (line.includes('=') && line.includes('data[1][2] = 88')) return "Mengubah elemen baris 2 kolom 3 menjadi 88.";
+    if (line.includes('=') && line.includes('data[2][1] = 77')) return "Mengubah elemen baris 3 kolom 2 menjadi 77.";
+    if (line.includes('.append(')) return "Menambahkan elemen/baris baru di akhir list.";
+    if (line.includes('.insert(')) return "Menyisipkan elemen/baris pada posisi tertentu.";
+    if (line.includes('pop(')) return "Menghapus elemen pada indeks tertentu.";
+    if (line.includes('del ')) return "Menghapus elemen dengan keyword del.";
+    if (line.includes('for')) return "Perulangan untuk memproses setiap baris.";
+    if (line.includes('if')) return "Percabangan kondisi.";
+    return "Baris kode Python biasa.";
+  };
+
+  return (
+    <div style={styles.penjelasanBox}>
+      <h4 style={styles.penjelasanTitle}>Penjelasan Kode (per baris)</h4>
+      {lines.map((line, idx) => {
+        const penjelasan = getPenjelasan(line);
+        if (!penjelasan) return null;
+        return (
+          <div key={idx} style={styles.penjelasanItem}>
+            <div style={styles.penjelasanBaris}><strong>Baris {idx+1}:</strong></div>
+            <div style={styles.penjelasanKode}>{line}</div>
+            <div style={styles.penjelasanArrow}>→</div>
+            <div style={styles.penjelasanDeskripsi}>{penjelasan}</div>
+          </div>
+        );
+      })}
+    </div>
+  );
+};
+
+// ===================== VISUALISASI INTERAKTIF DENGAN ANIMASI =====================
+const VisualisasiOperasi = ({ dataAwal, dataAkhir, operation }) => {
+  const [animating, setAnimating] = useState(false);
+  const [selectedCell, setSelectedCell] = useState(null);
+  const [showBeforeAfter, setShowBeforeAfter] = useState(false);
+
+  useEffect(() => {
+    if (operation === 'ubah' || operation === 'tambahBaris' || operation === 'sisipBaris' || 
+        operation === 'hapusBaris' || operation === 'tambahKolom' || operation === 'hapusKolom') {
+      setShowBeforeAfter(true);
+    }
+    setAnimating(true);
+    const timer = setTimeout(() => setAnimating(false), 3300);
+    return () => clearTimeout(timer);
+  }, [dataAwal, dataAkhir, operation]);
+
+  const handleCellClick = (row, col, value) => {
+    setSelectedCell({ row, col, value });
+    setTimeout(() => setSelectedCell(null), 2000);
+  };
+
+  const renderMatrix = (data, title, isAfter = false) => {
+    if (!data) return null;
+    return (
+      <div style={{ marginBottom: "15px" }}>
+        <h5 style={{ margin: "0 0 8px 0", color: isAfter ? "#28a745" : "#306998" }}>{title}</h5>
+        <table style={{ borderCollapse: "collapse", margin: "0 auto" }}>
+          <tbody>
+            {data.map((row, i) => (
+              <tr key={i}>
+                {row.map((val, j) => (
+                  <td
+                    key={`${i}-${j}`}
+                    style={{
+                      border: "1px solid #306998",
+                      padding: "10px 15px",
+                      textAlign: "center",
+                      backgroundColor: animating ? (isAfter ? "#FFD43B" : "#d4edda") : "#f8f9fa",
+                      transition: "all 0.3s ease",
+                      cursor: "pointer",
+                    }}
+                    onClick={() => handleCellClick(i, j, val)}
+                  >
+                    {val}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  };
+
+  return (
+    <div style={styles.visualisasiContainer}>
+      <h4 style={styles.visualisasiTitle}>Visualisasi Proses</h4>
+      {showBeforeAfter ? (
+        <>
+          {renderMatrix(dataAwal, "🔹 Sebelum operasi", false)}
+          <div style={{ textAlign: "center", margin: "10px 0" }}>
+            <span style={{ fontSize: "24px", animation: animating ? "pulse 0.5s infinite" : "none" }}>⬇️</span>
+            <p style={{ fontStyle: "italic", color: "#306998" }}>{animating ? "✨ Operasi sedang berlangsung..." : "✅ Selesai"}</p>
+          </div>
+          {renderMatrix(dataAkhir, "🔸 Setelah operasi", true)}
+        </>
+      ) : (
+        renderMatrix(dataAwal, "📌 Struktur Data", false)
+      )}
+      {selectedCell && (
+        <div style={styles.visualisasiPopup}>
+          <strong>Detail Elemen:</strong> baris {selectedCell.row+1}, kolom {selectedCell.col+1} → nilai <code>{selectedCell.value}</code>
+        </div>
+      )}
+      <style>{`
+        @keyframes pulse {
+          0% { transform: scale(1); opacity: 0.6; }
+          50% { transform: scale(1.2); opacity: 1; }
+          100% { transform: scale(1); opacity: 0.6; }
+        }
+      `}</style>
+    </div>
+  );
+};
+
+// ===================== KODE EDITOR LENGKAP =====================
+const CodeEditorEnhanced = ({ code, codeKey, pyodideReady, runPythonCode }) => {
   const [output, setOutput] = useState("");
+  const [showDetail, setShowDetail] = useState(false);
+  const [visualData, setVisualData] = useState(null);
+  const [visualDataAfter, setVisualDataAfter] = useState(null);
+  const [operationType, setOperationType] = useState("");
+  const cleanCode = code; // sudah tanpa komentar
+
+  useEffect(() => {
+    // Setup data visualisasi berdasarkan codeKey
+    if (codeKey === 'mengakses') {
+      setVisualData([[1,2,3],[4,5,6],[7,8,9]]);
+      setOperationType("akses");
+    } else if (codeKey === 'mengubah') {
+      setVisualData([[1,2,3],[4,5,6],[7,8,9]]);
+      setVisualDataAfter([[99,2,3],[4,5,88],[7,77,9]]);
+      setOperationType("ubah");
+    } else if (codeKey === 'menambahBaris') {
+      setVisualData([[1,2,3],[4,5,6]]);
+      setVisualDataAfter([[1,2,3],[4,5,6],[7,8,9]]);
+      setOperationType("tambahBaris");
+    } else if (codeKey === 'menyisipBaris') {
+      setVisualData([[1,2,3],[4,5,6]]);
+      setVisualDataAfter([[1,2,3],[10,11,12],[4,5,6]]);
+      setOperationType("sisipBaris");
+    } else if (codeKey === 'menghapusBaris') {
+      setVisualData([[1,2,3],[4,5,6],[7,8,9]]);
+      setVisualDataAfter([[1,2,3],[4,5,6]]);
+      setOperationType("hapusBaris");
+    } else if (codeKey === 'menambahKolom') {
+      setVisualData([[1,2,3],[4,5,6],[7,8,9]]);
+      setVisualDataAfter([[1,2,3,0],[4,5,6,0],[7,8,9,0]]);
+      setOperationType("tambahKolom");
+    } else if (codeKey === 'menghapusKolom') {
+      setVisualData([[1,2,3],[4,5,6],[7,8,9]]);
+      setVisualDataAfter([[1,3],[4,6],[7,9]]);
+      setOperationType("hapusKolom");
+    } else if (codeKey === 'mencari') {
+      setVisualData([[1,2,3],[4,5,6],[7,8,9]]);
+      setOperationType("cari");
+    } else if (codeKey === 'mengaksesRagged') {
+      setVisualData([[1,2],[3,4,5,6],[7]]);
+      setOperationType("ragged");
+    } else if (codeKey === 'iterasi') {
+      setVisualData([[1,2,3],[4,5,6]]);
+      setOperationType("iterasi");
+    } else if (codeKey === 'listComprehension') {
+      setVisualData([[0,0,0,0],[0,0,0,0],[0,0,0,0]]);
+      setOperationType("comprehension");
+    } else if (codeKey === 'menggabungkan') {
+      setVisualData([[[1,2],[3,4]], [[5,6],[7,8]]]);
+      setOperationType("gabung");
+    }
+  }, [codeKey]);
 
   const handleRun = useCallback(async () => {
     if (!pyodideReady) {
-      setOutput("⏳ Pyodide sedang dimuat, harap tunggu...");
+      setOutput("⏳ Pyodide sedang dimuat...");
+      setShowDetail(true);
       return;
     }
-    const result = await runPythonCode(code);
+    const result = await runPythonCode(cleanCode);
     setOutput(result);
-  }, [pyodideReady, code, runPythonCode]);
+    setShowDetail(true);
+  }, [pyodideReady, cleanCode, runPythonCode]);
 
   return (
     <div style={styles.codeEditorContainer}>
@@ -24,19 +205,38 @@ const CodeEditor = ({ code, codeKey, pyodideReady, runPythonCode }) => {
         </button>
       </div>
       <div style={styles.codeInputReadOnly}>
-        <pre style={styles.codePre}>{code}</pre>
+        <pre style={styles.codePre}>{cleanCode}</pre>
       </div>
-      <div style={styles.outputHeader}>
-        <span style={styles.outputTitle}>Output</span>
-      </div>
-      <div style={styles.codeOutput}>
-        <pre style={styles.outputContent}>{output || "(Klik 'Jalankan' untuk melihat hasil)"}</pre>
-      </div>
+      {showDetail && (
+        <>
+          {visualData && (
+            <VisualisasiOperasi
+              dataAwal={visualData}
+              dataAkhir={visualDataAfter}
+              operation={operationType}
+            />
+          )}
+          <div style={styles.outputBox}>
+            <div style={styles.outputHeader}>
+              <span style={styles.outputTitle}>Output</span>
+            </div>
+            <div style={styles.codeOutput}>
+              <pre style={styles.outputContent}>{output || "(Tidak ada output)"}</pre>
+            </div>
+          </div>
+          <PenjelasanPerBaris code={cleanCode} />
+        </>
+      )}
+      {!showDetail && (
+        <div style={styles.promptBox}>
+          ⚡ Klik tombol "Jalankan" untuk melihat visualisasi, output, dan penjelasan.
+        </div>
+      )}
     </div>
   );
 };
 
-// ===================== KOMPONEN LATIHAN PRAKTIK (CODING) =====================
+// ===================== KOMPONEN LAIN (TIDAK BERUBAH) =====================
 const CodeEditorEditable = ({ codeKey, title, validationRules, pyodideReady, runPythonCode, expectedOutput }) => {
   const [localCode, setLocalCode] = useState("");
   const [output, setOutput] = useState("");
@@ -113,7 +313,6 @@ const CodeEditorEditable = ({ codeKey, title, validationRules, pyodideReady, run
   );
 };
 
-// ===================== KOMPONEN SOAL MELENGKAPI KODE (INPUT LANGSUNG) =====================
 const CodeCompletionQuestion = ({ question, codeParts, placeholders, expectedAnswers, onCheck, resetTrigger }) => {
   const [answers, setAnswers] = useState(placeholders.map(() => ""));
   const [feedback, setFeedback] = useState("");
@@ -176,18 +375,13 @@ const CodeCompletionQuestion = ({ question, codeParts, placeholders, expectedAns
   return (
     <div style={styles.questionCard}>
       <p style={styles.questionText}>{question}</p>
-      <pre style={styles.codeTemplateInline}>
-        {renderCodeWithInputs()}
-      </pre>
-      <button style={styles.checkButton} onClick={handleCheck}>
-        Periksa
-      </button>
+      <pre style={styles.codeTemplateInline}>{renderCodeWithInputs()}</pre>
+      <button style={styles.checkButton} onClick={handleCheck}>Periksa</button>
       {feedback && <div style={styles.feedback}>{feedback}</div>}
     </div>
   );
 };
 
-// ===================== KOMPONEN DRAG DROP COMPLETION =====================
 const DragDropCompletionQuestion = ({ question, codeTemplate, placeholders, options, expectedAnswers, resetTrigger }) => {
   const [answers, setAnswers] = useState(placeholders.map(() => ""));
   const [feedback, setFeedback] = useState("");
@@ -314,9 +508,7 @@ const DragDropCompletionQuestion = ({ question, codeTemplate, placeholders, opti
   return (
     <div style={styles.questionCard}>
       <p style={styles.questionText}>{question}</p>
-      <pre style={styles.codeTemplateInline}>
-        {renderCodeWithDropZones()}
-      </pre>
+      <pre style={styles.codeTemplateInline}>{renderCodeWithDropZones()}</pre>
       <div style={styles.bubbleContainer}>
         <p style={{ marginBottom: "8px", fontWeight: "500" }}>📦 Drag ke area kosong di atas:</p>
         <div style={{ display: "flex", flexWrap: "wrap", gap: "10px" }}>
@@ -332,15 +524,12 @@ const DragDropCompletionQuestion = ({ question, codeTemplate, placeholders, opti
           ))}
         </div>
       </div>
-      <button style={styles.checkButton} onClick={handleCheck}>
-        Periksa
-      </button>
+      <button style={styles.checkButton} onClick={handleCheck}>Periksa</button>
       {feedback && <div style={styles.feedback}>{feedback}</div>}
     </div>
   );
 };
 
-// ===================== EKSPLORASI (DENGAN STYLE BARU) =====================
 const Eksplorasi = ({ onComplete }) => {
   const [selected, setSelected] = useState([null, null]);
   const [feedback, setFeedback] = useState(["", ""]);
@@ -349,53 +538,25 @@ const Eksplorasi = ({ onComplete }) => {
   const questions = [
     {
       text: "Untuk menambahkan baris baru (list) di akhir nested list, method yang tepat adalah ...",
-      options: [
-        "insert()",
-        "append()",
-        "pop()",
-        "remove()",
-        "extend()"
-      ],
-      correct: 1, // append()
+      options: ["insert()", "append()", "pop()", "remove()", "extend()"],
+      correct: 1,
     },
     {
       text: "Jika ingin menghapus baris dengan indeks 1 dari nested list `data`, perintah yang tepat adalah ...",
-      options: [
-        "data.remove(1)",
-        "data.pop(1)",
-        "data.del(1)",
-        "delete data[1]",
-        "data[1].pop()"
-      ],
-      correct: 1, // data.pop(1)
+      options: ["data.remove(1)", "data.pop(1)", "data.del(1)", "delete data[1]", "data[1].pop()"],
+      correct: 1,
     }
   ];
 
   const handleAnswer = (qIdx, optIdx) => {
     if (hasAnswered[qIdx]) return;
-    setSelected(prev => {
-      const newSel = [...prev];
-      newSel[qIdx] = optIdx;
-      return newSel;
-    });
+    setSelected(prev => { const newSel = [...prev]; newSel[qIdx] = optIdx; return newSel; });
     const isCorrect = (optIdx === questions[qIdx].correct);
-    setFeedback(prev => {
-      const newFb = [...prev];
-      newFb[qIdx] = isCorrect ? "Benar" : "Salah";
-      return newFb;
-    });
-    setHasAnswered(prev => {
-      const newAns = [...prev];
-      newAns[qIdx] = true;
-      return newAns;
-    });
+    setFeedback(prev => { const newFb = [...prev]; newFb[qIdx] = isCorrect ? "Benar" : "Salah"; return newFb; });
+    setHasAnswered(prev => { const newAns = [...prev]; newAns[qIdx] = true; return newAns; });
   };
 
-  useEffect(() => {
-    if (hasAnswered.every(v => v === true)) {
-      onComplete();
-    }
-  }, [hasAnswered, onComplete]);
+  useEffect(() => { if (hasAnswered.every(v => v === true)) onComplete(); }, [hasAnswered, onComplete]);
 
   return (
     <div>
@@ -410,7 +571,7 @@ const Eksplorasi = ({ onComplete }) => {
           const selectedIdx = selected[idx];
           return (
             <div key={idx} style={{ marginBottom: "30px", borderBottom: "1px solid #e0e0e0", paddingBottom: "20px" }}>
-              <p style={{ fontWeight: "600", marginBottom: "12px" }}>{idx + 1}. {q.text}</p>
+              <p style={{ fontWeight: "600", marginBottom: "12px" }}>{idx+1}. {q.text}</p>
               <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                 {q.options.map((opt, optIdx) => {
                   let optionStyle = styles.eksplorasiOption;
@@ -418,34 +579,20 @@ const Eksplorasi = ({ onComplete }) => {
                     optionStyle = { ...styles.eksplorasiOptionDisabled };
                     if (selectedIdx === optIdx) {
                       const isCorrect = (selectedIdx === q.correct);
-                      optionStyle = {
-                        ...optionStyle,
-                        backgroundColor: isCorrect ? "#d4edda" : "#f8d7da",
-                        borderColor: isCorrect ? "#28a745" : "#dc3545",
-                        color: isCorrect ? "#155724" : "#842029",
-                      };
+                      optionStyle = { ...optionStyle, backgroundColor: isCorrect ? "#d4edda" : "#f8d7da", borderColor: isCorrect ? "#28a745" : "#dc3545", color: isCorrect ? "#155724" : "#842029" };
                     }
                   }
                   return (
-                    <div
-                      key={optIdx}
-                      onClick={() => !isAnswered && handleAnswer(idx, optIdx)}
-                      style={optionStyle}
-                    >
+                    <div key={optIdx} onClick={() => !isAnswered && handleAnswer(idx, optIdx)} style={optionStyle}>
                       {opt}
                     </div>
                   );
                 })}
               </div>
-              {feedback[idx] && (
-                <div style={feedback[idx] === "Benar" ? styles.feedbackCorrect : styles.feedbackWrong}>
-                  {feedback[idx]}
-                </div>
-              )}
+              {feedback[idx] && <div style={feedback[idx] === "Benar" ? styles.feedbackCorrect : styles.feedbackWrong}>{feedback[idx]}</div>}
             </div>
           );
         })}
-        {/* Pesan "Jawab kedua pertanyaan..." dihapus */}
       </div>
     </div>
   );
@@ -459,17 +606,14 @@ export default function OperasiNestedList() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isEksplorasiCompleted, setIsEksplorasiCompleted] = useState(false);
 
-  // Contoh kode read-only (tetap sama)
+  // Contoh kode (tanpa komentar)
   const exampleCodes = {
-    mengakses: `# Mengakses elemen nested list
-data = [[1, 2, 3],
+    mengakses: `data = [[1, 2, 3],
         [4, 5, 6],
         [7, 8, 9]]
 print("Elemen baris 1 kolom 2:", data[0][1])
 print("Elemen baris 3 kolom 3:", data[2][2])`,
-    
-    mengubah: `# Mengubah nilai elemen nested list
-data = [[1, 2, 3],
+    mengubah: `data = [[1, 2, 3],
         [4, 5, 6],
         [7, 8, 9]]
 print("Sebelum diubah:", data)
@@ -477,49 +621,35 @@ data[0][0] = 99
 data[1][2] = 88
 data[2][1] = 77
 print("Setelah diubah:", data)`,
-    
-    menambahBaris: `# Menambahkan baris baru (append)
-data = [[1, 2, 3],
+    menambahBaris: `data = [[1, 2, 3],
         [4, 5, 6]]
 baris_baru = [7, 8, 9]
 data.append(baris_baru)
 print("Setelah append:", data)`,
-    
-    menyisipBaris: `# Menyisipkan baris di posisi tertentu (insert)
-data = [[1, 2, 3],
+    menyisipBaris: `data = [[1, 2, 3],
         [4, 5, 6]]
-data.insert(1, [10, 11, 12])  # sisipkan di indeks 1
+data.insert(1, [10, 11, 12])
 print("Setelah insert:", data)`,
-    
-    menghapusBaris: `# Menghapus baris (pop, del, remove)
-data = [[1, 2, 3],
+    menghapusBaris: `data = [[1, 2, 3],
         [4, 5, 6],
         [7, 8, 9]]
-# Hapus baris terakhir
 data.pop()
 print("Setelah pop():", data)
-# Hapus baris pertama
 del data[0]
 print("Setelah del data[0]:", data)`,
-    
-    menambahKolom: `# Menambahkan elemen ke setiap baris (menambah kolom)
-data = [[1, 2, 3],
+    menambahKolom: `data = [[1, 2, 3],
         [4, 5, 6],
         [7, 8, 9]]
 for baris in data:
-    baris.append(0)  # tambah kolom baru dengan nilai 0
+    baris.append(0)
 print("Setiap baris ditambah kolom:", data)`,
-    
-    menghapusKolom: `# Menghapus elemen tertentu dari setiap baris (hapus kolom)
-data = [[1, 2, 3],
+    menghapusKolom: `data = [[1, 2, 3],
         [4, 5, 6],
         [7, 8, 9]]
 for baris in data:
-    baris.pop(1)  # hapus kolom ke-2 (indeks 1)
+    baris.pop(1)
 print("Setelah hapus kolom ke-2:", data)`,
-    
-    mencari: `# Mencari nilai dalam nested list
-data = [[1, 2, 3],
+    mencari: `data = [[1, 2, 3],
         [4, 5, 6],
         [7, 8, 9]]
 cari = 5
@@ -531,36 +661,27 @@ for i in range(len(data)):
             ditemukan = True
 if not ditemukan:
     print(f"Nilai {cari} tidak ditemukan")`,
-    
-    mengaksesRagged: `# Nested list dengan panjang baris berbeda (ragged)
-data = [[1, 2],
+    mengaksesRagged: `data = [[1, 2],
         [3, 4, 5, 6],
         [7]]
-print(data[1][2])  # output: 5
-print(data[2][0])  # output: 7`,
-    
-    iterasi: `# Iterasi seluruh elemen
-data = [[1, 2, 3],
+print(data[1][2])
+print(data[2][0])`,
+    iterasi: `data = [[1, 2, 3],
         [4, 5, 6]]
 for i in range(len(data)):
     for j in range(len(data[i])):
         print(f"data[{i}][{j}] = {data[i][j]}")`,
-    
-    listComprehension: `# Membuat nested list dengan list comprehension
-baris = 3
+    listComprehension: `baris = 3
 kolom = 4
 matriks = [[0 for j in range(kolom)] for i in range(baris)]
 print("Matriks 3x4 dengan nilai 0:")
 print(matriks)`,
-    
-    menggabungkan: `# Menggabungkan dua nested list
-a = [[1, 2], [3, 4]]
+    menggabungkan: `a = [[1, 2], [3, 4]]
 b = [[5, 6], [7, 8]]
 hasil = a + b
 print("Hasil penggabungan:", hasil)`,
   };
 
-  // Soal 1-2: input langsung
   const soal1CodeParts = [
     "data = [[10, 20, 30], [40, 50, 60]]\n# Ubah elemen baris pertama kolom kedua menjadi 99\ndata[",
     "][",
@@ -576,7 +697,6 @@ print("Hasil penggabungan:", hasil)`,
   const soal2Placeholders = ["method"];
   const soal2Expected = ["append"];
 
-  // Soal 3: Drag drop - menambah kolom
   const soal3Template = `data = [[1, 2, 3], [4, 5, 6]]
 for baris in ___:
     baris.___(0)
@@ -585,7 +705,6 @@ print(data)`;
   const soal3Options = ["data", "range(len(data))", "append", "insert", "extend", "baris"];
   const soal3Expected = ["data", "append"];
 
-  // Soal 4: Drag drop - menghapus baris pertama
   const soal4Template = `data = [[1, 2], [3, 4], [5, 6]]
 ___ data[0]
 print(data)`;
@@ -593,7 +712,6 @@ print(data)`;
   const soal4Options = ["del", "pop", "remove", "delete", "data.pop(0)", "data.remove([1,2])"];
   const soal4Expected = ["del"];
 
-  // Soal 5: Drag drop - mengubah elemen baris kedua kolom pertama menjadi 99
   const soal5Template = `data = [[10, 20], [30, 40]]
 data[___][___] = 99
 print(data[1][0])`;
@@ -601,7 +719,6 @@ print(data[1][0])`;
   const soal5Options = ["0", "1", "2", "3", "baris", "kolom"];
   const soal5Expected = ["1", "0"];
 
-  // Load Pyodide
   useEffect(() => {
     const loadPyodide = async () => {
       if (!window.loadPyodide) {
@@ -647,36 +764,20 @@ _buffer.getvalue()
     }
   }, []);
 
-  const resetInteractiveQuestions = () => {
-    setResetInteractives(prev => prev + 1);
-  };
-
-  const handleEksplorasiComplete = () => {
-    setIsEksplorasiCompleted(true);
-  };
+  const resetInteractiveQuestions = () => setResetInteractives(prev => prev + 1);
+  const handleEksplorasiComplete = () => setIsEksplorasiCompleted(true);
 
   return (
     <>
       <Navbar />
       <SidebarMateri isOpen={isSidebarOpen} onToggle={() => setIsSidebarOpen(!isSidebarOpen)} />
-      <div 
-        className="main-content"
-        style={{ 
-          marginLeft: isSidebarOpen ? "280px" : "0",
-          transition: "margin-left 0.3s ease",
-          paddingTop: "64px",
-          minHeight: "100vh",
-          width: "auto",
-        }}
-      >
+      <div className="main-content" style={{ marginLeft: isSidebarOpen ? "280px" : "0", transition: "margin-left 0.3s ease", paddingTop: "64px", minHeight: "100vh", width: "auto" }}>
         <div style={styles.page}>
-          {/* HEADER */}
           <div style={styles.header}>
             <div style={styles.headerAccent}></div>
             <h1 style={styles.headerTitle}>OPERASI DAN MANIPULASI NESTED LIST</h1>
           </div>
 
-          {/* TUJUAN PEMBELAJARAN */}
           <section style={styles.section}>
             <h2 style={styles.sectionTitle}>Tujuan Pembelajaran</h2>
             <div style={styles.card}>
@@ -684,75 +785,65 @@ _buffer.getvalue()
             </div>
           </section>
 
-          {/* EKSPLORASI */}
           <section style={styles.section}>
             <Eksplorasi onComplete={handleEksplorasiComplete} />
           </section>
 
-          {/* MATERI UTAMA (TERKUNCI SAMPAI EKSPLORASI SELESAI) */}
           {isEksplorasiCompleted && (
             <>
-              {/* BAGIAN OPERASI DASAR */}
               <section style={styles.section}>
-                <h2 style={styles.sectionTitle}>📊 Operasi Dasar Nested List</h2>
+                <h2 style={styles.sectionTitle}>Operasi Dasar Nested List</h2>
                 <div style={styles.card}>
-                  <h3>1. Mengakses Elemen Nested List</h3>
-                  <p style={styles.text}>Gunakan dua indeks: <code>nama_list[indeks_baris][indeks_kolom]</code>. Indeks dimulai dari 0.</p>
-                  <CodeEditor code={exampleCodes.mengakses} codeKey="mengakses" pyodideReady={pyodideReady} runPythonCode={runPythonCode} />
-                  
-                  <h3>2. Mengubah Nilai Elemen</h3>
-                  <p style={styles.text}>Kita dapat mengubah nilai elemen tertentu dengan mengaksesnya lalu menetapkan nilai baru.</p>
-                  <CodeEditor code={exampleCodes.mengubah} codeKey="mengubah" pyodideReady={pyodideReady} runPythonCode={runPythonCode} />
+                  <h3>1. Mengakses Elemen</h3>
+                  <p style={styles.text}>Gunakan dua indeks: <code>nama[indeks_baris][indeks_kolom]</code></p>
+                  <CodeEditorEnhanced code={exampleCodes.mengakses} codeKey="mengakses" pyodideReady={pyodideReady} runPythonCode={runPythonCode} />
 
-                  <h3>3. Mencari Nilai dalam Nested List</h3>
-                  <p style={styles.text}>Gunakan perulangan bersarang untuk memeriksa setiap elemen.</p>
-                  <CodeEditor code={exampleCodes.mencari} codeKey="mencari" pyodideReady={pyodideReady} runPythonCode={runPythonCode} />
+                  <h3>2. Mengubah Nilai Elemen</h3>
+                  <p style={styles.text}>Akses lalu tetapkan nilai baru.</p>
+                  <CodeEditorEnhanced code={exampleCodes.mengubah} codeKey="mengubah" pyodideReady={pyodideReady} runPythonCode={runPythonCode} />
+
+                  <h3>3. Mencari Nilai</h3>
+                  <p style={styles.text}>Perulangan bersarang.</p>
+                  <CodeEditorEnhanced code={exampleCodes.mencari} codeKey="mencari" pyodideReady={pyodideReady} runPythonCode={runPythonCode} />
 
                   <h3>4. Iterasi Seluruh Elemen</h3>
-                  <p style={styles.text}>Gunakan perulangan bersarang untuk mengakses semua elemen.</p>
-                  <CodeEditor code={exampleCodes.iterasi} codeKey="iterasi" pyodideReady={pyodideReady} runPythonCode={runPythonCode} />
+                  <p style={styles.text}>Perulangan bersarang.</p>
+                  <CodeEditorEnhanced code={exampleCodes.iterasi} codeKey="iterasi" pyodideReady={pyodideReady} runPythonCode={runPythonCode} />
 
-                  <h3>5. Nested List dengan Panjang Baris Berbeda (Ragged Array)</h3>
-                  <p style={styles.text}>Setiap baris dapat memiliki jumlah kolom yang berbeda.</p>
-                  <CodeEditor code={exampleCodes.mengaksesRagged} codeKey="mengaksesRagged" pyodideReady={pyodideReady} runPythonCode={runPythonCode} />
+                  <h3>5. Panjang Baris Berbeda (Ragged Array)</h3>
+                  <p style={styles.text}>Setiap baris bisa beda panjang.</p>
+                  <CodeEditorEnhanced code={exampleCodes.mengaksesRagged} codeKey="mengaksesRagged" pyodideReady={pyodideReady} runPythonCode={runPythonCode} />
 
-                  <h3>6. Membuat Nested List dengan List Comprehension</h3>
-                  <p style={styles.text}>Cara ringkas membuat matriks berukuran tertentu.</p>
-                  <CodeEditor code={exampleCodes.listComprehension} codeKey="listComprehension" pyodideReady={pyodideReady} runPythonCode={runPythonCode} />
+                  <h3>6. Membuat dengan List Comprehension</h3>
+                  <p style={styles.text}>Cara ringkas membuat matriks.</p>
+                  <CodeEditorEnhanced code={exampleCodes.listComprehension} codeKey="listComprehension" pyodideReady={pyodideReady} runPythonCode={runPythonCode} />
 
                   <h3>7. Menggabungkan Dua Nested List</h3>
-                  <p style={styles.text}>Operator <code>+</code> dapat digunakan untuk menggabungkan dua nested list.</p>
-                  <CodeEditor code={exampleCodes.menggabungkan} codeKey="menggabungkan" pyodideReady={pyodideReady} runPythonCode={runPythonCode} />
+                  <p style={styles.text}>Operator +</p>
+                  <CodeEditorEnhanced code={exampleCodes.menggabungkan} codeKey="menggabungkan" pyodideReady={pyodideReady} runPythonCode={runPythonCode} />
                 </div>
               </section>
 
-              {/* BAGIAN MANIPULASI */}
               <section style={styles.section}>
-                <h2 style={styles.sectionTitle}>✏️ Manipulasi Nested List</h2>
+                <h2 style={styles.sectionTitle}>Manipulasi Nested List</h2>
                 <div style={styles.card}>
-                  <h3>1. Menambah Baris Baru (append)</h3>
-                  <p style={styles.text}>Gunakan method <code>append()</code> untuk menambahkan baris (list) baru di akhir nested list.</p>
-                  <CodeEditor code={exampleCodes.menambahBaris} codeKey="menambahBaris" pyodideReady={pyodideReady} runPythonCode={runPythonCode} />
+                  <h3>1. Menambah Baris (append)</h3>
+                  <CodeEditorEnhanced code={exampleCodes.menambahBaris} codeKey="menambahBaris" pyodideReady={pyodideReady} runPythonCode={runPythonCode} />
 
                   <h3>2. Menyisipkan Baris (insert)</h3>
-                  <p style={styles.text}>Gunakan method <code>insert(posisi, baris_baru)</code> untuk menyisipkan baris di posisi tertentu.</p>
-                  <CodeEditor code={exampleCodes.menyisipBaris} codeKey="menyisipBaris" pyodideReady={pyodideReady} runPythonCode={runPythonCode} />
+                  <CodeEditorEnhanced code={exampleCodes.menyisipBaris} codeKey="menyisipBaris" pyodideReady={pyodideReady} runPythonCode={runPythonCode} />
 
-                  <h3>3. Menghapus Baris</h3>
-                  <p style={styles.text}>Gunakan <code>pop()</code> untuk menghapus baris terakhir, atau <code>del</code> untuk menghapus baris berdasarkan indeks.</p>
-                  <CodeEditor code={exampleCodes.menghapusBaris} codeKey="menghapusBaris" pyodideReady={pyodideReady} runPythonCode={runPythonCode} />
+                  <h3>3. Menghapus Baris (pop, del)</h3>
+                  <CodeEditorEnhanced code={exampleCodes.menghapusBaris} codeKey="menghapusBaris" pyodideReady={pyodideReady} runPythonCode={runPythonCode} />
 
-                  <h3>4. Menambah Kolom (Elemen pada Setiap Baris)</h3>
-                  <p style={styles.text}>Iterasi setiap baris dan gunakan <code>append()</code> pada baris tersebut untuk menambah kolom.</p>
-                  <CodeEditor code={exampleCodes.menambahKolom} codeKey="menambahKolom" pyodideReady={pyodideReady} runPythonCode={runPythonCode} />
+                  <h3>4. Menambah Kolom</h3>
+                  <CodeEditorEnhanced code={exampleCodes.menambahKolom} codeKey="menambahKolom" pyodideReady={pyodideReady} runPythonCode={runPythonCode} />
 
                   <h3>5. Menghapus Kolom</h3>
-                  <p style={styles.text}>Iterasi setiap baris dan gunakan <code>pop(indeks_kolom)</code> atau <code>del</code> untuk menghapus kolom tertentu.</p>
-                  <CodeEditor code={exampleCodes.menghapusKolom} codeKey="menghapusKolom" pyodideReady={pyodideReady} runPythonCode={runPythonCode} />
+                  <CodeEditorEnhanced code={exampleCodes.menghapusKolom} codeKey="menghapusKolom" pyodideReady={pyodideReady} runPythonCode={runPythonCode} />
                 </div>
               </section>
 
-              {/* LATIHAN PRAKTIK (CODING) */}
               <section style={styles.section}>
                 <h2 style={styles.sectionTitle}>Ayo Praktik!</h2>
                 <div style={styles.card}>
@@ -775,7 +866,6 @@ _buffer.getvalue()
                 </div>
               </section>
 
-              {/* LATIHAN INTERAKTIF - 5 SOAL */}
               <section style={styles.section}>
                 <h2 style={styles.sectionTitle}>Latihan</h2>
                 <div style={styles.card}>
@@ -829,11 +919,8 @@ _buffer.getvalue()
             </>
           )}
 
-          {/* PESAN TERKUNCI */}
           {!isEksplorasiCompleted && (
-            <div style={styles.lockMessage}>
-              🔒 Materi terkunci. Selesaikan eksplorasi di atas dengan menjawab kedua pertanyaan.
-            </div>
+            <div style={styles.lockMessage}>🔒 Materi terkunci. Selesaikan eksplorasi di atas dengan menjawab kedua pertanyaan.</div>
           )}
         </div>
       </div>
@@ -841,256 +928,53 @@ _buffer.getvalue()
   );
 }
 
-/* ================== STYLE ================== */
+// ===================== STYLES =====================
 const styles = {
-  page: {
-    padding: "30px 40px",
-    paddingTop: "30px",
-    backgroundColor: "#f5f7fa",
-    minHeight: "calc(100vh - 64px)",
-    fontFamily: "Poppins, sans-serif",
-    width: "100%",
-    maxWidth: "100%",
-    boxSizing: "border-box",
-  },
-  header: {
-    backgroundColor: "#306998",
-    color: "white",
-    padding: "18px 24px",
-    position: "relative",
-    marginBottom: "30px",
-    borderRadius: "6px",
-  },
-  headerAccent: {
-    position: "absolute",
-    left: 0,
-    top: 0,
-    bottom: 0,
-    width: "8px",
-    backgroundColor: "#FFD43B",
-    borderRadius: "6px 0 0 6px",
-  },
-  headerTitle: {
-    margin: 0,
-    textAlign: "center",
-    fontSize: "28px",
-    fontWeight: "700",
-  },
+  page: { padding: "30px 40px", paddingTop: "30px", backgroundColor: "#f5f7fa", minHeight: "calc(100vh - 64px)", fontFamily: "Poppins, sans-serif", width: "100%", boxSizing: "border-box" },
+  header: { backgroundColor: "#306998", color: "white", padding: "18px 24px", position: "relative", marginBottom: "30px", borderRadius: "6px" },
+  headerAccent: { position: "absolute", left: 0, top: 0, bottom: 0, width: "8px", backgroundColor: "#FFD43B", borderRadius: "6px 0 0 6px" },
+  headerTitle: { margin: 0, textAlign: "center", fontSize: "28px", fontWeight: "700" },
   section: { marginBottom: "40px" },
-  sectionTitle: {
-    fontSize: "22px",
-    fontWeight: "700",
-    marginBottom: "15px",
-    borderLeft: "5px solid #306998",
-    paddingLeft: "12px",
-  },
-  card: {
-    backgroundColor: "white",
-    borderRadius: "10px",
-    padding: "25px",
-    boxShadow: "0 5px 15px rgba(0,0,0,0.08)",
-  },
+  sectionTitle: { fontSize: "22px", fontWeight: "700", marginBottom: "15px", borderLeft: "5px solid #306998", paddingLeft: "12px" },
+  card: { backgroundColor: "white", borderRadius: "10px", padding: "25px", boxShadow: "0 5px 15px rgba(0,0,0,0.08)" },
   text: { lineHeight: "1.8", color: "#333", marginBottom: "15px" },
-  list: { paddingLeft: "20px", lineHeight: "1.8" },
-  alertBox: {
-    backgroundColor: "#fff3cd",
-    border: "1px solid #ffc107",
-    borderRadius: "6px",
-    padding: "15px",
-    marginBottom: "15px",
-    color: "#856404",
-  },
-  lockMessage: {
-    marginTop: "20px",
-    padding: "15px",
-    backgroundColor: "#cfe2ff",
-    borderLeft: "5px solid #0d6efd",
-    borderRadius: "8px",
-    textAlign: "center",
-    color: "#084298",
-  },
-  eksplorasiOption: {
-    padding: "12px",
-    borderRadius: "8px",
-    cursor: "pointer",
-    transition: "all 0.2s",
-    border: "1px solid #ddd",
-    backgroundColor: "#f9f9f9",
-  },
-  eksplorasiOptionDisabled: {
-    padding: "12px",
-    borderRadius: "8px",
-    border: "1px solid #ccc",
-    backgroundColor: "#e9ecef",
-    color: "#6c757d",
-    cursor: "not-allowed",
-    opacity: 0.7,
-  },
-  feedbackCorrect: {
-    marginTop: "10px",
-    padding: "8px 12px",
-    backgroundColor: "#d1e7dd",
-    color: "#0f5132",
-    borderRadius: "6px",
-    fontWeight: "500",
-  },
-  feedbackWrong: {
-    marginTop: "10px",
-    padding: "8px 12px",
-    backgroundColor: "#f8d7da",
-    color: "#842029",
-    borderRadius: "6px",
-    fontWeight: "500",
-  },
-  codeEditorContainer: {
-    border: "2px solid #306998",
-    borderRadius: "10px",
-    overflow: "hidden",
-    marginBottom: "20px",
-    backgroundColor: "#1e1e1e",
-    marginTop: "15px"
-  },
-  codeEditorHeader: {
-    backgroundColor: "#306998",
-    color: "white",
-    padding: "12px 15px",
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center"
-  },
-  codeEditorTitle: { fontWeight: "600", fontSize: "15px", display: "flex", alignItems: "center", gap: "8px" },
-  runButton: {
-    backgroundColor: "#FFD43B",
-    color: "#306998",
-    border: "none",
-    padding: "8px 20px",
-    borderRadius: "6px",
-    cursor: "pointer",
-    fontWeight: "600",
-    fontSize: "14px",
-  },
-  errorBox: {
-    backgroundColor: "#ff4444",
-    color: "white",
-    padding: "12px 15px",
-    fontSize: "14px",
-    fontWeight: "500",
-    borderBottom: "2px solid #cc0000",
-  },
-  codeInputReadOnly: {
-    width: "100%",
-    minHeight: "100px",
-    backgroundColor: "#272822",
-    color: "#f8f8f2",
-    border: "none",
-    padding: "15px",
-    fontFamily: "monospace",
-    fontSize: "14px",
-    overflow: "auto"
-  },
+  alertBox: { backgroundColor: "#fff3cd", border: "1px solid #ffc107", borderRadius: "6px", padding: "15px", marginBottom: "15px", color: "#856404" },
+  lockMessage: { marginTop: "20px", padding: "15px", backgroundColor: "#cfe2ff", borderLeft: "5px solid #0d6efd", borderRadius: "8px", textAlign: "center", color: "#084298" },
+  eksplorasiOption: { padding: "12px", borderRadius: "8px", cursor: "pointer", transition: "all 0.2s", border: "1px solid #ddd", backgroundColor: "#f9f9f9" },
+  eksplorasiOptionDisabled: { padding: "12px", borderRadius: "8px", border: "1px solid #ccc", backgroundColor: "#e9ecef", color: "#6c757d", cursor: "not-allowed", opacity: 0.7 },
+  feedbackCorrect: { marginTop: "10px", padding: "8px 12px", backgroundColor: "#d1e7dd", color: "#0f5132", borderRadius: "6px", fontWeight: "500" },
+  feedbackWrong: { marginTop: "10px", padding: "8px 12px", backgroundColor: "#f8d7da", color: "#842029", borderRadius: "6px", fontWeight: "500" },
+  codeEditorContainer: { border: "2px solid #306998", borderRadius: "10px", overflow: "hidden", marginBottom: "20px", backgroundColor: "#1e1e1e", marginTop: "15px" },
+  codeEditorHeader: { backgroundColor: "#306998", color: "white", padding: "12px 15px", display: "flex", justifyContent: "space-between", alignItems: "center" },
+  codeEditorTitle: { fontWeight: "600", fontSize: "15px" },
+  runButton: { backgroundColor: "#FFD43B", color: "#306998", border: "none", padding: "8px 20px", borderRadius: "6px", cursor: "pointer", fontWeight: "600", fontSize: "14px" },
+  errorBox: { backgroundColor: "#ff4444", color: "white", padding: "12px 15px", fontSize: "14px", fontWeight: "500", borderBottom: "2px solid #cc0000" },
+  codeInputReadOnly: { width: "100%", minHeight: "100px", backgroundColor: "#272822", color: "#f8f8f2", border: "none", padding: "15px", fontFamily: "monospace", fontSize: "14px", overflow: "auto" },
   codePre: { margin: 0, whiteSpace: "pre-wrap", wordWrap: "break-word", fontFamily: "monospace" },
-  codeInputEditable: {
-    width: "100%",
-    minHeight: "250px",
-    backgroundColor: "#272822",
-    color: "#f8f8f2",
-    border: "none",
-    padding: "15px",
-    fontFamily: "monospace",
-    fontSize: "14px",
-    resize: "vertical",
-    outline: "none",
-    boxSizing: "border-box",
-    tabSize: 4,
-  },
-  outputHeader: {
-    backgroundColor: "#306998",
-    color: "white",
-    padding: "10px 15px",
-    borderTop: "2px solid #1e1e1e"
-  },
+  codeInputEditable: { width: "100%", minHeight: "250px", backgroundColor: "#272822", color: "#f8f8f2", border: "none", padding: "15px", fontFamily: "monospace", fontSize: "14px", resize: "vertical", outline: "none", boxSizing: "border-box", tabSize: 4 },
+  outputHeader: { backgroundColor: "#306998", color: "white", padding: "10px 15px", borderTop: "2px solid #1e1e1e" },
   outputTitle: { fontWeight: "600", fontSize: "15px" },
   codeOutput: { backgroundColor: "#1e1e1e", padding: "15px", minHeight: "80px" },
-  outputContent: {
-    color: "#4af",
-    fontFamily: "monospace",
-    fontSize: "14px",
-    margin: 0,
-    whiteSpace: "pre-wrap",
-    wordWrap: "break-word",
-    lineHeight: "1.5"
-  },
-  questionCard: {
-    backgroundColor: "#f9f9f9",
-    borderRadius: "8px",
-    padding: "15px",
-    marginBottom: "20px",
-    border: "1px solid #ddd"
-  },
+  outputContent: { color: "#4af", fontFamily: "monospace", fontSize: "14px", margin: 0, whiteSpace: "pre-wrap", wordWrap: "break-word", lineHeight: "1.5" },
+  outputBox: { marginTop: "10px" },
+  promptBox: { padding: "15px", textAlign: "center", color: "#666" },
+  questionCard: { backgroundColor: "#f9f9f9", borderRadius: "8px", padding: "15px", marginBottom: "20px", border: "1px solid #ddd" },
   questionText: { fontWeight: "500", marginBottom: "10px" },
-  codeTemplateInline: {
-    backgroundColor: "#272822",
-    color: "#f8f8f2",
-    padding: "10px",
-    borderRadius: "6px",
-    fontFamily: "monospace",
-    fontSize: "14px",
-    overflowX: "auto",
-    whiteSpace: "pre-wrap",
-    wordBreak: "break-word",
-    marginBottom: "10px"
-  },
-  inlineInput: {
-    backgroundColor: "#fff",
-    color: "#000",
-    border: "1px solid #ccc",
-    borderRadius: "4px",
-    padding: "2px 6px",
-    margin: "0 2px",
-    fontFamily: "monospace",
-    fontSize: "14px",
-    textAlign: "center",
-    outline: "none"
-  },
-  checkButton: {
-    backgroundColor: "#28a745",
-    color: "white",
-    border: "none",
-    padding: "8px 16px",
-    borderRadius: "6px",
-    cursor: "pointer",
-    fontSize: "14px",
-    marginRight: "10px"
-  },
-  resetButton: {
-    backgroundColor: "#6c757d",
-    color: "white",
-    border: "none",
-    padding: "8px 16px",
-    borderRadius: "6px",
-    cursor: "pointer",
-    fontSize: "14px",
-    marginBottom: "20px"
-  },
+  codeTemplateInline: { backgroundColor: "#272822", color: "#f8f8f2", padding: "10px", borderRadius: "6px", fontFamily: "monospace", fontSize: "14px", overflowX: "auto", whiteSpace: "pre-wrap", wordBreak: "break-word", marginBottom: "10px" },
+  inlineInput: { backgroundColor: "#fff", color: "#000", border: "1px solid #ccc", borderRadius: "4px", padding: "2px 6px", margin: "0 2px", fontFamily: "monospace", fontSize: "14px", textAlign: "center", outline: "none" },
+  checkButton: { backgroundColor: "#28a745", color: "white", border: "none", padding: "8px 16px", borderRadius: "6px", cursor: "pointer", fontSize: "14px", marginRight: "10px" },
+  resetButton: { backgroundColor: "#6c757d", color: "white", border: "none", padding: "8px 16px", borderRadius: "6px", cursor: "pointer", fontSize: "14px", marginBottom: "20px" },
   feedback: { marginTop: "8px", fontSize: "14px", fontStyle: "italic", color: "#333" },
-  bubbleContainer: {
-    marginTop: "15px",
-    padding: "10px",
-    backgroundColor: "#f0f0f0",
-    borderRadius: "8px",
-  },
-  dragBubble: {
-    display: "inline-block",
-    padding: "6px 12px",
-    margin: "4px",
-    backgroundColor: "#306998",
-    color: "white",
-    borderRadius: "20px",
-    cursor: "grab",
-    fontSize: "14px",
-    userSelect: "none",
-    boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
-    transition: "transform 0.1s",
-    ":active": { cursor: "grabbing" }
-  },
+  bubbleContainer: { marginTop: "15px", padding: "10px", backgroundColor: "#f0f0f0", borderRadius: "8px" },
+  dragBubble: { display: "inline-block", padding: "6px 12px", margin: "4px", backgroundColor: "#306998", color: "white", borderRadius: "20px", cursor: "grab", fontSize: "14px", userSelect: "none", boxShadow: "0 2px 5px rgba(0,0,0,0.1)" },
+  penjelasanBox: { marginTop: "15px", padding: "12px", backgroundColor: "#f8f9fa", borderRadius: "8px", borderLeft: "4px solid #306998" },
+  penjelasanTitle: { margin: "0 0 12px 0", fontSize: "16px", fontWeight: "bold", color: "#306998" },
+  penjelasanItem: { marginBottom: "12px", padding: "8px", backgroundColor: "#fff", borderRadius: "6px", border: "1px solid #e9ecef", display: "flex", flexWrap: "wrap", alignItems: "baseline", gap: "8px" },
+  penjelasanBaris: { fontWeight: "bold", color: "#306998", minWidth: "60px" },
+  penjelasanKode: { fontFamily: "monospace", backgroundColor: "#f0f0f0", padding: "2px 6px", borderRadius: "4px", color: "#d63384" },
+  penjelasanArrow: { color: "#6c757d", fontWeight: "bold" },
+  penjelasanDeskripsi: { color: "#333", flex: 1 },
+  visualisasiContainer: { marginTop: "15px", padding: "15px", backgroundColor: "#eef2fa", borderRadius: "8px", border: "1px solid #306998", textAlign: "center" },
+  visualisasiTitle: { margin: "0 0 12px 0", color: "#306998", fontWeight: "bold" },
+  visualisasiPopup: { marginTop: "12px", padding: "8px", backgroundColor: "#fff3cd", borderLeft: "5px solid #FFD43B", borderRadius: "8px", fontSize: "14px" },
 };
