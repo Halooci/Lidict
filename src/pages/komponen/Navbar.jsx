@@ -12,7 +12,7 @@ export default function Navbar() {
 
       <div className="right-section">
         <Link to="/" className="nav-item">Beranda</Link>
-        <Link to="/List/PendahuluanList" className="nav-item">Materi</Link>
+        <Link to="/PetaKonsep" className="nav-item">Materi</Link>
         <Link to="/InformasiPage" className="nav-item">Informasi</Link>
         <div className="avatar">👤</div>
       </div>

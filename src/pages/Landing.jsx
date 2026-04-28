@@ -26,7 +26,8 @@ export default function Landing() {
         <div style={styles.buttonGroup}>
           <button
             style={styles.primaryBtn}
-            onClick={() => window.location.href = "/List/PendahuluanList"}
+            // onClick={() => window.location.href = "/List/PendahuluanList"}
+            onClick={() => window.location.href = "/PetaKonsep"}
           >
             Mulai Belajar
           </button>

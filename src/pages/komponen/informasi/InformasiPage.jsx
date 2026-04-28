@@ -129,14 +129,14 @@ const InformasiPage = () => {
             <p><b>Program Studi:</b> Pendidikan Komputer</p>
           </div>
 
-          <section className="info-section">
+          {/* <section className="info-section">
             <h2>Peta Konsep</h2>
             <div className="concept-map">
               <img src="/images/peta-konsep.png" alt="Peta Konsep" />
             </div>
-          </section>
+          </section> */}
 
-          <section className="info-section">
+          {/* <section className="info-section">
             <h2>Ringkasan Materi</h2>
 
             <div className="materi-list">
@@ -166,7 +166,7 @@ const InformasiPage = () => {
               </div>
             </div>
 
-          </section>
+          </section> */}
 
         </div>
       </div>
