@@ -191,7 +191,7 @@ export default function Apersepsi() {
           <div style={styles.header}>
             <div style={styles.headerAccent}></div>
             <h1 style={styles.headerTitle}>APERSEPSI</h1>
-            <div style={styles.headerSub}>Bangun fondasi Anda sebelum melangkah lebih jauh</div>
+            {/* <div style={styles.headerSub}>Bangun fondasi Anda sebelum melangkah lebih jauh</div> */}
           </div>
 
           {/* PEMANTIK VISUAL */}
