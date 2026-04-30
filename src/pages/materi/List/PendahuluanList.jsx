@@ -5,7 +5,7 @@ import SidebarMateri from "../../komponen/SidebarMateri";
 // ================= STYLE GLOBAL =================
 const styles = {
   page: {
-    padding: "30px 40px",
+    padding: "30px 39px",
     backgroundColor: "#f5f7fa",
     minHeight: "100vh",
     fontFamily: "Poppins, sans-serif",
