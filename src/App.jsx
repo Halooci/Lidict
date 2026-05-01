@@ -1,8 +1,10 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { useEffect } from "react";
+import { db } from "./config/firebase";
+import { collection, getDocs } from "firebase/firestore";
+
 import Landing from "./pages/Landing";
 import LoginRegister from "./pages/LoginRegister";
-import Materi1 from "./pages/materi/Materi1";
-import Materi2 from "./pages/materi/Materi2";
 
 import PetaKonsep from "./pages/materi/PetaKonsep/PetaKonsep";
 import Apersepsi from "./pages/materi/PetaKonsep/Apersepsi";
@@ -30,14 +32,27 @@ import EvaluasiAkhir from "./pages/materi/evaluasi/EvaluasiAkhir";
 import InformasiPage from "./pages/komponen/informasi/InformasiPage";
 
 function App() {
+  // Cek koneksi Firestore (bisa dihapus nanti setelah yakin koneksi berhasil)
+  useEffect(() => {
+    const cekKoneksiFirestore = async () => {
+      try {
+        const testCollection = collection(db, "test");
+        const snapshot = await getDocs(testCollection);
+        console.log("✅ Firestore terhubung! Jumlah dokumen di koleksi 'test':", snapshot.size);
+      } catch (error) {
+        console.error("❌ Gagal koneksi ke Firestore:", error);
+      }
+    };
+    cekKoneksiFirestore();
+  }, []);
+
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Landing />} />
         <Route path="/loginregister" element={<LoginRegister />} />
         {/* <Route path="/register" element={<LoginRegister />} /> */}
-        <Route path="/Materi1" element={<Materi1 />} />
-        <Route path="/Materi2" element={<Materi2 />} />
+       
 
         <Route path="/PetaKonsep" element={<PetaKonsep />} />
         <Route path="/Apersepsi" element={<Apersepsi />} />

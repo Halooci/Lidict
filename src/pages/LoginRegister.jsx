@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import { User, Mail, Lock, Eye, EyeOff, ChevronDown } from 'lucide-react';
 import Navbar from './komponen/Navbar';
+import { auth, db } from '../config/firebase';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 
-// ==================== STYLES ====================
+// ==================== STYLES (sama seperti kode Anda, tidak diubah) ====================
 const styles = `
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 
@@ -459,17 +462,47 @@ const SlidingPanel = ({ isLogin, onToggle }) => (
   </div>
 );
 
-const LoginForm = () => {
+// Komponen Login dengan state dan Firebase
+const LoginForm = ({ onLoginSuccess }) => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Login submitted');
+    setError('');
+    setLoading(true);
+    try {
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
+      // Cek role dari Firestore (koleksi mahasiswa atau dosen)
+      const mahasiswaDoc = await getDoc(doc(db, 'mahasiswa', user.uid));
+      const dosenDoc = await getDoc(doc(db, 'dosen', user.uid));
+      let role = null;
+      if (mahasiswaDoc.exists()) role = 'mahasiswa';
+      else if (dosenDoc.exists()) role = 'dosen';
+      else throw new Error('Akun tidak ditemukan di database.');
+      
+      console.log('Login berhasil:', { uid: user.uid, role });
+      // Simpan info ke localStorage atau context jika perlu
+      localStorage.setItem('userRole', role);
+      localStorage.setItem('userId', user.uid);
+      // Panggil callback untuk navigasi
+      if (onLoginSuccess) onLoginSuccess(role);
+    } catch (err) {
+      console.error(err);
+      setError(err.message || 'Gagal login. Periksa email/password.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="form-container">
       <h1 className="form-title">Masuk</h1>
+      {error && <div style={{color: 'red', marginBottom: '15px', textAlign: 'center'}}>{error}</div>}
       <form onSubmit={handleSubmit}>
         <div className="input-group">
           <div className="input-icon"><Mail size={20} /></div>
@@ -477,6 +510,8 @@ const LoginForm = () => {
             type="email" 
             className="input-field" 
             placeholder="Email" 
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             required 
           />
         </div>
@@ -487,6 +522,8 @@ const LoginForm = () => {
             type={showPassword ? "text" : "password"}
             className="input-field" 
             placeholder="Password" 
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
             required 
           />
           <span 
@@ -497,34 +534,120 @@ const LoginForm = () => {
           </span>
         </div>
         
-        <button type="submit" className="submit-btn login-btn">
-          Masuk
+        <button type="submit" className="submit-btn login-btn" disabled={loading}>
+          {loading ? 'Memproses...' : 'Masuk'}
         </button>
       </form>
     </div>
   );
 };
 
-const RegisterForm = () => {
+// Komponen Register dengan field dinamis sesuai role (mahasiswa/dosen)
+const RegisterForm = ({ onRegisterSuccess }) => {
+  const [formData, setFormData] = useState({
+    nama: '',
+    email: '',
+    password: '',
+    confirmPassword: '',
+    role: '',
+    nim: '',
+    nip: ''
+  });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [role, setRole] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleRoleChange = (e) => {
+    const role = e.target.value;
+    setFormData({ ...formData, role, nim: '', nip: '' });
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Register submitted with role:', role);
+    setError('');
+    if (formData.password !== formData.confirmPassword) {
+      setError('Password dan konfirmasi password tidak cocok.');
+      return;
+    }
+    if (formData.role === 'mahasiswa' && !formData.nim) {
+      setError('NIM wajib diisi untuk mahasiswa.');
+      return;
+    }
+    if (formData.role === 'dosen' && !formData.nip) {
+      setError('NIP wajib diisi untuk dosen.');
+      return;
+    }
+    setLoading(true);
+    try {
+      // Buat user di Firebase Authentication
+      const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
+      const user = userCredential.user;
+      const uid = user.uid;
+
+      // Simpan data tambahan ke Firestore sesuai role
+      if (formData.role === 'mahasiswa') {
+        await setDoc(doc(db, 'mahasiswa', uid), {
+          Nama: formData.nama,
+          Email: formData.email,
+          NIM: formData.nim,
+          Token_mahasiswa: '', // bisa diisi nanti
+        });
+        // Inisialisasi nilai (kosong) di koleksi 'nilai'
+        await setDoc(doc(db, 'nilai', uid), {
+          NIM: formData.nim,
+          'Kuis List': null,
+          'Kuis Nested List': null,
+          'Kuis Dictionary': null,
+          Evaluasi: null,
+        });
+      } else if (formData.role === 'dosen') {
+        await setDoc(doc(db, 'dosen', uid), {
+          Nama: formData.nama,
+          Email: formData.email,
+          NIP: formData.nip,
+          Token_kelas: '', // bisa diisi nanti
+        });
+        // Inisialisasi KKM (opsional)
+        await setDoc(doc(db, 'kkm', uid), {
+          Token: '',
+          'Nilai Kuis List': null,
+          'Nilai Kuis Nested List': null,
+          'Nilai Kuis Dictionary': null,
+          'Nilai Evaluasi': null,
+        });
+      }
+
+      console.log('Registrasi berhasil:', { uid, role: formData.role });
+      localStorage.setItem('userRole', formData.role);
+      localStorage.setItem('userId', uid);
+      if (onRegisterSuccess) onRegisterSuccess(formData.role);
+    } catch (err) {
+      console.error(err);
+      setError(err.message || 'Gagal mendaftar. Email mungkin sudah terdaftar.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="form-container">
       <h1 className="form-title">Daftar</h1>
+      {error && <div style={{color: 'red', marginBottom: '15px', textAlign: 'center'}}>{error}</div>}
       <form onSubmit={handleSubmit}>
         <div className="input-group">
           <div className="input-icon"><User size={20} /></div>
           <input 
             type="text" 
+            name="nama"
             className="input-field" 
             placeholder="Nama Lengkap" 
+            value={formData.nama}
+            onChange={handleChange}
             required 
           />
         </div>
@@ -533,8 +656,11 @@ const RegisterForm = () => {
           <div className="input-icon"><Mail size={20} /></div>
           <input 
             type="email" 
+            name="email"
             className="input-field" 
             placeholder="Email" 
+            value={formData.email}
+            onChange={handleChange}
             required 
           />
         </div>
@@ -543,8 +669,11 @@ const RegisterForm = () => {
           <div className="input-icon"><Lock size={20} /></div>
           <input 
             type={showPassword ? "text" : "password"}
+            name="password"
             className="input-field" 
             placeholder="Password" 
+            value={formData.password}
+            onChange={handleChange}
             required 
           />
           <span 
@@ -559,8 +688,11 @@ const RegisterForm = () => {
           <div className="input-icon"><Lock size={20} /></div>
           <input 
             type={showConfirmPassword ? "text" : "password"}
+            name="confirmPassword"
             className="input-field" 
             placeholder="Konfirmasi Password" 
+            value={formData.confirmPassword}
+            onChange={handleChange}
             required 
           />
           <span 
@@ -575,8 +707,9 @@ const RegisterForm = () => {
           <div className="select-icon"><User size={20} /></div>
           <select 
             className="select-field" 
-            value={role}
-            onChange={(e) => setRole(e.target.value)}
+            name="role"
+            value={formData.role}
+            onChange={handleRoleChange}
             required
           >
             <option value="" disabled>Daftar Sebagai</option>
@@ -585,9 +718,39 @@ const RegisterForm = () => {
           </select>
           <div className="select-arrow"><ChevronDown size={20} /></div>
         </div>
+
+        {formData.role === 'mahasiswa' && (
+          <div className="input-group">
+            <div className="input-icon"><User size={20} /></div>
+            <input 
+              type="text" 
+              name="nim"
+              className="input-field" 
+              placeholder="NIM" 
+              value={formData.nim}
+              onChange={handleChange}
+              required 
+            />
+          </div>
+        )}
+
+        {formData.role === 'dosen' && (
+          <div className="input-group">
+            <div className="input-icon"><User size={20} /></div>
+            <input 
+              type="text" 
+              name="nip"
+              className="input-field" 
+              placeholder="NIP" 
+              value={formData.nip}
+              onChange={handleChange}
+              required 
+            />
+          </div>
+        )}
         
-        <button type="submit" className="submit-btn register-btn">
-          Daftar
+        <button type="submit" className="submit-btn register-btn" disabled={loading}>
+          {loading ? 'Memproses...' : 'Daftar'}
         </button>
       </form>
     </div>
@@ -603,6 +766,15 @@ const LoginRegister = () => {
     setIsLogin(!isLogin);
   };
 
+  const handleAuthSuccess = (role) => {
+    // Arahkan ke dashboard sesuai role
+    if (role === 'mahasiswa') {
+      window.location.href = '/dashboard-mahasiswa'; // ganti dengan rute yang sesuai
+    } else if (role === 'dosen') {
+      window.location.href = '/dashboard-dosen';
+    }
+  };
+
   return (
     <>
       <style>{styles}</style>
@@ -612,7 +784,7 @@ const LoginRegister = () => {
           <div className={`panels-container ${isLogin ? '' : 'register-active'}`}>
             
             <div className="form-section register-section">
-              <RegisterForm />
+              <RegisterForm onRegisterSuccess={handleAuthSuccess} />
             </div>
 
             <SlidingPanel 
@@ -621,7 +793,7 @@ const LoginRegister = () => {
             />
 
             <div className="form-section login-section">
-              <LoginForm />
+              <LoginForm onLoginSuccess={handleAuthSuccess} />
             </div>
 
           </div>
