@@ -4,7 +4,7 @@ import Navbar from './komponen/Navbar';
 import { db } from '../config/firebase';
 import { collection, query, where, getDocs, setDoc, doc } from 'firebase/firestore';
 
-// ==================== STYLES (sama, tidak diubah) ====================
+// ==================== STYLES (sama seperti sebelumnya) ====================
 const styles = `
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 
@@ -438,7 +438,7 @@ const styles = `
 }
 `;
 
-// ==================== Helper: Generate random token 8 karakter (huruf besar + angka) ====================
+// ==================== Helper: Generate random token 8 karakter ====================
 const generateRandomToken = () => {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
   let token = '';
@@ -467,7 +467,7 @@ const SlidingPanel = ({ isLogin, onToggle }) => (
   </div>
 );
 
-// LoginForm (tidak berubah)
+// ==================== LOGIN FORM (sudah menyimpan userName) ====================
 const LoginForm = ({ onLoginSuccess }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -506,9 +506,11 @@ const LoginForm = ({ onLoginSuccess }) => {
         throw new Error('Password salah.');
       }
 
+      // Simpan data ke localStorage
       localStorage.setItem('userRole', role);
       localStorage.setItem('userId', docId);
       localStorage.setItem('userEmail', email);
+      localStorage.setItem('userName', userData.Nama); // <-- TAMBAHKAN: simpan nama user
 
       if (onLoginSuccess) onLoginSuccess(role);
     } catch (err) {
@@ -542,7 +544,7 @@ const LoginForm = ({ onLoginSuccess }) => {
   );
 };
 
-// RegisterForm dengan field token untuk mahasiswa dan generate token untuk dosen
+// ==================== REGISTER FORM (sudah menyimpan userName) ====================
 const RegisterForm = ({ onRegisterSuccess }) => {
   const [formData, setFormData] = useState({
     nama: '',
@@ -552,7 +554,7 @@ const RegisterForm = ({ onRegisterSuccess }) => {
     role: '',
     nim: '',
     nip: '',
-    tokenKelas: '' // khusus mahasiswa
+    tokenKelas: ''
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -587,7 +589,7 @@ const RegisterForm = ({ onRegisterSuccess }) => {
       return;
     }
 
-    // Cek email sudah terdaftar?
+    // Cek email sudah terdaftar
     const emailQueryMahasiswa = query(collection(db, 'mahasiswa'), where('Email', '==', formData.email));
     const emailSnapshotMahasiswa = await getDocs(emailQueryMahasiswa);
     const emailQueryDosen = query(collection(db, 'dosen'), where('Email', '==', formData.email));
@@ -606,9 +608,8 @@ const RegisterForm = ({ onRegisterSuccess }) => {
           Email: formData.email,
           NIM: formData.nim,
           Password: formData.password,
-          Token_mahasiswa: formData.tokenKelas, // simpan token yang diinput
+          Token_mahasiswa: formData.tokenKelas,
         });
-        // Inisialisasi nilai mahasiswa
         await setDoc(doc(db, 'nilai', formData.nim), {
           NIM: formData.nim,
           'Kuis List': null,
@@ -620,9 +621,9 @@ const RegisterForm = ({ onRegisterSuccess }) => {
         localStorage.setItem('userId', formData.nim);
       } 
       else if (formData.role === 'dosen') {
-        const tokenKelas = generateRandomToken(); // generate token 8 karakter
+        const tokenKelas = generateRandomToken();
         const dosenRef = doc(db, 'dosen', formData.nip);
-        console.log("🎫 Token yang digenerate:", tokenKelas); // <- tambahkan sebelum setDoc
+        console.log("🎫 Token yang digenerate:", tokenKelas);
         await setDoc(dosenRef, {
           Nama: formData.nama,
           Email: formData.email,
@@ -630,7 +631,6 @@ const RegisterForm = ({ onRegisterSuccess }) => {
           Password: formData.password,
           Token_kelas: tokenKelas,
         });
-        // Buat dokumen kkm dengan ID = tokenKelas
         await setDoc(doc(db, 'kkm', tokenKelas), {
           Token: tokenKelas,
           'Nilai Kuis List': null,
@@ -640,10 +640,11 @@ const RegisterForm = ({ onRegisterSuccess }) => {
         });
         localStorage.setItem('userRole', 'dosen');
         localStorage.setItem('userId', formData.nip);
-        // Tampilkan token ke user (opsional, bisa pakai alert)
         alert(`Token Kelas Anda (bagikan ke mahasiswa): ${tokenKelas}`);
       }
+      // Simpan email dan nama user ke localStorage
       localStorage.setItem('userEmail', formData.email);
+      localStorage.setItem('userName', formData.nama); // <-- TAMBAHKAN: simpan nama user
 
       if (onRegisterSuccess) onRegisterSuccess(formData.role);
     } catch (err) {
