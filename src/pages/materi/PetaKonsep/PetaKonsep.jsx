@@ -1,8 +1,7 @@
-import React from 'react';
+import React, { useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Navbar from "../../komponen/Navbar";
 import SidebarMateri from "../../komponen/SidebarMateri";
-// Sesuaikan nama file gambar dengan yang ada di folder assets Anda
-// Bisa: PetaKonsep.png, PetaKonsepImage.png, atau PetaKonseplmage.png
 import PetaKonsepImage from '../../../assets/PetaKonsepImage.png';
 
 const styles = {
@@ -60,23 +59,26 @@ const styles = {
 };
 
 const PetaKonsep = () => {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Cek apakah user sudah login (ada data di localStorage)
+    const userId = localStorage.getItem('userId');
+    const userEmail = localStorage.getItem('userEmail');
+    if (!userId || !userEmail) {
+      // Jika belum login, redirect ke halaman login/register
+      navigate('/loginregister');
+    }
+  }, [navigate]);
+
   return (
     <>
       <Navbar />
       <SidebarMateri />
       <div className="main-content" style={{ paddingTop: "64px" }}>
         <div style={styles.page}>
-          {/* <div style={styles.header}>
-            <div style={styles.headerAccent}></div>
-            <h1 style={styles.headerTitle}>PETA KONSEP</h1>
-          </div> */}
           <section style={styles.section}>
-            {/* <h2 style={styles.sectionTitle}>Peta Konsep List</h2> */}
             <div style={styles.card}>
-              {/* <p style={styles.text}>
-                Berikut adalah gambaran umum tentang konsep list dalam pemrograman Python.
-                Peta konsep ini akan membantu Anda memahami hubungan antar topik secara visual.
-              </p> */}
               <img 
                 src={PetaKonsepImage} 
                 alt="Peta Konsep List Python" 

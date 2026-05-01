@@ -1,8 +1,20 @@
 import { useState, useEffect, useRef } from "react";
 import Navbar from "../../komponen/Navbar";
 import SidebarMateri from "../../komponen/SidebarMateri";
+import { useNavigate } from 'react-router-dom';
 
 export default function RangkumanList() {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const userId = localStorage.getItem('userId');
+    const userEmail = localStorage.getItem('userEmail');
+    if (!userId || !userEmail) {
+      navigate('/loginregister');
+    }
+  }, [navigate]);
+
+  
   const [pyodideReady, setPyodideReady] = useState(false);
   const pyodideRef = useRef(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);

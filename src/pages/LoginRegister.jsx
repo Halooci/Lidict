@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
-import { User, Mail, Lock, Eye, EyeOff, ChevronDown } from 'lucide-react';
+import { User, Mail, Lock, Eye, EyeOff, ChevronDown, Key } from 'lucide-react';
 import Navbar from './komponen/Navbar';
-import { auth, db } from '../config/firebase';
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
-import { doc, setDoc, getDoc } from 'firebase/firestore';
+import { db } from '../config/firebase';
+import { collection, query, where, getDocs, setDoc, doc } from 'firebase/firestore';
 
-// ==================== STYLES (sama seperti kode Anda, tidak diubah) ====================
+// ==================== STYLES (sama, tidak diubah) ====================
 const styles = `
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 
@@ -439,6 +438,16 @@ const styles = `
 }
 `;
 
+// ==================== Helper: Generate random token 8 karakter (huruf besar + angka) ====================
+const generateRandomToken = () => {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let token = '';
+  for (let i = 0; i < 8; i++) {
+    token += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return token;
+};
+
 // ==================== COMPONENTS ====================
 
 const SlidingPanel = ({ isLogin, onToggle }) => (
@@ -450,11 +459,7 @@ const SlidingPanel = ({ isLogin, onToggle }) => (
     </div>
     <div className="panel-content">
       <h2>{isLogin ? 'Belum Punya Akun ?' : 'Sudah Punya Akun ?'}</h2>
-      <p>
-        {isLogin 
-          ? 'Daftar Disini!' 
-          : 'Masuk Disini!'}
-      </p>
+      <p>{isLogin ? 'Daftar Disini!' : 'Masuk Disini!'}</p>
       <button className="panel-btn" onClick={onToggle}>
         {isLogin ? 'Daftar' : 'Masuk'}
       </button>
@@ -462,7 +467,7 @@ const SlidingPanel = ({ isLogin, onToggle }) => (
   </div>
 );
 
-// Komponen Login dengan state dan Firebase
+// LoginForm (tidak berubah)
 const LoginForm = ({ onLoginSuccess }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -474,26 +479,40 @@ const LoginForm = ({ onLoginSuccess }) => {
     e.preventDefault();
     setError('');
     setLoading(true);
+
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
-      // Cek role dari Firestore (koleksi mahasiswa atau dosen)
-      const mahasiswaDoc = await getDoc(doc(db, 'mahasiswa', user.uid));
-      const dosenDoc = await getDoc(doc(db, 'dosen', user.uid));
+      const mahasiswaQuery = query(collection(db, 'mahasiswa'), where('Email', '==', email));
+      const mahasiswaSnapshot = await getDocs(mahasiswaQuery);
+      const dosenQuery = query(collection(db, 'dosen'), where('Email', '==', email));
+      const dosenSnapshot = await getDocs(dosenQuery);
+
+      let userData = null;
       let role = null;
-      if (mahasiswaDoc.exists()) role = 'mahasiswa';
-      else if (dosenDoc.exists()) role = 'dosen';
-      else throw new Error('Akun tidak ditemukan di database.');
-      
-      console.log('Login berhasil:', { uid: user.uid, role });
-      // Simpan info ke localStorage atau context jika perlu
+      let docId = null;
+
+      if (!mahasiswaSnapshot.empty) {
+        userData = mahasiswaSnapshot.docs[0].data();
+        role = 'mahasiswa';
+        docId = mahasiswaSnapshot.docs[0].id;
+      } else if (!dosenSnapshot.empty) {
+        userData = dosenSnapshot.docs[0].data();
+        role = 'dosen';
+        docId = dosenSnapshot.docs[0].id;
+      } else {
+        throw new Error('Email tidak ditemukan.');
+      }
+
+      if (userData.Password !== password) {
+        throw new Error('Password salah.');
+      }
+
       localStorage.setItem('userRole', role);
-      localStorage.setItem('userId', user.uid);
-      // Panggil callback untuk navigasi
+      localStorage.setItem('userId', docId);
+      localStorage.setItem('userEmail', email);
+
       if (onLoginSuccess) onLoginSuccess(role);
     } catch (err) {
-      console.error(err);
-      setError(err.message || 'Gagal login. Periksa email/password.');
+      setError(err.message);
     } finally {
       setLoading(false);
     }
@@ -502,38 +521,19 @@ const LoginForm = ({ onLoginSuccess }) => {
   return (
     <div className="form-container">
       <h1 className="form-title">Masuk</h1>
-      {error && <div style={{color: 'red', marginBottom: '15px', textAlign: 'center'}}>{error}</div>}
+      {error && <div style={{ color: 'red', marginBottom: '15px', textAlign: 'center' }}>{error}</div>}
       <form onSubmit={handleSubmit}>
         <div className="input-group">
           <div className="input-icon"><Mail size={20} /></div>
-          <input 
-            type="email" 
-            className="input-field" 
-            placeholder="Email" 
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required 
-          />
+          <input type="email" className="input-field" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} required />
         </div>
-        
         <div className="input-group">
           <div className="input-icon"><Lock size={20} /></div>
-          <input 
-            type={showPassword ? "text" : "password"}
-            className="input-field" 
-            placeholder="Password" 
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required 
-          />
-          <span 
-            className="password-toggle"
-            onClick={() => setShowPassword(!showPassword)}
-          >
+          <input type={showPassword ? 'text' : 'password'} className="input-field" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+          <span className="password-toggle" onClick={() => setShowPassword(!showPassword)}>
             {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
           </span>
         </div>
-        
         <button type="submit" className="submit-btn login-btn" disabled={loading}>
           {loading ? 'Memproses...' : 'Masuk'}
         </button>
@@ -542,7 +542,7 @@ const LoginForm = ({ onLoginSuccess }) => {
   );
 };
 
-// Komponen Register dengan field dinamis sesuai role (mahasiswa/dosen)
+// RegisterForm dengan field token untuk mahasiswa dan generate token untuk dosen
 const RegisterForm = ({ onRegisterSuccess }) => {
   const [formData, setFormData] = useState({
     nama: '',
@@ -551,20 +551,18 @@ const RegisterForm = ({ onRegisterSuccess }) => {
     confirmPassword: '',
     role: '',
     nim: '',
-    nip: ''
+    nip: '',
+    tokenKelas: '' // khusus mahasiswa
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
-
+  const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
   const handleRoleChange = (e) => {
     const role = e.target.value;
-    setFormData({ ...formData, role, nim: '', nip: '' });
+    setFormData({ ...formData, role, nim: '', nip: '', tokenKelas: '' });
   };
 
   const handleSubmit = async (e) => {
@@ -574,61 +572,83 @@ const RegisterForm = ({ onRegisterSuccess }) => {
       setError('Password dan konfirmasi password tidak cocok.');
       return;
     }
-    if (formData.role === 'mahasiswa' && !formData.nim) {
-      setError('NIM wajib diisi untuk mahasiswa.');
-      return;
+    if (formData.role === 'mahasiswa') {
+      if (!formData.nim) {
+        setError('NIM wajib diisi untuk mahasiswa.');
+        return;
+      }
+      if (!formData.tokenKelas) {
+        setError('Token Kelas wajib diisi untuk mahasiswa.');
+        return;
+      }
     }
     if (formData.role === 'dosen' && !formData.nip) {
       setError('NIP wajib diisi untuk dosen.');
       return;
     }
+
+    // Cek email sudah terdaftar?
+    const emailQueryMahasiswa = query(collection(db, 'mahasiswa'), where('Email', '==', formData.email));
+    const emailSnapshotMahasiswa = await getDocs(emailQueryMahasiswa);
+    const emailQueryDosen = query(collection(db, 'dosen'), where('Email', '==', formData.email));
+    const emailSnapshotDosen = await getDocs(emailQueryDosen);
+    if (!emailSnapshotMahasiswa.empty || !emailSnapshotDosen.empty) {
+      setError('Email sudah terdaftar. Gunakan email lain.');
+      return;
+    }
+
     setLoading(true);
     try {
-      // Buat user di Firebase Authentication
-      const userCredential = await createUserWithEmailAndPassword(auth, formData.email, formData.password);
-      const user = userCredential.user;
-      const uid = user.uid;
-
-      // Simpan data tambahan ke Firestore sesuai role
       if (formData.role === 'mahasiswa') {
-        await setDoc(doc(db, 'mahasiswa', uid), {
+        const mahasiswaRef = doc(db, 'mahasiswa', formData.nim);
+        await setDoc(mahasiswaRef, {
           Nama: formData.nama,
           Email: formData.email,
           NIM: formData.nim,
-          Token_mahasiswa: '', // bisa diisi nanti
+          Password: formData.password,
+          Token_mahasiswa: formData.tokenKelas, // simpan token yang diinput
         });
-        // Inisialisasi nilai (kosong) di koleksi 'nilai'
-        await setDoc(doc(db, 'nilai', uid), {
+        // Inisialisasi nilai mahasiswa
+        await setDoc(doc(db, 'nilai', formData.nim), {
           NIM: formData.nim,
           'Kuis List': null,
           'Kuis Nested List': null,
           'Kuis Dictionary': null,
           Evaluasi: null,
         });
-      } else if (formData.role === 'dosen') {
-        await setDoc(doc(db, 'dosen', uid), {
+        localStorage.setItem('userRole', 'mahasiswa');
+        localStorage.setItem('userId', formData.nim);
+      } 
+      else if (formData.role === 'dosen') {
+        const tokenKelas = generateRandomToken(); // generate token 8 karakter
+        const dosenRef = doc(db, 'dosen', formData.nip);
+        console.log("🎫 Token yang digenerate:", tokenKelas); // <- tambahkan sebelum setDoc
+        await setDoc(dosenRef, {
           Nama: formData.nama,
           Email: formData.email,
           NIP: formData.nip,
-          Token_kelas: '', // bisa diisi nanti
+          Password: formData.password,
+          Token_kelas: tokenKelas,
         });
-        // Inisialisasi KKM (opsional)
-        await setDoc(doc(db, 'kkm', uid), {
-          Token: '',
+        // Buat dokumen kkm dengan ID = tokenKelas
+        await setDoc(doc(db, 'kkm', tokenKelas), {
+          Token: tokenKelas,
           'Nilai Kuis List': null,
           'Nilai Kuis Nested List': null,
           'Nilai Kuis Dictionary': null,
           'Nilai Evaluasi': null,
         });
+        localStorage.setItem('userRole', 'dosen');
+        localStorage.setItem('userId', formData.nip);
+        // Tampilkan token ke user (opsional, bisa pakai alert)
+        alert(`Token Kelas Anda (bagikan ke mahasiswa): ${tokenKelas}`);
       }
+      localStorage.setItem('userEmail', formData.email);
 
-      console.log('Registrasi berhasil:', { uid, role: formData.role });
-      localStorage.setItem('userRole', formData.role);
-      localStorage.setItem('userId', uid);
       if (onRegisterSuccess) onRegisterSuccess(formData.role);
     } catch (err) {
       console.error(err);
-      setError(err.message || 'Gagal mendaftar. Email mungkin sudah terdaftar.');
+      setError(err.message || 'Gagal mendaftar.');
     } finally {
       setLoading(false);
     }
@@ -637,118 +657,57 @@ const RegisterForm = ({ onRegisterSuccess }) => {
   return (
     <div className="form-container">
       <h1 className="form-title">Daftar</h1>
-      {error && <div style={{color: 'red', marginBottom: '15px', textAlign: 'center'}}>{error}</div>}
+      {error && <div style={{ color: 'red', marginBottom: '15px', textAlign: 'center' }}>{error}</div>}
       <form onSubmit={handleSubmit}>
         <div className="input-group">
           <div className="input-icon"><User size={20} /></div>
-          <input 
-            type="text" 
-            name="nama"
-            className="input-field" 
-            placeholder="Nama Lengkap" 
-            value={formData.nama}
-            onChange={handleChange}
-            required 
-          />
+          <input type="text" name="nama" className="input-field" placeholder="Nama Lengkap" value={formData.nama} onChange={handleChange} required />
         </div>
-        
         <div className="input-group">
           <div className="input-icon"><Mail size={20} /></div>
-          <input 
-            type="email" 
-            name="email"
-            className="input-field" 
-            placeholder="Email" 
-            value={formData.email}
-            onChange={handleChange}
-            required 
-          />
+          <input type="email" name="email" className="input-field" placeholder="Email" value={formData.email} onChange={handleChange} required />
         </div>
-        
         <div className="input-group">
           <div className="input-icon"><Lock size={20} /></div>
-          <input 
-            type={showPassword ? "text" : "password"}
-            name="password"
-            className="input-field" 
-            placeholder="Password" 
-            value={formData.password}
-            onChange={handleChange}
-            required 
-          />
-          <span 
-            className="password-toggle"
-            onClick={() => setShowPassword(!showPassword)}
-          >
+          <input type={showPassword ? 'text' : 'password'} name="password" className="input-field" placeholder="Password" value={formData.password} onChange={handleChange} required />
+          <span className="password-toggle" onClick={() => setShowPassword(!showPassword)}>
             {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
           </span>
         </div>
-        
         <div className="input-group">
           <div className="input-icon"><Lock size={20} /></div>
-          <input 
-            type={showConfirmPassword ? "text" : "password"}
-            name="confirmPassword"
-            className="input-field" 
-            placeholder="Konfirmasi Password" 
-            value={formData.confirmPassword}
-            onChange={handleChange}
-            required 
-          />
-          <span 
-            className="password-toggle"
-            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-          >
+          <input type={showConfirmPassword ? 'text' : 'password'} name="confirmPassword" className="input-field" placeholder="Konfirmasi Password" value={formData.confirmPassword} onChange={handleChange} required />
+          <span className="password-toggle" onClick={() => setShowConfirmPassword(!showConfirmPassword)}>
             {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
           </span>
         </div>
-
         <div className="select-group">
           <div className="select-icon"><User size={20} /></div>
-          <select 
-            className="select-field" 
-            name="role"
-            value={formData.role}
-            onChange={handleRoleChange}
-            required
-          >
+          <select className="select-field" name="role" value={formData.role} onChange={handleRoleChange} required>
             <option value="" disabled>Daftar Sebagai</option>
             <option value="dosen">Dosen</option>
             <option value="mahasiswa">Mahasiswa</option>
           </select>
           <div className="select-arrow"><ChevronDown size={20} /></div>
         </div>
-
         {formData.role === 'mahasiswa' && (
-          <div className="input-group">
-            <div className="input-icon"><User size={20} /></div>
-            <input 
-              type="text" 
-              name="nim"
-              className="input-field" 
-              placeholder="NIM" 
-              value={formData.nim}
-              onChange={handleChange}
-              required 
-            />
-          </div>
+          <>
+            <div className="input-group">
+              <div className="input-icon"><User size={20} /></div>
+              <input type="text" name="nim" className="input-field" placeholder="NIM" value={formData.nim} onChange={handleChange} required />
+            </div>
+            <div className="input-group">
+              <div className="input-icon"><Key size={20} /></div>
+              <input type="text" name="tokenKelas" className="input-field" placeholder="Token Kelas (dari dosen)" value={formData.tokenKelas} onChange={handleChange} required />
+            </div>
+          </>
         )}
-
         {formData.role === 'dosen' && (
           <div className="input-group">
             <div className="input-icon"><User size={20} /></div>
-            <input 
-              type="text" 
-              name="nip"
-              className="input-field" 
-              placeholder="NIP" 
-              value={formData.nip}
-              onChange={handleChange}
-              required 
-            />
+            <input type="text" name="nip" className="input-field" placeholder="NIP" value={formData.nip} onChange={handleChange} required />
           </div>
         )}
-        
         <button type="submit" className="submit-btn register-btn" disabled={loading}>
           {loading ? 'Memproses...' : 'Daftar'}
         </button>
@@ -758,23 +717,16 @@ const RegisterForm = ({ onRegisterSuccess }) => {
 };
 
 // ==================== MAIN COMPONENT ====================
-
 const LoginRegister = () => {
   const [isLogin, setIsLogin] = useState(true);
-
-  const toggleMode = () => {
-    setIsLogin(!isLogin);
-  };
-
+  const toggleMode = () => setIsLogin(!isLogin);
   const handleAuthSuccess = (role) => {
-    // Arahkan ke dashboard sesuai role
     if (role === 'mahasiswa') {
-      window.location.href = '/dashboard-mahasiswa'; // ganti dengan rute yang sesuai
+      window.location.href = '/PetaKonsep';
     } else if (role === 'dosen') {
       window.location.href = '/dashboard-dosen';
     }
   };
-
   return (
     <>
       <style>{styles}</style>
@@ -782,20 +734,13 @@ const LoginRegister = () => {
         <Navbar />
         <div className="auth-main">
           <div className={`panels-container ${isLogin ? '' : 'register-active'}`}>
-            
             <div className="form-section register-section">
               <RegisterForm onRegisterSuccess={handleAuthSuccess} />
             </div>
-
-            <SlidingPanel 
-              isLogin={isLogin} 
-              onToggle={toggleMode} 
-            />
-
+            <SlidingPanel isLogin={isLogin} onToggle={toggleMode} />
             <div className="form-section login-section">
               <LoginForm onLoginSuccess={handleAuthSuccess} />
             </div>
-
           </div>
         </div>
       </div>

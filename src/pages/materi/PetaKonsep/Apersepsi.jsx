@@ -1,8 +1,21 @@
 import { useState, useEffect } from "react";
 import Navbar from "../../komponen/Navbar";
 import SidebarMateri from "../../komponen/SidebarMateri";
+import { useNavigate } from 'react-router-dom';
 
 export default function Apersepsi() {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const userId = localStorage.getItem('userId');
+    const userEmail = localStorage.getItem('userEmail');
+    if (!userId || !userEmail) {
+      navigate('/loginregister');
+    }
+  }, [navigate]);
+
+
+  
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   // ==================== MATERI 1: VARIABEL & TIPE DATA ====================

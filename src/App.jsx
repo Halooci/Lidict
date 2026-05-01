@@ -31,6 +31,8 @@ import KuisDictionary from "./pages/materi/dictionary/KuisDictionary";
 import EvaluasiAkhir from "./pages/materi/evaluasi/EvaluasiAkhir";
 import InformasiPage from "./pages/komponen/informasi/InformasiPage";
 
+import DashboardDosen from "./pages/dosen/DashboardDosen";
+
 function App() {
   // Cek koneksi Firestore (bisa dihapus nanti setelah yakin koneksi berhasil)
   useEffect(() => {
@@ -79,6 +81,12 @@ function App() {
 
         <Route path="/EvaluasiAkhir" element={<EvaluasiAkhir />} />
         <Route path="/InformasiPage" element={<InformasiPage />} />
+
+
+        <Route path="/dashboard-dosen" element={<DashboardDosen />} />
+
+        
+
       </Routes>
     </BrowserRouter>
   );

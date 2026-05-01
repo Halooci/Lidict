@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import Navbar from "../../komponen/Navbar";
 import SidebarMateri from "../../komponen/SidebarMateri";
+import { useNavigate } from 'react-router-dom';
 
 // ===================== KOMPONEN VISUALISASI DICTIONARY =====================
 const DictionaryVisualization = ({ data, title }) => {
@@ -175,6 +176,17 @@ const LatihanSoal = ({ soal, index, selectedAnswer, onSelect, isLocked, isCorrec
 
 // ===================== KOMPONEN UTAMA =====================
 export default function PendahuluanDictionary() {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const userId = localStorage.getItem('userId');
+    const userEmail = localStorage.getItem('userEmail');
+    if (!userId || !userEmail) {
+      navigate('/loginregister');
+    }
+  }, [navigate]);
+
+  
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   // EKSPLORASI (pretest) - opsi A sampai E

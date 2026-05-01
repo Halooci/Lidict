@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import Navbar from "../../komponen/Navbar";
 import SidebarMateri from "../../komponen/SidebarMateri";
+import { useNavigate } from 'react-router-dom';
 
 // ================= STYLE GLOBAL =================
 const styles = {
@@ -883,6 +884,17 @@ const GuessOutputQuestion = ({ question, codeSnippet, expectedOutput, index, onC
 
 // ================= KOMPONEN UTAMA =================
 export default function PembuatanAksesElement() {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const userId = localStorage.getItem('userId');
+    const userEmail = localStorage.getItem('userEmail');
+    if (!userId || !userEmail) {
+      navigate('/loginregister');
+    }
+  }, [navigate]);
+
+  
   const [pyodideReady, setPyodideReady] = useState(false);
   const pyodideRef = useRef(null);
   const [correctStatus, setCorrectStatus] = useState([false, false, false, false, false]);

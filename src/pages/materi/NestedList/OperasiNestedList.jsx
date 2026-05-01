@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import Navbar from "../../komponen/Navbar";
 import SidebarMateri from "../../komponen/SidebarMateri";
+import { useNavigate } from 'react-router-dom';
 
 // ===================== PENJELASAN PER BARIS =====================
 const PenjelasanPerBaris = ({ code }) => {
@@ -600,6 +601,17 @@ const Eksplorasi = ({ onComplete }) => {
 
 // ===================== KOMPONEN UTAMA =====================
 export default function OperasiNestedList() {
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const userId = localStorage.getItem('userId');
+    const userEmail = localStorage.getItem('userEmail');
+    if (!userId || !userEmail) {
+      navigate('/loginregister');
+    }
+  }, [navigate]);
+
+  
   const [pyodideReady, setPyodideReady] = useState(false);
   const pyodideRef = useRef(null);
   const [resetInteractives, setResetInteractives] = useState(0);
