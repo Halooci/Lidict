@@ -467,7 +467,7 @@ const SlidingPanel = ({ isLogin, onToggle }) => (
   </div>
 );
 
-// ==================== LOGIN FORM (sudah menyimpan userName) ====================
+// ==================== LOGIN FORM ====================
 const LoginForm = ({ onLoginSuccess }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -506,11 +506,10 @@ const LoginForm = ({ onLoginSuccess }) => {
         throw new Error('Password salah.');
       }
 
-      // Simpan data ke localStorage
       localStorage.setItem('userRole', role);
       localStorage.setItem('userId', docId);
       localStorage.setItem('userEmail', email);
-      localStorage.setItem('userName', userData.Nama); // <-- TAMBAHKAN: simpan nama user
+      localStorage.setItem('userName', userData.Nama);
 
       if (onLoginSuccess) onLoginSuccess(role);
     } catch (err) {
@@ -544,7 +543,7 @@ const LoginForm = ({ onLoginSuccess }) => {
   );
 };
 
-// ==================== REGISTER FORM (sudah menyimpan userName) ====================
+// ==================== REGISTER FORM (dengan progres_belajar untuk mahasiswa) ====================
 const RegisterForm = ({ onRegisterSuccess }) => {
   const [formData, setFormData] = useState({
     nama: '',
@@ -609,6 +608,7 @@ const RegisterForm = ({ onRegisterSuccess }) => {
           NIM: formData.nim,
           Password: formData.password,
           Token_mahasiswa: formData.tokenKelas,
+          progres_belajar: 0, // <--- TAMBAHKAN INI
         });
         await setDoc(doc(db, 'nilai', formData.nim), {
           NIM: formData.nim,
@@ -642,9 +642,8 @@ const RegisterForm = ({ onRegisterSuccess }) => {
         localStorage.setItem('userId', formData.nip);
         alert(`Token Kelas Anda (bagikan ke mahasiswa): ${tokenKelas}`);
       }
-      // Simpan email dan nama user ke localStorage
       localStorage.setItem('userEmail', formData.email);
-      localStorage.setItem('userName', formData.nama); // <-- TAMBAHKAN: simpan nama user
+      localStorage.setItem('userName', formData.nama);
 
       if (onRegisterSuccess) onRegisterSuccess(formData.role);
     } catch (err) {
