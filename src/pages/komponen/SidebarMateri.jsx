@@ -1,10 +1,39 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { db } from "../../config/firebase";
+import { doc, getDoc } from "firebase/firestore";
 
 export default function SidebarMateri() {
   const location = useLocation();
   const currentPath = location.pathname;
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [progres, setProgres] = useState(0);
+  const [userRole, setUserRole] = useState(null);
+
+  // Ambil progres dari Firestore jika mahasiswa
+  useEffect(() => {
+    const role = localStorage.getItem("userRole");
+    const userId = localStorage.getItem("userId");
+    setUserRole(role);
+
+    if (role === "mahasiswa" && userId) {
+      const fetchProgres = async () => {
+        try {
+          const docRef = doc(db, "mahasiswa", userId);
+          const docSnap = await getDoc(docRef);
+          if (docSnap.exists()) {
+            const data = docSnap.data();
+            setProgres(data.progres_belajar ?? 0);
+          }
+        } catch (error) {
+          console.error("Gagal ambil progres:", error);
+        }
+      };
+      fetchProgres();
+    } else if (role === "dosen") {
+      setProgres(999); // Dosen akses semua
+    }
+  }, []);
 
   // Tentukan accordion aktif berdasarkan URL
   const getDefaultAccordion = () => {
@@ -12,117 +41,224 @@ export default function SidebarMateri() {
     if (currentPath.startsWith("/NestedList")) return "NestedList";
     if (currentPath.startsWith("/Dictionary")) return "dictionary";
     if (currentPath.startsWith("/Evaluasi")) return "evaluasi";
-    if (currentPath.startsWith("/PetaKonsep/")) return "petaKonsep";
+    if (currentPath.startsWith("/PetaKonsep")) return "petaKonsep";
     return null;
   };
 
   const [activeAccordion, setActiveAccordion] = useState(getDefaultAccordion());
 
-  // Efek untuk mengatur margin kiri konten utama saat sidebar terbuka/tutup
+  // Efek untuk margin konten utama
   useEffect(() => {
     const mainContent = document.querySelector(".main-content");
     if (mainContent) {
       mainContent.style.marginLeft = isSidebarOpen ? "280px" : "0";
       mainContent.style.transition = "margin-left 0.3s ease";
     }
-    document.body.style.overflowX = "hidden";
   }, [isSidebarOpen]);
 
-  const toggleSidebar = () => {
-    setIsSidebarOpen(!isSidebarOpen);
-  };
+  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
+
+  // Fungsi pengecekan apakah suatu sub item dapat diakses
+  const isUnlocked = (requiredLevel) => progres >= requiredLevel;
 
   return (
     <>
-      {/* Tombol hamburger floating saat sidebar tertutup */}
       {!isSidebarOpen && (
         <button onClick={toggleSidebar} style={styles.floatingHamburger}>
           ☰
         </button>
       )}
 
-      {/* Sidebar */}
-      <aside style={{ ...styles.sidebar, width: isSidebarOpen ? "280px" : "0", padding: isSidebarOpen ? "10px" : "0", overflow: isSidebarOpen ? "auto" : "hidden" }}>
-        {/* Tombol hamburger di dalam sidebar (kiri atas) */}
+      <aside
+        style={{
+          ...styles.sidebar,
+          width: isSidebarOpen ? "280px" : "0",
+          padding: isSidebarOpen ? "10px" : "0",
+          overflow: isSidebarOpen ? "auto" : "hidden",
+        }}
+      >
         {isSidebarOpen && (
           <div style={styles.hamburgerInside} onClick={toggleSidebar}>
             ☰
           </div>
         )}
 
-        {/* ========= ACCORDION PETA KONSEP (induk) dengan 2 anak ========= */}
+        {/* ========= PETA KONSEP (level 0) ========= */}
         <Accordion
           id="petaKonsep"
           title="Peta Konsep"
           activeAccordion={activeAccordion}
           setActiveAccordion={setActiveAccordion}
         >
-          <SubItem 
-            label="Peta Konsep" 
-            to="/PetaKonsep" 
-            currentPath={currentPath} 
+          <SubItem
+            label="Peta Konsep"
+            to="/PetaKonsep"
+            currentPath={currentPath}
+            requiredLevel={0}
+            unlocked={isUnlocked(0)}
           />
-          <SubItem 
-            label="Apersepsi" 
-            to="/Apersepsi" 
-            currentPath={currentPath} 
+          <SubItem
+            label="Apersepsi"
+            to="/Apersepsi"
+            currentPath={currentPath}
+            requiredLevel={0}
+            unlocked={isUnlocked(0)}
           />
         </Accordion>
 
-        {/* ACCORDION List */}
+        {/* ========= LIST ========= */}
         <Accordion
           id="list"
           title="List"
           activeAccordion={activeAccordion}
           setActiveAccordion={setActiveAccordion}
         >
-          <SubItem label="Pendahuluan List" to="/List/PendahuluanList" currentPath={currentPath} />
-          <SubItem label="Pembuatan dan Akses Elemen" to="/List/PembuatanAksesElement" currentPath={currentPath} />
-          <SubItem label="Operasi dan Manipulasi" to="/List/OperasiDanManipulasi" currentPath={currentPath} />
-          <SubItem label="Rangkuman List" to="/List/RangkumanList" currentPath={currentPath} />
-          <SubItem label="Kuis List" to="/List/KuisList" currentPath={currentPath} />
+          <SubItem
+            label="Pendahuluan List"
+            to="/List/PendahuluanList"
+            currentPath={currentPath}
+            requiredLevel={1}
+            unlocked={isUnlocked(1)}
+          />
+          <SubItem
+            label="Pembuatan dan Akses Elemen"
+            to="/List/PembuatanAksesElement"
+            currentPath={currentPath}
+            requiredLevel={2}
+            unlocked={isUnlocked(2)}
+          />
+          <SubItem
+            label="Operasi dan Manipulasi"
+            to="/List/OperasiDanManipulasi"
+            currentPath={currentPath}
+            requiredLevel={3}
+            unlocked={isUnlocked(3)}
+          />
+          <SubItem
+            label="Rangkuman List"
+            to="/List/RangkumanList"
+            currentPath={currentPath}
+            requiredLevel={4}
+            unlocked={isUnlocked(4)}
+          />
+          <SubItem
+            label="Kuis List"
+            to="/List/KuisList"
+            currentPath={currentPath}
+            requiredLevel={4}
+            unlocked={isUnlocked(4)}
+          />
         </Accordion>
 
+        {/* ========= NESTED LIST ========= */}
         <Accordion
           id="NestedList"
           title="Nested List"
           activeAccordion={activeAccordion}
           setActiveAccordion={setActiveAccordion}
         >
-          <SubItem label="Pendahuluan Nested List" to="/NestedList/PendahuluanNestedList" currentPath={currentPath} />
-          <SubItem label="Pembuatan dan Akses Elemen Nested List" to="/NestedList/PembuatanAksesNestedList" currentPath={currentPath} />
-          <SubItem label="Operasi dan Manipulasi Nested List" to="/NestedList/OperasiNestedList" currentPath={currentPath} />
-          <SubItem label="Rangkuman Nested List" to="/NestedList/RangkumanNestedList" currentPath={currentPath} />
-          <SubItem label="Kuis Nested List" to="/NestedList/KuisNestedList" currentPath={currentPath} />
+          <SubItem
+            label="Pendahuluan Nested List"
+            to="/NestedList/PendahuluanNestedList"
+            currentPath={currentPath}
+            requiredLevel={5}
+            unlocked={isUnlocked(5)}
+          />
+          <SubItem
+            label="Pembuatan dan Akses Elemen Nested List"
+            to="/NestedList/PembuatanAksesNestedList"
+            currentPath={currentPath}
+            requiredLevel={6}
+            unlocked={isUnlocked(6)}
+          />
+          <SubItem
+            label="Operasi dan Manipulasi Nested List"
+            to="/NestedList/OperasiNestedList"
+            currentPath={currentPath}
+            requiredLevel={7}
+            unlocked={isUnlocked(7)}
+          />
+          <SubItem
+            label="Rangkuman Nested List"
+            to="/NestedList/RangkumanNestedList"
+            currentPath={currentPath}
+            requiredLevel={8}
+            unlocked={isUnlocked(8)}
+          />
+          <SubItem
+            label="Kuis Nested List"
+            to="/NestedList/KuisNestedList"
+            currentPath={currentPath}
+            requiredLevel={8}
+            unlocked={isUnlocked(8)}
+          />
         </Accordion>
 
+        {/* ========= DICTIONARY ========= */}
         <Accordion
           id="dictionary"
           title="Dictionary"
           activeAccordion={activeAccordion}
           setActiveAccordion={setActiveAccordion}
         >
-          <SubItem label="Pendahuluan Dictionary" to="/Dictionary/PendahuluanDictionary" currentPath={currentPath} />
-          <SubItem label="Pembuatan dan Akses Dictionary" to="/Dictionary/PembuatanAksesElementDictionary" currentPath={currentPath} />
-          <SubItem label="Manipulasi Dictionary" to="/Dictionary/ManipulasiDictionary" currentPath={currentPath} />
-          <SubItem label="Rangkuman Dictionary" to="/Dictionary/RangkumanDictionary" currentPath={currentPath} />
-          <SubItem label="Kuis Dictionary" to="/Dictionary/KuisDictionary" currentPath={currentPath} />
+          <SubItem
+            label="Pendahuluan Dictionary"
+            to="/Dictionary/PendahuluanDictionary"
+            currentPath={currentPath}
+            requiredLevel={9}
+            unlocked={isUnlocked(9)}
+          />
+          <SubItem
+            label="Pembuatan dan Akses Dictionary"
+            to="/Dictionary/PembuatanAksesElementDictionary"
+            currentPath={currentPath}
+            requiredLevel={10}
+            unlocked={isUnlocked(10)}
+          />
+          <SubItem
+            label="Manipulasi Dictionary"
+            to="/Dictionary/ManipulasiDictionary"
+            currentPath={currentPath}
+            requiredLevel={11}
+            unlocked={isUnlocked(11)}
+          />
+          <SubItem
+            label="Rangkuman Dictionary"
+            to="/Dictionary/RangkumanDictionary"
+            currentPath={currentPath}
+            requiredLevel={12}
+            unlocked={isUnlocked(12)}
+          />
+          <SubItem
+            label="Kuis Dictionary"
+            to="/Dictionary/KuisDictionary"
+            currentPath={currentPath}
+            requiredLevel={12}
+            unlocked={isUnlocked(12)}
+          />
         </Accordion>
 
+        {/* ========= EVALUASI ========= */}
         <Accordion
           id="evaluasi"
           title="Evaluasi"
           activeAccordion={activeAccordion}
           setActiveAccordion={setActiveAccordion}
         >
-          <SubItem label="Evaluasi Akhir" to="/EvaluasiAkhir" currentPath={currentPath} />
+          <SubItem
+            label="Evaluasi Akhir"
+            to="/EvaluasiAkhir"
+            currentPath={currentPath}
+            requiredLevel={13}
+            unlocked={isUnlocked(13)}
+          />
         </Accordion>
       </aside>
     </>
   );
 }
 
-/* ================= ACCORDION ================= */
+// Komponen Accordion (tetap bisa dibuka)
 function Accordion({ id, title, children, activeAccordion, setActiveAccordion }) {
   const isOpen = activeAccordion === id;
 
@@ -133,21 +269,9 @@ function Accordion({ id, title, children, activeAccordion, setActiveAccordion })
           ...styles.accordionHeader,
           backgroundColor: isOpen ? "#eef2ff" : "#ffffff",
           borderBottom: isOpen ? "2px solid #FFD43B" : "1px solid #e9ecef",
-          boxShadow: isOpen ? "0 2px 6px rgba(0,0,0,0.05)" : "none",
+          cursor: "pointer",
         }}
         onClick={() => setActiveAccordion(isOpen ? null : id)}
-        onMouseEnter={(e) => {
-          if (!isOpen) {
-            e.currentTarget.style.backgroundColor = "#fffbeb";
-            e.currentTarget.style.borderLeftColor = "#FFD43B";
-          }
-        }}
-        onMouseLeave={(e) => {
-          if (!isOpen) {
-            e.currentTarget.style.backgroundColor = "#ffffff";
-            e.currentTarget.style.borderLeftColor = "transparent";
-          }
-        }}
       >
         <span style={{ fontWeight: isOpen ? "600" : "500" }}>{title}</span>
         <span style={styles.accordionIcon}>{isOpen ? "▲" : "▼"}</span>
@@ -157,44 +281,38 @@ function Accordion({ id, title, children, activeAccordion, setActiveAccordion })
   );
 }
 
-/* ================= SUB ITEM (dengan efek tombol, tanpa indikator titik) ================= */
-function SubItem({ label, to, currentPath }) {
+// Komponen SubItem dengan sistem kunci per sub
+function SubItem({ label, to, currentPath, requiredLevel, unlocked }) {
   const isActive = currentPath === to;
 
+  const handleClick = (e) => {
+    if (!unlocked) {
+      e.preventDefault();
+      alert(`Materi "${label}" membutuhkan progres level ${requiredLevel}. Level Anda saat ini ${localStorage.getItem("userRole") === "mahasiswa" ? require("../firebase").getDoc ? "..." : "belum cukup" : "? "}Selesaikan materi sebelumnya terlebih dahulu.`);
+    }
+  };
+
+  const linkStyle = {
+    ...styles.subItem,
+    backgroundColor: isActive ? "#FFD43B" : "#f8fafc",
+    color: isActive ? "#081527" : "#2c7be5",
+    fontWeight: isActive ? "600" : "500",
+    border: "1px solid #e2e8f0",
+    opacity: unlocked ? 1 : 0.5,
+    pointerEvents: unlocked ? "auto" : "none",
+    cursor: unlocked ? "pointer" : "not-allowed",
+  };
+
   return (
-    <Link to={to} style={{ textDecoration: "none" }}>
-      <div
-        style={{
-          ...styles.subItem,
-          backgroundColor: isActive ? "#FFD43B" : "#f8fafc",
-          color: isActive ? "#081527" : "#2c7be5",
-          fontWeight: isActive ? "600" : "500",
-          border: "1px solid #e2e8f0",
-          boxShadow: isActive ? "0 2px 4px rgba(0,0,0,0.05)" : "none",
-        }}
-        onMouseEnter={(e) => {
-          if (!isActive) {
-            e.currentTarget.style.backgroundColor = "#fef9e6";
-            e.currentTarget.style.borderColor = "#FFD43B";
-            e.currentTarget.style.transform = "translateX(4px)";
-          }
-        }}
-        onMouseLeave={(e) => {
-          if (!isActive) {
-            e.currentTarget.style.backgroundColor = "#f8fafc";
-            e.currentTarget.style.borderColor = "#e2e8f0";
-            e.currentTarget.style.transform = "translateX(0)";
-          }
-        }}
-      >
+    <Link to={to} style={{ textDecoration: "none" }} onClick={handleClick}>
+      <div style={linkStyle}>
         <span>{label}</span>
-        {/* Indikator titik (●) telah dihapus */}
       </div>
     </Link>
   );
 }
 
-/* ================= STYLES ================= */
+// Styles (sama seperti sebelumnya)
 const styles = {
   sidebar: {
     position: "fixed",
@@ -252,7 +370,6 @@ const styles = {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    cursor: "pointer",
     transition: "all 0.2s ease",
     borderLeft: "3px solid transparent",
     borderRadius: "14px 14px 0 0",
@@ -275,7 +392,6 @@ const styles = {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    cursor: "pointer",
     transition: "all 0.2s ease",
     borderRadius: "12px",
   },
