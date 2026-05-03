@@ -4,7 +4,7 @@ import Navbar from './komponen/Navbar';
 import { db } from '../config/firebase';
 import { collection, query, where, getDocs, setDoc, doc } from 'firebase/firestore';
 
-// ==================== STYLES (sama seperti sebelumnya) ====================
+// ==================== STYLES (dengan perbaikan posisi login) ====================
 const styles = `
 @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 
@@ -44,27 +44,32 @@ const styles = `
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 60px 60px 40px 60px;
+  padding: 40px 60px 40px 60px;
   background: white;
   position: absolute;
   top: 0;
   height: 100%;
   transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 5;
+  overflow-y: auto;
 }
 
+/* Perbaikan: form login di tengah vertikal */
 .form-section.login-section {
   right: 0;
   transform: translateX(0);
   opacity: 1;
+  justify-content: center;  /* <--- added: membuat form login di tengah */
 }
 
+/* Form register tetap di atas agar bisa scroll */
 .form-section.register-section {
   left: 0;
   transform: translateX(-100%);
   opacity: 0;
   pointer-events: none;
+  justify-content: flex-start; /* memastikan scroll berfungsi */
+  padding-bottom: 60px;
 }
 
 .panels-container.register-active .form-section.login-section {
@@ -146,6 +151,7 @@ const styles = `
   max-width: 380px;
   animation: formFadeIn 0.6s ease;
   margin-top: 20px;
+  margin-bottom: 30px;
 }
 
 @keyframes formFadeIn {
@@ -414,10 +420,13 @@ const styles = `
     opacity: 1 !important;
     pointer-events: all !important;
     display: none;
+    overflow-y: visible;
+    padding-bottom: 40px;
   }
   
   .panels-container:not(.register-active) .form-section.login-section {
     display: flex;
+    justify-content: center;
   }
   
   .panels-container.register-active .form-section.register-section {
@@ -608,7 +617,7 @@ const RegisterForm = ({ onRegisterSuccess }) => {
           NIM: formData.nim,
           Password: formData.password,
           Token_mahasiswa: formData.tokenKelas,
-          progres_belajar: 0, // <--- TAMBAHKAN INI
+          progres_belajar: 0,
         });
         await setDoc(doc(db, 'nilai', formData.nim), {
           NIM: formData.nim,
