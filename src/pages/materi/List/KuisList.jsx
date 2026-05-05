@@ -2,9 +2,10 @@ import { useState, useEffect, useRef } from "react";
 import Navbar from "../../komponen/Navbar";
 import SidebarMateri from "../../komponen/SidebarMateri";
 import { useNavigate } from 'react-router-dom';
+import { db } from "../../../config/firebase";
+import { doc, getDoc, updateDoc, increment } from "firebase/firestore";
 
 export default function KuisList() {
-
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -14,7 +15,6 @@ export default function KuisList() {
       navigate('/loginregister');
     }
   }, [navigate]);
-
 
   // ---------- STATE ----------
   const [quizStarted, setQuizStarted] = useState(false);
@@ -26,6 +26,7 @@ export default function KuisList() {
   const [timeLeft, setTimeLeft] = useState(20 * 60); // 20 menit
   const timerRef = useRef(null);
   const [resultsData, setResultsData] = useState(null);
+  const [savingData, setSavingData] = useState(false);
 
   // State untuk jawaban drag-drop (5 soal)
   const [dragAnswers, setDragAnswers] = useState(Array(5).fill().map(() => []));
@@ -230,7 +231,7 @@ export default function KuisList() {
     setUnsures(newUnsures);
   };
 
-  const handleSubmit = (auto = false) => {
+  const handleSubmit = async (auto = false) => {
     if (submitted) return;
     stopTimer();
     setSubmitted(true);
@@ -256,6 +257,63 @@ export default function KuisList() {
     const finalScore = score;
     const waktuDigunakan = (20 * 60) - timeLeft;
     setResultsData({ results, finalScore, waktuDigunakan });
+
+    // Simpan nilai ke Firestore dan update progres
+    setSavingData(true);
+    try {
+      const userId = localStorage.getItem('userId');
+      if (!userId) throw new Error("User ID tidak ditemukan");
+
+      // 1. Simpan nilai ke koleksi "nilai" dengan field "Kuis List"
+      const nilaiRef = doc(db, "nilai", userId);
+      const nilaiDoc = await getDoc(nilaiRef);
+      if (nilaiDoc.exists()) {
+        await updateDoc(nilaiRef, {
+          "Kuis List": finalScore * 10 // simpan dalam skala 0-100
+        });
+      } else {
+        // Jika dokumen nilai belum ada, buat baru (tapi biasanya sudah dibuat saat registrasi)
+        console.warn("Dokumen nilai tidak ditemukan, membuat baru");
+        // (Opsional: buat dokumen baru)
+      }
+
+      // 2. Ambil token mahasiswa dari koleksi mahasiswa
+      const mahasiswaRef = doc(db, "mahasiswa", userId);
+      const mahasiswaDoc = await getDoc(mahasiswaRef);
+      if (!mahasiswaDoc.exists()) throw new Error("Data mahasiswa tidak ditemukan");
+      const tokenMahasiswa = mahasiswaDoc.data().Token_mahasiswa;
+      if (!tokenMahasiswa) throw new Error("Token kelas tidak ditemukan");
+
+      // 3. Ambil KKM dari koleksi kkm berdasarkan token
+      const kkmRef = doc(db, "kkm", tokenMahasiswa);
+      const kkmDoc = await getDoc(kkmRef);
+      if (!kkmDoc.exists()) throw new Error("Data KKM tidak ditemukan");
+      const kkm = kkmDoc.data()["Nilai Kuis List"];
+      if (kkm === undefined) throw new Error("KKM Kuis List belum diatur oleh dosen");
+
+      const nilaiAkhir = finalScore * 10;
+      const isPassed = nilaiAkhir >= kkm;
+
+      // 4. Jika lulus dan bonus belum pernah diberikan, update progres_belajar +1
+      const bonusKey = "kuis_list_bonus_done";
+      const alreadyBonus = localStorage.getItem(bonusKey);
+      if (isPassed && !alreadyBonus) {
+        await updateDoc(mahasiswaRef, {
+          progres_belajar: increment(1)
+        });
+        localStorage.setItem(bonusKey, "true");
+        console.log("Bonus progres +1 diberikan karena lulus KKM");
+      } else if (!isPassed) {
+        console.log("Nilai belum mencapai KKM, tidak mendapat bonus progres");
+      } else {
+        console.log("Bonus sudah pernah diberikan sebelumnya");
+      }
+    } catch (error) {
+      console.error("Gagal menyimpan data ke Firestore:", error);
+      alert("Terjadi kesalahan saat menyimpan nilai. Silakan hubungi administrator.");
+    } finally {
+      setSavingData(false);
+    }
   };
 
   const resetQuiz = () => {
@@ -343,7 +401,7 @@ export default function KuisList() {
     };
   }, []);
 
-  // ---------- RENDER HALAMAN PETUNJUK (dengan Navbar & SidebarMateri) ----------
+  // ---------- RENDER HALAMAN PETUNJUK ----------
   if (!quizStarted && !submitted) {
     return (
       <>
@@ -362,8 +420,6 @@ export default function KuisList() {
                 <li>Setiap soal bernilai 10 poin (total maksimal 100).</li>
                 <li>Waktu pengerjaan: 20 menit (timer berjalan setelah mulai).</li>
                 <li>Jika waktu habis, jawaban yang sudah terisi akan tersimpan dan terkirim secara otomatis.</li>
-                {/* <li>Gunakan fitur "Flag" (🚩) dan "Ragu" (🤔) untuk menandai soal.</li> */}
-                {/* <li>Navigasi soal melalui panel kotak nomor di sebelah kanan.</li> */}
                 <li>Pastikan semua jawaban sudah dipilih sebelum menekan KUMPULKAN JAWABAN.</li>
                 <li>Pastikan perangkat terhubung dengan koneksi internet yang stabil.</li>
               </ul>
@@ -379,13 +435,13 @@ export default function KuisList() {
     );
   }
 
-  // ---------- RENDER HALAMAN HASIL (fullscreen, tanpa sidebar) ----------
+  // ---------- RENDER HALAMAN HASIL ----------
   if (submitted && resultsData) {
     const { finalScore, waktuDigunakan } = resultsData;
     const minutesUsed = Math.floor(waktuDigunakan / 60);
     const secondsUsed = waktuDigunakan % 60;
     const skor100 = finalScore * 10;
-    const isPassed = skor100 >= 70;
+    const isPassed = skor100 >= 70; // angka sementara, nanti bisa diganti dengan KKM dinamis
     const percentage = skor100;
 
     return (
@@ -448,6 +504,7 @@ export default function KuisList() {
               className="btn-hover-retry"
               style={styles.retryButtonNew} 
               onClick={resetQuiz}
+              disabled={savingData}
             >Ulangi Kuis</button>
             {!isPassed && (
               <button 
@@ -469,7 +526,7 @@ export default function KuisList() {
     );
   }
 
-  // ---------- RENDER HALAMAN KUIS (fullscreen, dua kolom) ----------
+  // ---------- RENDER HALAMAN KUIS ----------
   const q = questions[currentQuestion];
   const isFlagged = flags[currentQuestion];
   const isUnsure = unsures[currentQuestion];
@@ -589,7 +646,10 @@ export default function KuisList() {
               className="btn-hover-submit"
               onClick={() => handleSubmit()} 
               style={styles.submitButton}
-            >KUMPULKAN JAWABAN</button>
+              disabled={savingData}
+            >
+              {savingData ? "Menyimpan..." : "KUMPULKAN JAWABAN"}
+            </button>
           </div>
         </div>
 
