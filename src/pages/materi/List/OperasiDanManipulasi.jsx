@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useNavigate } from 'react-router-dom';
 import Navbar from "../../komponen/Navbar";
 import SidebarMateri from "../../komponen/SidebarMateri";
-import { useNavigate } from 'react-router-dom';
+import { db } from "../../../config/firebase";
+import { doc, updateDoc, increment } from "firebase/firestore";
 
-// ================= STYLE GLOBAL =================
+// ================= STYLE GLOBAL (sama seperti kode asli, ditambah style modal) =================
 const styles = {
   page: {
     padding: "30px 40px",
@@ -326,16 +328,15 @@ const styles = {
     borderRadius: "6px",
     fontWeight: "500",
   },
-  // PERBAIKAN: header penjelasan menjadi biru, teks putih
   explanationHeader: {
-    backgroundColor: "#306998", // biru seperti contoh gambar
+    backgroundColor: "#306998",
     color: "white",
     padding: "10px 15px",
     fontWeight: "600",
     borderTop: "1px solid #444",
   },
   explanationContent: {
-    backgroundColor: "#1e1e1e", // tetap gelap
+    backgroundColor: "#1e1e1e",
     padding: "15px",
     fontSize: "14px",
     lineHeight: "1.7",
@@ -372,7 +373,45 @@ const styles = {
   explanationTitle: {
     fontWeight: "bold",
     marginBottom: "10px",
-    color: "white", // putih di atas biru
+    color: "white",
+  },
+  // Modal styles
+  modalOverlay: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    backdropFilter: "blur(4px)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 2000,
+  },
+  modal: {
+    background: "white",
+    borderRadius: "32px",
+    padding: "32px",
+    maxWidth: "450px",
+    width: "90%",
+    textAlign: "center",
+    boxShadow: "0 20px 35px rgba(0,0,0,0.2)",
+    animation: "fadeInUp 0.3s ease",
+  },
+  modalIcon: { fontSize: "64px", marginBottom: "16px" },
+  modalTitle: { fontSize: "28px", fontWeight: "700", color: "#1e3a5f", marginBottom: "12px" },
+  modalText: { fontSize: "16px", color: "#334155", lineHeight: "1.5", marginBottom: "24px" },
+  modalButton: {
+    background: "linear-gradient(135deg, #3182ce, #2c5282)",
+    color: "white",
+    border: "none",
+    padding: "12px 24px",
+    borderRadius: "40px",
+    fontSize: "16px",
+    fontWeight: "600",
+    cursor: "pointer",
+    transition: "transform 0.2s, box-shadow 0.2s",
   },
 };
 
@@ -523,7 +562,7 @@ const SingleListVisualization = ({ data, title, hoverContext = {}, highlightInde
   );
 };
 
-// ================= KOMPONEN UNTUK MENAMPILKAN DUA LIST SECARA HORIZONTAL (UNTUK CONCAT) =================
+// ================= KOMPONEN UNTUK MENAMPILKAN DUA LIST SECARA HORIZONTAL =================
 const TwoListsHorizontal = ({ dataA, dataB, titleA, titleB, hoverContextA, hoverContextB, highlightIndexA, highlightIndexB, highlightPairA, highlightPairB, changedIndicesA, changedIndicesB, explanationA, explanationB }) => {
   return (
     <div style={{ display: "flex", gap: "20px", justifyContent: "center", flexWrap: "wrap" }}>
@@ -894,7 +933,7 @@ const DoubleBeforeVisualization = ({ dataA, dataB, titleA, titleB, hoverContextA
   );
 };
 
-// ================= KOMPONEN CODE EDITOR DENGAN ANIMASI DAN PENJELASAN (MUNCUL SETELAH JALANKAN) =================
+// ================= KOMPONEN CODE EDITOR DENGAN ANIMASI DAN PENJELASAN =================
 const CodeEditorWithVisual = ({
   code,
   title,
@@ -1081,8 +1120,8 @@ const CodeEditorEditable = ({ title, pyodideReady, runPythonCode }) => {
   );
 };
 
-// ================= KOMPONEN DRAG-N-DROP MATCHING (DENGAN PERBAIKAN PESAN) =================
-const DragDropMatching = ({ items, resetTrigger }) => {
+// ================= KOMPONEN DRAG-N-DROP MATCHING (DENGAN PERBAIKAN PESAN DAN CALLBACK) =================
+const DragDropMatching = ({ items, resetTrigger, onAllCorrectChange }) => {
   const shuffleArray = (arr) => {
     const shuffled = [...arr];
     for (let i = shuffled.length - 1; i > 0; i--) {
@@ -1125,16 +1164,17 @@ const DragDropMatching = ({ items, resetTrigger }) => {
     if (allMatched && newCorrectFuncIds.size === items.length) {
       setAllCorrect(true);
       setFeedbackMsg("🎉 SELAMAT! Semua jawaban benar! 🎉");
+      if (onAllCorrectChange) onAllCorrectChange(true);
     } else {
       setAllCorrect(false);
+      if (onAllCorrectChange) onAllCorrectChange(false);
       if (checked && allMatched) {
         setFeedbackMsg(`❌ Masih ada ${items.length - newCorrectFuncIds.size} pasangan yang salah. Silakan perbaiki.`);
       }
     }
-  }, [functions, descriptions, items.length, checked]);
+  }, [functions, descriptions, items.length, checked, onAllCorrectChange]);
 
   const resetWrongOnly = () => {
-    // Cek apakah sudah pernah diperiksa
     if (!checked) {
       setFeedbackMsg("⚠️ Silakan lengkapi jawaban terlebih dahulu! ⚠️");
       return;
@@ -1175,6 +1215,7 @@ const DragDropMatching = ({ items, resetTrigger }) => {
     setFeedbackMsg("");
     setCorrectFuncIds(new Set());
     setCorrectDescIds(new Set());
+    if (onAllCorrectChange) onAllCorrectChange(false);
   };
 
   useEffect(() => {
@@ -1235,6 +1276,7 @@ const DragDropMatching = ({ items, resetTrigger }) => {
       setFeedbackMsg(`⚠️ Lengkapi semua pasangan terlebih dahulu. ⚠️`);
       setChecked(false);
       setAllCorrect(false);
+      if (onAllCorrectChange) onAllCorrectChange(false);
       return;
     }
     setChecked(true);
@@ -1350,6 +1392,7 @@ const DragDropMatching = ({ items, resetTrigger }) => {
 export default function OperasiManipulasiList() {
   const navigate = useNavigate();
 
+  // Auth check
   useEffect(() => {
     const userId = localStorage.getItem('userId');
     const userEmail = localStorage.getItem('userEmail');
@@ -1358,10 +1401,43 @@ export default function OperasiManipulasiList() {
     }
   }, [navigate]);
 
-  
   const [pyodideReady, setPyodideReady] = useState(false);
   const pyodideRef = useRef(null);
   const [resetMatching, setResetMatching] = useState(0);
+
+  // State untuk bonus progres
+  const [allMatchingCorrect, setAllMatchingCorrect] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [bonusGiven, setBonusGiven] = useState(false);
+  const userId = localStorage.getItem('userId');
+
+  // Cek apakah bonus sudah pernah diberikan untuk halaman ini
+  useEffect(() => {
+    const already = localStorage.getItem("operasi_manipulasi_bonus_done");
+    if (already === "true") setBonusGiven(true);
+  }, []);
+
+  // Ketika allMatchingCorrect berubah menjadi true, muncul modal
+  useEffect(() => {
+    if (allMatchingCorrect && !bonusGiven && userId) {
+      setShowModal(true);
+    }
+  }, [allMatchingCorrect, bonusGiven, userId]);
+
+  const handleCompleteAndNavigate = async () => {
+    try {
+      const mahasiswaRef = doc(db, "mahasiswa", userId);
+      await updateDoc(mahasiswaRef, {
+        progres_belajar: increment(1)
+      });
+      localStorage.setItem("operasi_manipulasi_bonus_done", "true");
+      setShowModal(false);
+      navigate("/List/RangkumanList");
+    } catch (error) {
+      console.error("Gagal update progres:", error);
+      alert("Terjadi kesalahan. Silakan coba lagi.");
+    }
+  };
 
   // EKSPLORASI AWAL
   const [eksplorasiSelected, setEksplorasiSelected] = useState([null, null]);
@@ -1409,7 +1485,7 @@ export default function OperasiManipulasiList() {
     }
   }, [eksplorasiSelected, isEksplorasiCompleted]);
 
-  // DATA VISUALISASI
+  // DATA VISUALISASI (sama seperti asli)
   const concatBeforeA = [1,2,3];
   const concatBeforeB = [4,5,6];
   const concatAfter = [1,2,3,4,5,6];
@@ -1444,7 +1520,7 @@ export default function OperasiManipulasiList() {
   const lengthBefore = [1,2,3,4];
   const lengthAfter = [4];
 
-  // Hover context
+  // Hover context (sama seperti asli)
   const concatHoverBeforeA = { 0:"a:1",1:"a:2",2:"a:3" };
   const concatHoverBeforeB = { 0:"b:4",1:"b:5",2:"b:6" };
   const concatHoverAfter = { 0:"1",1:"2",2:"3",3:"4",4:"5",5:"6" };
@@ -1484,7 +1560,7 @@ export default function OperasiManipulasiList() {
   const lengthHoverBefore = { 0:"1",1:"2",2:"3",3:"4" };
   const lengthHoverAfter = {};
 
-  // ANIMATION STEPS
+  // ANIMATION STEPS (sama seperti asli)
   const concatSteps = [
     { highlightIndex: 0, explanation: "Mengambil elemen pertama dari a (1)" },
     { highlightIndex: 1, explanation: "Mengambil elemen kedua dari a (2)" },
@@ -1562,7 +1638,7 @@ export default function OperasiManipulasiList() {
     { highlightIndex: 3, explanation: "Menghitung elemen ke-4 (rambutan) -> panjang = 4" },
   ];
 
-  // Penjelasan kode per baris
+  // Penjelasan kode per baris (sama seperti asli)
   const codeExplanations = {
     concat: [
       "Baris 1: a = [1, 2, 3]  -> Membuat list a dengan elemen 1,2,3.",
@@ -2140,13 +2216,45 @@ export default function OperasiManipulasiList() {
                 <h2 style={styles.sectionTitle}>Latihan</h2>
                 <div style={styles.card}>
                   <p>Seret method list ke kegunaan yang sesuai. Klik "Periksa Jawaban" setelah semua pasangan sudah lengkapi. Pasangan yang salah bisa diperbaiki. Tombol "Reset Jawaban Salah" akan mengacak ulang hanya pasangan yang masih salah.</p>
-                  <DragDropMatching items={matchingItems} resetTrigger={resetMatching} />
+                  <DragDropMatching 
+                    items={matchingItems} 
+                    resetTrigger={resetMatching} 
+                    onAllCorrectChange={setAllMatchingCorrect} 
+                  />
                 </div>
               </section>
             </>
           )}
         </div>
       </div>
+
+      {/* Modal Sukses */}
+      {showModal && (
+        <div style={styles.modalOverlay}>
+          <div style={styles.modal}>
+            <div style={styles.modalIcon}>🎉</div>
+            <h2 style={styles.modalTitle}>Selamat!</h2>
+            <p style={styles.modalText}>
+              Anda telah menyelesaikan semua latihan dengan sempurna.<br />
+              Progres belajar Anda bertambah! Materi selanjutnya akan terbuka.
+            </p>
+            <button style={styles.modalButton} onClick={handleCompleteAndNavigate}>
+              Lanjut ke Rangkuman List 🚀
+            </button>
+          </div>
+        </div>
+      )}
+
+      <style>{`
+        @keyframes fadeInUp {
+          from { opacity: 0; transform: translateY(30px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .modalButton:hover {
+          transform: scale(1.02);
+          box-shadow: 0 5px 15px rgba(49,130,206,0.3);
+        }
+      `}</style>
     </>
   );
 }
