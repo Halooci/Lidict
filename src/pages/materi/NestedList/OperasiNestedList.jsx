@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useNavigate } from 'react-router-dom';
 import Navbar from "../../komponen/Navbar";
 import SidebarMateri from "../../komponen/SidebarMateri";
-import { useNavigate } from 'react-router-dom';
+import { db } from "../../../config/firebase";
+import { doc, updateDoc, increment } from "firebase/firestore";
 
-// ===================== PENJELASAN PER BARIS =====================
 const PenjelasanPerBaris = ({ code }) => {
   const lines = code.split('\n').filter(l => l.trim().length > 0);
   const getPenjelasan = (line) => {
@@ -45,7 +46,6 @@ const PenjelasanPerBaris = ({ code }) => {
   );
 };
 
-// ===================== VISUALISASI INTERAKTIF DENGAN ANIMASI =====================
 const VisualisasiOperasi = ({ dataAwal, dataAkhir, operation }) => {
   const [animating, setAnimating] = useState(false);
   const [selectedCell, setSelectedCell] = useState(null);
@@ -130,17 +130,15 @@ const VisualisasiOperasi = ({ dataAwal, dataAkhir, operation }) => {
   );
 };
 
-// ===================== KODE EDITOR LENGKAP =====================
 const CodeEditorEnhanced = ({ code, codeKey, pyodideReady, runPythonCode }) => {
   const [output, setOutput] = useState("");
   const [showDetail, setShowDetail] = useState(false);
   const [visualData, setVisualData] = useState(null);
   const [visualDataAfter, setVisualDataAfter] = useState(null);
   const [operationType, setOperationType] = useState("");
-  const cleanCode = code; // sudah tanpa komentar
+  const cleanCode = code;
 
   useEffect(() => {
-    // Setup data visualisasi berdasarkan codeKey
     if (codeKey === 'mengakses') {
       setVisualData([[1,2,3],[4,5,6],[7,8,9]]);
       setOperationType("akses");
@@ -237,7 +235,6 @@ const CodeEditorEnhanced = ({ code, codeKey, pyodideReady, runPythonCode }) => {
   );
 };
 
-// ===================== KOMPONEN LAIN (TIDAK BERUBAH) =====================
 const CodeEditorEditable = ({ codeKey, title, validationRules, pyodideReady, runPythonCode, expectedOutput }) => {
   const [localCode, setLocalCode] = useState("");
   const [output, setOutput] = useState("");
@@ -314,16 +311,11 @@ const CodeEditorEditable = ({ codeKey, title, validationRules, pyodideReady, run
   );
 };
 
-const CodeCompletionQuestion = ({ question, codeParts, placeholders, expectedAnswers, onCheck, resetTrigger }) => {
+const CodeCompletionQuestion = ({ question, codeParts, placeholders, expectedAnswers, onCheck }) => {
   const [answers, setAnswers] = useState(placeholders.map(() => ""));
   const [feedback, setFeedback] = useState("");
   const [checked, setChecked] = useState(false);
-
-  useEffect(() => {
-    setAnswers(placeholders.map(() => ""));
-    setFeedback("");
-    setChecked(false);
-  }, [resetTrigger, placeholders]);
+  const [isCorrect, setIsCorrect] = useState(false);
 
   const handleAnswerChange = (idx, value) => {
     const newAnswers = [...answers];
@@ -331,6 +323,10 @@ const CodeCompletionQuestion = ({ question, codeParts, placeholders, expectedAns
     setAnswers(newAnswers);
     setChecked(false);
     setFeedback("");
+    if (isCorrect) {
+      setIsCorrect(false);
+      if (onCheck) onCheck(false);
+    }
   };
 
   const handleCheck = () => {
@@ -343,13 +339,22 @@ const CodeCompletionQuestion = ({ question, codeParts, placeholders, expectedAns
     }
     setChecked(true);
     if (allCorrect) {
-      setFeedback("✅ Benar! Jawaban tepat.");
+      setFeedback("✅ Benar!");
+      setIsCorrect(true);
       if (onCheck) onCheck(true);
     } else {
-      const expectedStr = expectedAnswers.join(", ");
-      setFeedback(`❌ Salah. Jawaban yang benar: ${expectedStr}`);
+      setFeedback("❌ Jawaban salah. Coba lagi!");
+      setIsCorrect(false);
       if (onCheck) onCheck(false);
     }
+  };
+
+  const handleReset = () => {
+    setAnswers(placeholders.map(() => ""));
+    setFeedback("");
+    setChecked(false);
+    setIsCorrect(false);
+    if (onCheck) onCheck(false);
   };
 
   const renderCodeWithInputs = () => {
@@ -361,11 +366,11 @@ const CodeCompletionQuestion = ({ question, codeParts, placeholders, expectedAns
           <input
             key={`input-${i}`}
             type="text"
-            size={placeholders[i]?.length || 10}
+            size={8}
             style={styles.inlineInput}
             value={answers[i]}
             onChange={(e) => handleAnswerChange(i, e.target.value)}
-            placeholder={placeholders[i] || "..."}
+            placeholder="..."
           />
         );
       }
@@ -377,22 +382,20 @@ const CodeCompletionQuestion = ({ question, codeParts, placeholders, expectedAns
     <div style={styles.questionCard}>
       <p style={styles.questionText}>{question}</p>
       <pre style={styles.codeTemplateInline}>{renderCodeWithInputs()}</pre>
-      <button style={styles.checkButton} onClick={handleCheck}>Periksa</button>
+      <div>
+        <button style={styles.checkButton} onClick={handleCheck}>Periksa</button>
+        <button style={styles.resetButtonInline} onClick={handleReset}>Reset</button>
+      </div>
       {feedback && <div style={styles.feedback}>{feedback}</div>}
     </div>
   );
 };
 
-const DragDropCompletionQuestion = ({ question, codeTemplate, placeholders, options, expectedAnswers, resetTrigger }) => {
+const DragDropCompletionQuestion = ({ question, codeTemplate, placeholders, options, expectedAnswers, onCheck }) => {
   const [answers, setAnswers] = useState(placeholders.map(() => ""));
   const [feedback, setFeedback] = useState("");
   const [checked, setChecked] = useState(false);
-
-  useEffect(() => {
-    setAnswers(placeholders.map(() => ""));
-    setFeedback("");
-    setChecked(false);
-  }, [resetTrigger, placeholders]);
+  const [isCorrect, setIsCorrect] = useState(false);
 
   const handleDragStart = (e, value) => {
     e.dataTransfer.setData("text/plain", value);
@@ -416,8 +419,12 @@ const DragDropCompletionQuestion = ({ question, codeTemplate, placeholders, opti
       });
       setChecked(false);
       setFeedback("");
+      if (isCorrect) {
+        setIsCorrect(false);
+        if (onCheck) onCheck(false);
+      }
     }
-  }, []);
+  }, [isCorrect, onCheck]);
 
   const handleResetSlot = useCallback((idx) => {
     setAnswers(prev => {
@@ -427,7 +434,19 @@ const DragDropCompletionQuestion = ({ question, codeTemplate, placeholders, opti
     });
     setChecked(false);
     setFeedback("");
-  }, []);
+    if (isCorrect) {
+      setIsCorrect(false);
+      if (onCheck) onCheck(false);
+    }
+  }, [isCorrect, onCheck]);
+
+  const handleResetAll = () => {
+    setAnswers(placeholders.map(() => ""));
+    setFeedback("");
+    setChecked(false);
+    setIsCorrect(false);
+    if (onCheck) onCheck(false);
+  };
 
   const handleCheck = () => {
     let allCorrect = true;
@@ -440,8 +459,12 @@ const DragDropCompletionQuestion = ({ question, codeTemplate, placeholders, opti
     setChecked(true);
     if (allCorrect) {
       setFeedback("✅ Benar! Semua placeholder terisi dengan benar.");
+      setIsCorrect(true);
+      if (onCheck) onCheck(true);
     } else {
-      setFeedback("❌ Salah. Ada placeholder yang belum benar. Coba lagi!");
+      setFeedback("❌ Jawaban salah. Coba lagi!");
+      setIsCorrect(false);
+      if (onCheck) onCheck(false);
     }
   };
 
@@ -496,7 +519,7 @@ const DragDropCompletionQuestion = ({ question, codeTemplate, placeholders, opti
                   </button>
                 </span>
               ) : (
-                <span style={{ color: "#888", fontStyle: "italic" }}>___</span>
+                <span style={{ color: "#888", fontStyle: "italic" }}>...</span>
               )}
             </div>
           </span>
@@ -525,7 +548,10 @@ const DragDropCompletionQuestion = ({ question, codeTemplate, placeholders, opti
           ))}
         </div>
       </div>
-      <button style={styles.checkButton} onClick={handleCheck}>Periksa</button>
+      <div>
+        <button style={styles.checkButton} onClick={handleCheck}>Periksa</button>
+        <button style={styles.resetButtonInline} onClick={handleResetAll}>Reset</button>
+      </div>
       {feedback && <div style={styles.feedback}>{feedback}</div>}
     </div>
   );
@@ -599,7 +625,6 @@ const Eksplorasi = ({ onComplete }) => {
   );
 };
 
-// ===================== KOMPONEN UTAMA =====================
 export default function OperasiNestedList() {
   const navigate = useNavigate();
 
@@ -611,14 +636,56 @@ export default function OperasiNestedList() {
     }
   }, [navigate]);
 
-  
   const [pyodideReady, setPyodideReady] = useState(false);
   const pyodideRef = useRef(null);
-  const [resetInteractives, setResetInteractives] = useState(0);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isEksplorasiCompleted, setIsEksplorasiCompleted] = useState(false);
 
-  // Contoh kode (tanpa komentar)
+  const [exerciseStatus, setExerciseStatus] = useState([false, false, false, false, false]);
+  const [allExercisesCorrect, setAllExercisesCorrect] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [bonusGiven, setBonusGiven] = useState(false);
+  const userId = localStorage.getItem('userId');
+
+  useEffect(() => {
+    const already = localStorage.getItem("operasi_nested_bonus_done");
+    if (already === "true") setBonusGiven(true);
+  }, []);
+
+  useEffect(() => {
+    const allCorrect = exerciseStatus.every(v => v === true);
+    setAllExercisesCorrect(allCorrect);
+  }, [exerciseStatus]);
+
+  useEffect(() => {
+    if (allExercisesCorrect && !bonusGiven && userId) {
+      setShowModal(true);
+    }
+  }, [allExercisesCorrect, bonusGiven, userId]);
+
+  const handleCompleteAndNavigate = async () => {
+    try {
+      const mahasiswaRef = doc(db, "mahasiswa", userId);
+      await updateDoc(mahasiswaRef, {
+        progres_belajar: increment(1)
+      });
+      localStorage.setItem("operasi_nested_bonus_done", "true");
+      setShowModal(false);
+      navigate("/NestedList/RangkumanNestedList");
+    } catch (error) {
+      console.error("Gagal update progres:", error);
+      alert("Terjadi kesalahan. Silakan coba lagi.");
+    }
+  };
+
+  const updateExerciseStatus = (index, isCorrect) => {
+    setExerciseStatus(prev => {
+      const newStatus = [...prev];
+      newStatus[index] = isCorrect;
+      return newStatus;
+    });
+  };
+
   const exampleCodes = {
     mengakses: `data = [[1, 2, 3],
         [4, 5, 6],
@@ -695,7 +762,7 @@ print("Hasil penggabungan:", hasil)`,
   };
 
   const soal1CodeParts = [
-    "data = [[10, 20, 30], [40, 50, 60]]\n# Ubah elemen baris pertama kolom kedua menjadi 99\ndata[",
+    "data = [[10, 20, 30], [40, 50, 60]]\ndata[",
     "][",
     "] = 99\nprint(data)"
   ];
@@ -703,7 +770,7 @@ print("Hasil penggabungan:", hasil)`,
   const soal1Expected = ["0", "1"];
 
   const soal2CodeParts = [
-    "data = [[1, 2], [3, 4]]\n# Tambahkan baris baru [5,6] di akhir\ndata.",
+    "data = [[1, 2], [3, 4]]\ndata.",
     "([5, 6])\nprint(data)"
   ];
   const soal2Placeholders = ["method"];
@@ -776,7 +843,6 @@ _buffer.getvalue()
     }
   }, []);
 
-  const resetInteractiveQuestions = () => setResetInteractives(prev => prev + 1);
   const handleEksplorasiComplete = () => setIsEksplorasiCompleted(true);
 
   return (
@@ -882,14 +948,13 @@ _buffer.getvalue()
                 <h2 style={styles.sectionTitle}>Latihan</h2>
                 <div style={styles.card}>
                   <p style={styles.text}>Isilah bagian yang kosong pada kode (soal 1-2) dan drag pilihan ke area kosong (soal 3-5). Anda dapat mencoba berulang kali hingga jawaban benar.</p>
-                  <button style={styles.resetButton} onClick={resetInteractiveQuestions}>↻ Reset Semua Jawaban</button>
                   
                   <CodeCompletionQuestion
                     question="1. Lengkapi kode untuk mengubah elemen baris pertama kolom kedua menjadi 99."
                     codeParts={soal1CodeParts}
                     placeholders={soal1Placeholders}
                     expectedAnswers={soal1Expected}
-                    resetTrigger={resetInteractives}
+                    onCheck={(isCorrect) => updateExerciseStatus(0, isCorrect)}
                   />
 
                   <CodeCompletionQuestion
@@ -897,7 +962,7 @@ _buffer.getvalue()
                     codeParts={soal2CodeParts}
                     placeholders={soal2Placeholders}
                     expectedAnswers={soal2Expected}
-                    resetTrigger={resetInteractives}
+                    onCheck={(isCorrect) => updateExerciseStatus(1, isCorrect)}
                   />
 
                   <DragDropCompletionQuestion
@@ -906,7 +971,7 @@ _buffer.getvalue()
                     placeholders={soal3Placeholders}
                     options={soal3Options}
                     expectedAnswers={soal3Expected}
-                    resetTrigger={resetInteractives}
+                    onCheck={(isCorrect) => updateExerciseStatus(2, isCorrect)}
                   />
 
                   <DragDropCompletionQuestion
@@ -915,7 +980,7 @@ _buffer.getvalue()
                     placeholders={soal4Placeholders}
                     options={soal4Options}
                     expectedAnswers={soal4Expected}
-                    resetTrigger={resetInteractives}
+                    onCheck={(isCorrect) => updateExerciseStatus(3, isCorrect)}
                   />
 
                   <DragDropCompletionQuestion
@@ -924,7 +989,7 @@ _buffer.getvalue()
                     placeholders={soal5Placeholders}
                     options={soal5Options}
                     expectedAnswers={soal5Expected}
-                    resetTrigger={resetInteractives}
+                    onCheck={(isCorrect) => updateExerciseStatus(4, isCorrect)}
                   />
                 </div>
               </section>
@@ -936,11 +1001,34 @@ _buffer.getvalue()
           )}
         </div>
       </div>
+
+      {showModal && (
+        <div style={styles.modalOverlay}>
+          <div style={styles.modal}>
+            <div style={styles.modalIcon}>🎉</div>
+            <h2 style={styles.modalTitle}>Selamat!</h2>
+            <p style={styles.modalText}>
+              Anda telah menyelesaikan materi ini dengan sempurna.
+              <br />
+              Materi selanjutnya akan terbuka.
+            </p>
+            <button style={styles.modalButton} onClick={handleCompleteAndNavigate}>
+              Lanjut ke materi selanjutnya 🚀
+            </button>
+          </div>
+        </div>
+      )}
+
+      <style>{`
+        @keyframes fadeInUp {
+          from { opacity: 0; transform: translateY(30px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
     </>
   );
 }
 
-// ===================== STYLES =====================
 const styles = {
   page: { padding: "30px 40px", paddingTop: "30px", backgroundColor: "#f5f7fa", minHeight: "calc(100vh - 64px)", fontFamily: "Poppins, sans-serif", width: "100%", boxSizing: "border-box" },
   header: { backgroundColor: "#306998", color: "white", padding: "18px 24px", position: "relative", marginBottom: "30px", borderRadius: "6px" },
@@ -975,7 +1063,7 @@ const styles = {
   codeTemplateInline: { backgroundColor: "#272822", color: "#f8f8f2", padding: "10px", borderRadius: "6px", fontFamily: "monospace", fontSize: "14px", overflowX: "auto", whiteSpace: "pre-wrap", wordBreak: "break-word", marginBottom: "10px" },
   inlineInput: { backgroundColor: "#fff", color: "#000", border: "1px solid #ccc", borderRadius: "4px", padding: "2px 6px", margin: "0 2px", fontFamily: "monospace", fontSize: "14px", textAlign: "center", outline: "none" },
   checkButton: { backgroundColor: "#28a745", color: "white", border: "none", padding: "8px 16px", borderRadius: "6px", cursor: "pointer", fontSize: "14px", marginRight: "10px" },
-  resetButton: { backgroundColor: "#6c757d", color: "white", border: "none", padding: "8px 16px", borderRadius: "6px", cursor: "pointer", fontSize: "14px", marginBottom: "20px" },
+  resetButtonInline: { backgroundColor: "#6c757d", color: "white", border: "none", padding: "8px 16px", borderRadius: "6px", cursor: "pointer", fontSize: "14px" },
   feedback: { marginTop: "8px", fontSize: "14px", fontStyle: "italic", color: "#333" },
   bubbleContainer: { marginTop: "15px", padding: "10px", backgroundColor: "#f0f0f0", borderRadius: "8px" },
   dragBubble: { display: "inline-block", padding: "6px 12px", margin: "4px", backgroundColor: "#306998", color: "white", borderRadius: "20px", cursor: "grab", fontSize: "14px", userSelect: "none", boxShadow: "0 2px 5px rgba(0,0,0,0.1)" },
@@ -985,8 +1073,45 @@ const styles = {
   penjelasanBaris: { fontWeight: "bold", color: "#306998", minWidth: "60px" },
   penjelasanKode: { fontFamily: "monospace", backgroundColor: "#f0f0f0", padding: "2px 6px", borderRadius: "4px", color: "#d63384" },
   penjelasanArrow: { color: "#6c757d", fontWeight: "bold" },
-  penjelasanDeskripsi: { color: "#333", flex: 1 },
+  penjelasanDeskripsi: { color: "#333", flex: "1" },
   visualisasiContainer: { marginTop: "15px", padding: "15px", backgroundColor: "#eef2fa", borderRadius: "8px", border: "1px solid #306998", textAlign: "center" },
   visualisasiTitle: { margin: "0 0 12px 0", color: "#306998", fontWeight: "bold" },
   visualisasiPopup: { marginTop: "12px", padding: "8px", backgroundColor: "#fff3cd", borderLeft: "5px solid #FFD43B", borderRadius: "8px", fontSize: "14px" },
+  modalOverlay: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    backdropFilter: "blur(4px)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 2000,
+  },
+  modal: {
+    background: "white",
+    borderRadius: "32px",
+    padding: "32px",
+    maxWidth: "450px",
+    width: "90%",
+    textAlign: "center",
+    boxShadow: "0 20px 35px rgba(0,0,0,0.2)",
+    animation: "fadeInUp 0.3s ease",
+  },
+  modalIcon: { fontSize: "64px", marginBottom: "16px" },
+  modalTitle: { fontSize: "28px", fontWeight: "700", color: "#1e3a5f", marginBottom: "12px" },
+  modalText: { fontSize: "16px", color: "#334155", lineHeight: "1.5", marginBottom: "24px" },
+  modalButton: {
+    background: "linear-gradient(135deg, #3182ce, #2c5282)",
+    color: "white",
+    border: "none",
+    padding: "12px 24px",
+    borderRadius: "40px",
+    fontSize: "16px",
+    fontWeight: "600",
+    cursor: "pointer",
+    transition: "transform 0.2s, box-shadow 0.2s",
+  },
 };

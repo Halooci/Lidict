@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useNavigate } from 'react-router-dom';
 import Navbar from "../../komponen/Navbar";
 import SidebarMateri from "../../komponen/SidebarMateri";
-import { useNavigate } from 'react-router-dom';
+import { db } from "../../../config/firebase";
+import { doc, updateDoc, increment } from "firebase/firestore";
 
 // ===================== PENJELASAN PER BARIS =====================
 const PenjelasanPerBaris = ({ code }) => {
@@ -189,11 +191,7 @@ const CodeEditor = ({ code, codeKey, pyodideReady, runPythonCode }) => {
       <div style={styles.cardSection}>
         <div style={styles.codeEditorHeader}>
           <span style={styles.codeEditorTitle}>Contoh Kode Program</span>
-          <button
-            style={styles.runButton}
-            onClick={handleRun}
-            disabled={!pyodideReady}
-          >
+          <button style={styles.runButton} onClick={handleRun} disabled={!pyodideReady}>
             {pyodideReady ? "▶ Jalankan" : "⏳ Memuat..."}
           </button>
         </div>
@@ -207,9 +205,7 @@ const CodeEditor = ({ code, codeKey, pyodideReady, runPythonCode }) => {
           {/* Visualisasi Kode Program */}
           <div style={styles.cardSection}>
             <div style={styles.visualisasiHeader}>
-              <span style={styles.visualisasiHeaderTitle}>
-                Visualisasi Kode Program
-              </span>
+              <span style={styles.visualisasiHeaderTitle}>Visualisasi Kode Program</span>
             </div>
             <VisualisasiContoh codeKey={codeKey} output={output} />
           </div>
@@ -235,8 +231,7 @@ const CodeEditor = ({ code, codeKey, pyodideReady, runPythonCode }) => {
 
       {!showDetail && (
         <div style={styles.promptBox}>
-          ⚡ Klik tombol "Jalankan" untuk melihat visualisasi, output, dan
-          penjelasan.
+          ⚡ Klik tombol "Jalankan" untuk melihat visualisasi, output, dan penjelasan.
         </div>
       )}
     </div>
@@ -340,11 +335,7 @@ const CodeEditorEditable = ({ pyodideReady, runPythonCode }) => {
     <div style={styles.codeEditorContainer}>
       <div style={styles.codeEditorHeader}>
         <span style={styles.codeEditorTitle}>Ayo Praktik</span>
-        <button
-          style={styles.runButton}
-          onClick={handleRun}
-          disabled={!pyodideReady}
-        >
+        <button style={styles.runButton} onClick={handleRun} disabled={!pyodideReady}>
           {pyodideReady ? "▶ Jalankan" : "⏳ Memuat..."}
         </button>
       </div>
@@ -783,18 +774,51 @@ export default function PembuatanAksesNestedList() {
     }
   }, [navigate]);
 
-  
   const [pyodideReady, setPyodideReady] = useState(false);
   const pyodideRef = useRef(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isEksplorasiCompleted, setIsEksplorasiCompleted] = useState(false);
-  const [exerciseStatus, setExerciseStatus] = useState([
-    false,
-    false,
-    false,
-    false,
-    false,
-  ]);
+  const [exerciseStatus, setExerciseStatus] = useState([false, false, false, false, false]);
+
+  // State untuk bonus progres
+  const [allExercisesCorrect, setAllExercisesCorrect] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [bonusGiven, setBonusGiven] = useState(false);
+  const userId = localStorage.getItem('userId');
+
+  // Cek apakah bonus sudah pernah diberikan untuk halaman ini
+  useEffect(() => {
+    const already = localStorage.getItem("pembuatan_akses_nested_bonus_done");
+    if (already === "true") setBonusGiven(true);
+  }, []);
+
+  // Monitor status latihan
+  useEffect(() => {
+    const allCorrect = exerciseStatus.every(v => v === true);
+    setAllExercisesCorrect(allCorrect);
+  }, [exerciseStatus]);
+
+  // Ketika semua latihan benar dan bonus belum diberikan, tampilkan modal
+  useEffect(() => {
+    if (allExercisesCorrect && !bonusGiven && userId) {
+      setShowModal(true);
+    }
+  }, [allExercisesCorrect, bonusGiven, userId]);
+
+  const handleCompleteAndNavigate = async () => {
+    try {
+      const mahasiswaRef = doc(db, "mahasiswa", userId);
+      await updateDoc(mahasiswaRef, {
+        progres_belajar: increment(1)
+      });
+      localStorage.setItem("pembuatan_akses_nested_bonus_done", "true");
+      setShowModal(false);
+      navigate("/NestedList/OperasiNestedList");
+    } catch (error) {
+      console.error("Gagal update progres:", error);
+      alert("Terjadi kesalahan. Silakan coba lagi.");
+    }
+  };
 
   // Menambahkan CSS global untuk efek hover pada tabel interaktif
   useEffect(() => {
@@ -902,7 +926,7 @@ _buffer.getvalue()`);
       return newStatus;
     });
   };
-  const allExercisesCorrect = exerciseStatus.every((v) => v === true);
+  const allExercisesCorrectFlag = exerciseStatus.every((v) => v === true);
 
   return (
     <>
@@ -932,12 +956,10 @@ _buffer.getvalue()`);
             <div style={styles.card}>
               <ol style={styles.list}>
                 <li>
-                  Mahasiswa mampu membuat nested list sesuai kebutuhan
-                  representasi data.
+                  Mahasiswa mampu membuat nested list sesuai kebutuhan representasi data.
                 </li>
                 <li>
-                  Mahasiswa mampu mengakses elemen nested list menggunakan
-                  indeks baris dan kolom.
+                  Mahasiswa mampu mengakses elemen nested list menggunakan indeks baris dan kolom.
                 </li>
               </ol>
             </div>
@@ -951,8 +973,7 @@ _buffer.getvalue()`);
                 <div style={styles.card}>
                   <h3 style={styles.subTitle}>Struktur Nested List</h3>
                   <p style={styles.text}>
-                    Nested list dapat dipandang sebagai tabel/matriks. Indeks
-                    pertama = baris, kedua = kolom.
+                    Nested list dapat dipandang sebagai tabel/matriks. Indeks pertama = baris, kedua = kolom.
                   </p>
                   <StrukturInteraktif />
                 </div>
@@ -961,24 +982,16 @@ _buffer.getvalue()`);
                 <div style={styles.card}>
                   <h3 style={styles.subTitle}>Membuat Nested List</h3>
                   <p style={styles.text}>
-                    <strong>Nested list</strong> adalah list yang di dalamnya
-                    berisi list lain. Struktur ini sangat berguna untuk
-                    merepresentasikan data dua dimensi seperti tabel, matriks,
-                    atau kumpulan data yang berelasi. Contoh sederhana:{" "}
-                    <code>matriks = [[1, 2, 3], [4, 5, 6]]</code> akan membuat
-                    sebuah nested list dengan 2 baris dan 3 kolom. Setiap baris
-                    ditulis sebagai list terpisah, dipisahkan koma, dan
-                    seluruhnya diapit tanda kurung siku. Anda juga dapat
-                    membuat nested list dengan panjang baris berbeda (dikenal
-                    sebagai <em>ragged array</em>), misalnya{" "}
+                    <strong>Nested list</strong> adalah list yang di dalamnya berisi list lain. Struktur ini sangat berguna untuk
+                    merepresentasikan data dua dimensi seperti tabel, matriks, atau kumpulan data yang berelasi. Contoh sederhana:{" "}
+                    <code>matriks = [[1, 2, 3], [4, 5, 6]]</code> akan membuat sebuah nested list dengan 2 baris dan 3 kolom. Setiap baris
+                    ditulis sebagai list terpisah, dipisahkan koma, dan seluruhnya diapit tanda kurung siku. Anda juga dapat membuat nested list
+                    dengan panjang baris berbeda (dikenal sebagai <em>ragged array</em>), misalnya{" "}
                     <code>data = [[1,2], [3,4,5], [6]]</code>.
                   </p>
                   <p style={styles.text}>
-                    Perhatikan penamaan variabel: gunakan nama yang deskriptif,
-                    misal <code>nilai_siswa</code>, <code>matriks</code>, atau{" "}
-                    <code>data_penjualan</code>. Dengan memahami cara membuat
-                    nested list, Anda dapat menyimpan data terstruktur dengan
-                    mudah.
+                    Perhatikan penamaan variabel: gunakan nama yang deskriptif, misal <code>nilai_siswa</code>, <code>matriks</code>, atau{" "}
+                    <code>data_penjualan</code>. Dengan memahami cara membuat nested list, Anda dapat menyimpan data terstruktur dengan mudah.
                   </p>
                   <CodeEditor
                     code={exampleCodes.pembuatan}
@@ -998,33 +1011,25 @@ _buffer.getvalue()`);
                 <div style={styles.card}>
                   <h3 style={styles.subTitle}>Mengakses Elemen</h3>
                   <p style={styles.text}>
-                    Untuk mengambil nilai dari nested list, Anda perlu
-                    menggunakan <strong>dua indeks</strong> (baris dan kolom).
-                    Indeks pertama menunjukkan nomor baris, indeks kedua
-                    menunjukkan nomor kolom. Ingatlah bahwa indeks dalam Python
-                    selalu dimulai dari <strong>0</strong>. Jadi baris pertama
-                    adalah indeks 0, kolom pertama juga indeks 0.
+                    Untuk mengambil nilai dari nested list, Anda perlu menggunakan <strong>dua indeks</strong> (baris dan kolom).
+                    Indeks pertama menunjukkan nomor baris, indeks kedua menunjukkan nomor kolom. Ingatlah bahwa indeks dalam Python
+                    selalu dimulai dari <strong>0</strong>. Jadi baris pertama adalah indeks 0, kolom pertama juga indeks 0.
                   </p>
                   <p style={styles.text}>
                     Misalkan <code>matriks = [[1, 2, 3], [4, 5, 6]]</code>:
                     <ul style={styles.list}>
                       <li>
-                        <code>matriks[0][0]</code> → mengakses baris 1, kolom 1
-                        → menghasilkan <strong>1</strong>.
+                        <code>matriks[0][0]</code> → mengakses baris 1, kolom 1 → menghasilkan <strong>1</strong>.
                       </li>
                       <li>
-                        <code>matriks[1][2]</code> → mengakses baris 2, kolom 3
-                        → menghasilkan <strong>6</strong>.
+                        <code>matriks[1][2]</code> → mengakses baris 2, kolom 3 → menghasilkan <strong>6</strong>.
                       </li>
                     </ul>
-                    Cara ini analog dengan koordinat (baris, kolom). Anda juga
-                    bisa mengakses seluruh baris dengan satu indeks, misal{" "}
-                    <code>matriks[0]</code> akan mengembalikan list{" "}
-                    <code>[1,2,3]</code>.
+                    Cara ini analog dengan koordinat (baris, kolom). Anda juga bisa mengakses seluruh baris dengan satu indeks, misal{" "}
+                    <code>matriks[0]</code> akan mengembalikan list <code>[1,2,3]</code>.
                   </p>
                   <p style={styles.text}>
-                    Pengaksesan elemen sangat penting untuk memproses data
-                    tabel, misalnya mencari nilai maksimum pada setiap kolom,
+                    Pengaksesan elemen sangat penting untuk memproses data tabel, misalnya mencari nilai maksimum pada setiap kolom,
                     atau menghitung rata-rata.
                   </p>
                   <CodeEditor
@@ -1041,16 +1046,14 @@ _buffer.getvalue()`);
                   <div style={styles.alertBox}>
                     <strong>Studi Kasus:</strong>
                     <p>
-                      Data: Siswa A=[3,6,9], Siswa B=[12,15,18]. Buat nested
-                      list 'matriks', cetak 3 dan 18.
+                      Data: Siswa A=[3,6,9], Siswa B=[12,15,18]. Buat nested list 'matriks', cetak 3 dan 18.
                     </p>
                     <p>
                       <strong>Instruksi:</strong>
                     </p>
                     <ol style={styles.instruksiList}>
                       <li>
-                        Buat nested list dengan variabel matriks dan berisi
-                        [3,6,9] [12,15,18]
+                        Buat nested list dengan variabel matriks dan berisi [3,6,9] [12,15,18]
                       </li>
                       <li>Cetak elemen 3</li>
                       <li>Cetak elemen 18</li>
@@ -1066,8 +1069,7 @@ _buffer.getvalue()`);
                 <h2 style={styles.sectionTitle}>Latihan</h2>
                 <div style={styles.card}>
                   <p style={styles.text}>
-                    Isilah bagian kosong pada kode. Jawab semua soal. Jika
-                    salah, Anda bisa mereset per soal. Setelah semua benar,
+                    Isilah bagian kosong pada kode. Jawab semua soal. Jika salah, Anda bisa mereset per soal. Setelah semua benar,
                     akan muncul ucapan selamat.
                   </p>
                   <CodeCompletionQuestion
@@ -1108,7 +1110,7 @@ _buffer.getvalue()`);
                     expectedOutput="4"
                     onCheck={handleExerciseCheck}
                   />
-                  {allExercisesCorrect && (
+                  {allExercisesCorrectFlag && (
                     <div style={styles.finalSuccessBox}>
                       🎉 Selamat! Semua jawaban benar.
                     </div>
@@ -1124,11 +1126,40 @@ _buffer.getvalue()`);
           )}
         </div>
       </div>
+
+      {/* Modal Sukses */}
+      {showModal && (
+        <div style={styles.modalOverlay}>
+          <div style={styles.modal}>
+            <div style={styles.modalIcon}>🎉</div>
+            <h2 style={styles.modalTitle}>Selamat!</h2>
+            <p style={styles.modalText}>
+              Anda telah menyelesaikan materi ini dengan sempurna.
+              <br />
+              Materi selanjutnya akan terbuka.
+            </p>
+            <button style={styles.modalButton} onClick={handleCompleteAndNavigate}>
+              Lanjut ke materi selanjutnya 🚀
+            </button>
+          </div>
+        </div>
+      )}
+
+      <style>{`
+        @keyframes fadeInUp {
+          from { opacity: 0; transform: translateY(30px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .modalButton:hover {
+          transform: scale(1.02);
+          box-shadow: 0 5px 15px rgba(49,130,206,0.3);
+        }
+      `}</style>
     </>
   );
 }
 
-// ===================== STYLES =====================
+// ===================== STYLES (diperluas dengan modal) =====================
 const styles = {
   page: {
     padding: "30px 40px",
@@ -1543,4 +1574,42 @@ const styles = {
     padding: "10px 15px",
   },
   visualisasiHeaderTitle: { fontWeight: "600", fontSize: "15px" },
+  // Modal styles
+  modalOverlay: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    backdropFilter: "blur(4px)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 2000,
+  },
+  modal: {
+    background: "white",
+    borderRadius: "32px",
+    padding: "32px",
+    maxWidth: "450px",
+    width: "90%",
+    textAlign: "center",
+    boxShadow: "0 20px 35px rgba(0,0,0,0.2)",
+    animation: "fadeInUp 0.3s ease",
+  },
+  modalIcon: { fontSize: "64px", marginBottom: "16px" },
+  modalTitle: { fontSize: "28px", fontWeight: "700", color: "#1e3a5f", marginBottom: "12px" },
+  modalText: { fontSize: "16px", color: "#334155", lineHeight: "1.5", marginBottom: "24px" },
+  modalButton: {
+    background: "linear-gradient(135deg, #3182ce, #2c5282)",
+    color: "white",
+    border: "none",
+    padding: "12px 24px",
+    borderRadius: "40px",
+    fontSize: "16px",
+    fontWeight: "600",
+    cursor: "pointer",
+    transition: "transform 0.2s, box-shadow 0.2s",
+  },
 };
