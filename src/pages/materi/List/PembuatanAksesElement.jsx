@@ -1,9 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useNavigate } from 'react-router-dom';
 import Navbar from "../../komponen/Navbar";
 import SidebarMateri from "../../komponen/SidebarMateri";
-import { useNavigate } from 'react-router-dom';
+import { db } from "../../../config/firebase";
+import { doc, updateDoc, increment } from "firebase/firestore";
 
-// ================= STYLE GLOBAL =================
+// ================= STYLE GLOBAL (sama seperti kode asli, ditambah style modal) =================
 const styles = {
   page: {
     padding: "30px 40px",
@@ -138,9 +140,8 @@ const styles = {
     wordWrap: "break-word",
     lineHeight: "1.5",
   },
-  // Style penjelasan DARK THEME dengan header BIRU (tanpa emoji)
   explanationHeader: {
-    backgroundColor: "#306998", // Biru seperti contoh gambar
+    backgroundColor: "#306998",
     color: "white",
     padding: "10px 15px",
     fontWeight: "600",
@@ -162,7 +163,7 @@ const styles = {
   },
   explanationLineNumber: {
     fontWeight: "bold",
-    color: "#61afef", // Biru terang
+    color: "#61afef",
     marginRight: "8px",
   },
   explanationCode: {
@@ -351,9 +352,47 @@ const styles = {
     fontSize: "14px",
   },
   feedback: { marginTop: "8px", fontSize: "14px", fontStyle: "italic", color: "#333" },
+  // Modal styles
+  modalOverlay: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    backdropFilter: "blur(4px)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 2000,
+  },
+  modal: {
+    background: "white",
+    borderRadius: "32px",
+    padding: "32px",
+    maxWidth: "450px",
+    width: "90%",
+    textAlign: "center",
+    boxShadow: "0 20px 35px rgba(0,0,0,0.2)",
+    animation: "fadeInUp 0.3s ease",
+  },
+  modalIcon: { fontSize: "64px", marginBottom: "16px" },
+  modalTitle: { fontSize: "28px", fontWeight: "700", color: "#1e3a5f", marginBottom: "12px" },
+  modalText: { fontSize: "16px", color: "#334155", lineHeight: "1.5", marginBottom: "24px" },
+  modalButton: {
+    background: "linear-gradient(135deg, #3182ce, #2c5282)",
+    color: "white",
+    border: "none",
+    padding: "12px 24px",
+    borderRadius: "40px",
+    fontSize: "16px",
+    fontWeight: "600",
+    cursor: "pointer",
+    transition: "transform 0.2s, box-shadow 0.2s",
+  },
 };
 
-// ================= KOMPONEN VISUALISASI LIST =================
+// ================= KOMPONEN VISUALISASI LIST (sama seperti asli) =================
 const ListVisualization = ({ data, title, highlightSequence, processExplanation, hidePositive = false, hideNegative = false, disableHover = false }) => {
   const [currentHighlight, setCurrentHighlight] = useState(null);
   const [explanationText, setExplanationText] = useState("");
@@ -502,7 +541,7 @@ const visStyles = {
   note: { fontSize: "12px", color: "#666", marginTop: "10px", textAlign: "center" },
 };
 
-// ================= KOMPONEN CODE EDITOR (URUTAN: KODE -> VISUAL -> OUTPUT -> PENJELASAN) =================
+// ================= KOMPONEN CODE EDITOR (sama seperti asli) =================
 const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, highlightMapping, pyodideReady, runPythonCode, hidePositive = false, hideNegative = false, disableHover = false, lineExplanations }) => {
   const [output, setOutput] = useState("");
   const [isRunning, setIsRunning] = useState(false);
@@ -537,7 +576,6 @@ const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, highlightM
     }
   }, [pyodideReady, code, runPythonCode, highlightMapping]);
 
-  // Render penjelasan per baris dengan dark theme, header biru, tanpa emoji
   const renderLineExplanations = () => {
     if (!lineExplanations || lineExplanations.length === 0) return null;
     const lines = code.split("\n");
@@ -570,12 +608,10 @@ const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, highlightM
         </button>
       </div>
 
-      {/* CONTOH KODE PROGRAM */}
       <div style={styles.codeInputReadOnly}>
         <pre style={styles.codePre}>{code}</pre>
       </div>
 
-      {/* VISUALISASI */}
       <div style={styles.visualHeader}>Visualisasi Kode Program</div>
       <div style={styles.visualArea}>
         {showVisual && visualData ? (
@@ -593,7 +629,6 @@ const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, highlightM
         )}
       </div>
 
-      {/* OUTPUT */}
       <div style={styles.outputHeader}>
         <span style={styles.outputTitle}>Output</span>
       </div>
@@ -601,7 +636,6 @@ const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, highlightM
         <pre style={styles.outputContent}>{output || "(Klik tombol di atas untuk menjalankan kode)"}</pre>
       </div>
 
-      {/* PENJELASAN PER BARIS (setelah output) - TANPA EMOJI, HEADER BIRU */}
       {showExplanations && lineExplanations && lineExplanations.length > 0 && (
         <>
           <div style={styles.explanationHeader}>
@@ -616,7 +650,7 @@ const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, highlightM
   );
 };
 
-// ================= KOMPONEN UNTUK LATIHAN PRAKTIK CODING (VALIDASI BERTAHAP) =================
+// ================= KOMPONEN UNTUK LATIHAN PRAKTIK CODING (sama seperti asli) =================
 const CodeEditorEditable = ({ title, pyodideReady, runPythonCode }) => {
   const [localCode, setLocalCode] = useState("");
   const [output, setOutput] = useState("");
@@ -886,6 +920,7 @@ const GuessOutputQuestion = ({ question, codeSnippet, expectedOutput, index, onC
 export default function PembuatanAksesElement() {
   const navigate = useNavigate();
 
+  // Cek login
   useEffect(() => {
     const userId = localStorage.getItem('userId');
     const userEmail = localStorage.getItem('userEmail');
@@ -894,7 +929,6 @@ export default function PembuatanAksesElement() {
     }
   }, [navigate]);
 
-  
   const [pyodideReady, setPyodideReady] = useState(false);
   const pyodideRef = useRef(null);
   const [correctStatus, setCorrectStatus] = useState([false, false, false, false, false]);
@@ -902,6 +936,17 @@ export default function PembuatanAksesElement() {
   const [eksplorasiSelected, setEksplorasiSelected] = useState([null, null]);
   const [eksplorasiFeedback, setEksplorasiFeedback] = useState(["", ""]);
   const [isEksplorasiCompleted, setIsEksplorasiCompleted] = useState(false);
+
+  // State untuk modal dan bonus
+  const [showModal, setShowModal] = useState(false);
+  const [bonusGiven, setBonusGiven] = useState(false);
+  const userId = localStorage.getItem('userId');
+
+  // Cek apakah sudah pernah dapat bonus
+  useEffect(() => {
+    const already = localStorage.getItem("pembuatan_akses_bonus_done");
+    if (already === "true") setBonusGiven(true);
+  }, []);
 
   const eksplorasiQuestions = [
     {
@@ -1018,7 +1063,6 @@ print("Indeks 1 sampai 3:", angka[1:4])`;
     ]
   });
 
-  // Penjelasan per baris (dark theme)
   const lineExplanationsPositif = [
     "Komentar: Memberi tahu bahwa list ini berisi tipe data campuran.",
     "Membuat list bernama 'data' dengan elemen: string 'apel', integer 100, boolean True, float 3.14.",
@@ -1078,6 +1122,28 @@ print(angka[-2])`;
   };
 
   const allCorrect = correctStatus.every(v => v === true);
+
+  // Monitor ketika semua soal benar dan bonus belum diberikan -> tampilkan modal
+  useEffect(() => {
+    if (allCorrect && !bonusGiven && userId) {
+      setShowModal(true);
+    }
+  }, [allCorrect, bonusGiven, userId]);
+
+  const handleCompleteAndNavigate = async () => {
+    try {
+      const mahasiswaRef = doc(db, "mahasiswa", userId);
+      await updateDoc(mahasiswaRef, {
+        progres_belajar: increment(1)
+      });
+      localStorage.setItem("pembuatan_akses_bonus_done", "true");
+      setShowModal(false);
+      navigate("/List/OperasiDanManipulasi");
+    } catch (error) {
+      console.error("Gagal update progres:", error);
+      alert("Terjadi kesalahan. Silakan coba lagi.");
+    }
+  };
 
   useEffect(() => {
     const loadPyodide = async () => {
@@ -1382,9 +1448,9 @@ nilai3 = 78
                     onCorrectChange={handleCorrectChange}
                   />
 
-                  {allCorrect && (
+                  {allCorrect && !bonusGiven && (
                     <div style={styles.finalSuccessBox}>
-                      Selamat! Anda telah menyelesaikan semua soal dengan benar.
+                      Selamat! Anda telah menyelesaikan semua soal dengan benar. Klik tombol di bawah untuk melanjutkan.
                     </div>
                   )}
                 </div>
@@ -1393,6 +1459,34 @@ nilai3 = 78
           )}
         </div>
       </div>
+
+      {/* Modal Sukses */}
+      {showModal && (
+        <div style={styles.modalOverlay}>
+          <div style={styles.modal}>
+            <div style={styles.modalIcon}>🎉</div>
+            <h2 style={styles.modalTitle}>Selamat!</h2>
+            <p style={styles.modalText}>
+              Anda telah menyelesaikan semua latihan dengan sempurna.<br />
+              Progres belajar Anda bertambah! Materi selanjutnya akan terbuka.
+            </p>
+            <button style={styles.modalButton} onClick={handleCompleteAndNavigate}>
+              Lanjut ke Operasi dan Manipulasi 🚀
+            </button>
+          </div>
+        </div>
+      )}
+
+      <style>{`
+        @keyframes fadeInUp {
+          from { opacity: 0; transform: translateY(30px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .modalButton:hover {
+          transform: scale(1.02);
+          box-shadow: 0 5px 15px rgba(49,130,206,0.3);
+        }
+      `}</style>
     </>
   );
 }
