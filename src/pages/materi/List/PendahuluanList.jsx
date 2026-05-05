@@ -2,6 +2,8 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import Navbar from "../../komponen/Navbar";
 import SidebarMateri from "../../komponen/SidebarMateri";
 import { useNavigate } from 'react-router-dom';
+import { db } from "../../../config/firebase";
+import { doc, updateDoc, increment } from "firebase/firestore";
 
 // ================= STYLE GLOBAL =================
 const styles = {
@@ -322,16 +324,28 @@ const CodeEditor = ({ code, title, pyodideReady, runPythonCode }) => {
 // ================= KOMPONEN UTAMA =================
 export default function PendahuluanList() {
   const navigate = useNavigate();
+  const [userId, setUserId] = useState(null);
+  const [showCompletionModal, setShowCompletionModal] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [bonusGiven, setBonusGiven] = useState(false);
 
+  // Ambil userId dari localStorage
   useEffect(() => {
-    const userId = localStorage.getItem('userId');
+    const uid = localStorage.getItem('userId');
     const userEmail = localStorage.getItem('userEmail');
-    if (!userId || !userEmail) {
+    if (!uid || !userEmail) {
       navigate('/loginregister');
+    } else {
+      setUserId(uid);
     }
   }, [navigate]);
 
-  
+  // Cek apakah bonus sudah pernah diberikan
+  useEffect(() => {
+    const already = localStorage.getItem("pendahuluanlist_bonus_done");
+    if (already === "true") setBonusGiven(true);
+  }, []);
+
   const [pyodideReady, setPyodideReady] = useState(false);
   const pyodideRef = useRef(null);
 
@@ -550,6 +564,37 @@ sys.stdout = StringIO()
   const isPrevDisabled = quizCurrent === 0;
   const isLastQuestion = quizCurrent === quizQuestions.length - 1;
   const isAllCorrect = quizLocked.every(locked => locked === true);
+
+  // Effect untuk memunculkan modal ketika semua jawaban benar dan bonus belum diberikan
+  useEffect(() => {
+    if (!userId) return;
+    if (bonusGiven) return;
+    if (isAllCorrect && !showCompletionModal && !isProcessing) {
+      setShowCompletionModal(true);
+    }
+  }, [isAllCorrect, userId, bonusGiven, showCompletionModal, isProcessing]);
+
+  // Fungsi untuk menangani konfirmasi dari modal
+  const handleCompleteAndContinue = async () => {
+    if (isProcessing) return;
+    setIsProcessing(true);
+
+    try {
+      const mahasiswaRef = doc(db, "mahasiswa", userId);
+      await updateDoc(mahasiswaRef, {
+        progres_belajar: increment(1)
+      });
+      localStorage.setItem("pendahuluanlist_bonus_done", "true");
+      setBonusGiven(true);
+      setShowCompletionModal(false);
+      navigate("/List/PembuatanAksesElement");
+    } catch (error) {
+      console.error("Gagal update progres:", error);
+      alert("Terjadi kesalahan saat menyimpan progres. Silakan coba lagi.");
+      setIsProcessing(false);
+      setShowCompletionModal(false);
+    }
+  };
 
   return (
     <>
@@ -782,7 +827,8 @@ nilai3 = 78
                       </button>
                     )}
                   </div>
-                  {isAllCorrect && (
+                  {/* Hanya sebagai fallback, modal akan menggantikan pesan sukses ini */}
+                  {isAllCorrect && !bonusGiven && (
                     <div style={styles.finalSuccessBox}>
                       Selamat! Anda telah menyelesaikan semua soal dengan benar.
                     </div>
@@ -793,6 +839,92 @@ nilai3 = 78
           )}
         </div>
       </div>
+
+      {/* MODAL POP-UP */}
+      {showCompletionModal && (
+        <div style={modalStyles.overlay}>
+          <div style={modalStyles.modal}>
+            <div style={modalStyles.modalHeader}>
+              <div style={modalStyles.icon}>🎉</div>
+              <h2 style={modalStyles.title}>Selamat!</h2>
+            </div>
+            <p style={modalStyles.message}>
+              Anda telah menyelesaikan semua soal Latihan dengan sempurna.
+            </p>
+            <p style={modalStyles.subMessage}>
+              Progres belajar Anda akan bertambah dan Anda akan melanjutkan ke materi berikutnya.
+            </p>
+            <button 
+              style={modalStyles.button} 
+              onClick={handleCompleteAndContinue}
+              disabled={isProcessing}
+            >
+              {isProcessing ? "Memproses..." : "OKE, Lanjutkan"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      <style>{`
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes slideUp {
+          from { opacity: 0; transform: translateY(30px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
     </>
   );
 }
+
+// Styles untuk modal
+const modalStyles = {
+  overlay: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
+    backdropFilter: "blur(4px)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 1000,
+    animation: "fadeIn 0.2s ease-out",
+  },
+  modal: {
+    backgroundColor: "white",
+    borderRadius: "32px",
+    padding: "32px",
+    width: "90%",
+    maxWidth: "450px",
+    textAlign: "center",
+    boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+    animation: "slideUp 0.3s ease-out",
+  },
+  modalHeader: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    marginBottom: "20px",
+  },
+  icon: { fontSize: "56px", marginBottom: "8px" },
+  title: { fontSize: "28px", fontWeight: "700", color: "#1e293b", margin: 0 },
+  message: { fontSize: "18px", color: "#334155", marginBottom: "12px", lineHeight: "1.5" },
+  subMessage: { fontSize: "14px", color: "#64748b", marginBottom: "28px", lineHeight: "1.5" },
+  button: {
+    background: "linear-gradient(135deg, #306998, #2b4b8a)",
+    color: "white",
+    border: "none",
+    padding: "12px 28px",
+    borderRadius: "40px",
+    fontSize: "16px",
+    fontWeight: "600",
+    cursor: "pointer",
+    transition: "transform 0.1s ease, box-shadow 0.1s ease",
+    boxShadow: "0 4px 10px rgba(0, 0, 0, 0.1)",
+  },
+};

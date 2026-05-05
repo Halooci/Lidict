@@ -1,9 +1,16 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Navbar from "../../komponen/Navbar";
 import SidebarMateri from "../../komponen/SidebarMateri";
+import { db } from "../../../config/firebase";
+import { doc, updateDoc, increment } from "firebase/firestore";
 
 export default function Apersepsi() {
+  const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [userId, setUserId] = useState(null);
+  const [showCompletionModal, setShowCompletionModal] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   // ==================== MATERI 1: VARIABEL & TIPE DATA ====================
   const [dragDropAnswers, setDragDropAnswers] = useState({
@@ -58,7 +65,6 @@ export default function Apersepsi() {
 
   const [varPilihanAnswer, setVarPilihanAnswer] = useState(null);
   const [varPilihanFeedback, setVarPilihanFeedback] = useState("");
-  const varPilihanQuestion = "Manakah penulisan variabel yang benar di Python?";
   const varPilihanOptions = [
     "1nama = 'Andi'",
     "nama = 'Andi'",
@@ -90,7 +96,6 @@ export default function Apersepsi() {
   // ==================== MATERI 2: OPERATOR ====================
   const [operatorAnswer, setOperatorAnswer] = useState(null);
   const [operatorFeedback, setOperatorFeedback] = useState("");
-  const operatorQuestion = "Berapakah hasil dari 15 // 4 ?";
   const operatorOptions = ["3.75", "3", "4", "1", "Error"];
   const operatorCorrect = 1;
   const handleOperator = (idx) => {
@@ -104,7 +109,6 @@ export default function Apersepsi() {
 
   const [modulusAnswer, setModulusAnswer] = useState(null);
   const [modulusFeedback, setModulusFeedback] = useState("");
-  const modulusQuestion = "Hasil dari 10 % 3 adalah ...";
   const modulusOptions = ["3", "1", "0", "3.33", "Error"];
   const modulusCorrect = 1;
   const handleModulus = (idx) => {
@@ -141,7 +145,6 @@ export default function Apersepsi() {
 
   const [outputAnswer, setOutputAnswer] = useState(null);
   const [outputFeedback, setOutputFeedback] = useState("");
-  const outputQuestion = "Fungsi untuk menampilkan teks ke layar adalah ...";
   const outputOptions = ["input()", "print()", "output()", "display()", "write()"];
   const outputCorrect = 1;
   const handleOutput = (idx) => {
@@ -164,6 +167,89 @@ export default function Apersepsi() {
     }
   };
 
+  // Ambil userId dari localStorage
+  useEffect(() => {
+    const uid = localStorage.getItem("userId");
+    if (!uid) {
+      navigate("/loginregister");
+      return;
+    }
+    setUserId(uid);
+  }, [navigate]);
+
+  // Cek apakah sudah pernah memberikan bonus (untuk mencegah double)
+  const [bonusGiven, setBonusGiven] = useState(false);
+  useEffect(() => {
+    const already = localStorage.getItem("apersepsi_bonus_done");
+    if (already === "true") setBonusGiven(true);
+  }, []);
+
+  // Fungsi untuk mengecek apakah semua aktivitas sudah dijawab dengan benar
+  const isAllActivitiesCorrect = () => {
+    if (!dragDropAllDone) return false;
+    if (varPilihanAnswer !== varPilihanCorrect) return false;
+    if (!tipeNilaiFeedback.startsWith("✓")) return false;
+    if (operatorAnswer !== operatorCorrect) return false;
+    if (modulusAnswer !== modulusCorrect) return false;
+    if (!pangkatFeedback.startsWith("✓")) return false;
+    if (!ioFeedback.startsWith("✓")) return false;
+    if (outputAnswer !== outputCorrect) return false;
+    if (!printVarFeedback.startsWith("✓")) return false;
+    return true;
+  };
+
+  // Effect untuk memunculkan modal ketika semua aktivitas benar dan bonus belum diberikan
+  useEffect(() => {
+    if (!userId) return;
+    if (bonusGiven) return;
+    if (isAllActivitiesCorrect() && !showCompletionModal && !isProcessing) {
+      setShowCompletionModal(true);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    dragDropAllDone,
+    varPilihanAnswer,
+    tipeNilaiFeedback,
+    operatorAnswer,
+    modulusAnswer,
+    pangkatFeedback,
+    ioFeedback,
+    outputAnswer,
+    printVarFeedback,
+    userId,
+    bonusGiven,
+    showCompletionModal,
+    isProcessing,
+  ]);
+
+  // Fungsi untuk menangani konfirmasi dari modal
+  const handleCompleteAndContinue = async () => {
+    if (isProcessing) return;
+    setIsProcessing(true);
+
+    try {
+      // Update progres belajar di Firestore
+      const mahasiswaRef = doc(db, "mahasiswa", userId);
+      await updateDoc(mahasiswaRef, {
+        progres_belajar: increment(1)
+      });
+
+      // Tandai bonus sudah diberikan di localStorage
+      localStorage.setItem("apersepsi_bonus_done", "true");
+      setBonusGiven(true);
+      setShowCompletionModal(false);
+
+      // Navigasi ke halaman list pendahuluan
+      navigate("/list/pendahuluanlist");
+    } catch (error) {
+      console.error("Gagal update progres:", error);
+      alert("Terjadi kesalahan saat menyimpan progres. Silakan coba lagi.");
+      setIsProcessing(false);
+      setShowCompletionModal(false);
+    }
+  };
+
+  // Animasi fade-in
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -241,10 +327,9 @@ nama = "Andi" # string
 status = True # boolean`}
               </pre>
 
-              {/* Drag & Drop */}
               <div style={styles.activityWrapper}>
                 <div style={styles.activityTitle}>🎯 Aktivitas 1.1 - Cocokkan Tipe Data</div>
-                <p style={styles.instruction}>Seret kotak tipe data (int, float, str, bool) ke nilai yang sesuai. Zona yang benar akan berwarna hijau, zona yang salah akan berwarna merah.</p>
+                <p style={styles.instruction}>Seret kotak tipe data (int, float, str, bool) ke nilai yang sesuai.</p>
                 <div style={styles.dragContainer}>
                   <div style={styles.dragItems}>
                     {dragItems.map((item) => (
@@ -260,41 +345,29 @@ status = True # boolean`}
                     ))}
                   </div>
                   <div style={styles.dropZones}>
-                    {targets.map((target) => {
-                      const isAnswered = dragDropAnswers[target] !== null;
-                      const isCorrect = dragDropStatus[target];
-                      return (
-                        <div
-                          key={target}
-                          onDragOver={handleDragOver}
-                          onDrop={(e) => handleDrop(e, target)}
-                          style={{
-                            ...styles.dropZone,
-                            backgroundColor: isAnswered
-                              ? (isCorrect ? "#d1fae5" : "#fee2e2")
-                              : "#f8fafc",
-                            borderColor: isAnswered
-                              ? (isCorrect ? "#10b981" : "#ef4444")
-                              : "#306998",
-                          }}
-                        >
-                          <span style={styles.targetValue}>{target}</span>
-                          <span style={styles.dropAnswer}>
-                            {dragDropAnswers[target]
-                              ? ` → ${dragDropAnswers[target]}`
-                              : " (kosong)"}
-                            {isAnswered && isCorrect && " ✓"}
-                            {isAnswered && !isCorrect && " ✗"}
-                          </span>
-                        </div>
-                      );
-                    })}
+                    {targets.map((target) => (
+                      <div
+                        key={target}
+                        onDragOver={handleDragOver}
+                        onDrop={(e) => handleDrop(e, target)}
+                        style={{
+                          ...styles.dropZone,
+                          backgroundColor: dragDropStatus[target] ? "#d1fae5" : "#f8fafc",
+                          borderColor: dragDropStatus[target] ? "#10b981" : "#306998",
+                        }}
+                      >
+                        <span style={styles.targetValue}>{target}</span>
+                        <span style={styles.dropAnswer}>
+                          {dragDropAnswers[target] ? ` → ${dragDropAnswers[target]}` : " (kosong)"}
+                          {dragDropStatus[target] && " ✓"}
+                        </span>
+                      </div>
+                    ))}
                   </div>
                 </div>
                 {dragDropAllDone && <div style={styles.successMsg}>✨ Semua cocok! Bagus.</div>}
               </div>
 
-              {/* Pilihan Ganda */}
               <div style={styles.activityWrapper}>
                 <div style={styles.activityTitle}>🎯 Aktivitas 1.2 - Aturan Penulisan Variabel</div>
                 <p style={styles.instruction}>Pilih satu jawaban yang paling benar.</p>
@@ -316,7 +389,6 @@ status = True # boolean`}
                 {varPilihanFeedback && <div style={styles.feedback}>{varPilihanFeedback}</div>}
               </div>
 
-              {/* Isian tipe data */}
               <div style={styles.activityWrapper}>
                 <div style={styles.activityTitle}>🎯 Aktivitas 1.3 - Tipe Data dari Nilai</div>
                 <p style={styles.instruction}>Tentukan tipe data dari nilai 5. Tulis jawaban dalam huruf kecil (contoh: int).</p>
@@ -356,48 +428,13 @@ status = True # boolean`}
                     </tr>
                   </thead>
                   <tbody>
-                    <tr style={styles.tableRow}>
-                      <td style={styles.tableCell}><code>+</code></td>
-                      <td style={styles.tableCell}>Penjumlahan</td>
-                      <td style={styles.tableCell}><code>10 + 5</code></td>
-                      <td style={styles.tableCell}>15</td>
-                    </tr>
-                    <tr style={styles.tableRow}>
-                      <td style={styles.tableCell}><code>-</code></td>
-                      <td style={styles.tableCell}>Pengurangan</td>
-                      <td style={styles.tableCell}><code>10 - 5</code></td>
-                      <td style={styles.tableCell}>5</td>
-                    </tr>
-                    <tr style={styles.tableRow}>
-                      <td style={styles.tableCell}><code>*</code></td>
-                      <td style={styles.tableCell}>Perkalian</td>
-                      <td style={styles.tableCell}><code>10 * 5</code></td>
-                      <td style={styles.tableCell}>50</td>
-                    </tr>
-                    <tr style={styles.tableRow}>
-                      <td style={styles.tableCell}><code>/</code></td>
-                      <td style={styles.tableCell}>Pembagian float</td>
-                      <td style={styles.tableCell}><code>10 / 3</code></td>
-                      <td style={styles.tableCell}>3.333...</td>
-                    </tr>
-                    <tr style={styles.tableRow}>
-                      <td style={styles.tableCell}><code>//</code></td>
-                      <td style={styles.tableCell}>Pembagian bulat</td>
-                      <td style={styles.tableCell}><code>10 // 3</code></td>
-                      <td style={styles.tableCell}>3</td>
-                    </tr>
-                    <tr style={styles.tableRow}>
-                      <td style={styles.tableCell}><code>%</code></td>
-                      <td style={styles.tableCell}>Sisa bagi (modulus)</td>
-                      <td style={styles.tableCell}><code>10 % 3</code></td>
-                      <td style={styles.tableCell}>1</td>
-                    </tr>
-                    <tr style={styles.tableRow}>
-                      <td style={styles.tableCell}><code>**</code></td>
-                      <td style={styles.tableCell}>Pangkat</td>
-                      <td style={styles.tableCell}><code>2 ** 3</code></td>
-                      <td style={styles.tableCell}>8</td>
-                    </tr>
+                    <tr style={styles.tableRow}><td style={styles.tableCell}><code>+</code></td><td style={styles.tableCell}>Penjumlahan</td><td style={styles.tableCell}><code>10 + 5</code></td><td style={styles.tableCell}>15</td></tr>
+                    <tr style={styles.tableRow}><td style={styles.tableCell}><code>-</code></td><td style={styles.tableCell}>Pengurangan</td><td style={styles.tableCell}><code>10 - 5</code></td><td style={styles.tableCell}>5</td></tr>
+                    <tr style={styles.tableRow}><td style={styles.tableCell}><code>*</code></td><td style={styles.tableCell}>Perkalian</td><td style={styles.tableCell}><code>10 * 5</code></td><td style={styles.tableCell}>50</td></tr>
+                    <tr style={styles.tableRow}><td style={styles.tableCell}><code>/</code></td><td style={styles.tableCell}>Pembagian float</td><td style={styles.tableCell}><code>10 / 3</code></td><td style={styles.tableCell}>3.333...</td></tr>
+                    <tr style={styles.tableRow}><td style={styles.tableCell}><code>//</code></td><td style={styles.tableCell}>Pembagian bulat</td><td style={styles.tableCell}><code>10 // 3</code></td><td style={styles.tableCell}>3</td></tr>
+                    <tr style={styles.tableRow}><td style={styles.tableCell}><code>%</code></td><td style={styles.tableCell}>Sisa bagi (modulus)</td><td style={styles.tableCell}><code>10 % 3</code></td><td style={styles.tableCell}>1</td></tr>
+                    <tr style={styles.tableRow}><td style={styles.tableCell}><code>**</code></td><td style={styles.tableCell}>Pangkat</td><td style={styles.tableCell}><code>2 ** 3</code></td><td style={styles.tableCell}>8</td></tr>
                   </tbody>
                 </table>
               </div>
@@ -541,9 +578,42 @@ print("Halo", ______)`}</pre>
         </div>
       </div>
 
+      {/* MODAL POP-UP */}
+      {showCompletionModal && (
+        <div style={modalStyles.overlay}>
+          <div style={modalStyles.modal}>
+            <div style={modalStyles.modalHeader}>
+              <div style={modalStyles.icon}>🎉</div>
+              <h2 style={modalStyles.title}>Selamat!</h2>
+            </div>
+            <p style={modalStyles.message}>
+              Anda telah menyelesaikan semua aktivitas Apersepsi dengan sempurna.
+            </p>
+            <p style={modalStyles.subMessage}>
+              Progres belajar Anda akan bertambah dan Anda akan melanjutkan ke materi berikutnya.
+            </p>
+            <button 
+              style={modalStyles.button} 
+              onClick={handleCompleteAndContinue}
+              disabled={isProcessing}
+            >
+              {isProcessing ? "Memproses..." : "OKE, Lanjutkan"}
+            </button>
+          </div>
+        </div>
+      )}
+
       <style>{`
         .fade-in { opacity: 0; transform: translateY(20px); transition: opacity 0.6s ease, transform 0.6s ease; }
         .fade-in-visible { opacity: 1; transform: translateY(0); }
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes slideUp {
+          from { opacity: 0; transform: translateY(30px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
       `}</style>
     </>
   );
@@ -578,6 +648,7 @@ const styles = {
     borderRadius: "3px",
   },
   headerTitle: { fontSize: "38px", fontWeight: "700", margin: "0", letterSpacing: "-0.5px" },
+  section: { marginBottom: "20px" },
   heroCard: {
     background: "linear-gradient(135deg, #ffffff, #fef9e3)",
     borderRadius: "32px",
@@ -663,4 +734,53 @@ const styles = {
   checkButton: { background: "#306998", color: "white", border: "none", padding: "10px 24px", borderRadius: "40px", cursor: "pointer", fontWeight: "600", transition: "0.2s" },
   feedback: { marginTop: "12px", padding: "10px 16px", borderRadius: "16px", background: "#f1f5f9", borderLeft: "5px solid #306998", fontWeight: "500", color: "#1e293b" },
   successMsg: { marginTop: "12px", padding: "10px", background: "#d1fae5", borderRadius: "16px", color: "#065f46", textAlign: "center", fontWeight: "500" },
+};
+
+const modalStyles = {
+  overlay: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0, 0, 0, 0.6)",
+    backdropFilter: "blur(4px)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 1000,
+    animation: "fadeIn 0.2s ease-out",
+  },
+  modal: {
+    backgroundColor: "white",
+    borderRadius: "32px",
+    padding: "32px",
+    width: "90%",
+    maxWidth: "450px",
+    textAlign: "center",
+    boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+    animation: "slideUp 0.3s ease-out",
+  },
+  modalHeader: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    marginBottom: "20px",
+  },
+  icon: { fontSize: "56px", marginBottom: "8px" },
+  title: { fontSize: "28px", fontWeight: "700", color: "#1e293b", margin: 0 },
+  message: { fontSize: "18px", color: "#334155", marginBottom: "12px", lineHeight: "1.5" },
+  subMessage: { fontSize: "14px", color: "#64748b", marginBottom: "28px", lineHeight: "1.5" },
+  button: {
+    background: "linear-gradient(135deg, #306998, #2b4b8a)",
+    color: "white",
+    border: "none",
+    padding: "12px 28px",
+    borderRadius: "40px",
+    fontSize: "16px",
+    fontWeight: "600",
+    cursor: "pointer",
+    transition: "transform 0.1s ease, box-shadow 0.1s ease",
+    boxShadow: "0 4px 10px rgba(0, 0, 0, 0.1)",
+  },
 };
