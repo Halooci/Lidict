@@ -1,7 +1,9 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from 'react-router-dom';
 import Navbar from "../../komponen/Navbar";
 import SidebarMateri from "../../komponen/SidebarMateri";
-import { useNavigate } from 'react-router-dom';
+import { db } from "../../../config/firebase";
+import { doc, updateDoc, increment } from "firebase/firestore";
 
 // ===================== KOMPONEN VISUALISASI DICTIONARY =====================
 const DictionaryVisualization = ({ data, title }) => {
@@ -186,10 +188,18 @@ export default function PendahuluanDictionary() {
     }
   }, [navigate]);
 
-  
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [showModal, setShowModal] = useState(false);
+  const [bonusGiven, setBonusGiven] = useState(false);
+  const userId = localStorage.getItem('userId');
 
-  // EKSPLORASI (pretest) - opsi A sampai E
+  // Cek apakah bonus sudah pernah diberikan
+  useEffect(() => {
+    const already = localStorage.getItem("pendahuluan_dict_bonus_done");
+    if (already === "true") setBonusGiven(true);
+  }, []);
+
+  // EKSPLORASI (pretest)
   const [eksplorasiSelected, setEksplorasiSelected] = useState([null, null, null]);
   const [eksplorasiFeedback, setEksplorasiFeedback] = useState(["", "", ""]);
   const [eksplorasiHasAnswered, setEksplorasiHasAnswered] = useState([false, false, false]);
@@ -265,7 +275,7 @@ export default function PendahuluanDictionary() {
     kota: "Jakarta"
   };
 
-  // Soal latihan pilihan ganda (5 soal) dengan opsi A sampai E
+  // Soal latihan pilihan ganda (5 soal)
   const latihanSoal = [
     {
       text: "Dictionary pada Python menggunakan tanda kurung ...",
@@ -328,16 +338,13 @@ export default function PendahuluanDictionary() {
   // Fungsi untuk memilih jawaban latihan
   const handleSelectLatihan = (index, optionIdx) => {
     if (isLockedLatihan[index]) return;
-    // Update jawaban
     setJawabanLatihan(prev => {
       const newJaw = [...prev];
       newJaw[index] = optionIdx;
       return newJaw;
     });
-    // Cek kebenaran jawaban ini sekarang
     const isCorrect = (optionIdx === latihanSoal[index].correct);
     if (isCorrect) {
-      // Jika benar, langsung kunci soal dan tandai benar
       setIsBenarLatihan(prev => {
         const newBenar = [...prev];
         newBenar[index] = true;
@@ -354,34 +361,27 @@ export default function PendahuluanDictionary() {
       const allTrue = updatedBenar.every(v => v === true);
       if (allTrue) setSemuaBenar(true);
     } else {
-      // Jika salah, set status benar jadi false (belum benar)
       setIsBenarLatihan(prev => {
         const newBenar = [...prev];
         newBenar[index] = false;
         return newBenar;
       });
-      // Jangan kunci, biarkan user coba lagi
-      // Jika sebelumnya semua benar, reset
       setSemuaBenar(false);
     }
   };
 
-  // Fungsi untuk memeriksa semua jawaban (tombol periksa)
   const handlePeriksaSemua = () => {
-    // Cek apakah semua soal sudah dipilih jawabannya (tidak null)
     const semuaTerisi = jawabanLatihan.every(jaw => jaw !== null);
     if (!semuaTerisi) {
       setPesanPeriksa("⚠️ Anda harus menjawab semua soal terlebih dahulu!");
       return;
     }
     setPesanPeriksa("");
-    // Evaluasi setiap jawaban yang masih belum benar
     for (let i = 0; i < latihanSoal.length; i++) {
-      if (isBenarLatihan[i]) continue; // sudah benar, skip
+      if (isBenarLatihan[i]) continue;
       const jawabanUser = jawabanLatihan[i];
       const isCorrect = (jawabanUser === latihanSoal[i].correct);
       if (isCorrect) {
-        // Jika jawaban benar, kunci dan tandai
         setIsBenarLatihan(prev => {
           const newBenar = [...prev];
           newBenar[i] = true;
@@ -392,13 +392,8 @@ export default function PendahuluanDictionary() {
           newLock[i] = true;
           return newLock;
         });
-      } else {
-        // Jika salah, beri tahu user (melalui state, akan muncul pesan di komponen)
-        // Tidak perlu kunci, biarkan user mengubah
-        // Tampilkan pesan error di masing-masing soal (sudah ada dari komponen LatihanSoal)
       }
     }
-    // Setelah pengecekan, cek apakah semua sudah benar
     setTimeout(() => {
       const semuaSudahBenar = isBenarLatihan.every(v => v === true);
       if (semuaSudahBenar) {
@@ -411,12 +406,33 @@ export default function PendahuluanDictionary() {
     }, 0);
   };
 
-  // Reset pesan periksa jika ada perubahan jawaban
   useEffect(() => {
     if (pesanPeriksa && !semuaBenar) {
       setPesanPeriksa("");
     }
   }, [jawabanLatihan, pesanPeriksa, semuaBenar]);
+
+  // Ketika semua latihan benar dan bonus belum diberikan, tampilkan modal
+  useEffect(() => {
+    if (semuaBenar && !bonusGiven && userId) {
+      setShowModal(true);
+    }
+  }, [semuaBenar, bonusGiven, userId]);
+
+  const handleCompleteAndNavigate = async () => {
+    try {
+      const mahasiswaRef = doc(db, "mahasiswa", userId);
+      await updateDoc(mahasiswaRef, {
+        progres_belajar: increment(1)
+      });
+      localStorage.setItem("pendahuluan_dict_bonus_done", "true");
+      setShowModal(false);
+      navigate("/Dictionary/PembuatanAksesElementDictionary");
+    } catch (error) {
+      console.error("Gagal update progres:", error);
+      alert("Terjadi kesalahan. Silakan coba lagi.");
+    }
+  };
 
   return (
     <>
@@ -577,11 +593,40 @@ export default function PendahuluanDictionary() {
           )}
         </div>
       </div>
+
+      {/* Modal Sukses */}
+      {showModal && (
+        <div style={styles.modalOverlay}>
+          <div style={styles.modal}>
+            <div style={styles.modalIcon}>🎉</div>
+            <h2 style={styles.modalTitle}>Selamat!</h2>
+            <p style={styles.modalText}>
+              Anda telah menyelesaikan materi ini dengan sempurna.
+              <br />
+              Materi selanjutnya akan terbuka.
+            </p>
+            <button style={styles.modalButton} onClick={handleCompleteAndNavigate}>
+              Lanjut ke materi selanjutnya 🚀
+            </button>
+          </div>
+        </div>
+      )}
+
+      <style>{`
+        @keyframes fadeInUp {
+          from { opacity: 0; transform: translateY(30px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .modalButton:hover {
+          transform: scale(1.02);
+          box-shadow: 0 5px 15px rgba(49,130,206,0.3);
+        }
+      `}</style>
     </>
   );
 }
 
-/* ================== STYLE ================== */
+/* ================== STYLES (diperluas dengan modal) ================== */
 const styles = {
   page: {
     padding: "30px 40px",
@@ -656,7 +701,6 @@ const styles = {
     transition: "all 0.2s",
     border: "1px solid #ddd",
     backgroundColor: "#fff",
-    cursor: "pointer",
     color: "#1f2937",
   },
   mcFeedback: {
@@ -706,5 +750,43 @@ const styles = {
     borderRadius: "8px",
     textAlign: "center",
     color: "#084298",
+  },
+  // Modal styles
+  modalOverlay: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    backdropFilter: "blur(4px)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 2000,
+  },
+  modal: {
+    background: "white",
+    borderRadius: "32px",
+    padding: "32px",
+    maxWidth: "450px",
+    width: "90%",
+    textAlign: "center",
+    boxShadow: "0 20px 35px rgba(0,0,0,0.2)",
+    animation: "fadeInUp 0.3s ease",
+  },
+  modalIcon: { fontSize: "64px", marginBottom: "16px" },
+  modalTitle: { fontSize: "28px", fontWeight: "700", color: "#1e3a5f", marginBottom: "12px" },
+  modalText: { fontSize: "16px", color: "#334155", lineHeight: "1.5", marginBottom: "24px" },
+  modalButton: {
+    background: "linear-gradient(135deg, #3182ce, #2c5282)",
+    color: "white",
+    border: "none",
+    padding: "12px 24px",
+    borderRadius: "40px",
+    fontSize: "16px",
+    fontWeight: "600",
+    cursor: "pointer",
+    transition: "transform 0.2s, box-shadow 0.2s",
   },
 };

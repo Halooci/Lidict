@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useNavigate } from 'react-router-dom';
 import Navbar from "../../komponen/Navbar";
 import SidebarMateri from "../../komponen/SidebarMateri";
-import { useNavigate } from 'react-router-dom';
+import { db } from "../../../config/firebase";
+import { doc, updateDoc, increment } from "firebase/firestore";
 
 // ===================== KOMPONEN VISUALISASI DICTIONARY =====================
 const DictionaryVisualization = ({ data, title, changedKeys = [], accessSequence = [], showClickDetail = true }) => {
@@ -440,8 +442,8 @@ const CodeEditorEditable = ({ codeKey, title, pyodideReady, runPythonCode, expec
   );
 };
 
-// ===================== KOMPONEN LATIHAN SOAL (LOCK PER SOAL) =====================
-const LatihanSoal = ({ questions, resetTrigger }) => {
+// ===================== KOMPONEN LATIHAN SOAL (LOCK PER SOAL) DENGAN CALLBACK =====================
+const LatihanSoal = ({ questions, resetTrigger, onAllCorrectChange }) => {
   const [answers, setAnswers] = useState(questions.map(() => null));
   const [feedback, setFeedback] = useState(questions.map(() => ""));
   const [locked, setLocked] = useState(questions.map(() => false));
@@ -454,7 +456,8 @@ const LatihanSoal = ({ questions, resetTrigger }) => {
     setLocked(questions.map(() => false));
     setGlobalError("");
     setAllCorrect(false);
-  }, [resetTrigger, questions]);
+    if (onAllCorrectChange) onAllCorrectChange(false);
+  }, [resetTrigger, questions, onAllCorrectChange]);
 
   const handleAnswerChange = (qIdx, optIdx) => {
     if (locked[qIdx]) return;
@@ -490,6 +493,7 @@ const LatihanSoal = ({ questions, resetTrigger }) => {
 
     const semuaBenar = newLocked.every(v => v === true);
     setAllCorrect(semuaBenar);
+    if (onAllCorrectChange) onAllCorrectChange(semuaBenar);
   };
 
   return (
@@ -542,6 +546,7 @@ const LatihanSoal = ({ questions, resetTrigger }) => {
 export default function ManipulasiDictionary() {
   const navigate = useNavigate();
 
+  // Auth check
   useEffect(() => {
     const userId = localStorage.getItem('userId');
     const userEmail = localStorage.getItem('userEmail');
@@ -550,11 +555,44 @@ export default function ManipulasiDictionary() {
     }
   }, [navigate]);
 
-  
   const [pyodideReady, setPyodideReady] = useState(false);
   const pyodideRef = useRef(null);
   const [resetInteractives, setResetInteractives] = useState(0);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+  // State untuk bonus progres
+  const [allLatihanCorrect, setAllLatihanCorrect] = useState(false);
+  const [showModal, setShowModal] = useState(false);
+  const [bonusGiven, setBonusGiven] = useState(false);
+  const userId = localStorage.getItem('userId');
+
+  // Cek apakah bonus sudah pernah diberikan untuk halaman ini
+  useEffect(() => {
+    const already = localStorage.getItem("manipulasi_dict_bonus_done");
+    if (already === "true") setBonusGiven(true);
+  }, []);
+
+  // Ketika semua latihan benar dan bonus belum diberikan, tampilkan modal
+  useEffect(() => {
+    if (allLatihanCorrect && !bonusGiven && userId) {
+      setShowModal(true);
+    }
+  }, [allLatihanCorrect, bonusGiven, userId]);
+
+  const handleCompleteAndNavigate = async () => {
+    try {
+      const mahasiswaRef = doc(db, "mahasiswa", userId);
+      await updateDoc(mahasiswaRef, {
+        progres_belajar: increment(1)
+      });
+      localStorage.setItem("manipulasi_dict_bonus_done", "true");
+      setShowModal(false);
+      navigate("/Dictionary/RangkumanDictionary");
+    } catch (error) {
+      console.error("Gagal update progres:", error);
+      alert("Terjadi kesalahan. Silakan coba lagi.");
+    }
+  };
 
   // EKSPLORASI
   const [eksplorasiSelected, setEksplorasiSelected] = useState([null, null, null]);
@@ -617,13 +655,11 @@ export default function ManipulasiDictionary() {
   const dataClearBefore = { nama: "Andi", usia: 25, kota: "Jakarta" };
   const dataClearAfter = {};
 
-  // Access sequences untuk animasi pada kolom "Sesudah"
   const accessUpdate = ["c", "d"];
   const accessPop = ["mangga"];
   const accessPopitem = ["z"];
   const accessClear = [];
 
-  // Kode contoh
   const exampleCodes = {
     update: `data = {"a": 1, "b": 2}
 data.update({"c": 3, "d": 4})
@@ -666,7 +702,6 @@ print("Setelah clear:", data)`,
     ],
   };
 
-  // Latihan soal
   const latihanQuestions = [
     {
       text: "Kode yang BENAR untuk menambahkan pasangan key-value baru 'kota': 'Bandung' ke dalam dictionary `data` yang sudah ada adalah ...",
@@ -957,13 +992,46 @@ _buffer.getvalue()
                 <h2 style={styles.sectionTitle}>Latihan</h2>
                 <div style={styles.card}>
                   <p style={styles.text}>Pilihlah jawaban yang tepat untuk setiap soal. Jawab semua soal, lalu klik "Periksa Semua Jawaban". Soal yang benar akan terkunci, soal yang salah dapat diperbaiki. Setelah semua jawaban benar, akan muncul pesan sukses.</p>
-                  <LatihanSoal questions={latihanQuestions} resetTrigger={resetInteractives} />
+                  <LatihanSoal 
+                    questions={latihanQuestions} 
+                    resetTrigger={resetInteractives} 
+                    onAllCorrectChange={setAllLatihanCorrect}
+                  />
                 </div>
               </section>
             </>
           )}
         </div>
       </div>
+
+      {/* Modal Sukses */}
+      {showModal && (
+        <div style={styles.modalOverlay}>
+          <div style={styles.modal}>
+            <div style={styles.modalIcon}>🎉</div>
+            <h2 style={styles.modalTitle}>Selamat!</h2>
+            <p style={styles.modalText}>
+              Anda telah menyelesaikan materi ini.
+              <br />
+              Materi selanjutnya terbuka.
+            </p>
+            <button style={styles.modalButton} onClick={handleCompleteAndNavigate}>
+              Lanjut ke materi selanjutnya 
+            </button>
+          </div>
+        </div>
+      )}
+
+      <style>{`
+        @keyframes fadeInUp {
+          from { opacity: 0; transform: translateY(30px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .modalButton:hover {
+          transform: scale(1.02);
+          box-shadow: 0 5px 15px rgba(49,130,206,0.3);
+        }
+      `}</style>
     </>
   );
 }
@@ -1214,5 +1282,43 @@ const styles = {
     color: "#0f5132",
     textAlign: "center",
     fontWeight: "bold"
+  },
+  // Modal styles
+  modalOverlay: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    backdropFilter: "blur(4px)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 2000,
+  },
+  modal: {
+    background: "white",
+    borderRadius: "32px",
+    padding: "32px",
+    maxWidth: "450px",
+    width: "90%",
+    textAlign: "center",
+    boxShadow: "0 20px 35px rgba(0,0,0,0.2)",
+    animation: "fadeInUp 0.3s ease",
+  },
+  modalIcon: { fontSize: "64px", marginBottom: "16px" },
+  modalTitle: { fontSize: "28px", fontWeight: "700", color: "#1e3a5f", marginBottom: "12px" },
+  modalText: { fontSize: "16px", color: "#334155", lineHeight: "1.5", marginBottom: "24px" },
+  modalButton: {
+    background: "linear-gradient(135deg, #3182ce, #2c5282)",
+    color: "white",
+    border: "none",
+    padding: "12px 24px",
+    borderRadius: "40px",
+    fontSize: "16px",
+    fontWeight: "600",
+    cursor: "pointer",
+    transition: "transform 0.2s, box-shadow 0.2s",
   },
 };

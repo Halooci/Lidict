@@ -2,6 +2,8 @@ import { useState, useEffect, useRef } from "react";
 import Navbar from "../../komponen/Navbar";
 import SidebarMateri from "../../komponen/SidebarMateri";
 import { useNavigate } from 'react-router-dom';
+import { db } from "../../../config/firebase";
+import { doc, getDoc, updateDoc, increment } from "firebase/firestore";
 
 export default function EvaluasiAkhir() {
   const navigate = useNavigate();
@@ -14,7 +16,6 @@ export default function EvaluasiAkhir() {
     }
   }, [navigate]);
 
-  
   // ---------- QUIZ STATE ----------
   const [quizStarted, setQuizStarted] = useState(false);
   const [quizSubmitted, setQuizSubmitted] = useState(false);
@@ -26,11 +27,20 @@ export default function EvaluasiAkhir() {
   const [score, setScore] = useState(null);
   const [correctCount, setCorrectCount] = useState(null);
   const [wrongCount, setWrongCount] = useState(null);
+  const [savingData, setSavingData] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [bonusGiven, setBonusGiven] = useState(false);
 
   const timerIntervalRef = useRef(null);
+  const userId = localStorage.getItem('userId');
+
+  // Cek apakah bonus sudah pernah diberikan untuk halaman ini
+  useEffect(() => {
+    const already = localStorage.getItem("evaluasi_bonus_done");
+    if (already === "true") setBonusGiven(true);
+  }, []);
 
   // ---------- SOAL PILIHAN GANDA (List, Nested List, Dictionary) ----------
-  // 20 soal dengan taksonomi Bloom (C1 s.d. C6)
   const questions = [
     // ==================== LIST (7 soal) ====================
     {
@@ -283,7 +293,7 @@ export default function EvaluasiAkhir() {
     "B"  // soal19: huruf 'p' muncul 1 kali
   ];
 
-  // ---------- HELPER FUNCTIONS (sama seperti asli) ----------
+  // ---------- HELPER FUNCTIONS ----------
   const stopTimer = () => {
     if (timerIntervalRef.current) {
       clearInterval(timerIntervalRef.current);
@@ -319,14 +329,20 @@ export default function EvaluasiAkhir() {
     return { correct, wrong, totalScore, timeTaken };
   };
 
-  const handleSubmitQuiz = (isAuto = false) => {
+  // Fungsi submit dengan penyimpanan ke Firestore
+  const handleSubmitQuiz = async (isAuto = false) => {
     if (quizSubmitted) return;
-
     if (!isAuto) {
-      const confirmSubmit = window.confirm("Apakah Anda yakin ingin mengumpulkan jawaban?");
-      if (!confirmSubmit) return;
+      // Tampilkan modal konfirmasi
+      setShowConfirmModal(true);
+      return;
     }
+    // Untuk auto submit (timer habis) langsung proses tanpa modal
+    await processSubmit();
+  };
 
+  const processSubmit = async () => {
+    if (quizSubmitted) return;
     stopTimer();
 
     const { correct, wrong, totalScore, timeTaken } = computeResult();
@@ -335,6 +351,59 @@ export default function EvaluasiAkhir() {
     setScore(totalScore);
     setDuration(timeTaken);
     setQuizSubmitted(true);
+    setShowConfirmModal(false);
+
+    // Simpan nilai ke Firestore dan update progres
+    setSavingData(true);
+    try {
+      if (!userId) throw new Error("User ID tidak ditemukan");
+
+      // 1. Simpan nilai ke koleksi "nilai" dengan field "Evaluasi"
+      const nilaiRef = doc(db, "nilai", userId);
+      const nilaiDoc = await getDoc(nilaiRef);
+      if (nilaiDoc.exists()) {
+        await updateDoc(nilaiRef, {
+          Evaluasi: totalScore
+        });
+      } else {
+        console.warn("Dokumen nilai tidak ditemukan, membuat baru");
+      }
+
+      // 2. Ambil token mahasiswa dari koleksi mahasiswa
+      const mahasiswaRef = doc(db, "mahasiswa", userId);
+      const mahasiswaDoc = await getDoc(mahasiswaRef);
+      if (!mahasiswaDoc.exists()) throw new Error("Data mahasiswa tidak ditemukan");
+      const tokenMahasiswa = mahasiswaDoc.data().Token_mahasiswa;
+      if (!tokenMahasiswa) throw new Error("Token kelas tidak ditemukan");
+
+      // 3. Ambil KKM dari koleksi kkm berdasarkan token
+      const kkmRef = doc(db, "kkm", tokenMahasiswa);
+      const kkmDoc = await getDoc(kkmRef);
+      if (!kkmDoc.exists()) throw new Error("Data KKM tidak ditemukan");
+      const kkm = kkmDoc.data()["Nilai Evaluasi"];
+      if (kkm === undefined) throw new Error("KKM Evaluasi belum diatur oleh dosen");
+
+      const isPassed = totalScore >= kkm;
+
+      // 4. Jika lulus dan bonus belum pernah diberikan, update progres_belajar +1
+      const alreadyBonus = localStorage.getItem("evaluasi_bonus_done");
+      if (isPassed && !alreadyBonus) {
+        await updateDoc(mahasiswaRef, {
+          progres_belajar: increment(1)
+        });
+        localStorage.setItem("evaluasi_bonus_done", "true");
+        console.log("Bonus progres +1 diberikan karena lulus KKM");
+      } else if (!isPassed) {
+        console.log("Nilai belum mencapai KKM, tidak mendapat bonus progres");
+      } else {
+        console.log("Bonus sudah pernah diberikan sebelumnya");
+      }
+    } catch (error) {
+      console.error("Gagal menyimpan data ke Firestore:", error);
+      alert("Terjadi kesalahan saat menyimpan nilai. Silakan hubungi administrator.");
+    } finally {
+      setSavingData(false);
+    }
   };
 
   const startQuiz = () => {
@@ -440,7 +509,7 @@ export default function EvaluasiAkhir() {
 
   // ---------- RENDER RESULT PAGE ----------
   if (quizSubmitted) {
-    const isPassed = score >= 70;
+    const isPassed = score >= 70; // sementara, nanti bisa pakai KKM dari Firestore juga
     const minutesTaken = Math.floor(duration / 60);
     const secondsTaken = duration % 60;
     const percentage = (score / 100) * 100;
@@ -511,7 +580,7 @@ export default function EvaluasiAkhir() {
             {!isPassed ? (
               <button style={styles.retryButtonNew} onClick={handleRetry}>Ulangi Evaluasi</button>
             ) : (
-              <button style={styles.backMaterialButtonNew} onClick={backToMaterial}>Kembali ke Halaman Materi</button>
+              <button style={styles.petaKonsepButton} onClick={() => navigate('/PetaKonsep')}>Kembali ke materi</button>
             )}
           </div>
         </div>
@@ -578,8 +647,8 @@ export default function EvaluasiAkhir() {
           </div>
 
           <div style={styles.submitWrapper}>
-            <button onClick={() => handleSubmitQuiz(false)} style={styles.submitButton}>
-              KUMPULKAN JAWABAN
+            <button onClick={() => handleSubmitQuiz(false)} style={styles.submitButton} disabled={savingData}>
+              {savingData ? "Menyimpan..." : "KUMPULKAN JAWABAN"}
             </button>
           </div>
         </div>
@@ -609,11 +678,37 @@ export default function EvaluasiAkhir() {
           </div>
         </div>
       </div>
+
+      {/* Modal Konfirmasi Kustom */}
+      {showConfirmModal && (
+        <div style={styles.modalOverlay}>
+          <div style={styles.modal}>
+            <div style={styles.modalIcon}>⚠️</div>
+            <h2 style={styles.modalTitle}>Konfirmasi</h2>
+            <p style={styles.modalText}>Apakah Anda yakin ingin mengumpulkan jawaban?</p>
+            <div style={{ display: "flex", gap: "16px", justifyContent: "center", marginTop: "20px" }}>
+              <button style={styles.modalButtonCancel} onClick={() => setShowConfirmModal(false)}>Batal</button>
+              <button style={styles.modalButtonConfirm} onClick={processSubmit}>Ya, Kumpulkan</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <style>{`
+        @keyframes fadeInUp {
+          from { opacity: 0; transform: translateY(30px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .modalButton:hover {
+          transform: scale(1.02);
+          transition: all 0.2s;
+        }
+      `}</style>
     </div>
   );
 }
 
-/* ================== STYLE (tidak diubah) ================== */
+/* ================== STYLE (ditambah modal dan tombol baru) ================== */
 const styles = {
   // ----- INSTRUCTION PAGE -----
   page: {
@@ -874,5 +969,55 @@ const styles = {
   failedBoxNew: { backgroundColor: "#fee9e6", color: "#c62828", padding: "14px", borderRadius: "60px", fontWeight: "600", fontSize: "18px", border: "1px solid #ffab91" },
   resultActionsNew: { display: "flex", justifyContent: "center" },
   retryButtonNew: { backgroundColor: "#f59e0b", border: "none", padding: "12px 28px", borderRadius: "40px", fontSize: "16px", fontWeight: "bold", color: "white", cursor: "pointer" },
-  backMaterialButtonNew: { backgroundColor: "#306998", border: "none", padding: "12px 28px", borderRadius: "40px", fontSize: "16px", fontWeight: "bold", color: "white", cursor: "pointer" },
+  petaKonsepButton: { backgroundColor: "#306998", border: "none", padding: "12px 28px", borderRadius: "40px", fontSize: "16px", fontWeight: "bold", color: "white", cursor: "pointer" },
+
+  // ----- MODAL KONFIRMASI -----
+  modalOverlay: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    backdropFilter: "blur(4px)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 2000,
+  },
+  modal: {
+    background: "white",
+    borderRadius: "32px",
+    padding: "32px",
+    maxWidth: "400px",
+    width: "90%",
+    textAlign: "center",
+    boxShadow: "0 20px 35px rgba(0,0,0,0.2)",
+    animation: "fadeInUp 0.3s ease",
+  },
+  modalIcon: { fontSize: "48px", marginBottom: "16px" },
+  modalTitle: { fontSize: "24px", fontWeight: "700", color: "#1e3a5f", marginBottom: "12px" },
+  modalText: { fontSize: "16px", color: "#334155", lineHeight: "1.5", marginBottom: "24px" },
+  modalButtonCancel: {
+    background: "#6c757d",
+    color: "white",
+    border: "none",
+    padding: "10px 24px",
+    borderRadius: "40px",
+    fontSize: "14px",
+    fontWeight: "600",
+    cursor: "pointer",
+    transition: "transform 0.2s",
+  },
+  modalButtonConfirm: {
+    background: "linear-gradient(135deg, #3182ce, #2c5282)",
+    color: "white",
+    border: "none",
+    padding: "10px 24px",
+    borderRadius: "40px",
+    fontSize: "14px",
+    fontWeight: "600",
+    cursor: "pointer",
+    transition: "transform 0.2s",
+  },
 };
