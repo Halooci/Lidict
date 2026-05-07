@@ -1069,8 +1069,7 @@ _buffer.getvalue()`);
                 <h2 style={styles.sectionTitle}>Latihan</h2>
                 <div style={styles.card}>
                   <p style={styles.text}>
-                    Isilah bagian kosong pada kode. Jawab semua soal. Jika salah, Anda bisa mereset per soal. Setelah semua benar,
-                    akan muncul ucapan selamat.
+                    Isilah bagian kosong pada kode. Jawab semua soal. Jika salah, Anda bisa mereset per soal.
                   </p>
                   <CodeCompletionQuestion
                     id={0}

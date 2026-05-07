@@ -22,7 +22,7 @@ export default function EvaluasiAkhir() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState(Array(20).fill(null));
   const [flags, setFlags] = useState(Array(20).fill(false));
-  const [timeRemaining, setTimeRemaining] = useState(1500); // 25 menit = 1500 detik
+  const [timeRemaining, setTimeRemaining] = useState(1500);
   const [duration, setDuration] = useState(null);
   const [score, setScore] = useState(null);
   const [correctCount, setCorrectCount] = useState(null);
@@ -34,18 +34,16 @@ export default function EvaluasiAkhir() {
   const timerIntervalRef = useRef(null);
   const userId = localStorage.getItem('userId');
 
-  // Cek apakah bonus sudah pernah diberikan untuk halaman ini
   useEffect(() => {
     const already = localStorage.getItem("evaluasi_bonus_done");
     if (already === "true") setBonusGiven(true);
   }, []);
 
-  // ---------- SOAL PILIHAN GANDA (List, Nested List, Dictionary) ----------
+  // Data soal (semua diakhiri dengan "adalah....")
   const questions = [
-    // ==================== LIST (7 soal) ====================
     {
       id: 0,
-      text: "Perhatikan pernyataan berikut tentang list pada Python:\n(1) List dapat menyimpan elemen dengan tipe data berbeda.\n(2) List bersifat immutable (tidak bisa diubah).\n(3) List didefinisikan dengan tanda kurung siku [].\n(4) Elemen list dapat diakses menggunakan indeks mulai dari 0.\nManakah pernyataan yang benar?",
+      text: "Perhatikan pernyataan berikut tentang list pada Python:\n(1) List dapat menyimpan elemen dengan tipe data berbeda.\n(2) List bersifat immutable (tidak bisa diubah).\n(3) List didefinisikan dengan tanda kurung siku [].\n(4) Elemen list dapat diakses menggunakan indeks mulai dari 0.\nPernyataan yang benar adalah....",
       options: [
         "A. (1), (2), dan (3)",
         "B. (1), (3), dan (4)",
@@ -56,7 +54,7 @@ export default function EvaluasiAkhir() {
     },
     {
       id: 1,
-      text: "Diberikan kode berikut:\nbuah = ['apel', 'pisang', 'jeruk', 'mangga']\nprint(buah[-2])\nApa output yang dihasilkan?",
+      text: "Diberikan kode berikut:\nbuah = ['apel', 'pisang', 'jeruk', 'mangga']\nprint(buah[-2])\nOutput yang dihasilkan adalah....",
       options: [
         "A. apel",
         "B. pisang",
@@ -67,7 +65,7 @@ export default function EvaluasiAkhir() {
     },
     {
       id: 2,
-      text: "Manakah cara yang tepat untuk membuat list berisi angka 1, 2, 3, 4, 5 secara berurutan?",
+      text: "Cara yang tepat untuk membuat list berisi angka 1, 2, 3, 4, 5 secara berurutan adalah....",
       options: [
         "A. list(1,2,3,4,5)",
         "B. [1;2;3;4;5]",
@@ -78,7 +76,7 @@ export default function EvaluasiAkhir() {
     },
     {
       id: 3,
-      text: "Perhatikan potongan kode berikut:\nnilai = [80, 75, 90, 85]\nnilai.append(95)\nnilai.insert(1, 70)\nBerapakah panjang list `nilai` setelah kedua operasi tersebut?",
+      text: "Perhatikan potongan kode berikut:\nnilai = [80, 75, 90, 85]\nnilai.append(95)\nnilai.insert(1, 70)\nPanjang list `nilai` setelah kedua operasi tersebut adalah....",
       options: [
         "A. 4",
         "B. 5",
@@ -89,7 +87,7 @@ export default function EvaluasiAkhir() {
     },
     {
       id: 4,
-      text: "Jika ingin menghapus elemen terakhir dari list sekaligus mengembalikan nilainya, method apa yang paling tepat digunakan?",
+      text: "Method yang paling tepat digunakan untuk menghapus elemen terakhir dari list sekaligus mengembalikan nilainya adalah....",
       options: [
         "A. remove()",
         "B. pop()",
@@ -100,7 +98,7 @@ export default function EvaluasiAkhir() {
     },
     {
       id: 5,
-      text: "Analisislah kode berikut:\ndata = [3, 1, 4, 1, 5]\ndata.sort(reverse=True)\nprint(data[2])\nApa output yang dihasilkan?",
+      text: "Analisislah kode berikut:\ndata = [3, 1, 4, 1, 5]\ndata.sort(reverse=True)\nprint(data[2])\nOutput yang dihasilkan adalah....",
       options: [
         "A. 1",
         "B. 4",
@@ -111,7 +109,7 @@ export default function EvaluasiAkhir() {
     },
     {
       id: 6,
-      text: "Manakah dari operasi berikut yang menghasilkan list baru [10, 20, 30, 40] jika diketahui list awal `a = [10, 20, 30]`?",
+      text: "Operasi yang menghasilkan list baru [10, 20, 30, 40] jika diketahui list awal `a = [10, 20, 30]` adalah....",
       options: [
         "A. a.append(40)",
         "B. a + [40]",
@@ -120,11 +118,9 @@ export default function EvaluasiAkhir() {
         "E. a.add(40)"
       ]
     },
-
-    // ==================== NESTED LIST (7 soal) ====================
     {
       id: 7,
-      text: "Apa yang dimaksud dengan nested list dalam Python?",
+      text: "Yang dimaksud dengan nested list dalam Python adalah....",
       options: [
         "A. List yang hanya berisi tipe data numerik",
         "B. List yang di dalamnya terdapat list lain sebagai elemen",
@@ -135,7 +131,7 @@ export default function EvaluasiAkhir() {
     },
     {
       id: 8,
-      text: "Diberikan nested list: matrix = [[1,2,3], [4,5,6], [7,8,9]]\nBagaimana cara mengakses angka 5?",
+      text: "Diberikan nested list: matrix = [[1,2,3], [4,5,6], [7,8,9]]\nCara mengakses angka 5 adalah....",
       options: [
         "A. matrix[1][1]",
         "B. matrix[2][1]",
@@ -146,7 +142,7 @@ export default function EvaluasiAkhir() {
     },
     {
       id: 9,
-      text: "Manakah kode yang benar untuk membuat nested list dengan tiga baris dan dua kolom, semua elemen bernilai 0?",
+      text: "Kode yang benar untuk membuat nested list dengan tiga baris dan dua kolom, semua elemen bernilai 0 adalah....",
       options: [
         "A. [[0]*2]*3",
         "B. [[0 for _ in range(2)] for _ in range(3)]",
@@ -157,7 +153,7 @@ export default function EvaluasiAkhir() {
     },
     {
       id: 10,
-      text: "Perhatikan kode berikut:\nA = [[1,2], [3,4]]\nB = A[0]\nB.append(5)\nprint(A)\nApa output yang dihasilkan?",
+      text: "Perhatikan kode berikut:\nA = [[1,2], [3,4]]\nB = A[0]\nB.append(5)\nprint(A)\nOutput yang dihasilkan adalah....",
       options: [
         "A. [[1,2], [3,4]]",
         "B. [[1,2,5], [3,4]]",
@@ -168,7 +164,7 @@ export default function EvaluasiAkhir() {
     },
     {
       id: 11,
-      text: "Jika diketahui nested list `data = [['a','b'], ['c','d'], ['e','f']]`, manakah perintah yang akan mengubah elemen 'd' menjadi 'z'?",
+      text: "Jika diketahui nested list `data = [['a','b'], ['c','d'], ['e','f']]`, perintah yang akan mengubah elemen 'd' menjadi 'z' adalah....",
       options: [
         "A. data[1][1] = 'z'",
         "B. data[2][1] = 'z'",
@@ -179,7 +175,7 @@ export default function EvaluasiAkhir() {
     },
     {
       id: 12,
-      text: "Manakah dari pernyataan berikut yang tepat tentang operasi pada nested list?",
+      text: "Pernyataan yang tepat tentang operasi pada nested list adalah....",
       options: [
         "A. Kita dapat menggunakan perulangan bersarang (nested loop) untuk mengakses setiap elemen",
         "B. Nested list tidak bisa digabung dengan operator +",
@@ -190,7 +186,7 @@ export default function EvaluasiAkhir() {
     },
     {
       id: 13,
-      text: "Analisislah kode berikut:\nmatrix = [[i*j for j in range(3)] for i in range(2)]\nprint(matrix[1][2])\nBerapakah output yang dihasilkan?",
+      text: "Analisislah kode berikut:\nmatrix = [[i*j for j in range(3)] for i in range(2)]\nprint(matrix[1][2])\nOutput yang dihasilkan adalah....",
       options: [
         "A. 0",
         "B. 1",
@@ -199,11 +195,9 @@ export default function EvaluasiAkhir() {
         "E. Error"
       ]
     },
-
-    // ==================== DICTIONARY (6 soal) ====================
     {
       id: 14,
-      text: "Manakah pernyataan yang benar tentang dictionary di Python?",
+      text: "Pernyataan yang benar tentang dictionary di Python adalah....",
       options: [
         "A. Dictionary menyimpan data dalam pasangan key-value",
         "B. Key dalam dictionary harus unik dan immutable",
@@ -214,7 +208,7 @@ export default function EvaluasiAkhir() {
     },
     {
       id: 15,
-      text: "Diberikan kode:\nsiswa = {'nama': 'Andi', 'umur': 17}\nprint(siswa.get('kelas', 'Tidak ada'))\nApa output yang dihasilkan?",
+      text: "Diberikan kode:\nsiswa = {'nama': 'Andi', 'umur': 17}\nprint(siswa.get('kelas', 'Tidak ada'))\nOutput yang dihasilkan adalah....",
       options: [
         "A. Error",
         "B. None",
@@ -225,7 +219,7 @@ export default function EvaluasiAkhir() {
     },
     {
       id: 16,
-      text: "Manakah cara yang benar untuk mengubah nilai dari key 'hobi' menjadi 'membaca' pada dictionary `profil = {'nama': 'Budi', 'hobi': 'berenang'}`?",
+      text: "Cara yang benar untuk mengubah nilai dari key 'hobi' menjadi 'membaca' pada dictionary `profil = {'nama': 'Budi', 'hobi': 'berenang'}` adalah....",
       options: [
         "A. profil['hobi'] = 'membaca'",
         "B. profil.update(hobi='membaca')",
@@ -236,7 +230,7 @@ export default function EvaluasiAkhir() {
     },
     {
       id: 17,
-      text: "Perhatikan kode berikut:\ndata = {'a':1, 'b':2, 'c':3}\ndel data['b']\ndata['d'] = 4\nprint(len(data))\nBerapakah outputnya?",
+      text: "Perhatikan kode berikut:\ndata = {'a':1, 'b':2, 'c':3}\ndel data['b']\ndata['d'] = 4\nprint(len(data))\nOutput yang dihasilkan adalah....",
       options: [
         "A. 2",
         "B. 3",
@@ -247,7 +241,7 @@ export default function EvaluasiAkhir() {
     },
     {
       id: 18,
-      text: "Manakah method yang digunakan untuk mengambil semua key dari dictionary?",
+      text: "Method yang digunakan untuk mengambil semua key dari dictionary adalah....",
       options: [
         "A. values()",
         "B. items()",
@@ -258,7 +252,7 @@ export default function EvaluasiAkhir() {
     },
     {
       id: 19,
-      text: "Analisislah potongan kode berikut:\ncounter = {}\nkata = 'python'\nfor huruf in kata:\n    counter[huruf] = counter.get(huruf, 0) + 1\nprint(counter['p'])\nApa output yang dihasilkan?",
+      text: "Analisislah potongan kode berikut:\ncounter = {}\nkata = 'python'\nfor huruf in kata:\n    counter[huruf] = counter.get(huruf, 0) + 1\nprint(counter['p'])\nOutput yang dihasilkan adalah....",
       options: [
         "A. 0",
         "B. 1",
@@ -269,48 +263,25 @@ export default function EvaluasiAkhir() {
     }
   ];
 
-  // Kunci jawaban (A, B, C, D, E) sesuai dengan soal di atas
   const correctAnswers = [
-    "B", // soal0: (1),(3),(4) benar
-    "C", // soal1: jeruk (indeks -2)
-    "D", // soal2: [1,2,3,4,5]
-    "C", // soal3: panjang 6 (awal 4, append+1, insert+1 =6)
-    "B", // soal4: pop()
-    "C", // soal5: sort reverse -> [5,4,3,1,1] index2 = 3
-    "B", // soal6: a + [40] menghasilkan list baru
-    "B", // soal7: nested list adalah list di dalam list
-    "A", // soal8: matrix[1][1] = 5
-    "E", // soal9: Hanya B yang benar (A menghasilkan referensi sama, tidak disarankan)
-    "B", // soal10: [[1,2,5], [3,4]]
-    "A", // soal11: data[1][1] = 'z'
-    "A", // soal12: perulangan bersarang tepat
-    "C", // soal13: matrix[1][2] = 1*2 = 2
-    "D", // soal14: A dan B benar
-    "C", // soal15: get('kelas','Tidak ada') -> 'Tidak ada'
-    "D", // soal16: A dan B benar
-    "B", // soal17: setelah del b dan tambah d, panjang 3
-    "C", // soal18: keys()
-    "B"  // soal19: huruf 'p' muncul 1 kali
+    "B", "C", "D", "C", "B", "C", "B", "B", "A", "E",
+    "B", "A", "A", "C", "D", "C", "D", "B", "C", "B"
   ];
 
-  // ---------- HELPER FUNCTIONS ----------
+  // Helper functions (sama seperti sebelumnya, tidak diubah)
   const stopTimer = () => {
-    if (timerIntervalRef.current) {
-      clearInterval(timerIntervalRef.current);
-      timerIntervalRef.current = null;
-    }
+    if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
+    timerIntervalRef.current = null;
   };
 
   const startTimer = () => {
-    if (timerIntervalRef.current) stopTimer();
+    stopTimer();
     timerIntervalRef.current = setInterval(() => {
-      setTimeRemaining((prev) => {
+      setTimeRemaining(prev => {
         if (prev <= 1) {
           clearInterval(timerIntervalRef.current);
           timerIntervalRef.current = null;
-          if (!quizSubmitted && quizStarted) {
-            handleSubmitQuiz(true);
-          }
+          if (!quizSubmitted && quizStarted) handleSubmitQuiz(true);
           return 0;
         }
         return prev - 1;
@@ -329,22 +300,18 @@ export default function EvaluasiAkhir() {
     return { correct, wrong, totalScore, timeTaken };
   };
 
-  // Fungsi submit dengan penyimpanan ke Firestore
   const handleSubmitQuiz = async (isAuto = false) => {
     if (quizSubmitted) return;
     if (!isAuto) {
-      // Tampilkan modal konfirmasi
       setShowConfirmModal(true);
       return;
     }
-    // Untuk auto submit (timer habis) langsung proses tanpa modal
     await processSubmit();
   };
 
   const processSubmit = async () => {
     if (quizSubmitted) return;
     stopTimer();
-
     const { correct, wrong, totalScore, timeTaken } = computeResult();
     setCorrectCount(correct);
     setWrongCount(wrong);
@@ -353,54 +320,35 @@ export default function EvaluasiAkhir() {
     setQuizSubmitted(true);
     setShowConfirmModal(false);
 
-    // Simpan nilai ke Firestore dan update progres
     setSavingData(true);
     try {
       if (!userId) throw new Error("User ID tidak ditemukan");
-
-      // 1. Simpan nilai ke koleksi "nilai" dengan field "Evaluasi"
       const nilaiRef = doc(db, "nilai", userId);
       const nilaiDoc = await getDoc(nilaiRef);
-      if (nilaiDoc.exists()) {
-        await updateDoc(nilaiRef, {
-          Evaluasi: totalScore
-        });
-      } else {
-        console.warn("Dokumen nilai tidak ditemukan, membuat baru");
-      }
+      if (nilaiDoc.exists()) await updateDoc(nilaiRef, { Evaluasi: totalScore });
+      else console.warn("Dokumen nilai tidak ditemukan");
 
-      // 2. Ambil token mahasiswa dari koleksi mahasiswa
       const mahasiswaRef = doc(db, "mahasiswa", userId);
       const mahasiswaDoc = await getDoc(mahasiswaRef);
       if (!mahasiswaDoc.exists()) throw new Error("Data mahasiswa tidak ditemukan");
       const tokenMahasiswa = mahasiswaDoc.data().Token_mahasiswa;
       if (!tokenMahasiswa) throw new Error("Token kelas tidak ditemukan");
 
-      // 3. Ambil KKM dari koleksi kkm berdasarkan token
       const kkmRef = doc(db, "kkm", tokenMahasiswa);
       const kkmDoc = await getDoc(kkmRef);
       if (!kkmDoc.exists()) throw new Error("Data KKM tidak ditemukan");
       const kkm = kkmDoc.data()["Nilai Evaluasi"];
-      if (kkm === undefined) throw new Error("KKM Evaluasi belum diatur oleh dosen");
+      if (kkm === undefined) throw new Error("KKM Evaluasi belum diatur");
 
       const isPassed = totalScore >= kkm;
-
-      // 4. Jika lulus dan bonus belum pernah diberikan, update progres_belajar +1
       const alreadyBonus = localStorage.getItem("evaluasi_bonus_done");
       if (isPassed && !alreadyBonus) {
-        await updateDoc(mahasiswaRef, {
-          progres_belajar: increment(1)
-        });
+        await updateDoc(mahasiswaRef, { progres_belajar: increment(1) });
         localStorage.setItem("evaluasi_bonus_done", "true");
-        console.log("Bonus progres +1 diberikan karena lulus KKM");
-      } else if (!isPassed) {
-        console.log("Nilai belum mencapai KKM, tidak mendapat bonus progres");
-      } else {
-        console.log("Bonus sudah pernah diberikan sebelumnya");
       }
     } catch (error) {
-      console.error("Gagal menyimpan data ke Firestore:", error);
-      alert("Terjadi kesalahan saat menyimpan nilai. Silakan hubungi administrator.");
+      console.error(error);
+      alert("Terjadi kesalahan saat menyimpan nilai.");
     } finally {
       setSavingData(false);
     }
@@ -417,32 +365,22 @@ export default function EvaluasiAkhir() {
     setCorrectCount(null);
     setWrongCount(null);
     setDuration(null);
-
     stopTimer();
     startTimer();
   };
 
-  const handleRetry = () => {
-    startQuiz();
-  };
-
+  const handleRetry = () => startQuiz();
   const backToMaterial = () => {
     setQuizStarted(false);
     setQuizSubmitted(false);
     stopTimer();
   };
 
+  useEffect(() => () => stopTimer(), []);
   useEffect(() => {
-    return () => stopTimer();
-  }, []);
-
-  useEffect(() => {
-    if (quizStarted && !quizSubmitted && timeRemaining === 0) {
-      handleSubmitQuiz(true);
-    }
+    if (quizStarted && !quizSubmitted && timeRemaining === 0) handleSubmitQuiz(true);
   }, [timeRemaining, quizStarted, quizSubmitted]);
 
-  // ---------- HANDLER SOAL ----------
   const handleAnswerSelect = (optionLetter) => {
     if (quizSubmitted) return;
     const newAnswers = [...answers];
@@ -457,17 +395,9 @@ export default function EvaluasiAkhir() {
     setFlags(newFlags);
   };
 
-  const goPrevQuestion = () => {
-    if (currentIndex > 0) setCurrentIndex(currentIndex - 1);
-  };
-
-  const goNextQuestion = () => {
-    if (currentIndex < 19) setCurrentIndex(currentIndex + 1);
-  };
-
-  const goToQuestion = (index) => {
-    setCurrentIndex(index);
-  };
+  const goPrevQuestion = () => currentIndex > 0 && setCurrentIndex(currentIndex - 1);
+  const goNextQuestion = () => currentIndex < 19 && setCurrentIndex(currentIndex + 1);
+  const goToQuestion = (index) => setCurrentIndex(index);
 
   const formatTime = (seconds) => {
     const mins = Math.floor(seconds / 60);
@@ -475,7 +405,7 @@ export default function EvaluasiAkhir() {
     return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
-  // ---------- RENDER INSTRUCTION PAGE ----------
+  // Render instruction page
   if (!quizStarted && !quizSubmitted) {
     return (
       <>
@@ -507,9 +437,9 @@ export default function EvaluasiAkhir() {
     );
   }
 
-  // ---------- RENDER RESULT PAGE ----------
+  // Render result page
   if (quizSubmitted) {
-    const isPassed = score >= 70; // sementara, nanti bisa pakai KKM dari Firestore juga
+    const isPassed = score >= 70;
     const minutesTaken = Math.floor(duration / 60);
     const secondsTaken = duration % 60;
     const percentage = (score / 100) * 100;
@@ -521,53 +451,30 @@ export default function EvaluasiAkhir() {
             <h1>HASIL EVALUASI</h1>
             <div style={styles.headerAccentResultNew}></div>
           </div>
-
           <div style={styles.scoreDisplay}>
             <span style={styles.scoreNumberNew}>{score}</span>
             <span style={styles.scoreTotalNew}>/100</span>
           </div>
-
           <div style={styles.progressContainer}>
             <div style={styles.progressBar}>
-              <div
-                style={{
-                  width: `${percentage}%`,
-                  height: "100%",
-                  backgroundColor: isPassed ? "#306998" : "#f59e0b",
-                  borderRadius: "30px",
-                  transition: "width 0.5s",
-                }}
-              ></div>
+              <div style={{ width: `${percentage}%`, height: "100%", backgroundColor: isPassed ? "#306998" : "#f59e0b", borderRadius: "30px" }}></div>
             </div>
             <div style={styles.progressLabel}>{score}%</div>
           </div>
-
           <div style={styles.statsGridNew}>
             <div style={styles.statItemNew}>
               <div style={styles.statIcon}>✓</div>
-              <div>
-                <div style={styles.statLabelNew}>Benar</div>
-                <div style={styles.statValueNew}>{correctCount}</div>
-              </div>
+              <div><div style={styles.statLabelNew}>Benar</div><div style={styles.statValueNew}>{correctCount}</div></div>
             </div>
             <div style={styles.statItemNew}>
               <div style={styles.statIcon}>✗</div>
-              <div>
-                <div style={styles.statLabelNew}>Salah</div>
-                <div style={styles.statValueNew}>{wrongCount}</div>
-              </div>
+              <div><div style={styles.statLabelNew}>Salah</div><div style={styles.statValueNew}>{wrongCount}</div></div>
             </div>
             <div style={styles.statItemNew}>
               <div style={styles.statIcon}>⏱</div>
-              <div>
-                <div style={styles.statLabelNew}>Waktu</div>
-                <div style={styles.statValueNew}>
-                  {minutesTaken}m {secondsTaken}s
-                </div>
-              </div>
+              <div><div style={styles.statLabelNew}>Waktu</div><div style={styles.statValueNew}>{minutesTaken}m {secondsTaken}s</div></div>
             </div>
           </div>
-
           <div style={styles.resultMessageNew}>
             {isPassed ? (
               <div style={styles.passedBoxNew}>SELAMAT! Anda LULUS dengan nilai {score}</div>
@@ -575,7 +482,6 @@ export default function EvaluasiAkhir() {
               <div style={styles.failedBoxNew}>MOHON MAAF, Anda TIDAK LULUS (Nilai {score} &lt; 70)</div>
             )}
           </div>
-
           <div style={styles.resultActionsNew}>
             {!isPassed ? (
               <button style={styles.retryButtonNew} onClick={handleRetry}>Ulangi Evaluasi</button>
@@ -588,7 +494,7 @@ export default function EvaluasiAkhir() {
     );
   }
 
-  // ---------- RENDER QUIZ PAGE ----------
+  // Render quiz page
   const currentQuestion = questions[currentIndex];
   const selectedAnswer = answers[currentIndex];
   const isFlagged = flags[currentIndex];
@@ -609,10 +515,7 @@ export default function EvaluasiAkhir() {
         <div style={styles.questionCard}>
           <div style={styles.questionHeader}>
             <h3 style={styles.questionNumber}>Soal {currentQuestion.id + 1} dari 20</h3>
-            <button
-              style={isFlagged ? styles.flagButtonActive : styles.flagButton}
-              onClick={toggleFlag}
-            >
+            <button style={isFlagged ? styles.flagButtonActive : styles.flagButton} onClick={toggleFlag}>
               {isFlagged ? "🏁 Hapus Ragu" : "❓ Tandai Ragu-ragu"}
             </button>
           </div>
@@ -631,19 +534,15 @@ export default function EvaluasiAkhir() {
                     onChange={() => handleAnswerSelect(letter)}
                     disabled={quizSubmitted}
                   />
-                  <span style={styles.optionLetter}>{letter}.</span> {opt}
+                  {opt}
                 </label>
               );
             })}
           </div>
 
           <div style={styles.navButtons}>
-            <button onClick={goPrevQuestion} disabled={currentIndex === 0} style={styles.navButton}>
-              Sebelumnya
-            </button>
-            <button onClick={goNextQuestion} disabled={currentIndex === 19} style={styles.navButton}>
-              Selanjutnya
-            </button>
+            <button onClick={goPrevQuestion} disabled={currentIndex === 0} style={styles.navButton}>Sebelumnya</button>
+            <button onClick={goNextQuestion} disabled={currentIndex === 19} style={styles.navButton}>Selanjutnya</button>
           </div>
 
           <div style={styles.submitWrapper}>
@@ -661,13 +560,7 @@ export default function EvaluasiAkhir() {
               if (idx === currentIndex) boxStyle = { ...styles.navBox, ...styles.navBoxActive };
               else if (flags[idx]) boxStyle = { ...styles.navBox, ...styles.navBoxFlagged };
               else if (answers[idx]) boxStyle = { ...styles.navBox, ...styles.navBoxAnswered };
-              else boxStyle = styles.navBox;
-
-              return (
-                <div key={idx} style={boxStyle} onClick={() => goToQuestion(idx)}>
-                  {idx + 1}
-                </div>
-              );
+              return <div key={idx} style={boxStyle} onClick={() => goToQuestion(idx)}>{idx + 1}</div>;
             })}
           </div>
           <div style={styles.legend}>
@@ -679,7 +572,6 @@ export default function EvaluasiAkhir() {
         </div>
       </div>
 
-      {/* Modal Konfirmasi Kustom */}
       {showConfirmModal && (
         <div style={styles.modalOverlay}>
           <div style={styles.modal}>
@@ -695,223 +587,45 @@ export default function EvaluasiAkhir() {
       )}
 
       <style>{`
-        @keyframes fadeInUp {
-          from { opacity: 0; transform: translateY(30px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        .modalButton:hover {
-          transform: scale(1.02);
-          transition: all 0.2s;
-        }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
       `}</style>
     </div>
   );
 }
 
-/* ================== STYLE (ditambah modal dan tombol baru) ================== */
 const styles = {
-  // ----- INSTRUCTION PAGE -----
-  page: {
-    padding: "30px 40px",
-    backgroundColor: "#f5f7fa",
-    minHeight: "calc(100vh - 64px)",
-    fontFamily: "Poppins, sans-serif",
-  },
-  header: {
-    backgroundColor: "#306998",
-    color: "white",
-    padding: "18px 24px",
-    position: "relative",
-    marginBottom: "30px",
-    borderRadius: "6px",
-  },
-  headerAccent: {
-    position: "absolute",
-    left: 0,
-    top: 0,
-    bottom: 0,
-    width: "8px",
-    backgroundColor: "#FFD43B",
-    borderRadius: "6px 0 0 6px",
-  },
-  headerTitle: {
-    margin: 0,
-    textAlign: "center",
-    fontSize: "28px",
-    fontWeight: "700",
-  },
-  cardInstruction: {
-    backgroundColor: "white",
-    borderRadius: "16px",
-    padding: "32px",
-    boxShadow: "0 10px 25px rgba(0,0,0,0.05)",
-    maxWidth: "800px",
-    margin: "0 auto",
-  },
-  instructionTitle: {
-    fontSize: "24px",
-    fontWeight: "600",
-    color: "#306998",
-    marginBottom: "20px",
-    borderLeft: "5px solid #FFD43B",
-    paddingLeft: "16px",
-  },
-  instructionList: {
-    lineHeight: "1.9",
-    fontSize: "16px",
-    color: "#2d3748",
-    marginBottom: "32px",
-    paddingLeft: "24px",
-  },
-  startButton: {
-    backgroundColor: "#306998",
-    color: "white",
-    border: "none",
-    padding: "14px 28px",
-    fontSize: "18px",
-    fontWeight: "600",
-    borderRadius: "40px",
-    cursor: "pointer",
-    width: "100%",
-    transition: "0.2s",
-    boxShadow: "0 4px 10px rgba(48,105,152,0.3)",
-  },
-
-  // ----- FULLSCREEN QUIZ -----
-  fullscreenQuiz: {
-    minHeight: "100vh",
-    backgroundColor: "#f5f7fa",
-    fontFamily: "Poppins, sans-serif",
-    padding: "20px 40px",
-  },
-  quizHeader: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    backgroundColor: "#306998",
-    borderRadius: "20px",
-    padding: "16px 32px",
-    marginBottom: "30px",
-    color: "white",
-    boxShadow: "0 6px 14px rgba(0,0,0,0.1)",
-  },
-  quizTitle: {
-    fontSize: "28px",
-    fontWeight: "bold",
-    letterSpacing: "1px",
-  },
-  timerBox: {
-    display: "flex",
-    alignItems: "center",
-    gap: "12px",
-    backgroundColor: "rgba(0,0,0,0.2)",
-    padding: "8px 20px",
-    borderRadius: "60px",
-  },
+  page: { padding: "30px 40px", backgroundColor: "#f5f7fa", minHeight: "calc(100vh - 64px)", fontFamily: "Poppins, sans-serif" },
+  header: { backgroundColor: "#306998", color: "white", padding: "18px 24px", position: "relative", marginBottom: "30px", borderRadius: "6px" },
+  headerAccent: { position: "absolute", left: 0, top: 0, bottom: 0, width: "8px", backgroundColor: "#FFD43B", borderRadius: "6px 0 0 6px" },
+  headerTitle: { margin: 0, textAlign: "center", fontSize: "28px", fontWeight: "700" },
+  cardInstruction: { backgroundColor: "white", borderRadius: "16px", padding: "32px", boxShadow: "0 10px 25px rgba(0,0,0,0.05)", maxWidth: "800px", margin: "0 auto" },
+  instructionTitle: { fontSize: "24px", fontWeight: "600", color: "#306998", marginBottom: "20px", borderLeft: "5px solid #FFD43B", paddingLeft: "16px" },
+  instructionList: { lineHeight: "1.9", fontSize: "16px", color: "#2d3748", marginBottom: "32px", paddingLeft: "24px" },
+  startButton: { backgroundColor: "#306998", color: "white", border: "none", padding: "14px 28px", fontSize: "18px", fontWeight: "600", borderRadius: "40px", cursor: "pointer", width: "100%", boxShadow: "0 4px 10px rgba(48,105,152,0.3)" },
+  fullscreenQuiz: { minHeight: "100vh", backgroundColor: "#f5f7fa", fontFamily: "Poppins, sans-serif", padding: "20px 40px" },
+  quizHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", backgroundColor: "#306998", borderRadius: "20px", padding: "16px 32px", marginBottom: "30px", color: "white", boxShadow: "0 6px 14px rgba(0,0,0,0.1)" },
+  quizTitle: { fontSize: "28px", fontWeight: "bold", letterSpacing: "1px" },
+  timerBox: { display: "flex", alignItems: "center", gap: "12px", backgroundColor: "rgba(0,0,0,0.2)", padding: "8px 20px", borderRadius: "60px" },
   timerIcon: { fontSize: "24px" },
   timerText: { fontSize: "28px", fontWeight: "700", fontFamily: "monospace" },
   timerDanger: { fontSize: "28px", fontWeight: "700", fontFamily: "monospace", color: "#FFD43B" },
-  twoColumnLayout: {
-    display: "grid",
-    gridTemplateColumns: "1fr 320px",
-    gap: "30px",
-  },
-  questionCard: {
-    backgroundColor: "white",
-    borderRadius: "28px",
-    padding: "32px",
-    boxShadow: "0 12px 30px rgba(0,0,0,0.08)",
-  },
-  questionHeader: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: "20px",
-    flexWrap: "wrap",
-  },
+  twoColumnLayout: { display: "grid", gridTemplateColumns: "1fr 320px", gap: "30px" },
+  questionCard: { backgroundColor: "white", borderRadius: "28px", padding: "32px", boxShadow: "0 12px 30px rgba(0,0,0,0.08)" },
+  questionHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", flexWrap: "wrap" },
   questionNumber: { fontSize: "20px", fontWeight: "700", color: "#306998", margin: 0 },
-  flagButton: {
-    backgroundColor: "#f1f5f9",
-    border: "none",
-    padding: "8px 18px",
-    borderRadius: "40px",
-    fontSize: "14px",
-    fontWeight: "500",
-    cursor: "pointer",
-    color: "#334155",
-  },
-  flagButtonActive: {
-    backgroundColor: "#fef3c7",
-    border: "none",
-    padding: "8px 18px",
-    borderRadius: "40px",
-    fontSize: "14px",
-    fontWeight: "500",
-    cursor: "pointer",
-    color: "#b45309",
-    border: "1px solid #f59e0b",
-  },
+  flagButton: { backgroundColor: "#f1f5f9", border: "none", padding: "8px 18px", borderRadius: "40px", fontSize: "14px", fontWeight: "500", cursor: "pointer", color: "#334155" },
+  flagButtonActive: { backgroundColor: "#fef3c7", border: "1px solid #f59e0b", padding: "8px 18px", borderRadius: "40px", fontSize: "14px", fontWeight: "500", cursor: "pointer", color: "#b45309" },
   questionText: { fontSize: "18px", lineHeight: "1.5", marginBottom: "28px", color: "#0f172a", fontWeight: "500", whiteSpace: "pre-line" },
   optionsContainer: { display: "flex", flexDirection: "column", gap: "16px", marginBottom: "36px" },
-  optionLabel: {
-    display: "flex",
-    alignItems: "center",
-    gap: "12px",
-    fontSize: "16px",
-    padding: "10px 16px",
-    borderRadius: "16px",
-    backgroundColor: "#f8fafc",
-    cursor: "pointer",
-    border: "1px solid #e2e8f0",
-  },
-  optionLetter: { fontWeight: "bold", color: "#306998", width: "28px" },
+  optionLabel: { display: "flex", alignItems: "center", gap: "12px", fontSize: "16px", padding: "10px 16px", borderRadius: "16px", backgroundColor: "#f8fafc", cursor: "pointer", border: "1px solid #e2e8f0" },
   navButtons: { display: "flex", justifyContent: "space-between", gap: "20px", marginTop: "10px" },
-  navButton: {
-    backgroundColor: "#e2e8f0",
-    border: "none",
-    padding: "10px 20px",
-    borderRadius: "40px",
-    fontWeight: "600",
-    cursor: "pointer",
-    fontSize: "15px",
-    flex: 1,
-    maxWidth: "160px",
-  },
+  navButton: { backgroundColor: "#e2e8f0", border: "none", padding: "10px 20px", borderRadius: "40px", fontWeight: "600", cursor: "pointer", fontSize: "15px", flex: 1, maxWidth: "160px" },
   submitWrapper: { marginTop: "32px", textAlign: "center" },
-  submitButton: {
-    backgroundColor: "#306998",
-    color: "white",
-    border: "none",
-    padding: "14px 28px",
-    borderRadius: "40px",
-    fontSize: "18px",
-    fontWeight: "bold",
-    cursor: "pointer",
-    width: "100%",
-    maxWidth: "300px",
-  },
-  navGridContainer: {
-    backgroundColor: "white",
-    borderRadius: "20px",
-    padding: "20px",
-    boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
-    height: "fit-content",
-  },
+  submitButton: { backgroundColor: "#306998", color: "white", border: "none", padding: "14px 28px", borderRadius: "40px", fontSize: "18px", fontWeight: "bold", cursor: "pointer", width: "100%", maxWidth: "300px" },
+  navGridContainer: { backgroundColor: "white", borderRadius: "20px", padding: "20px", boxShadow: "0 4px 12px rgba(0,0,0,0.05)", height: "fit-content" },
   navLabel: { fontSize: "18px", fontWeight: "600", marginBottom: "15px", color: "#2c3e50" },
   navGrid: { display: "flex", flexWrap: "wrap", gap: "12px", marginBottom: "20px" },
-  navBox: {
-    width: "52px",
-    height: "52px",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    borderRadius: "12px",
-    fontWeight: "bold",
-    fontSize: "18px",
-    cursor: "pointer",
-    backgroundColor: "#e2e8f0",
-    color: "#1e293b",
-  },
+  navBox: { width: "52px", height: "52px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "12px", fontWeight: "bold", fontSize: "18px", cursor: "pointer", backgroundColor: "#e2e8f0", color: "#1e293b" },
   navBoxActive: { backgroundColor: "#306998", color: "white", boxShadow: "0 0 0 3px #FFD43B" },
   navBoxFlagged: { backgroundColor: "#f59e0b", color: "white" },
   navBoxAnswered: { backgroundColor: "#10b981", color: "white" },
@@ -920,27 +634,8 @@ const styles = {
   legendFlagged: { display: "inline-block", width: "16px", height: "16px", backgroundColor: "#f59e0b", borderRadius: "4px", marginRight: "6px", verticalAlign: "middle" },
   legendActive: { display: "inline-block", width: "16px", height: "16px", backgroundColor: "#306998", borderRadius: "4px", marginRight: "6px", verticalAlign: "middle", boxShadow: "0 0 0 1px #FFD43B" },
   legendUnanswered: { display: "inline-block", width: "16px", height: "16px", backgroundColor: "#e2e8f0", borderRadius: "4px", marginRight: "6px", verticalAlign: "middle" },
-
-  // ----- FULLSCREEN RESULT -----
-  fullscreenResult: {
-    minHeight: "100vh",
-    backgroundColor: "#f5f7fa",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    fontFamily: "Poppins, sans-serif",
-    padding: "20px",
-  },
-  resultCardNew: {
-    backgroundColor: "white",
-    borderRadius: "32px",
-    padding: "40px 30px",
-    maxWidth: "600px",
-    width: "100%",
-    textAlign: "center",
-    boxShadow: "0 20px 35px -10px rgba(0,0,0,0.1)",
-    borderTop: "6px solid #306998",
-  },
+  fullscreenResult: { minHeight: "100vh", backgroundColor: "#f5f7fa", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Poppins, sans-serif", padding: "20px" },
+  resultCardNew: { backgroundColor: "white", borderRadius: "32px", padding: "40px 30px", maxWidth: "600px", width: "100%", textAlign: "center", boxShadow: "0 20px 35px -10px rgba(0,0,0,0.1)", borderTop: "6px solid #306998" },
   resultHeaderNew: { marginBottom: "20px" },
   headerAccentResultNew: { width: "60px", height: "4px", backgroundColor: "#FFD43B", margin: "12px auto 0", borderRadius: "2px" },
   scoreDisplay: { marginBottom: "30px" },
@@ -950,17 +645,7 @@ const styles = {
   progressBar: { backgroundColor: "#e2e8f0", borderRadius: "30px", height: "12px", overflow: "hidden", marginBottom: "8px" },
   progressLabel: { fontSize: "14px", fontWeight: "600", color: "#306998", textAlign: "right" },
   statsGridNew: { display: "flex", justifyContent: "space-between", gap: "15px", marginBottom: "30px", flexWrap: "wrap" },
-  statItemNew: {
-    flex: 1,
-    display: "flex",
-    alignItems: "center",
-    gap: "12px",
-    backgroundColor: "#f8fafc",
-    padding: "12px 16px",
-    borderRadius: "20px",
-    border: "1px solid #e2e8f0",
-    textAlign: "left",
-  },
+  statItemNew: { flex: 1, display: "flex", alignItems: "center", gap: "12px", backgroundColor: "#f8fafc", padding: "12px 16px", borderRadius: "20px", border: "1px solid #e2e8f0", textAlign: "left" },
   statIcon: { fontSize: "28px", fontWeight: "bold", color: "#306998", width: "40px", textAlign: "center" },
   statLabelNew: { fontSize: "12px", fontWeight: "500", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.5px" },
   statValueNew: { fontSize: "24px", fontWeight: "700", color: "#0f172a", lineHeight: 1.2 },
@@ -970,54 +655,11 @@ const styles = {
   resultActionsNew: { display: "flex", justifyContent: "center" },
   retryButtonNew: { backgroundColor: "#f59e0b", border: "none", padding: "12px 28px", borderRadius: "40px", fontSize: "16px", fontWeight: "bold", color: "white", cursor: "pointer" },
   petaKonsepButton: { backgroundColor: "#306998", border: "none", padding: "12px 28px", borderRadius: "40px", fontSize: "16px", fontWeight: "bold", color: "white", cursor: "pointer" },
-
-  // ----- MODAL KONFIRMASI -----
-  modalOverlay: {
-    position: "fixed",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "rgba(0,0,0,0.5)",
-    backdropFilter: "blur(4px)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    zIndex: 2000,
-  },
-  modal: {
-    background: "white",
-    borderRadius: "32px",
-    padding: "32px",
-    maxWidth: "400px",
-    width: "90%",
-    textAlign: "center",
-    boxShadow: "0 20px 35px rgba(0,0,0,0.2)",
-    animation: "fadeInUp 0.3s ease",
-  },
+  modalOverlay: { position: "fixed", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2000 },
+  modal: { background: "white", borderRadius: "32px", padding: "32px", maxWidth: "400px", width: "90%", textAlign: "center", boxShadow: "0 20px 35px rgba(0,0,0,0.2)", animation: "fadeInUp 0.3s ease" },
   modalIcon: { fontSize: "48px", marginBottom: "16px" },
   modalTitle: { fontSize: "24px", fontWeight: "700", color: "#1e3a5f", marginBottom: "12px" },
   modalText: { fontSize: "16px", color: "#334155", lineHeight: "1.5", marginBottom: "24px" },
-  modalButtonCancel: {
-    background: "#6c757d",
-    color: "white",
-    border: "none",
-    padding: "10px 24px",
-    borderRadius: "40px",
-    fontSize: "14px",
-    fontWeight: "600",
-    cursor: "pointer",
-    transition: "transform 0.2s",
-  },
-  modalButtonConfirm: {
-    background: "linear-gradient(135deg, #3182ce, #2c5282)",
-    color: "white",
-    border: "none",
-    padding: "10px 24px",
-    borderRadius: "40px",
-    fontSize: "14px",
-    fontWeight: "600",
-    cursor: "pointer",
-    transition: "transform 0.2s",
-  },
+  modalButtonCancel: { background: "#6c757d", color: "white", border: "none", padding: "10px 24px", borderRadius: "40px", fontSize: "14px", fontWeight: "600", cursor: "pointer" },
+  modalButtonConfirm: { background: "linear-gradient(135deg, #3182ce, #2c5282)", color: "white", border: "none", padding: "10px 24px", borderRadius: "40px", fontSize: "14px", fontWeight: "600", cursor: "pointer" },
 };

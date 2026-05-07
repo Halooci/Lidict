@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from 'react-router-dom';
 import Navbar from "../../komponen/Navbar";
 import SidebarMateri from "../../komponen/SidebarMateri";
@@ -106,7 +106,6 @@ const EksplorasiQuestion = ({ question, options, correctIndex, onAnswer, reset }
             optionStyle.borderColor = (idx === correctIndex) ? "#28a745" : "#dc3545";
             optionStyle.color = (idx === correctIndex) ? "#155724" : "#842029";
           } else if (isAnswered && idx === correctIndex && selected !== correctIndex) {
-            // Tampilkan jawaban benar jika user salah
             optionStyle.backgroundColor = "#d4edda";
             optionStyle.borderColor = "#28a745";
             optionStyle.color = "#155724";
@@ -130,30 +129,19 @@ const EksplorasiQuestion = ({ question, options, correctIndex, onAnswer, reset }
   );
 };
 
-// ===================== KOMPONEN SOAL LATIHAN (DENGAN TOMBOL PERIKSA) =====================
-const LatihanSoal = ({ soal, index, selectedAnswer, onSelect, isLocked, isCorrect }) => {
+// ===================== KOMPONEN SOAL LATIHAN (TANPA AUTO CHECK) =====================
+const LatihanSoal = ({ soal, index, selectedAnswer, onSelect, isWrong }) => {
   const handleSelect = (idx) => {
-    if (isLocked) return;
     onSelect(index, idx);
   };
 
   return (
-    <div style={styles.questionCard}>
+    <div style={styles.questionCard} id={`soal-latihan-${index}`}>
       <p style={styles.questionText}>{index+1}. {soal.text}</p>
       <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "10px" }}>
         {soal.options.map((opt, optIdx) => {
-          let optionStyle = { ...styles.mcOption, cursor: isLocked ? "not-allowed" : "pointer" };
-          if (isLocked && isCorrect) {
-            // Jika sudah benar, tampilkan jawaban yang benar dengan warna hijau
-            if (optIdx === soal.correct) {
-              optionStyle.backgroundColor = "#d4edda";
-              optionStyle.borderColor = "#28a745";
-              optionStyle.color = "#155724";
-            } else {
-              optionStyle.backgroundColor = "#e9ecef";
-              optionStyle.color = "#6c757d";
-            }
-          } else if (selectedAnswer === optIdx) {
+          let optionStyle = { ...styles.mcOption, cursor: "pointer" };
+          if (selectedAnswer === optIdx) {
             optionStyle.backgroundColor = "#2fa69a";
             optionStyle.color = "white";
           }
@@ -168,8 +156,7 @@ const LatihanSoal = ({ soal, index, selectedAnswer, onSelect, isLocked, isCorrec
           );
         })}
       </div>
-      {isLocked && isCorrect && <div style={styles.benarLabel}>✅ Jawaban Benar</div>}
-      {!isLocked && selectedAnswer !== undefined && !isCorrect && (
+      {isWrong && (
         <div style={styles.salahLabel}>❌ Jawaban salah, pilih jawaban lain</div>
       )}
     </div>
@@ -328,89 +315,78 @@ export default function PendahuluanDictionary() {
     },
   ];
 
-  // State untuk latihan
+  // State untuk latihan (baru, tanpa auto-lock)
   const [jawabanLatihan, setJawabanLatihan] = useState(Array(latihanSoal.length).fill(null));
-  const [isBenarLatihan, setIsBenarLatihan] = useState(Array(latihanSoal.length).fill(false));
-  const [isLockedLatihan, setIsLockedLatihan] = useState(Array(latihanSoal.length).fill(false));
+  const [hasilPeriksa, setHasilPeriksa] = useState(Array(latihanSoal.length).fill(null)); // null: belum diperiksa, true: benar, false: salah
   const [pesanPeriksa, setPesanPeriksa] = useState("");
   const [semuaBenar, setSemuaBenar] = useState(false);
+  
+  // Refs untuk scroll ke soal
+  const soalRefs = useRef([]);
+  useEffect(() => {
+    soalRefs.current = soalRefs.current.slice(0, latihanSoal.length);
+  }, [latihanSoal.length]);
 
-  // Fungsi untuk memilih jawaban latihan
+  // Fungsi untuk memilih jawaban latihan (hanya simpan, tidak langsung periksa)
   const handleSelectLatihan = (index, optionIdx) => {
-    if (isLockedLatihan[index]) return;
+    // Update jawaban
     setJawabanLatihan(prev => {
       const newJaw = [...prev];
       newJaw[index] = optionIdx;
       return newJaw;
     });
-    const isCorrect = (optionIdx === latihanSoal[index].correct);
-    if (isCorrect) {
-      setIsBenarLatihan(prev => {
-        const newBenar = [...prev];
-        newBenar[index] = true;
-        return newBenar;
-      });
-      setIsLockedLatihan(prev => {
-        const newLock = [...prev];
-        newLock[index] = true;
-        return newLock;
-      });
-      // Cek apakah semua sudah benar
-      const updatedBenar = [...isBenarLatihan];
-      updatedBenar[index] = true;
-      const allTrue = updatedBenar.every(v => v === true);
-      if (allTrue) setSemuaBenar(true);
-    } else {
-      setIsBenarLatihan(prev => {
-        const newBenar = [...prev];
-        newBenar[index] = false;
-        return newBenar;
-      });
-      setSemuaBenar(false);
-    }
+    // Reset hasil periksa untuk soal ini agar tanda salah hilang
+    setHasilPeriksa(prev => {
+      const newHasil = [...prev];
+      newHasil[index] = null;
+      return newHasil;
+    });
+    // Reset semuaBenar karena ada perubahan jawaban
+    if (semuaBenar) setSemuaBenar(false);
+    // Hilangkan pesan periksa jika ada
+    if (pesanPeriksa) setPesanPeriksa("");
   };
 
+  // Fungsi untuk memeriksa semua jawaban
   const handlePeriksaSemua = () => {
+    // Cek apakah semua soal sudah dijawab
     const semuaTerisi = jawabanLatihan.every(jaw => jaw !== null);
     if (!semuaTerisi) {
       setPesanPeriksa("⚠️ Anda harus menjawab semua soal terlebih dahulu!");
       return;
     }
-    setPesanPeriksa("");
-    for (let i = 0; i < latihanSoal.length; i++) {
-      if (isBenarLatihan[i]) continue;
-      const jawabanUser = jawabanLatihan[i];
-      const isCorrect = (jawabanUser === latihanSoal[i].correct);
-      if (isCorrect) {
-        setIsBenarLatihan(prev => {
-          const newBenar = [...prev];
-          newBenar[i] = true;
-          return newBenar;
-        });
-        setIsLockedLatihan(prev => {
-          const newLock = [...prev];
-          newLock[i] = true;
-          return newLock;
-        });
-      }
-    }
-    setTimeout(() => {
-      const semuaSudahBenar = isBenarLatihan.every(v => v === true);
-      if (semuaSudahBenar) {
-        setSemuaBenar(true);
-        setPesanPeriksa("🎉 Selamat! Semua jawaban Anda benar! 🎉");
-      } else {
-        setSemuaBenar(false);
-        setPesanPeriksa("Masih ada jawaban yang salah. Silakan perbaiki jawaban yang salah.");
-      }
-    }, 0);
-  };
 
-  useEffect(() => {
-    if (pesanPeriksa && !semuaBenar) {
-      setPesanPeriksa("");
+    // Evaluasi setiap jawaban
+    const newHasilPeriksa = [];
+    let adaSalah = false;
+    let firstWrongIndex = -1;
+
+    for (let i = 0; i < latihanSoal.length; i++) {
+      const isCorrect = (jawabanLatihan[i] === latihanSoal[i].correct);
+      newHasilPeriksa[i] = isCorrect;
+      if (!isCorrect) {
+        adaSalah = true;
+        if (firstWrongIndex === -1) firstWrongIndex = i;
+      }
     }
-  }, [jawabanLatihan, pesanPeriksa, semuaBenar]);
+
+    setHasilPeriksa(newHasilPeriksa);
+
+    if (adaSalah) {
+      // Scroll ke soal pertama yang salah
+      const element = document.getElementById(`soal-latihan-${firstWrongIndex}`);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+      setPesanPeriksa("❌ Masih ada jawaban yang salah. Perbaiki jawaban yang salah, lalu periksa kembali.");
+      setSemuaBenar(false);
+    } else {
+      // Semua benar
+      setSemuaBenar(true);
+      setPesanPeriksa("🎉 Selamat! Semua jawaban Anda benar! 🎉");
+      // Modal akan muncul karena efek di bawah
+    }
+  };
 
   // Ketika semua latihan benar dan bonus belum diberikan, tampilkan modal
   useEffect(() => {
@@ -568,8 +544,7 @@ export default function PendahuluanDictionary() {
                       index={idx}
                       selectedAnswer={jawabanLatihan[idx]}
                       onSelect={handleSelectLatihan}
-                      isLocked={isLockedLatihan[idx]}
-                      isCorrect={isBenarLatihan[idx]}
+                      isWrong={hasilPeriksa[idx] === false} // tampilkan label salah hanya jika hasil periksa false
                     />
                   ))}
                   <div style={{ marginTop: "20px", textAlign: "center" }}>
@@ -580,11 +555,6 @@ export default function PendahuluanDictionary() {
                   {pesanPeriksa && (
                     <div style={{ ...styles.mcFeedback, marginTop: "15px", textAlign: "center", backgroundColor: pesanPeriksa.includes("Selamat") ? "#d4edda" : "#f8d7da", color: pesanPeriksa.includes("Selamat") ? "#155724" : "#842029" }}>
                       {pesanPeriksa}
-                    </div>
-                  )}
-                  {semuaBenar && (
-                    <div style={{ marginTop: "15px", padding: "12px", backgroundColor: "#d4edda", color: "#155724", borderRadius: "8px", textAlign: "center", fontWeight: "bold" }}>
-                      🎉 SELAMAT! Anda telah menyelesaikan semua latihan dengan benar. 🎉
                     </div>
                   )}
                 </div>
@@ -693,6 +663,7 @@ const styles = {
     padding: "15px",
     marginBottom: "20px",
     border: "1px solid #ddd",
+    scrollMarginTop: "80px", // agar scroll tidak tertutup navbar
   },
   questionText: { fontWeight: "600", marginBottom: "10px", color: "#1f2937" },
   mcOption: {
@@ -723,6 +694,10 @@ const styles = {
     fontSize: "13px",
     fontWeight: "500",
     color: "#dc3545",
+    padding: "6px 12px",
+    backgroundColor: "#f8d7da",
+    borderRadius: "6px",
+    display: "inline-block",
   },
   periksaButton: {
     backgroundColor: "#306998",
