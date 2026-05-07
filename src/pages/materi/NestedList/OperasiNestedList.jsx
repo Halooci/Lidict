@@ -947,7 +947,7 @@ _buffer.getvalue()
               <section style={styles.section}>
                 <h2 style={styles.sectionTitle}>Latihan</h2>
                 <div style={styles.card}>
-                  <p style={styles.text}>Isilah bagian yang kosong pada kode (soal 1-2) dan drag pilihan ke area kosong (soal 3-5). Anda dapat mencoba berulang kali hingga jawaban benar.</p>
+                  <p style={styles.text}>Isilah bagian yang kosong pada kode (soal 1-2) dan drag pilihan ke area kosong (soal 3-5).</p>
                   
                   <CodeCompletionQuestion
                     question="1. Lengkapi kode untuk mengubah elemen baris pertama kolom kedua menjadi 99."
