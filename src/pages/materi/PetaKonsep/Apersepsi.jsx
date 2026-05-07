@@ -328,7 +328,7 @@ status = True # boolean`}
               </pre>
 
               <div style={styles.activityWrapper}>
-                <div style={styles.activityTitle}>🎯 Aktivitas 1.1 - Cocokkan Tipe Data</div>
+                <div style={styles.activityTitle}>Aktivitas 1.1 - Cocokkan Tipe Data</div>
                 <p style={styles.instruction}>Seret kotak tipe data (int, float, str, bool) ke nilai yang sesuai.</p>
                 <div style={styles.dragContainer}>
                   <div style={styles.dragItems}>
@@ -369,7 +369,7 @@ status = True # boolean`}
               </div>
 
               <div style={styles.activityWrapper}>
-                <div style={styles.activityTitle}>🎯 Aktivitas 1.2 - Aturan Penulisan Variabel</div>
+                <div style={styles.activityTitle}>Aktivitas 1.2 - Aturan Penulisan Variabel</div>
                 <p style={styles.instruction}>Pilih satu jawaban yang paling benar.</p>
                 <div style={styles.options}>
                   {varPilihanOptions.map((opt, idx) => (
@@ -390,7 +390,7 @@ status = True # boolean`}
               </div>
 
               <div style={styles.activityWrapper}>
-                <div style={styles.activityTitle}>🎯 Aktivitas 1.3 - Tipe Data dari Nilai</div>
+                <div style={styles.activityTitle}>Aktivitas 1.3 - Tipe Data dari Nilai</div>
                 <p style={styles.instruction}>Tentukan tipe data dari nilai 5. Tulis jawaban dalam huruf kecil (contoh: int).</p>
                 <div style={styles.inputGroup}>
                   <input
@@ -440,7 +440,7 @@ status = True # boolean`}
               </div>
 
               <div style={styles.activityWrapper}>
-                <div style={styles.activityTitle}>🎯 Aktivitas 2.1 - Pembagian Bulat</div>
+                <div style={styles.activityTitle}>Aktivitas 2.1 - Pembagian Bulat</div>
                 <p style={styles.instruction}>Pilih hasil dari 15 // 4 (pembagian bulat).</p>
                 <div style={styles.options}>
                   {operatorOptions.map((opt, idx) => (
@@ -461,7 +461,7 @@ status = True # boolean`}
               </div>
 
               <div style={styles.activityWrapper}>
-                <div style={styles.activityTitle}>🎯 Aktivitas 2.2 - Sisa Bagi (Modulus)</div>
+                <div style={styles.activityTitle}>Aktivitas 2.2 - Sisa Bagi (Modulus)</div>
                 <p style={styles.instruction}>Pilih hasil dari 10 % 3 (sisa bagi).</p>
                 <div style={styles.options}>
                   {modulusOptions.map((opt, idx) => (
@@ -482,7 +482,7 @@ status = True # boolean`}
               </div>
 
               <div style={styles.activityWrapper}>
-                <div style={styles.activityTitle}>🎯 Aktivitas 2.3 - Operator Pangkat</div>
+                <div style={styles.activityTitle}>Aktivitas 2.3 - Operator Pangkat</div>
                 <p style={styles.instruction}>Hitung hasil dari 2 ** 3, lalu tulis jawabannya (angka).</p>
                 <div style={styles.inputGroup}>
                   <input
@@ -520,7 +520,7 @@ umur = int(input("Umur: "))  # konversi ke integer`}
               </pre>
 
               <div style={styles.activityWrapper}>
-                <div style={styles.activityTitle}>🎯 Aktivitas 3.1 - Konversi ke Integer</div>
+                <div style={styles.activityTitle}>Aktivitas 3.1 - Konversi ke Integer</div>
                 <p style={styles.instruction}>Lengkapi kode agar variabel umur bertipe integer: <code>umur = ______(input("Umur: "))</code></p>
                 <div style={styles.inputGroup}>
                   <input
@@ -536,7 +536,7 @@ umur = int(input("Umur: "))  # konversi ke integer`}
               </div>
 
               <div style={styles.activityWrapper}>
-                <div style={styles.activityTitle}>🎯 Aktivitas 3.2 - Fungsi Output</div>
+                <div style={styles.activityTitle}>Aktivitas 3.2 - Fungsi Output</div>
                 <p style={styles.instruction}>Pilih fungsi yang benar untuk menampilkan teks ke layar.</p>
                 <div style={styles.options}>
                   {outputOptions.map((opt, idx) => (
@@ -557,7 +557,7 @@ umur = int(input("Umur: "))  # konversi ke integer`}
               </div>
 
               <div style={styles.activityWrapper}>
-                <div style={styles.activityTitle}>🎯 Aktivitas 3.3 - Mencetak Variabel</div>
+                <div style={styles.activityTitle}>Aktivitas 3.3 - Mencetak Variabel</div>
                 <p style={styles.instruction}>Lengkapi kode berikut agar program mencetak "Halo Andi". Tulis variabel yang tepat.</p>
                 <pre style={styles.codeBlockSmall}>{`nama = input("Nama: ")
 print("Halo", ______)`}</pre>

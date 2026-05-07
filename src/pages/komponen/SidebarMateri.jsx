@@ -35,13 +35,14 @@ export default function SidebarMateri() {
     }
   }, []);
 
-  // Tentukan accordion aktif berdasarkan URL
+  // Tentukan accordion aktif berdasarkan URL (sudah diperbaiki untuk Apersepsi)
   const getDefaultAccordion = () => {
     if (currentPath.startsWith("/List")) return "list";
     if (currentPath.startsWith("/NestedList")) return "NestedList";
     if (currentPath.startsWith("/Dictionary")) return "dictionary";
     if (currentPath.startsWith("/Evaluasi")) return "evaluasi";
     if (currentPath.startsWith("/PetaKonsep")) return "petaKonsep";
+    if (currentPath.startsWith("/Apersepsi")) return "petaKonsep"; // Perbaikan: Apersepsi termasuk Peta Konsep
     return null;
   };
 
@@ -258,7 +259,7 @@ export default function SidebarMateri() {
   );
 }
 
-// Komponen Accordion (tetap bisa dibuka)
+// Komponen Accordion
 function Accordion({ id, title, children, activeAccordion, setActiveAccordion }) {
   const isOpen = activeAccordion === id;
 
@@ -281,14 +282,14 @@ function Accordion({ id, title, children, activeAccordion, setActiveAccordion })
   );
 }
 
-// Komponen SubItem dengan sistem kunci per sub
+// Komponen SubItem dengan sistem kunci per sub (alert sudah diperbaiki)
 function SubItem({ label, to, currentPath, requiredLevel, unlocked }) {
   const isActive = currentPath === to;
 
   const handleClick = (e) => {
     if (!unlocked) {
       e.preventDefault();
-      alert(`Materi "${label}" membutuhkan progres level ${requiredLevel}. Level Anda saat ini ${localStorage.getItem("userRole") === "mahasiswa" ? require("../firebase").getDoc ? "..." : "belum cukup" : "? "}Selesaikan materi sebelumnya terlebih dahulu.`);
+      alert(`Materi "${label}" membutuhkan progres level ${requiredLevel}. Selesaikan materi sebelumnya terlebih dahulu.`);
     }
   };
 
@@ -312,7 +313,7 @@ function SubItem({ label, to, currentPath, requiredLevel, unlocked }) {
   );
 }
 
-// Styles (sama seperti sebelumnya)
+// Styles
 const styles = {
   sidebar: {
     position: "fixed",
