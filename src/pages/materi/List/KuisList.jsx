@@ -23,17 +23,14 @@ export default function KuisList() {
   const [flags, setFlags] = useState(Array(10).fill(false));
   const [unsures, setUnsures] = useState(Array(10).fill(false));
   const [submitted, setSubmitted] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(20 * 60); // 20 menit
+  const [timeLeft, setTimeLeft] = useState(20 * 60);
   const timerRef = useRef(null);
   const [resultsData, setResultsData] = useState(null);
   const [savingData, setSavingData] = useState(false);
 
-  // State untuk jawaban drag-drop (5 soal)
-  const [dragAnswers, setDragAnswers] = useState(Array(5).fill().map(() => []));
-
-  // ---------- DATA SOAL (10 soal: 5 Multiple Choice + 5 Drag-Drop) ----------
+  // ---------- DATA SOAL (10 SOAL PILIHAN GANDA) ----------
   const questions = [
-    // 5 PILIHAN GANDA
+    // Soal 1
     {
       id: 1,
       type: "multiple_choice",
@@ -48,6 +45,7 @@ export default function KuisList() {
       correct: 0,
       explanation: "List kosong dibuat dengan kurung siku tanpa elemen: []"
     },
+    // Soal 2
     {
       id: 2,
       type: "multiple_choice",
@@ -62,6 +60,7 @@ export default function KuisList() {
       correct: 2,
       explanation: "Indeks -1 mengakses elemen terakhir dari list, yaitu 'jeruk'."
     },
+    // Soal 3
     {
       id: 3,
       type: "multiple_choice",
@@ -76,6 +75,7 @@ export default function KuisList() {
       correct: 1,
       explanation: "Slicing [1:4] mengambil indeks 1 sampai 3 (indeks 4 tidak termasuk), yaitu [20,30,40]."
     },
+    // Soal 4
     {
       id: 4,
       type: "multiple_choice",
@@ -90,6 +90,7 @@ export default function KuisList() {
       correct: 3,
       explanation: "append() menambahkan elemen tunggal di akhir list."
     },
+    // Soal 5
     {
       id: 5,
       type: "multiple_choice",
@@ -104,55 +105,79 @@ export default function KuisList() {
       correct: 1,
       explanation: "b merujuk ke list yang sama dengan a, sehingga perubahan pada a juga terlihat pada b."
     },
-    // 5 DRAG AND DROP
+    // Soal 6
     {
       id: 6,
-      type: "dragdrop",
-      text: "Lengkapi kode untuk mengambil elemen ke 3 dari list berikut:",
-      codeTemplate: `warna = ['merah', 'kuning', 'hijau', 'biru']\nprint(warna[______])`,
-      placeholders: ["2"],
-      dragItems: ["0", "1", "2", "3", "4"],
-      correct: ["2"],
-      explanation: "Indeks ke 3 adalah indeks 2 karena indexing dimulai dari 0."
+      type: "multiple_choice",
+      text: "Indeks ke-3 dari list `warna = ['merah', 'kuning', 'hijau', 'biru']` adalah ...",
+      options: [
+        "A. 0",
+        "B. 1",
+        "C. 2",
+        "D. 3",
+        "E. 4"
+      ],
+      correct: 2,
+      explanation: "Indeks ke-3 adalah indeks 2 karena indexing dimulai dari 0."
     },
+    // Soal 7
     {
       id: 7,
-      type: "dragdrop",
-      text: "Lengkapi kode untuk mengubah elemen pertama menjadi 'Python':",
-      codeTemplate: `bahasa = ['Java', 'C++', 'JavaScript']\nbahasa[______] = 'Python'\nprint(bahasa)`,
-      placeholders: ["0"],
-      dragItems: ["0", "1", "2", "-1", "append"],
-      correct: ["0"],
+      type: "multiple_choice",
+      text: "Perintah yang benar untuk mengubah elemen pertama list `bahasa = ['Java', 'C++', 'JavaScript']` menjadi 'Python' adalah ...",
+      options: [
+        "A. bahasa[0] = 'Python'",
+        "B. bahasa[1] = 'Python'",
+        "C. bahasa[-1] = 'Python'",
+        "D. bahasa.append('Python')",
+        "E. bahasa.insert(0, 'Python')"
+      ],
+      correct: 0,
       explanation: "Indeks 0 adalah elemen pertama."
     },
+    // Soal 8
     {
       id: 8,
-      type: "dragdrop",
-      text: "Lengkapi kode untuk menggabungkan dua list menggunakan method yang tepat:",
-      codeTemplate: `list1 = [1, 2, 3]\nlist2 = [4, 5, 6]\nlist1.______(list2)\nprint(list1)`,
-      placeholders: ["extend"],
-      dragItems: ["append", "extend", "merge", "join", "add"],
-      correct: ["extend"],
+      type: "multiple_choice",
+      text: "Method yang tepat untuk menggabungkan `list2` ke dalam `list1` sehingga `list1` berisi semua elemen dari kedua list adalah ...",
+      options: [
+        "A. append()",
+        "B. extend()",
+        "C. merge()",
+        "D. join()",
+        "E. add()"
+      ],
+      correct: 1,
       explanation: "extend() menambahkan semua elemen dari list2 ke list1."
     },
+    // Soal 9 (diganti - tidak pakai list comprehension)
     {
       id: 9,
-      type: "dragdrop",
-      text: "Lengkapi kode untuk membuat list berisi kuadrat dari 0 sampai 4 menggunakan list comprehension:",
-      codeTemplate: `kuadrat = [x**2 for x in range(______)]\nprint(kuadrat)`,
-      placeholders: ["5"],
-      dragItems: ["4", "5", "6", "range(5)", "0-4"],
-      correct: ["5"],
-      explanation: "range(5) menghasilkan 0,1,2,3,4 sehingga ada 5 elemen."
+      type: "multiple_choice",
+      text: "Perintah yang tepat untuk menghapus elemen terakhir dari list `buah = ['apel', 'mangga', 'jeruk']` dan mengembalikan nilai elemen tersebut adalah ...",
+      options: [
+        "A. buah.pop()",
+        "B. buah.remove(-1)",
+        "C. buah.del[-1]",
+        "D. buah.pop(-1)",
+        "E. buah.delete()"
+      ],
+      correct: 0,
+      explanation: "pop() tanpa argumen menghapus elemen terakhir dan mengembalikannya. pop(-1) juga bisa, tetapi pop() lebih umum."
     },
+    // Soal 10
     {
       id: 10,
-      type: "dragdrop",
-      text: "Lengkapi kode untuk menghapus elemen 'mangga' dari list:",
-      codeTemplate: `buah = ['apel', 'mangga', 'jeruk']\nbuah.______('mangga')\nprint(buah)`,
-      placeholders: ["remove"],
-      dragItems: ["pop", "remove", "del", "delete", "discard"],
-      correct: ["remove"],
+      type: "multiple_choice",
+      text: "Perintah yang tepat untuk menghapus elemen 'mangga' dari list `buah = ['apel', 'mangga', 'jeruk']` adalah ...",
+      options: [
+        "A. buah.pop('mangga')",
+        "B. buah.remove('mangga')",
+        "C. del buah['mangga']",
+        "D. buah.delete('mangga')",
+        "E. buah.discard('mangga')"
+      ],
+      correct: 1,
       explanation: "remove() menghapus elemen pertama yang nilainya sesuai."
     }
   ];
@@ -195,30 +220,6 @@ export default function KuisList() {
     setAnswers(newAnswers);
   };
 
-  // Drag & Drop handlers
-  const handleDragStart = (e, item) => {
-    e.dataTransfer.setData("text/plain", item);
-    e.dataTransfer.effectAllowed = "copy";
-  };
-
-  const handleDragOver = (e) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = "copy";
-  };
-
-  const handleDrop = (e, dragQuestionIdx, placeholderIdx) => {
-    e.preventDefault();
-    const draggedItem = e.dataTransfer.getData("text/plain");
-    const newDragAnswers = [...dragAnswers];
-    if (!newDragAnswers[dragQuestionIdx]) newDragAnswers[dragQuestionIdx] = [];
-    newDragAnswers[dragQuestionIdx][placeholderIdx] = draggedItem;
-    setDragAnswers(newDragAnswers);
-    const globalIdx = 5 + dragQuestionIdx;
-    const newAnswers = [...answers];
-    newAnswers[globalIdx] = newDragAnswers[dragQuestionIdx].join("|");
-    setAnswers(newAnswers);
-  };
-
   const toggleFlag = () => {
     const newFlags = [...flags];
     newFlags[currentQuestion] = !newFlags[currentQuestion];
@@ -243,13 +244,6 @@ export default function KuisList() {
       let isCorrect = false;
       if (q.type === "multiple_choice") {
         isCorrect = (userAnswer === q.correct);
-      } else if (q.type === "dragdrop") {
-        const userAnswersArray = userAnswer ? userAnswer.split("|") : [];
-        if (userAnswersArray.length === q.correct.length) {
-          isCorrect = userAnswersArray.every((val, idx) => val === q.correct[idx]);
-        } else {
-          isCorrect = false;
-        }
       }
       if (isCorrect) score++;
       results.push({ ...q, userAnswer, isCorrect });
@@ -258,33 +252,27 @@ export default function KuisList() {
     const waktuDigunakan = (20 * 60) - timeLeft;
     setResultsData({ results, finalScore, waktuDigunakan });
 
-    // Simpan nilai ke Firestore dan update progres
     setSavingData(true);
     try {
       const userId = localStorage.getItem('userId');
       if (!userId) throw new Error("User ID tidak ditemukan");
 
-      // 1. Simpan nilai ke koleksi "nilai" dengan field "Kuis List"
       const nilaiRef = doc(db, "nilai", userId);
       const nilaiDoc = await getDoc(nilaiRef);
       if (nilaiDoc.exists()) {
         await updateDoc(nilaiRef, {
-          "Kuis List": finalScore * 10 // simpan dalam skala 0-100
+          "Kuis List": finalScore * 10
         });
       } else {
-        // Jika dokumen nilai belum ada, buat baru (tapi biasanya sudah dibuat saat registrasi)
         console.warn("Dokumen nilai tidak ditemukan, membuat baru");
-        // (Opsional: buat dokumen baru)
       }
 
-      // 2. Ambil token mahasiswa dari koleksi mahasiswa
       const mahasiswaRef = doc(db, "mahasiswa", userId);
       const mahasiswaDoc = await getDoc(mahasiswaRef);
       if (!mahasiswaDoc.exists()) throw new Error("Data mahasiswa tidak ditemukan");
       const tokenMahasiswa = mahasiswaDoc.data().Token_mahasiswa;
       if (!tokenMahasiswa) throw new Error("Token kelas tidak ditemukan");
 
-      // 3. Ambil KKM dari koleksi kkm berdasarkan token
       const kkmRef = doc(db, "kkm", tokenMahasiswa);
       const kkmDoc = await getDoc(kkmRef);
       if (!kkmDoc.exists()) throw new Error("Data KKM tidak ditemukan");
@@ -294,7 +282,6 @@ export default function KuisList() {
       const nilaiAkhir = finalScore * 10;
       const isPassed = nilaiAkhir >= kkm;
 
-      // 4. Jika lulus dan bonus belum pernah diberikan, update progres_belajar +1
       const bonusKey = "kuis_list_bonus_done";
       const alreadyBonus = localStorage.getItem(bonusKey);
       if (isPassed && !alreadyBonus) {
@@ -324,7 +311,6 @@ export default function KuisList() {
     setUnsures(Array(10).fill(false));
     setSubmitted(false);
     setTimeLeft(20 * 60);
-    setDragAnswers(Array(5).fill().map(() => []));
     setResultsData(null);
     stopTimer();
   };
@@ -337,7 +323,6 @@ export default function KuisList() {
     setAnswers(Array(10).fill(null));
     setFlags(Array(10).fill(false));
     setUnsures(Array(10).fill(false));
-    setDragAnswers(Array(5).fill().map(() => []));
     setResultsData(null);
     stopTimer();
     startTimer();
@@ -347,7 +332,7 @@ export default function KuisList() {
     window.location.href = '/List/PendahuluanList';
   };
 
-  // Efek untuk menambahkan CSS global hover
+  // Efek hover global
   useEffect(() => {
     const style = document.createElement('style');
     style.textContent = `
@@ -416,7 +401,7 @@ export default function KuisList() {
             <div style={styles.cardInstruction}>
               <h2 style={styles.instructionTitle}>Petunjuk Pengerjaan</h2>
               <ul style={styles.instructionList}>
-                <li>Kuis terdiri dari 10 soal.</li>
+                <li>Kuis terdiri dari 10 soal pilihan ganda.</li>
                 <li>Setiap soal bernilai 10 poin (total maksimal 100).</li>
                 <li>Waktu pengerjaan: 20 menit (timer berjalan setelah mulai).</li>
                 <li>Jika waktu habis, jawaban yang sudah terisi akan tersimpan dan terkirim secara otomatis.</li>
@@ -441,7 +426,7 @@ export default function KuisList() {
     const minutesUsed = Math.floor(waktuDigunakan / 60);
     const secondsUsed = waktuDigunakan % 60;
     const skor100 = finalScore * 10;
-    const isPassed = skor100 >= 70; // angka sementara, nanti bisa diganti dengan KKM dinamis
+    const isPassed = skor100 >= 70;
     const percentage = skor100;
 
     return (
@@ -530,8 +515,6 @@ export default function KuisList() {
   const q = questions[currentQuestion];
   const isFlagged = flags[currentQuestion];
   const isUnsure = unsures[currentQuestion];
-  const isDragDrop = q.type === "dragdrop";
-  const dragQuestionIdx = currentQuestion - 5;
 
   return (
     <div style={styles.fullscreenQuiz}>
@@ -569,58 +552,20 @@ export default function KuisList() {
           </div>
           <p style={styles.questionText}>{q.text}</p>
 
-          {q.type === "multiple_choice" && (
-            <div style={styles.optionsContainer}>
-              {q.options.map((opt, idx) => (
-                <label key={idx} style={styles.optionLabel}>
-                  <input
-                    type="radio"
-                    name="question"
-                    value={idx}
-                    checked={answers[currentQuestion] === idx}
-                    onChange={() => handleMCAnswer(idx)}
-                  />
-                  <span style={styles.optionLetter}>{String.fromCharCode(65 + idx)}.</span> {opt}
-                </label>
-              ))}
-            </div>
-          )}
-
-          {isDragDrop && (
-            <div>
-              <div style={styles.codeBlock}>
-                {q.codeTemplate.split('______').map((part, idx) => (
-                  <span key={idx}>
-                    {part}
-                    {idx < q.placeholders.length && (
-                      <span
-                        style={styles.dropZone}
-                        onDragOver={handleDragOver}
-                        onDrop={(e) => handleDrop(e, dragQuestionIdx, idx)}
-                      >
-                        {dragAnswers[dragQuestionIdx] && dragAnswers[dragQuestionIdx][idx]
-                          ? dragAnswers[dragQuestionIdx][idx]
-                          : '______'}
-                      </span>
-                    )}
-                  </span>
-                ))}
-              </div>
-              <div style={styles.dragItems}>
-                {q.dragItems.map((item, idx) => (
-                  <div
-                    key={idx}
-                    draggable
-                    onDragStart={(e) => handleDragStart(e, item)}
-                    style={styles.dragItem}
-                  >
-                    {item}
-                  </div>
-                ))}
-              </div>
-              <p style={{ fontSize: '12px', marginTop: '10px', color: '#666' }}>Seret kata/kode ke area kosong di atas.</p>
-            </div>
-          )}
+          <div style={styles.optionsContainer}>
+            {q.options.map((opt, idx) => (
+              <label key={idx} style={styles.optionLabel}>
+                <input
+                  type="radio"
+                  name="question"
+                  value={idx}
+                  checked={answers[currentQuestion] === idx}
+                  onChange={() => handleMCAnswer(idx)}
+                />
+                <span style={styles.optionLetter}>{String.fromCharCode(65 + idx)}.</span> {opt}
+              </label>
+            ))}
+          </div>
 
           <div style={styles.navButtons}>
             <button
@@ -691,9 +636,8 @@ export default function KuisList() {
   );
 }
 
-/* ================== STYLE (RAPI & TERSTRUKTUR) ================== */
+/* ================== STYLE (TIDAK BERUBAH) ================== */
 const styles = {
-  // ----- INSTRUCTION PAGE -----
   page: {
     padding: "30px 40px",
     backgroundColor: "#f5f7fa",
@@ -759,8 +703,6 @@ const styles = {
     transition: "0.2s",
     boxShadow: "0 4px 10px rgba(48,105,152,0.3)",
   },
-
-  // ----- FULLSCREEN QUIZ (dua kolom) -----
   fullscreenQuiz: {
     minHeight: "100vh",
     backgroundColor: "#f5f7fa",
@@ -895,44 +837,6 @@ const styles = {
     fontWeight: "bold",
     color: "#306998",
     width: "28px",
-  },
-  codeBlock: {
-    backgroundColor: "#272822",
-    color: "#f8f8f2",
-    padding: "15px",
-    borderRadius: "8px",
-    fontFamily: "monospace",
-    fontSize: "14px",
-    overflowX: "auto",
-    lineHeight: "1.8",
-  },
-  dropZone: {
-    display: "inline-block",
-    minWidth: "100px",
-    backgroundColor: "#3c3c3c",
-    border: "2px dashed #FFD43B",
-    borderRadius: "4px",
-    padding: "2px 8px",
-    margin: "0 2px",
-    textAlign: "center",
-    color: "#FFD43B",
-    fontWeight: "bold",
-  },
-  dragItems: {
-    display: "flex",
-    flexWrap: "wrap",
-    gap: "10px",
-    marginTop: "20px",
-    justifyContent: "center",
-  },
-  dragItem: {
-    backgroundColor: "#306998",
-    color: "white",
-    padding: "6px 12px",
-    borderRadius: "6px",
-    cursor: "grab",
-    userSelect: "none",
-    fontSize: "14px",
   },
   navButtons: {
     display: "flex",
@@ -1078,8 +982,6 @@ const styles = {
     marginRight: "6px",
     verticalAlign: "middle",
   },
-
-  // ----- FULLSCREEN RESULT -----
   fullscreenResult: {
     minHeight: "100vh",
     backgroundColor: "#f5f7fa",
