@@ -5,11 +5,10 @@ import SidebarMateri from "../../komponen/SidebarMateri";
 import { db } from "../../../config/firebase";
 import { doc, updateDoc, increment } from "firebase/firestore";
 
-// ================= STYLE GLOBAL (SAMA PERSIS KODE AWAL) =================
+// ================= STYLE GLOBAL =================
 const styles = {
   page: {
     padding: "30px 40px",
-    paddingTop: "30px",
     backgroundColor: "#f5f7fa",
     minHeight: "calc(100vh - 64px)",
     fontFamily: "Poppins, sans-serif",
@@ -31,14 +30,8 @@ const styles = {
     bottom: 0,
     width: "8px",
     backgroundColor: "#FFD43B",
-    borderRadius: "6px 0 0 6px",
   },
-  headerTitle: {
-    margin: 0,
-    textAlign: "center",
-    fontSize: "28px",
-    fontWeight: "700",
-  },
+  headerTitle: { margin: 0, textAlign: "center", fontSize: "28px", fontWeight: "700" },
   section: { marginBottom: "40px" },
   sectionTitle: {
     fontSize: "22px",
@@ -131,17 +124,9 @@ const styles = {
     fontWeight: "600",
     fontSize: "14px",
   },
-  errorBox: {
-    backgroundColor: "#ff4444",
-    color: "white",
-    padding: "12px 15px",
-    fontSize: "14px",
-    fontWeight: "500",
-    borderBottom: "2px solid #cc0000",
-  },
   codeInputReadOnly: {
     width: "100%",
-    minHeight: "100px",
+    minHeight: "120px",
     backgroundColor: "#272822",
     color: "#f8f8f2",
     border: "none",
@@ -150,38 +135,14 @@ const styles = {
     fontSize: "14px",
     overflow: "auto",
   },
-  codePre: {
-    margin: 0,
-    whiteSpace: "pre-wrap",
-    wordWrap: "break-word",
-    fontFamily: "monospace",
-  },
-  codeInputEditable: {
-    width: "100%",
-    minHeight: "250px",
-    backgroundColor: "#272822",
-    color: "#f8f8f2",
-    border: "none",
-    padding: "15px",
-    fontFamily: "monospace",
-    fontSize: "14px",
-    resize: "vertical",
-    outline: "none",
-    boxSizing: "border-box",
-    tabSize: 4,
-  },
+  codePre: { margin: 0, whiteSpace: "pre-wrap", wordWrap: "break-word" },
   outputHeader: {
     backgroundColor: "#306998",
     color: "white",
     padding: "10px 15px",
-    borderTop: "2px solid #1e1e1e",
   },
   outputTitle: { fontWeight: "600", fontSize: "15px" },
-  codeOutput: {
-    backgroundColor: "#1e1e1e",
-    padding: "15px",
-    minHeight: "80px",
-  },
+  codeOutput: { backgroundColor: "#1e1e1e", padding: "15px", minHeight: "80px" },
   outputContent: {
     color: "#4af",
     fontFamily: "monospace",
@@ -191,7 +152,66 @@ const styles = {
     wordWrap: "break-word",
     lineHeight: "1.5",
   },
-  outputBox: { marginTop: "10px" },
+  visualHeader: {
+    backgroundColor: "#306998",
+    color: "white",
+    padding: "10px 15px",
+    fontWeight: "600",
+    fontSize: "15px",
+  },
+  visualArea: {
+    backgroundColor: "#1e1e1e",
+    padding: "15px",
+    minHeight: "200px",
+  },
+  visualPlaceholder: {
+    color: "#aaa",
+    fontFamily: "monospace",
+    fontSize: "14px",
+    textAlign: "center",
+    margin: "20px 0",
+  },
+  explanationHeader: {
+    backgroundColor: "#306998",
+    color: "white",
+    padding: "10px 15px",
+    fontWeight: "600",
+  },
+  explanationContent: {
+    backgroundColor: "#1e1e1e",
+    padding: "15px",
+    fontSize: "14px",
+    lineHeight: "1.7",
+    color: "#f8f8f2",
+    fontFamily: "'Segoe UI', Roboto, sans-serif",
+    borderTop: "1px solid #333",
+  },
+  explanationLine: {
+    marginBottom: "12px",
+    paddingBottom: "8px",
+    borderBottom: "1px solid #333",
+    fontFamily: "'Segoe UI', Roboto, sans-serif",
+  },
+  explanationLineNumber: {
+    fontWeight: "bold",
+    color: "#61afef",
+    marginRight: "8px",
+  },
+  explanationCode: {
+    fontFamily: "monospace",
+    backgroundColor: "#2d2d2d",
+    padding: "2px 6px",
+    borderRadius: "4px",
+    fontSize: "13px",
+    color: "#e5c07b",
+  },
+  explanationArrow: {
+    margin: "0 6px",
+    color: "#abb2bf",
+  },
+  explanationText: {
+    color: "#abb2bf",
+  },
   promptBox: { padding: "15px", textAlign: "center", color: "#666" },
   questionCard: {
     backgroundColor: "#f9f9f9",
@@ -262,57 +282,6 @@ const styles = {
     fontSize: "14px",
     userSelect: "none",
     boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
-  },
-  penjelasanBox: {
-    marginTop: "15px",
-    padding: "12px",
-    backgroundColor: "#f8f9fa",
-    borderRadius: "8px",
-    borderLeft: "4px solid #306998",
-  },
-  penjelasanTitle: {
-    margin: "0 0 12px 0",
-    fontSize: "16px",
-    fontWeight: "bold",
-    color: "#306998",
-  },
-  penjelasanItem: {
-    marginBottom: "12px",
-    padding: "8px",
-    backgroundColor: "#fff",
-    borderRadius: "6px",
-    border: "1px solid #e9ecef",
-    display: "flex",
-    flexWrap: "wrap",
-    alignItems: "baseline",
-    gap: "8px",
-  },
-  penjelasanBaris: { fontWeight: "bold", color: "#306998", minWidth: "60px" },
-  penjelasanKode: {
-    fontFamily: "monospace",
-    backgroundColor: "#f0f0f0",
-    padding: "2px 6px",
-    borderRadius: "4px",
-    color: "#d63384",
-  },
-  penjelasanArrow: { color: "#6c757d", fontWeight: "bold" },
-  penjelasanDeskripsi: { color: "#333", flex: "1" },
-  visualisasiContainer: {
-    marginTop: "15px",
-    padding: "15px",
-    backgroundColor: "#eef2fa",
-    borderRadius: "8px",
-    border: "1px solid #306998",
-    textAlign: "center",
-  },
-  visualisasiTitle: { margin: "0 0 12px 0", color: "#306998", fontWeight: "bold" },
-  visualisasiPopup: {
-    marginTop: "12px",
-    padding: "8px",
-    backgroundColor: "#fff3cd",
-    borderLeft: "5px solid #FFD43B",
-    borderRadius: "8px",
-    fontSize: "14px",
   },
   modalOverlay: {
     position: "fixed",
@@ -466,7 +435,7 @@ const visStyles = {
   note: { fontSize: "12px", color: "#666", marginTop: "10px", textAlign: "center" },
 };
 
-// ================= CODE EDITOR UNTUK CONTOH KODE PROGRAM =================
+// ================= CODE EDITOR UNTUK CONTOH KODE PROGRAM (TAMPILAN SEPERTI GAMBAR) =================
 const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, pyodideReady, runPythonCode, lineExplanations }) => {
   const [output, setOutput] = useState("");
   const [isRunning, setIsRunning] = useState(false);
@@ -475,6 +444,7 @@ const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, pyodideRea
   const handleRun = useCallback(async () => {
     if (!pyodideReady) {
       setOutput("Pyodide sedang dimuat...");
+      setShowDetail(true);
       return;
     }
     setIsRunning(true);
@@ -492,16 +462,16 @@ const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, pyodideRea
     const explanations = [];
     for (let i = 0; i < maxLen; i++) explanations.push(lineExplanations[i] || "");
     return (
-      <div style={{ backgroundColor: "#1e1e1e", padding: "15px", fontSize: "14px", color: "#abb2bf" }}>
+      <div style={styles.explanationContent}>
         {lines.map((line, idx) => {
           const explanation = explanations[idx] || "";
           if (!explanation.trim() && line.trim() === "") return null;
           return (
-            <div key={idx} style={{ marginBottom: "12px", paddingBottom: "8px", borderBottom: "1px solid #333" }}>
-              <span style={{ fontWeight: "bold", color: "#61afef", marginRight: "8px" }}>Baris {idx+1}:</span>
-              <code style={{ fontFamily: "monospace", backgroundColor: "#2d2d2d", padding: "2px 6px", borderRadius: "4px", color: "#e5c07b" }}>{line || "(baris kosong)"}</code>
-              <span style={{ margin: "0 6px", color: "#abb2bf" }}> → </span>
-              <span style={{ color: "#abb2bf" }}>{explanation}</span>
+            <div key={idx} style={styles.explanationLine}>
+              <span style={styles.explanationLineNumber}>Baris {idx+1}:</span>
+              <code style={styles.explanationCode}>{line || "(baris kosong)"}</code>
+              <span style={styles.explanationArrow}> → </span>
+              <span style={styles.explanationText}>{explanation}</span>
             </div>
           );
         })}
@@ -522,57 +492,48 @@ const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, pyodideRea
         <pre style={styles.codePre}>{code}</pre>
       </div>
 
-      {showDetail && (
+      {/* Visualisasi Kode Program - selalu ditampilkan, dengan placeholder atau konten */}
+      <div style={styles.visualHeader}>Visualisasi Kode Program</div>
+      <div style={styles.visualArea}>
+        {showDetail && visualData ? (
+          <NestedListVisualization data={visualData} title={visualTitle} />
+        ) : (
+          <div style={styles.visualPlaceholder}>(Klik 'Jalankan' untuk melihat hasil)</div>
+        )}
+      </div>
+
+      {/* Output - selalu ditampilkan, dengan placeholder atau konten */}
+      <div style={styles.outputHeader}>
+        <span style={styles.outputTitle}>Output</span>
+      </div>
+      <div style={styles.codeOutput}>
+        <pre style={styles.outputContent}>
+          {showDetail ? (output || "(Tidak ada output)") : "(Klik tombol di atas untuk menjalankan kode)"}
+        </pre>
+      </div>
+
+      {/* Penjelasan Kode - hanya ditampilkan setelah dijalankan */}
+      {showDetail && lineExplanations && lineExplanations.length > 0 && (
         <>
-          <div style={{ backgroundColor: "#306998", color: "white", padding: "10px 15px", fontWeight: "600", fontSize: "15px" }}>
-            Visualisasi Kode Program
+          <div style={styles.explanationHeader}>
+            <span style={styles.outputTitle}>Penjelasan Kode (per baris)</span>
           </div>
-          <div style={{ backgroundColor: "#1e1e1e", padding: "15px", minHeight: "200px" }}>
-            {visualData ? (
-              <NestedListVisualization data={visualData} title={visualTitle} />
-            ) : (
-              <div style={{ color: "#aaa", fontFamily: "monospace", fontSize: "14px", textAlign: "center", margin: "20px 0" }}>
-                (Klik 'Jalankan' untuk melihat hasil)
-              </div>
-            )}
-          </div>
-
-          <div style={styles.outputHeader}>
-            <span style={styles.outputTitle}>Output</span>
-          </div>
-          <div style={styles.codeOutput}>
-            <pre style={styles.outputContent}>{output || "(Tidak ada output)"}</pre>
-          </div>
-
-          {lineExplanations && lineExplanations.length > 0 && (
-            <>
-              <div style={{ backgroundColor: "#306998", color: "white", padding: "10px 15px", fontWeight: "600", fontSize: "15px" }}>
-                Penjelasan Kode (per baris)
-              </div>
-              {renderLineExplanations()}
-            </>
-          )}
+          {renderLineExplanations()}
         </>
-      )}
-
-      {!showDetail && (
-        <div style={styles.promptBox}>
-          ⚡ Klik tombol "Jalankan" untuk melihat visualisasi, output, dan penjelasan.
-        </div>
       )}
     </div>
   );
 };
 
-// ================= PRAKTIK STEP BY STEP (SEPERTI HALAMAN PEMBUATAN AKSES) =================
+// ================= PRAKTIK STEP BY STEP =================
 const CodeEditorEditable = ({ pyodideReady, runPythonCode }) => {
   const [localCode, setLocalCode] = useState("");
   const [output, setOutput] = useState("");
   const [infoMessage, setInfoMessage] = useState("");
   const [completedSteps, setCompletedSteps] = useState({
-    1: false, // membuat data = [[1,2,3],[4,5,6],[7,8,9]]
-    2: false, // mengubah data[0][0] = 100
-    3: false, // mencetak data[2][1]
+    1: false,
+    2: false,
+    3: false,
   });
 
   const validateStep = (code) => {
@@ -914,7 +875,7 @@ const DragDropCompletionQuestion = ({ question, codeTemplate, placeholders, opti
   );
 };
 
-// ================= EKSPLORASI (TIDAK DIUBAH) =================
+// ================= EKSPLORASI =================
 const Eksplorasi = ({ onComplete }) => {
   const [selected, setSelected] = useState([null, null]);
   const [feedback, setFeedback] = useState(["", ""]);
@@ -1037,7 +998,7 @@ export default function OperasiNestedList() {
   const matrixZero = [[0,0,0,0],[0,0,0,0],[0,0,0,0]];
   const gabungan = [[1,2],[3,4],[5,6],[7,8]];
 
-  // Penjelasan per baris untuk setiap contoh kode (LENGKAP dan JELAS)
+  // Penjelasan per baris
   const lineExplMengakses = [
     "Komentar: Akan mengakses elemen dari nested list.",
     "Membuat nested list data dengan 3 baris 3 kolom.",
@@ -1144,7 +1105,7 @@ export default function OperasiNestedList() {
     "Mencetak data setelah penghapusan kolom."
   ];
 
-  // Soal latihan (sama seperti asli)
+  // Soal latihan
   const soal1CodeParts = ["data = [[10, 20, 30], [40, 50, 60]]\ndata[", "][", "] = 99\nprint(data)"];
   const soal1Placeholders = ["indeks baris", "indeks kolom"];
   const soal1Expected = ["0", "1"];
@@ -1222,7 +1183,6 @@ _buffer.getvalue()
 
   const handleEksplorasiComplete = () => setIsEksplorasiCompleted(true);
 
-  // Kode contoh yang akan ditampilkan di masing-masing sub bab
   const codeMengakses = `# Mengakses elemen nested list
 data = [[1, 2, 3],
         [4, 5, 6],
