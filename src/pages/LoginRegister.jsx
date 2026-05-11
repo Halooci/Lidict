@@ -552,7 +552,7 @@ const LoginForm = ({ onLoginSuccess }) => {
   );
 };
 
-// ==================== REGISTER FORM (dengan progres_belajar untuk mahasiswa) ====================
+// ==================== REGISTER FORM (revisi: dosen tanpa token kelas) ====================
 const RegisterForm = ({ onRegisterSuccess }) => {
   const [formData, setFormData] = useState({
     nama: '',
@@ -630,27 +630,19 @@ const RegisterForm = ({ onRegisterSuccess }) => {
         localStorage.setItem('userId', formData.nim);
       } 
       else if (formData.role === 'dosen') {
-        const tokenKelas = generateRandomToken();
+        // ✅ REVISI: dosen tidak lagi menyimpan Token_kelas & tidak membuat dokumen kkm
         const dosenRef = doc(db, 'dosen', formData.nip);
-        console.log("🎫 Token yang digenerate:", tokenKelas);
         await setDoc(dosenRef, {
           Nama: formData.nama,
           Email: formData.email,
           NIP: formData.nip,
           Password: formData.password,
-          Token_kelas: tokenKelas,
         });
-        await setDoc(doc(db, 'kkm', tokenKelas), {
-          Token: tokenKelas,
-          'Nilai Kuis List': null,
-          'Nilai Kuis Nested List': null,
-          'Nilai Kuis Dictionary': null,
-          'Nilai Evaluasi': null,
-        });
+
         localStorage.setItem('userRole', 'dosen');
         localStorage.setItem('userId', formData.nip);
-        alert(`Token Kelas Anda (bagikan ke mahasiswa): ${tokenKelas}`);
       }
+
       localStorage.setItem('userEmail', formData.email);
       localStorage.setItem('userName', formData.nama);
 
@@ -733,7 +725,7 @@ const LoginRegister = () => {
     if (role === 'mahasiswa') {
       window.location.href = '/PetaKonsep';
     } else if (role === 'dosen') {
-      window.location.href = '/dashboard-dosen';
+      window.location.href = '/dosen/dashboard';
     }
   };
   return (

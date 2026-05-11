@@ -32,6 +32,8 @@ import EvaluasiAkhir from "./pages/materi/evaluasi/EvaluasiAkhir";
 import InformasiPage from "./pages/komponen/informasi/InformasiPage";
 
 import DashboardDosen from "./pages/dosen/DashboardDosen";
+import DaftarMahasiswa from "./pages/dosen/DaftarMahasiswa";
+import Soal from "./pages/dosen/Soal";
 
 function App() {
   // Cek koneksi Firestore (bisa dihapus nanti setelah yakin koneksi berhasil)
@@ -83,7 +85,9 @@ function App() {
         <Route path="/InformasiPage" element={<InformasiPage />} />
 
 
-        <Route path="/dashboard-dosen" element={<DashboardDosen />} />
+        <Route path="/dosen/dashboard" element={<DashboardDosen />} />
+        <Route path="/dosen/mahasiswa" element={<DaftarMahasiswa />} />
+        <Route path="/dosen/soal" element={<Soal />} />
 
         
 
