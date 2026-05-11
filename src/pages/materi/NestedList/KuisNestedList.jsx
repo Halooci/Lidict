@@ -28,16 +28,13 @@ export default function KuisNestedList() {
   const [resultsData, setResultsData] = useState(null);
   const [savingData, setSavingData] = useState(false);
 
-  // State untuk jawaban drag-drop (5 soal)
-  const [dragAnswers, setDragAnswers] = useState(Array(5).fill().map(() => []));
-
-  // ---------- DATA SOAL ----------
+  // ---------- DATA SOAL (SEMUA PILIHAN GANDA, 10 SOAL) ----------
   const questions = [
-    // 5 PILIHAN GANDA
+    // Soal 1 (tetap)
     {
       id: 1,
       type: "multiple_choice",
-      text: "Cara mengakses angka 30 dari nested list berikut adalah ...\n\n```python\ndata = [[10, 20], [30, 40]]\n```",
+      text: "Cara mengakses angka 30 dari nested list berikut adalah ....\n\n```python\ndata = [[10, 20], [30, 40]]\n```",
       options: [
         "A. data[0][1]",
         "B. data[1][0]",
@@ -48,10 +45,11 @@ export default function KuisNestedList() {
       correct: 1,
       explanation: "Indeks pertama (1) mengakses list kedua, indeks kedua (0) mengakses elemen pertama dari list tersebut yaitu 30."
     },
+    // Soal 2 (tetap)
     {
       id: 2,
       type: "multiple_choice",
-      text: "Output dari kode berikut adalah ...\n\n```python\nmatrix = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]\nprint(matrix[1][2])\n```",
+      text: "Output dari kode berikut adalah ....\n\n```python\nmatrix = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]\nprint(matrix[1][2])\n```",
       options: [
         "A. 2",
         "B. 4",
@@ -62,10 +60,11 @@ export default function KuisNestedList() {
       correct: 3,
       explanation: "matrix[1] adalah [4,5,6], kemudian [2] mengambil indeks ke-2 yaitu 6."
     },
+    // Soal 3 (tetap)
     {
       id: 3,
       type: "multiple_choice",
-      text: "Perhatikan kode berikut:\n\n```python\nnested = [[1], [2, 3], [4, 5, 6]]\nprint(len(nested[1]))\n```\nOutputnya adalah ...",
+      text: "Perhatikan kode berikut:\n\n```python\nnested = [[1], [2, 3], [4, 5, 6]]\nprint(len(nested[1]))\n```\nOutputnya adalah ....",
       options: [
         "A. 1",
         "B. 2",
@@ -76,10 +75,11 @@ export default function KuisNestedList() {
       correct: 1,
       explanation: "nested[1] adalah [2,3] yang memiliki panjang 2."
     },
+    // Soal 4 (tetap)
     {
       id: 4,
       type: "multiple_choice",
-      text: "Prnyataan berikut yang BENAR tentang nested list di Python adalah ...",
+      text: "Pernyataan berikut yang BENAR tentang nested list di Python adalah ....",
       options: [
         "A. Nested list hanya bisa memiliki 2 tingkat kedalaman",
         "B. Setiap elemen dalam nested list harus memiliki tipe data yang sama",
@@ -90,10 +90,11 @@ export default function KuisNestedList() {
       correct: 2,
       explanation: "Nested list dapat diakses dengan indeks bertingkat, misal list[i][j][k]."
     },
+    // Soal 5 (tetap)
     {
       id: 5,
       type: "multiple_choice",
-      text: "Hasil dari kode berikut adalah ...\n\n```python\nlst = [[0] * 3] * 3\nlst[0][1] = 5\nprint(lst)\n```",
+      text: "Hasil dari kode berikut adalah ....\n\n```python\nlst = [[0] * 3] * 3\nlst[0][1] = 5\nprint(lst)\n```",
       options: [
         "A. [[0,5,0], [0,0,0], [0,0,0]]",
         "B. [[0,5,0], [0,5,0], [0,5,0]]",
@@ -104,56 +105,80 @@ export default function KuisNestedList() {
       correct: 1,
       explanation: "Perkalian list menghasilkan referensi ke list yang sama, sehingga perubahan pada satu baris mempengaruhi semua baris."
     },
-    // 5 DRAG AND DROP
+    // Soal 6 (BARU - lebih mudah)
     {
       id: 6,
-      type: "dragdrop",
-      text: "Lengkapi kode untuk membuat nested list 3x3 dengan nilai 0 menggunakan list comprehension:",
-      codeTemplate: `matrix = [[0 for j in range(3)] for i in range(______)]\nprint(matrix)`,
-      placeholders: ["..."],
-      dragItems: ["2", "3", "4", "range(3)", "[0,1,2]"],
-      correct: ["3"],
-      explanation: "range(3) menghasilkan 0,1,2 sehingga terbentuk 3 baris."
+      type: "multiple_choice",
+      text: "Diberikan nested list `nilai = [[80, 90], [70, 85]]`. Perintah yang benar untuk mengakses nilai 85 adalah ....",
+      options: [
+        "A. nilai[0][1]",
+        "B. nilai[1][0]",
+        "C. nilai[1][1]",
+        "D. nilai[2][1]",
+        "E. nilai[1][2]"
+      ],
+      correct: 2,
+      explanation: "nilai[1] adalah [70,85], kemudian indeks [1] mengambil 85."
     },
+    // Soal 7 (tetap, dulu nomor 7 drag drop, sekarang pilihan ganda dengan pertanyaan yang sama tetapi lebih mudah sudah)
     {
       id: 7,
-      type: "dragdrop",
-      text: "Lengkapi kode untuk mengakses angka 7 dari nested list berikut:",
-      codeTemplate: `data = [[1,2],[3,4],[5,6,7]]\nprint(data[______][______])`,
-      placeholders: ["...", "..."],
-      dragItems: ["0", "1", "2", "3"],
-      correct: ["2", "2"],
+      type: "multiple_choice",
+      text: "Diberikan nested list `data = [[1,2],[3,4],[5,6,7]]`. Perintah yang benar untuk mengakses angka 7 adalah ....",
+      options: [
+        "A. data[2][2]",
+        "B. data[3][0]",
+        "C. data[2][1]",
+        "D. data[1][2]",
+        "E. data[2][3]"
+      ],
+      correct: 0,
       explanation: "data[2] adalah [5,6,7], kemudian indeks [2] mengambil 7."
     },
+    // Soal 8 (BARU - lebih mudah)
     {
       id: 8,
-      type: "dragdrop",
-      text: "Lengkapi kode untuk menjumlahkan semua elemen dalam nested list (flatten):",
-      codeTemplate: `nested = [[1,2],[3,4],[5,6]]\ntotal = 0\nfor sublist in nested:\n    for val in ______:\n        total += val\nprint(total)`,
-      placeholders: ["..."],
-      dragItems: ["nested", "sublist", "val", "range(len(sublist))", "total"],
-      correct: ["sublist"],
-      explanation: "Loop pertama mengambil setiap sublist, loop kedua mengambil setiap nilai dalam sublist."
+      type: "multiple_choice",
+      text: "Perhatikan kode berikut:\n\n```python\nmatrix = [[1, 2], [3, 4]]\nmatrix[0].append(5)\nprint(matrix)\n```\nOutput dari kode diatas adalah ....",
+      options: [
+        "A. [[1,2,5], [3,4]]",
+        "B. [[1,2], [3,4,5]]",
+        "C. [[1,2], [3,4]]",
+        "D. Error",
+        "E. [[1,2,5], [3,4,5]]"
+      ],
+      correct: 0,
+      explanation: "matrix[0] adalah sublist pertama [1,2], kemudian append(5) menambahkan 5 ke sublist tersebut."
     },
+    // Soal 9 (tetap, dulu nomor 9 drag drop)
     {
       id: 9,
-      type: "dragdrop",
-      text: "Lengkapi kode untuk menambahkan elemen 99 ke dalam sublist kedua dari nested list:",
-      codeTemplate: `matrix = [[1,2],[3,4]]\nmatrix[______].append(99)\nprint(matrix)`,
-      placeholders: [""],
-      dragItems: ["0", "1", "2", "-1", "append"],
-      correct: ["1"],
+      type: "multiple_choice",
+      text: "Diberikan `matrix = [[1,2],[3,4]]`. Perintah untuk menambahkan angka 99 ke dalam sublist kedua (indeks 1) adalah ....",
+      options: [
+        "A. matrix[0].append(99)",
+        "B. matrix[1].append(99)",
+        "C. matrix[2].append(99)",
+        "D. matrix[-1].append(99)",
+        "E. matrix.append(99)"
+      ],
+      correct: 1,
       explanation: "Indeks 1 mengakses sublist [3,4], lalu append(99) menambahkannya."
     },
+    // Soal 10 (BARU - lebih mudah)
     {
       id: 10,
-      type: "dragdrop",
-      text: "Lengkapi kode untuk membuat nested list 2x2 dengan nilai perkalian indeks (i*j):",
-      codeTemplate: `matrix = [[i*j for j in range(2)] for i in range(______)]\nprint(matrix)`,
-      placeholders: [""],
-      dragItems: ["1", "2", "3", "range(2)", "2x2"],
-      correct: ["2"],
-      explanation: "range(2) menghasilkan baris 0 dan 1, sehingga terbentuk 2 baris."
+      type: "multiple_choice",
+      text: "Cara yang benar untuk membuat nested list dengan isi baris pertama [1,2] dan baris kedua [3,4] secara manual adalah ....",
+      options: [
+        "A. matrix = [1,2,3,4]",
+        "B. matrix = [[1,2], [3,4]]",
+        "C. matrix = [(1,2), (3,4)]",
+        "D. matrix = [[1,2,3,4]]",
+        "E. matrix = [1,2],[3,4]"
+      ],
+      correct: 1,
+      explanation: "Nested list dibuat dengan tanda kurung siku bersarang: [[1,2],[3,4]]."
     }
   ];
 
@@ -195,29 +220,6 @@ export default function KuisNestedList() {
     setAnswers(newAnswers);
   };
 
-  const handleDragStart = (e, item) => {
-    e.dataTransfer.setData("text/plain", item);
-    e.dataTransfer.effectAllowed = "copy";
-  };
-
-  const handleDragOver = (e) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = "copy";
-  };
-
-  const handleDrop = (e, dragQuestionIdx, placeholderIdx) => {
-    e.preventDefault();
-    const draggedItem = e.dataTransfer.getData("text/plain");
-    const newDragAnswers = [...dragAnswers];
-    if (!newDragAnswers[dragQuestionIdx]) newDragAnswers[dragQuestionIdx] = [];
-    newDragAnswers[dragQuestionIdx][placeholderIdx] = draggedItem;
-    setDragAnswers(newDragAnswers);
-    const globalIdx = 5 + dragQuestionIdx;
-    const newAnswers = [...answers];
-    newAnswers[globalIdx] = newDragAnswers[dragQuestionIdx].join("|");
-    setAnswers(newAnswers);
-  };
-
   const toggleFlag = () => {
     const newFlags = [...flags];
     newFlags[currentQuestion] = !newFlags[currentQuestion];
@@ -243,13 +245,6 @@ export default function KuisNestedList() {
       let isCorrect = false;
       if (q.type === "multiple_choice") {
         isCorrect = (userAnswer === q.correct);
-      } else if (q.type === "dragdrop") {
-        const userAnswersArray = userAnswer ? userAnswer.split("|") : [];
-        if (userAnswersArray.length === q.correct.length) {
-          isCorrect = userAnswersArray.every((val, idx) => val === q.correct[idx]);
-        } else {
-          isCorrect = false;
-        }
       }
       if (isCorrect) score++;
       results.push({ ...q, userAnswer, isCorrect });
@@ -258,31 +253,27 @@ export default function KuisNestedList() {
     const waktuDigunakan = (20 * 60) - timeLeft;
     setResultsData({ results, finalScore, waktuDigunakan });
 
-    // Simpan nilai ke Firestore dan update progres
     setSavingData(true);
     try {
       const userId = localStorage.getItem('userId');
       if (!userId) throw new Error("User ID tidak ditemukan");
 
-      // 1. Simpan nilai ke koleksi "nilai" dengan field "Kuis Nested List"
       const nilaiRef = doc(db, "nilai", userId);
       const nilaiDoc = await getDoc(nilaiRef);
       if (nilaiDoc.exists()) {
         await updateDoc(nilaiRef, {
-          "Kuis Nested List": finalScore * 10 // simpan dalam skala 0-100
+          "Kuis Nested List": finalScore * 10
         });
       } else {
         console.warn("Dokumen nilai tidak ditemukan, membuat baru");
       }
 
-      // 2. Ambil token mahasiswa dari koleksi mahasiswa
       const mahasiswaRef = doc(db, "mahasiswa", userId);
       const mahasiswaDoc = await getDoc(mahasiswaRef);
       if (!mahasiswaDoc.exists()) throw new Error("Data mahasiswa tidak ditemukan");
       const tokenMahasiswa = mahasiswaDoc.data().Token_mahasiswa;
       if (!tokenMahasiswa) throw new Error("Token kelas tidak ditemukan");
 
-      // 3. Ambil KKM dari koleksi kkm berdasarkan token
       const kkmRef = doc(db, "kkm", tokenMahasiswa);
       const kkmDoc = await getDoc(kkmRef);
       if (!kkmDoc.exists()) throw new Error("Data KKM tidak ditemukan");
@@ -292,7 +283,6 @@ export default function KuisNestedList() {
       const nilaiAkhir = finalScore * 10;
       const isPassed = nilaiAkhir >= kkm;
 
-      // 4. Jika lulus dan bonus belum pernah diberikan, update progres_belajar +1
       const bonusKey = "kuis_nested_bonus_done";
       const alreadyBonus = localStorage.getItem(bonusKey);
       if (isPassed && !alreadyBonus) {
@@ -322,7 +312,6 @@ export default function KuisNestedList() {
     setUnsures(Array(10).fill(false));
     setSubmitted(false);
     setTimeLeft(20 * 60);
-    setDragAnswers(Array(5).fill().map(() => []));
     setResultsData(null);
     stopTimer();
   };
@@ -335,7 +324,6 @@ export default function KuisNestedList() {
     setAnswers(Array(10).fill(null));
     setFlags(Array(10).fill(false));
     setUnsures(Array(10).fill(false));
-    setDragAnswers(Array(5).fill().map(() => []));
     setResultsData(null);
     stopTimer();
     startTimer();
@@ -414,7 +402,7 @@ export default function KuisNestedList() {
             <div style={styles.cardInstruction}>
               <h2 style={styles.instructionTitle}>Petunjuk Pengerjaan</h2>
               <ul style={styles.instructionList}>
-                <li>Kuis terdiri dari 10 soal.</li>
+                <li>Kuis terdiri dari 10 soal pilihan ganda.</li>
                 <li>Setiap soal bernilai 10 poin (total maksimal 100).</li>
                 <li>Waktu pengerjaan: 20 menit (timer berjalan setelah mulai).</li>
                 <li>Jika waktu habis, jawaban yang sudah terisi akan tersimpan dan terkirim secara otomatis.</li>
@@ -528,8 +516,6 @@ export default function KuisNestedList() {
   const q = questions[currentQuestion];
   const isFlagged = flags[currentQuestion];
   const isUnsure = unsures[currentQuestion];
-  const isDragDrop = q.type === "dragdrop";
-  const dragQuestionIdx = currentQuestion - 5;
 
   return (
     <div style={styles.fullscreenQuiz}>
@@ -567,58 +553,20 @@ export default function KuisNestedList() {
           </div>
           <p style={styles.questionText}>{q.text}</p>
 
-          {q.type === "multiple_choice" && (
-            <div style={styles.optionsContainer}>
-              {q.options.map((opt, idx) => (
-                <label key={idx} style={styles.optionLabel}>
-                  <input
-                    type="radio"
-                    name="question"
-                    value={idx}
-                    checked={answers[currentQuestion] === idx}
-                    onChange={() => handleMCAnswer(idx)}
-                  />
-                  <span style={styles.optionLetter}>{String.fromCharCode(65 + idx)}.</span> {opt}
-                </label>
-              ))}
-            </div>
-          )}
-
-          {isDragDrop && (
-            <div>
-              <div style={styles.codeBlock}>
-                {q.codeTemplate.split('______').map((part, idx) => (
-                  <span key={idx}>
-                    {part}
-                    {idx < q.placeholders.length && (
-                      <span
-                        style={styles.dropZone}
-                        onDragOver={handleDragOver}
-                        onDrop={(e) => handleDrop(e, dragQuestionIdx, idx)}
-                      >
-                        {dragAnswers[dragQuestionIdx] && dragAnswers[dragQuestionIdx][idx]
-                          ? dragAnswers[dragQuestionIdx][idx]
-                          : '______'}
-                      </span>
-                    )}
-                  </span>
-                ))}
-              </div>
-              <div style={styles.dragItems}>
-                {q.dragItems.map((item, idx) => (
-                  <div
-                    key={idx}
-                    draggable
-                    onDragStart={(e) => handleDragStart(e, item)}
-                    style={styles.dragItem}
-                  >
-                    {item}
-                  </div>
-                ))}
-              </div>
-              <p style={{ fontSize: '12px', marginTop: '10px', color: '#666' }}>Seret kata/kode ke area kosong di atas.</p>
-            </div>
-          )}
+          <div style={styles.optionsContainer}>
+            {q.options.map((opt, idx) => (
+              <label key={idx} style={styles.optionLabel}>
+                <input
+                  type="radio"
+                  name="question"
+                  value={idx}
+                  checked={answers[currentQuestion] === idx}
+                  onChange={() => handleMCAnswer(idx)}
+                />
+                <span style={styles.optionLetter}>{String.fromCharCode(65 + idx)}.</span> {opt}
+              </label>
+            ))}
+          </div>
 
           <div style={styles.navButtons}>
             <button
@@ -689,7 +637,7 @@ export default function KuisNestedList() {
   );
 }
 
-/* ================== STYLE (SAMA DENGAN KUIS LIST) ================== */
+/* ================== STYLE (SAMA PERSIS DENGAN ASLINYA) ================== */
 const styles = {
   page: {
     padding: "30px 40px",
@@ -890,44 +838,6 @@ const styles = {
     fontWeight: "bold",
     color: "#306998",
     width: "28px",
-  },
-  codeBlock: {
-    backgroundColor: "#272822",
-    color: "#f8f8f2",
-    padding: "15px",
-    borderRadius: "8px",
-    fontFamily: "monospace",
-    fontSize: "14px",
-    overflowX: "auto",
-    lineHeight: "1.8",
-  },
-  dropZone: {
-    display: "inline-block",
-    minWidth: "100px",
-    backgroundColor: "#3c3c3c",
-    border: "2px dashed #FFD43B",
-    borderRadius: "4px",
-    padding: "2px 8px",
-    margin: "0 2px",
-    textAlign: "center",
-    color: "#FFD43B",
-    fontWeight: "bold",
-  },
-  dragItems: {
-    display: "flex",
-    flexWrap: "wrap",
-    gap: "10px",
-    marginTop: "20px",
-    justifyContent: "center",
-  },
-  dragItem: {
-    backgroundColor: "#306998",
-    color: "white",
-    padding: "6px 12px",
-    borderRadius: "6px",
-    cursor: "grab",
-    userSelect: "none",
-    fontSize: "14px",
   },
   navButtons: {
     display: "flex",
