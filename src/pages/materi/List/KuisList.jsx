@@ -29,153 +29,144 @@ export default function KuisList() {
   const [savingData, setSavingData] = useState(false);
 
   // ---------- DATA SOAL (10 SOAL PILIHAN GANDA) ----------
+  // Perbaikan: Hapus "A. ", "B. ", dll dari teks opsi
   const questions = [
-    // Soal 1
     {
       id: 1,
       type: "multiple_choice",
-      text: "Cara yang benar untuk membuat list kosong di Python adalah ...",
+      text: "Cara yang benar untuk membuat list kosong di Python adalah ....",
       options: [
-        "A. list = []",
-        "B. list = ()",
-        "C. list = {}",
-        "D. list = list[]",
-        "E. list = empty()"
+        "list = []",
+        "list = ()",
+        "list = {}",
+        "list = list()",
+        "list = empty()"
       ],
       correct: 0,
-      explanation: "List kosong dibuat dengan kurung siku tanpa elemen: []"
+      explanation: "List kosong dibuat dengan kurung siku tanpa elemen: [] atau dengan fungsi list()."
     },
-    // Soal 2
     {
       id: 2,
       type: "multiple_choice",
-      text: "Output dari kode berikut adalah ... \n\n```python\nbuah = ['apel', 'mangga', 'jeruk']\nprint(buah[-1])\n```",
+      text: "Output dari kode berikut adalah .... \n\n```python\nbuah = ['apel', 'mangga', 'jeruk']\nprint(buah[-1])\n```",
       options: [
-        "A. apel",
-        "B. mangga",
-        "C. jeruk",
-        "D. Error",
-        "E. None"
+        "apel",
+        "mangga",
+        "jeruk",
+        "Error",
+        "None"
       ],
       correct: 2,
       explanation: "Indeks -1 mengakses elemen terakhir dari list, yaitu 'jeruk'."
     },
-    // Soal 3
     {
       id: 3,
       type: "multiple_choice",
-      text: "Perhatikan kode berikut:\n\n```python\nangka = [10, 20, 30, 40, 50]\nprint(angka[1:4])\n```\nOutputnya adalah ...",
+      text: "Perhatikan kode berikut:\n\n```python\nangka = [10, 20, 30, 40, 50]\nprint(angka[1:4])\n```\nOutputnya adalah ....",
       options: [
-        "A. [10, 20, 30]",
-        "B. [20, 30, 40]",
-        "C. [20, 30, 40, 50]",
-        "D. [10, 20, 30, 40]",
-        "E. [30, 40, 50]"
+        "[10, 20, 30]",
+        "[20, 30, 40]",
+        "[20, 30, 40, 50]",
+        "[10, 20, 30, 40]",
+        "[30, 40, 50]"
       ],
       correct: 1,
       explanation: "Slicing [1:4] mengambil indeks 1 sampai 3 (indeks 4 tidak termasuk), yaitu [20,30,40]."
     },
-    // Soal 4
     {
       id: 4,
       type: "multiple_choice",
-      text: "Method yang digunakan untuk menambahkan elemen di akhir list adalah ...",
+      text: "Method yang digunakan untuk menambahkan elemen di akhir list adalah ....",
       options: [
-        "A. insert()",
-        "B. extend()",
-        "C. add()",
-        "D. append()",
-        "E. push()"
+        "insert()",
+        "extend()",
+        "add()",
+        "append()",
+        "push()"
       ],
       correct: 3,
       explanation: "append() menambahkan elemen tunggal di akhir list."
     },
-    // Soal 5
     {
       id: 5,
       type: "multiple_choice",
-      text: "Hasil dari kode berikut adalah ...\n\n```python\na = [1, 2, 3]\nb = a\na.append(4)\nprint(b)\n```",
+      text: "Hasil dari kode berikut adalah ....\n\n```python\na = [1, 2, 3]\nb = a\na.append(4)\nprint(b)\n```",
       options: [
-        "A. [1, 2, 3]",
-        "B. [1, 2, 3, 4]",
-        "C. Error",
-        "D. [1, 2, 3, 4, 4]",
-        "E. None"
+        "[1, 2, 3]",
+        "[1, 2, 3, 4]",
+        "Error",
+        "[1, 2, 3, 4, 4]",
+        "None"
       ],
       correct: 1,
       explanation: "b merujuk ke list yang sama dengan a, sehingga perubahan pada a juga terlihat pada b."
     },
-    // Soal 6
     {
       id: 6,
       type: "multiple_choice",
-      text: "Indeks ke-3 dari list `warna = ['merah', 'kuning', 'hijau', 'biru']` adalah ...",
+      text: "Elemen ke 3 dari list `warna = ['merah', 'kuning', 'hijau', 'biru']` memiliki indeks ....",
       options: [
-        "A. 0",
-        "B. 1",
-        "C. 2",
-        "D. 3",
-        "E. 4"
+        "0",
+        "1",
+        "2",
+        "3",
+        "4"
       ],
       correct: 2,
       explanation: "Indeks ke-3 adalah indeks 2 karena indexing dimulai dari 0."
     },
-    // Soal 7
     {
       id: 7,
       type: "multiple_choice",
-      text: "Perintah yang benar untuk mengubah elemen pertama list `bahasa = ['Java', 'C++', 'JavaScript']` menjadi 'Python' adalah ...",
+      text: "Perintah yang benar untuk mengubah elemen pertama list `bahasa = ['Java', 'C++', 'JavaScript']` menjadi 'Python' adalah ....",
       options: [
-        "A. bahasa[0] = 'Python'",
-        "B. bahasa[1] = 'Python'",
-        "C. bahasa[-1] = 'Python'",
-        "D. bahasa.append('Python')",
-        "E. bahasa.insert(0, 'Python')"
+        "bahasa[0] = 'Python'",
+        "bahasa[1] = 'Python'",
+        "bahasa[-1] = 'Python'",
+        "bahasa.append('Python')",
+        "bahasa.insert(0, 'Python')"
       ],
       correct: 0,
       explanation: "Indeks 0 adalah elemen pertama."
     },
-    // Soal 8
     {
       id: 8,
       type: "multiple_choice",
-      text: "Method yang tepat untuk menggabungkan `list2` ke dalam `list1` sehingga `list1` berisi semua elemen dari kedua list adalah ...",
+      text: "Method yang tepat untuk menggabungkan `list2` ke dalam `list1` sehingga `list1` berisi semua elemen dari kedua list adalah ....",
       options: [
-        "A. append()",
-        "B. extend()",
-        "C. merge()",
-        "D. join()",
-        "E. add()"
+        "append()",
+        "extend()",
+        "merge()",
+        "join()",
+        "add()"
       ],
       correct: 1,
       explanation: "extend() menambahkan semua elemen dari list2 ke list1."
     },
-    // Soal 9 (diganti - tidak pakai list comprehension)
     {
       id: 9,
       type: "multiple_choice",
-      text: "Perintah yang tepat untuk menghapus elemen terakhir dari list `buah = ['apel', 'mangga', 'jeruk']` dan mengembalikan nilai elemen tersebut adalah ...",
+      text: "Perintah yang tepat untuk menghapus elemen terakhir dari list `buah = ['apel', 'mangga', 'jeruk']` dan mengembalikan nilai elemen tersebut adalah ....",
       options: [
-        "A. buah.pop()",
-        "B. buah.remove(-1)",
-        "C. buah.del[-1]",
-        "D. buah.pop(-1)",
-        "E. buah.delete()"
+        "buah.pop()",
+        "buah.remove(-1)",
+        "buah.del[-1]",
+        "buah.pop(-1)",
+        "buah.delete()"
       ],
       correct: 0,
       explanation: "pop() tanpa argumen menghapus elemen terakhir dan mengembalikannya. pop(-1) juga bisa, tetapi pop() lebih umum."
     },
-    // Soal 10
     {
       id: 10,
       type: "multiple_choice",
-      text: "Perintah yang tepat untuk menghapus elemen 'mangga' dari list `buah = ['apel', 'mangga', 'jeruk']` adalah ...",
+      text: "Perintah yang tepat untuk menghapus elemen 'mangga' dari list `buah = ['apel', 'mangga', 'jeruk']` adalah ....",
       options: [
-        "A. buah.pop('mangga')",
-        "B. buah.remove('mangga')",
-        "C. del buah['mangga']",
-        "D. buah.delete('mangga')",
-        "E. buah.discard('mangga')"
+        "buah.pop('mangga')",
+        "buah.remove('mangga')",
+        "del buah['mangga']",
+        "buah.delete('mangga')",
+        "buah.discard('mangga')"
       ],
       correct: 1,
       explanation: "remove() menghapus elemen pertama yang nilainya sesuai."

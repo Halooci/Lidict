@@ -29,153 +29,144 @@ export default function KuisNestedList() {
   const [savingData, setSavingData] = useState(false);
 
   // ---------- DATA SOAL (SEMUA PILIHAN GANDA, 10 SOAL) ----------
+  // Perbaikan: hapus "A. ", "B. ", dll dari setiap opsi
   const questions = [
-    // Soal 1 (tetap)
     {
       id: 1,
       type: "multiple_choice",
       text: "Cara mengakses angka 30 dari nested list berikut adalah ....\n\n```python\ndata = [[10, 20], [30, 40]]\n```",
       options: [
-        "A. data[0][1]",
-        "B. data[1][0]",
-        "C. data[1][1]",
-        "D. data[0][0]",
-        "E. data[2][0]"
+        "data[0][1]",
+        "data[1][0]",
+        "data[1][1]",
+        "data[0][0]",
+        "data[2][0]"
       ],
       correct: 1,
       explanation: "Indeks pertama (1) mengakses list kedua, indeks kedua (0) mengakses elemen pertama dari list tersebut yaitu 30."
     },
-    // Soal 2 (tetap)
     {
       id: 2,
       type: "multiple_choice",
       text: "Output dari kode berikut adalah ....\n\n```python\nmatrix = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]\nprint(matrix[1][2])\n```",
       options: [
-        "A. 2",
-        "B. 4",
-        "C. 5",
-        "D. 6",
-        "E. 8"
+        "2",
+        "4",
+        "5",
+        "6",
+        "8"
       ],
       correct: 3,
       explanation: "matrix[1] adalah [4,5,6], kemudian [2] mengambil indeks ke-2 yaitu 6."
     },
-    // Soal 3 (tetap)
     {
       id: 3,
       type: "multiple_choice",
       text: "Perhatikan kode berikut:\n\n```python\nnested = [[1], [2, 3], [4, 5, 6]]\nprint(len(nested[1]))\n```\nOutputnya adalah ....",
       options: [
-        "A. 1",
-        "B. 2",
-        "C. 3",
-        "D. 4",
-        "E. Error"
+        "1",
+        "2",
+        "3",
+        "4",
+        "Error"
       ],
       correct: 1,
       explanation: "nested[1] adalah [2,3] yang memiliki panjang 2."
     },
-    // Soal 4 (tetap)
     {
       id: 4,
       type: "multiple_choice",
       text: "Pernyataan berikut yang BENAR tentang nested list di Python adalah ....",
       options: [
-        "A. Nested list hanya bisa memiliki 2 tingkat kedalaman",
-        "B. Setiap elemen dalam nested list harus memiliki tipe data yang sama",
-        "C. Nested list dapat diakses menggunakan beberapa indeks berurutan",
-        "D. Nested list tidak dapat diubah setelah dibuat",
-        "E. Nested list hanya bisa berisi angka"
+        "Nested list hanya bisa memiliki 2 tingkat kedalaman",
+        "Setiap elemen dalam nested list harus memiliki tipe data yang sama",
+        "Nested list dapat diakses menggunakan beberapa indeks berurutan",
+        "Nested list tidak dapat diubah setelah dibuat",
+        "Nested list hanya bisa berisi angka"
       ],
       correct: 2,
       explanation: "Nested list dapat diakses dengan indeks bertingkat, misal list[i][j][k]."
     },
-    // Soal 5 (tetap)
     {
       id: 5,
       type: "multiple_choice",
       text: "Hasil dari kode berikut adalah ....\n\n```python\nlst = [[0] * 3] * 3\nlst[0][1] = 5\nprint(lst)\n```",
       options: [
-        "A. [[0,5,0], [0,0,0], [0,0,0]]",
-        "B. [[0,5,0], [0,5,0], [0,5,0]]",
-        "C. [[0,0,0], [0,5,0], [0,0,0]]",
-        "D. Error",
-        "E. [[5,0,0], [0,0,0], [0,0,0]]"
+        "[[0,5,0], [0,0,0], [0,0,0]]",
+        "[[0,5,0], [0,5,0], [0,5,0]]",
+        "[[0,0,0], [0,5,0], [0,0,0]]",
+        "Error",
+        "[[5,0,0], [0,0,0], [0,0,0]]"
       ],
       correct: 1,
       explanation: "Perkalian list menghasilkan referensi ke list yang sama, sehingga perubahan pada satu baris mempengaruhi semua baris."
     },
-    // Soal 6 (BARU - lebih mudah)
     {
       id: 6,
       type: "multiple_choice",
       text: "Diberikan nested list `nilai = [[80, 90], [70, 85]]`. Perintah yang benar untuk mengakses nilai 85 adalah ....",
       options: [
-        "A. nilai[0][1]",
-        "B. nilai[1][0]",
-        "C. nilai[1][1]",
-        "D. nilai[2][1]",
-        "E. nilai[1][2]"
+        "nilai[0][1]",
+        "nilai[1][0]",
+        "nilai[1][1]",
+        "nilai[2][1]",
+        "nilai[1][2]"
       ],
       correct: 2,
       explanation: "nilai[1] adalah [70,85], kemudian indeks [1] mengambil 85."
     },
-    
     {
       id: 7,
       type: "multiple_choice",
       text: "Diberikan nested list `data = [[1,2],[3,4],[5,6,7]]`. Perintah yang benar untuk mengakses angka 7 adalah ....",
       options: [
-        "A. data[2][2]",
-        "B. data[3][0]",
-        "C. data[2][1]",
-        "D. data[1][2]",
-        "E. data[2][3]"
+        "data[2][2]",
+        "data[3][0]",
+        "data[2][1]",
+        "data[1][2]",
+        "data[2][3]"
       ],
       correct: 0,
       explanation: "data[2] adalah [5,6,7], kemudian indeks [2] mengambil 7."
     },
-    // Soal 8 (BARU - lebih mudah)
     {
       id: 8,
       type: "multiple_choice",
       text: "Perhatikan kode berikut:\n\n```python\nmatrix = [[1, 2], [3, 4]]\nmatrix[0].append(5)\nprint(matrix)\n```\nOutput dari kode diatas adalah ....",
       options: [
-        "A. [[1,2,5], [3,4]]",
-        "B. [[1,2], [3,4,5]]",
-        "C. [[1,2], [3,4]]",
-        "D. Error",
-        "E. [[1,2,5], [3,4,5]]"
+        "[[1,2,5], [3,4]]",
+        "[[1,2], [3,4,5]]",
+        "[[1,2], [3,4]]",
+        "Error",
+        "[[1,2,5], [3,4,5]]"
       ],
       correct: 0,
       explanation: "matrix[0] adalah sublist pertama [1,2], kemudian append(5) menambahkan 5 ke sublist tersebut."
     },
-    
     {
       id: 9,
       type: "multiple_choice",
       text: "Diberikan `matrix = [[1,2],[3,4]]`. Perintah untuk menambahkan angka 99 ke dalam sublist kedua (indeks 1) adalah ....",
       options: [
-        "A. matrix[0].append(99)",
-        "B. matrix[1].append(99)",
-        "C. matrix[2].append(99)",
-        "D. matrix[-1].append(99)",
-        "E. matrix.append(99)"
+        "matrix[0].append(99)",
+        "matrix[1].append(99)",
+        "matrix[2].append(99)",
+        "matrix[-1].append(99)",
+        "matrix.append(99)"
       ],
       correct: 1,
       explanation: "Indeks 1 mengakses sublist [3,4], lalu append(99) menambahkannya."
     },
-    // Soal 10 (BARU - lebih mudah)
     {
       id: 10,
       type: "multiple_choice",
       text: "Cara yang benar untuk membuat nested list dengan isi baris pertama [1,2] dan baris kedua [3,4] secara manual adalah ....",
       options: [
-        "A. matrix = [1,2,3,4]",
-        "B. matrix = [[1,2], [3,4]]",
-        "C. matrix = [(1,2), (3,4)]",
-        "D. matrix = [[1,2,3,4]]",
-        "E. matrix = [1,2],[3,4]"
+        "matrix = [1,2,3,4]",
+        "matrix = [[1,2], [3,4]]",
+        "matrix = [(1,2), (3,4)]",
+        "matrix = [[1,2,3,4]]",
+        "matrix = [1,2],[3,4]"
       ],
       correct: 1,
       explanation: "Nested list dibuat dengan tanda kurung siku bersarang: [[1,2],[3,4]]."
@@ -427,7 +418,7 @@ export default function KuisNestedList() {
     const minutesUsed = Math.floor(waktuDigunakan / 60);
     const secondsUsed = waktuDigunakan % 60;
     const skor100 = finalScore * 10;
-    const isPassed = skor100 >= 70; // Nilai KKM sementara, nanti diganti dinamis dari Firestore
+    const isPassed = skor100 >= 70;
     const percentage = skor100;
 
     return (

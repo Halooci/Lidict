@@ -29,17 +29,18 @@ export default function KuisDictionary() {
   const [savingData, setSavingData] = useState(false);
 
   // ---------- DATA SOAL (10 SOAL PILIHAN GANDA) ----------
+  // Perbaikan: hapus "A. ", "B. ", dll dari setiap opsi
   const questions = [
     {
       id: 1,
       type: "multiple_choice",
       text: "Pernyataan yang BENAR tentang dictionary di Python adalah ...",
       options: [
-        "A. Dictionary dapat diakses menggunakan indeks angka seperti list",
-        "B. Key dalam dictionary harus bersifat unik dan immutable",
-        "C. Dictionary tidak dapat diubah setelah dibuat (immutable)",
-        "D. Dictionary hanya bisa menyimpan tipe data string sebagai value",
-        "E. Key dalam dictionary boleh berupa list"
+        "Dictionary dapat diakses menggunakan indeks angka seperti list",
+        "Key dalam dictionary harus bersifat unik dan immutable",
+        "Dictionary tidak dapat diubah setelah dibuat (immutable)",
+        "Dictionary hanya bisa menyimpan tipe data string sebagai value",
+        "Key dalam dictionary boleh berupa list"
       ],
       correct: 1,
       explanation: "Key dalam dictionary harus unik dan immutable (string, integer, tuple)."
@@ -48,7 +49,7 @@ export default function KuisDictionary() {
       id: 2,
       type: "multiple_choice",
       text: "Output dari kode berikut adalah ...\n\n```python\ndata = {'a': 1, 'b': 2, 'c': 3}\nprint(data.get('d', 0))\n```",
-      options: ["A. None", "B. Error", "C. 0", "D. 'd'", "E. 3"],
+      options: ["None", "Error", "0", "'d'", "3"],
       correct: 2,
       explanation: "Metode get() mengembalikan nilai default (0) jika key 'd' tidak ditemukan."
     },
@@ -56,7 +57,7 @@ export default function KuisDictionary() {
       id: 3,
       type: "multiple_choice",
       text: "Metode yang digunakan untuk menggabungkan dua dictionary adalah ...",
-      options: ["A. merge()", "B. combine()", "C. update()", "D. join()", "E. concat()"],
+      options: ["merge()", "combine()", "update()", "join()", "concat()"],
       correct: 2,
       explanation: "update() menambah/memperbarui dictionary dengan dictionary lain."
     },
@@ -64,7 +65,7 @@ export default function KuisDictionary() {
       id: 4,
       type: "multiple_choice",
       text: "Perhatikan kode berikut:\n\n```python\ndata = {'a': 1, 'b': 2, 'c': 3}\ndata['b'] = 99\nprint(data['b'])\n```\nOutputnya adalah ...",
-      options: ["A. 1", "B. 2", "C. 3", "D. 99", "E. Error"],
+      options: ["1", "2", "3", "99", "Error"],
       correct: 3,
       explanation: "Nilai key 'b' diubah menjadi 99, sehingga outputnya 99."
     },
@@ -72,7 +73,7 @@ export default function KuisDictionary() {
       id: 5,
       type: "multiple_choice",
       text: "Cara yang benar untuk menghapus semua item dalam dictionary `data` adalah ...",
-      options: ["A. data.removeAll()", "B. data.delete()", "C. data.clear()", "D. data.popall()", "E. del data"],
+      options: ["data.removeAll()", "data.delete()", "data.clear()", "data.popall()", "del data"],
       correct: 2,
       explanation: "clear() menghapus semua item, dictionary tetap ada."
     },
@@ -81,11 +82,11 @@ export default function KuisDictionary() {
       type: "multiple_choice",
       text: "Perhatikan kode berikut:\n\n```python\nnilai = {'fisika': 85, 'kimia': 90, 'matematika': 95}\nprint(nilai['biologi'])\n```\nApa yang akan terjadi?",
       options: [
-        "A. Output: None",
-        "B. Output: 0",
-        "C. Output: Error KeyError karena key 'biologi' tidak ditemukan",
-        "D. Output: 'biologi'",
-        "E. Output: 95"
+        "Output: None",
+        "Output: 0",
+        "Output: Error KeyError karena key 'biologi' tidak ditemukan",
+        "Output: 'biologi'",
+        "Output: 95"
       ],
       correct: 2,
       explanation: "Mengakses key yang tidak ada pada dictionary dengan kurung siku akan menyebabkan KeyError."
@@ -94,13 +95,7 @@ export default function KuisDictionary() {
       id: 7,
       type: "multiple_choice",
       text: "Method dictionary yang digunakan untuk mengembalikan nilai dari suatu key, dan jika key tidak ada mengembalikan nilai default (tanpa error) adalah ...",
-      options: [
-        "A. get()",
-        "B. pop()",
-        "C. setdefault()",
-        "D. items()",
-        "E. values()"
-      ],
+      options: ["get()", "pop()", "setdefault()", "items()", "values()"],
       correct: 0,
       explanation: "get(key, default) mengembalikan nilai key atau default jika key tidak ada."
     },
@@ -109,11 +104,11 @@ export default function KuisDictionary() {
       type: "multiple_choice",
       text: "Perintah untuk menghapus key 'mangga' dari dictionary `buah = {'apel': 5000, 'mangga': 8000, 'jeruk': 6000}` sekaligus mengembalikan nilainya adalah ...",
       options: [
-        "A. buah.del('mangga')",
-        "B. buah.pop('mangga')",
-        "C. buah.remove('mangga')",
-        "D. del buah['mangga']",
-        "E. buah.popitem('mangga')"
+        "buah.del('mangga')",
+        "buah.pop('mangga')",
+        "buah.remove('mangga')",
+        "del buah['mangga']",
+        "buah.popitem('mangga')"
       ],
       correct: 1,
       explanation: "pop(key) menghapus key dan mengembalikan nilainya."
@@ -122,13 +117,7 @@ export default function KuisDictionary() {
       id: 9,
       type: "multiple_choice",
       text: "Method dictionary yang menghapus dan mengembalikan pasangan (key, value) terakhir yang ditambahkan adalah ...",
-      options: [
-        "A. pop()",
-        "B. popitem()",
-        "C. clear()",
-        "D. del",
-        "E. remove()"
-      ],
+      options: ["pop()", "popitem()", "clear()", "del", "remove()"],
       correct: 1,
       explanation: "popitem() menghapus dan mengembalikan pasangan (key, value) terakhir yang ditambahkan (sejak Python 3.7)."
     },
@@ -136,13 +125,7 @@ export default function KuisDictionary() {
       id: 10,
       type: "multiple_choice",
       text: "Perintah untuk menggabungkan dictionary `b` ke dalam dictionary `a` (memperbarui atau menambah) adalah ...",
-      options: [
-        "A. a.merge(b)",
-        "B. a.extend(b)",
-        "C. a.append(b)",
-        "D. a.update(b)",
-        "E. a + b"
-      ],
+      options: ["a.merge(b)", "a.extend(b)", "a.append(b)", "a.update(b)", "a + b"],
       correct: 3,
       explanation: "update() menambahkan semua pasangan key-value dari b ke a."
     }
@@ -542,7 +525,7 @@ export default function KuisDictionary() {
   );
 }
 
-/* ==================== STYLE ==================== */
+/* ==================== STYLE (TIDAK BERUBAH) ==================== */
 const styles = {
   page: {
     padding: "30px 40px",
