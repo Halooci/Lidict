@@ -2215,7 +2215,7 @@ export default function OperasiManipulasiList() {
               <section style={styles.section}>
                 <h2 style={styles.sectionTitle}>Latihan</h2>
                 <div style={styles.card}>
-                  <p>Seret method list ke kegunaan yang sesuai. Klik "Periksa Jawaban" setelah semua pasangan sudah lengkapi. Pasangan yang salah bisa diperbaiki. Tombol "Reset Jawaban Salah" akan mengacak ulang hanya pasangan yang masih salah.</p>
+                  <p>Seret method list ke kegunaan yang sesuai. Klik "Periksa Jawaban" setelah semua pasangan sudah lengkapi.</p>
                   <DragDropMatching 
                     items={matchingItems} 
                     resetTrigger={resetMatching} 
