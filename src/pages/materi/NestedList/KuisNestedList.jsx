@@ -120,7 +120,7 @@ export default function KuisNestedList() {
       correct: 2,
       explanation: "nilai[1] adalah [70,85], kemudian indeks [1] mengambil 85."
     },
-    // Soal 7 (tetap, dulu nomor 7 drag drop, sekarang pilihan ganda dengan pertanyaan yang sama tetapi lebih mudah sudah)
+    
     {
       id: 7,
       type: "multiple_choice",
@@ -150,7 +150,7 @@ export default function KuisNestedList() {
       correct: 0,
       explanation: "matrix[0] adalah sublist pertama [1,2], kemudian append(5) menambahkan 5 ke sublist tersebut."
     },
-    // Soal 9 (tetap, dulu nomor 9 drag drop)
+    
     {
       id: 9,
       type: "multiple_choice",

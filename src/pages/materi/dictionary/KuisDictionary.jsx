@@ -26,12 +26,10 @@ export default function KuisDictionary() {
   const [timeLeft, setTimeLeft] = useState(20 * 60);
   const timerRef = useRef(null);
   const [resultsData, setResultsData] = useState(null);
-  const [dragAnswers, setDragAnswers] = useState(Array(5).fill().map(() => []));
   const [savingData, setSavingData] = useState(false);
 
   // ---------- DATA SOAL (10 SOAL PILIHAN GANDA) ----------
   const questions = [
-    // Soal 1
     {
       id: 1,
       type: "multiple_choice",
@@ -46,7 +44,6 @@ export default function KuisDictionary() {
       correct: 1,
       explanation: "Key dalam dictionary harus unik dan immutable (string, integer, tuple)."
     },
-    // Soal 2
     {
       id: 2,
       type: "multiple_choice",
@@ -55,7 +52,6 @@ export default function KuisDictionary() {
       correct: 2,
       explanation: "Metode get() mengembalikan nilai default (0) jika key 'd' tidak ditemukan."
     },
-    // Soal 3
     {
       id: 3,
       type: "multiple_choice",
@@ -64,7 +60,6 @@ export default function KuisDictionary() {
       correct: 2,
       explanation: "update() menambah/memperbarui dictionary dengan dictionary lain."
     },
-    // Soal 4 (DIGANTI - tidak pakai copy)
     {
       id: 4,
       type: "multiple_choice",
@@ -73,7 +68,6 @@ export default function KuisDictionary() {
       correct: 3,
       explanation: "Nilai key 'b' diubah menjadi 99, sehingga outputnya 99."
     },
-    // Soal 5
     {
       id: 5,
       type: "multiple_choice",
@@ -82,7 +76,6 @@ export default function KuisDictionary() {
       correct: 2,
       explanation: "clear() menghapus semua item, dictionary tetap ada."
     },
-    // Soal 6
     {
       id: 6,
       type: "multiple_choice",
@@ -97,7 +90,6 @@ export default function KuisDictionary() {
       correct: 2,
       explanation: "Mengakses key yang tidak ada pada dictionary dengan kurung siku akan menyebabkan KeyError."
     },
-    // Soal 7
     {
       id: 7,
       type: "multiple_choice",
@@ -112,7 +104,6 @@ export default function KuisDictionary() {
       correct: 0,
       explanation: "get(key, default) mengembalikan nilai key atau default jika key tidak ada."
     },
-    // Soal 8
     {
       id: 8,
       type: "multiple_choice",
@@ -127,7 +118,6 @@ export default function KuisDictionary() {
       correct: 1,
       explanation: "pop(key) menghapus key dan mengembalikan nilainya."
     },
-    // Soal 9
     {
       id: 9,
       type: "multiple_choice",
@@ -142,7 +132,6 @@ export default function KuisDictionary() {
       correct: 1,
       explanation: "popitem() menghapus dan mengembalikan pasangan (key, value) terakhir yang ditambahkan (sejak Python 3.7)."
     },
-    // Soal 10
     {
       id: 10,
       type: "multiple_choice",
@@ -193,19 +182,6 @@ export default function KuisDictionary() {
     const newAnswers = [...answers];
     newAnswers[currentQuestion] = answer;
     setAnswers(newAnswers);
-  };
-
-  // Fungsi drag drop (tidak digunakan)
-  const handleDragStart = (e, item) => {
-    e.dataTransfer.setData("text/plain", item);
-    e.dataTransfer.effectAllowed = "copy";
-  };
-  const handleDragOver = (e) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = "copy";
-  };
-  const handleDrop = (e, dragQuestionIdx, placeholderIdx) => {
-    e.preventDefault();
   };
 
   const toggleFlag = () => {
@@ -297,7 +273,6 @@ export default function KuisDictionary() {
     setUnsures(Array(10).fill(false));
     setSubmitted(false);
     setTimeLeft(20 * 60);
-    setDragAnswers(Array(5).fill().map(() => []));
     setResultsData(null);
     stopTimer();
   };
@@ -310,7 +285,6 @@ export default function KuisDictionary() {
     setAnswers(Array(10).fill(null));
     setFlags(Array(10).fill(false));
     setUnsures(Array(10).fill(false));
-    setDragAnswers(Array(5).fill().map(() => []));
     setResultsData(null);
     stopTimer();
     startTimer();
