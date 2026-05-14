@@ -134,11 +134,11 @@ print(mahasiswa.get("alamat", "Tidak tersedia"))   # Output: Tidak tersedia`}
                       <td style={styles.tableCell}><code>dict.clear()</code></td>
                       <td style={styles.tableCell}>Mengosongkan dictionary.</td>
                     </tr>
-                    <tr>
+                    {/* <tr>
                       <td style={styles.tableCell}>Salin dictionary</td>
                       <td style={styles.tableCell}><code>baru = dict.copy()</code></td>
                       <td style={styles.tableCell}>Membuat salinan dangkal (shallow copy).</td>
-                    </tr>
+                    </tr> */}
                   </tbody>
                 </table>
               </div>
@@ -146,7 +146,7 @@ print(mahasiswa.get("alamat", "Tidak tersedia"))   # Output: Tidak tersedia`}
           </section>
 
           {/* 5. METODE PENTING LAINNYA */}
-          <section style={styles.section}>
+          {/* <section style={styles.section}>
             <div style={styles.card}>
               <h2 style={styles.sectionTitle}>Metode Penting Dictionary</h2>
               <ul style={styles.list}>
@@ -158,7 +158,7 @@ print(mahasiswa.get("alamat", "Tidak tersedia"))   # Output: Tidak tersedia`}
                 <li><code>fromkeys(iterable, value)</code> → Membuat dictionary baru dari iterable dengan nilai yang sama.</li>
               </ul>
             </div>
-          </section>
+          </section> */}
 
           {/* 6. PERBANDINGAN DICTIONARY vs LIST (sesuai gambar) */}
           <section style={styles.section}>
@@ -223,7 +223,7 @@ print(mahasiswa.get("alamat", "Tidak tersedia"))   # Output: Tidak tersedia`}
                   </thead>
                   <tbody>
                     <tr><td style={styles.tableCell}><code>clear()</code></td><td style={styles.tableCell}>Menghapus semua item.</td></tr>
-                    <tr><td style={styles.tableCell}><code>copy()</code></td><td style={styles.tableCell}>Mengembalikan salinan dictionary (shallow copy).</td></tr>
+                    {/* <tr><td style={styles.tableCell}><code>copy()</code></td><td style={styles.tableCell}>Mengembalikan salinan dictionary (shallow copy).</td></tr> */}
                     <tr><td style={styles.tableCell}><code>fromkeys(seq, v)</code></td><td style={styles.tableCell}>Membuat dictionary baru dengan key dari seq dan nilai v (default None).</td></tr>
                     <tr><td style={styles.tableCell}><code>get(key, default)</code></td><td style={styles.tableCell}>Mengembalikan nilai key, atau default jika key tidak ada.</td></tr>
                     <tr><td style={styles.tableCell}><code>items()</code></td><td style={styles.tableCell}>Mengembalikan view of (key, value).</td></tr>
