@@ -3,177 +3,145 @@ import Navbar from "../../komponen/Navbar";
 import SidebarMateri from "../../komponen/SidebarMateri";
 import { useNavigate } from 'react-router-dom';
 import { db } from "../../../config/firebase";
-import { doc, getDoc, updateDoc, increment } from "firebase/firestore";
+import {
+  doc,
+  getDoc,
+  updateDoc,
+  increment,
+  collection,
+  query,
+  where,
+  getDocs,
+} from "firebase/firestore";
 
 export default function KuisNestedList() {
   const navigate = useNavigate();
 
+  // ---------- AUTENTIKASI & DATA PENGGUNA ----------
+  const [userData, setUserData] = useState(null);
+  const [role, setRole] = useState(null);
+  const [tokenKelas, setTokenKelas] = useState(null);
+  const [kelasId, setKelasId] = useState(null);
+  const [kkm, setKkm] = useState(75);
+
   useEffect(() => {
     const userId = localStorage.getItem('userId');
     const userEmail = localStorage.getItem('userEmail');
+    const userRole = localStorage.getItem('userRole');
     if (!userId || !userEmail) {
       navigate('/loginregister');
+      return;
     }
+    setRole(userRole);
+    const fetchUserData = async () => {
+      try {
+        if (userRole === 'mahasiswa') {
+          const mhsSnap = await getDoc(doc(db, 'mahasiswa', userId));
+          if (mhsSnap.exists()) {
+            const mhsData = mhsSnap.data();
+            setTokenKelas(mhsData.Token_mahasiswa);
+            setKelasId(mhsData.Token_mahasiswa);
+            setUserData(mhsData);
+          }
+        } else if (userRole === 'dosen') {
+          const savedToken = localStorage.getItem('activeKelasToken');
+          const savedKelasId = localStorage.getItem('activeKelasId');
+          if (savedToken) {
+            setTokenKelas(savedToken);
+            setKelasId(savedKelasId);
+            const dosenSnap = await getDoc(doc(db, 'dosen', userId));
+            if (dosenSnap.exists()) setUserData(dosenSnap.data());
+          }
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchUserData();
   }, [navigate]);
 
-  // ---------- STATE ----------
+  // ---------- AMBIL KKM DARI DOKUMEN KELAS ----------
+  useEffect(() => {
+    if (!kelasId) return;
+    const fetchKkm = async () => {
+      try {
+        const kelasSnap = await getDoc(doc(db, 'kelas', kelasId));
+        if (kelasSnap.exists()) {
+          const data = kelasSnap.data();
+          setKkm(data.kkm_kuis_nested_list ?? 75);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    };
+    fetchKkm();
+  }, [kelasId]);
+
+  // ---------- AMBIL SOAL DARI DATABASE ----------
+  const [questions, setQuestions] = useState([]);
+  const [loadingSoal, setLoadingSoal] = useState(true);
+
+  useEffect(() => {
+    if (!kelasId) return;
+    const fetchSoal = async () => {
+      try {
+        // Cari kuis dengan tipe 'nested_list' milik kelas ini
+        const kuisQuery = query(
+          collection(db, 'kuis'),
+          where('kelas_id', '==', kelasId),
+          where('tipe', '==', 'nested_list')
+        );
+        const kuisSnap = await getDocs(kuisQuery);
+        if (kuisSnap.empty) {
+          setQuestions([]);
+          setLoadingSoal(false);
+          return;
+        }
+        const kuisId = kuisSnap.docs[0].id;
+        // Ambil soal
+        const soalQuery = query(
+          collection(db, 'soal_kuis'),
+          where('kuis_id', '==', kuisId)
+        );
+        const soalSnap = await getDocs(soalQuery);
+        const soalList = [];
+        soalSnap.forEach(doc => {
+          soalList.push({ id: doc.id, ...doc.data() });
+        });
+        // Urutkan berdasarkan nomor
+        soalList.sort((a, b) => a.nomor - b.nomor);
+        setQuestions(soalList);
+        setLoadingSoal(false);
+      } catch (err) {
+        console.error(err);
+        setLoadingSoal(false);
+      }
+    };
+    fetchSoal();
+  }, [kelasId]);
+
+  // ---------- STATE KUIS ----------
   const [quizStarted, setQuizStarted] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [answers, setAnswers] = useState(Array(10).fill(null));
-  const [flags, setFlags] = useState(Array(10).fill(false));
-  const [unsures, setUnsures] = useState(Array(10).fill(false));
+  const [answers, setAnswers] = useState([]);
+  const [flags, setFlags] = useState([]);
+  const [unsures, setUnsures] = useState([]);
   const [submitted, setSubmitted] = useState(false);
   const [timeLeft, setTimeLeft] = useState(20 * 60);
   const timerRef = useRef(null);
   const [resultsData, setResultsData] = useState(null);
   const [savingData, setSavingData] = useState(false);
 
-  // ---------- DATA SOAL (SEMUA PILIHAN GANDA, 10 SOAL) ----------
-  // Perbaikan: hapus "A. ", "B. ", dll dari setiap opsi
-  const questions = [
-    {
-      id: 1,
-      type: "multiple_choice",
-      text: "Cara mengakses angka 30 dari nested list berikut adalah ....\n\n```python\ndata = [[10, 20], [30, 40]]\n```",
-      options: [
-        "data[0][1]",
-        "data[1][0]",
-        "data[1][1]",
-        "data[0][0]",
-        "data[2][0]"
-      ],
-      correct: 1,
-      explanation: "Indeks pertama (1) mengakses list kedua, indeks kedua (0) mengakses elemen pertama dari list tersebut yaitu 30."
-    },
-    {
-      id: 2,
-      type: "multiple_choice",
-      text: "Output dari kode berikut adalah ....\n\n```python\nmatrix = [[1, 2, 3], [4, 5, 6], [7, 8, 9]]\nprint(matrix[1][2])\n```",
-      options: [
-        "2",
-        "4",
-        "5",
-        "6",
-        "8"
-      ],
-      correct: 3,
-      explanation: "matrix[1] adalah [4,5,6], kemudian [2] mengambil indeks ke-2 yaitu 6."
-    },
-    {
-      id: 3,
-      type: "multiple_choice",
-      text: "Perhatikan kode berikut:\n\n```python\nnested = [[1], [2, 3], [4, 5, 6]]\nprint(len(nested[1]))\n```\nOutputnya adalah ....",
-      options: [
-        "1",
-        "2",
-        "3",
-        "4",
-        "Error"
-      ],
-      correct: 1,
-      explanation: "nested[1] adalah [2,3] yang memiliki panjang 2."
-    },
-    {
-      id: 4,
-      type: "multiple_choice",
-      text: "Pernyataan berikut yang BENAR tentang nested list di Python adalah ....",
-      options: [
-        "Nested list hanya bisa memiliki 2 tingkat kedalaman",
-        "Setiap elemen dalam nested list harus memiliki tipe data yang sama",
-        "Nested list dapat diakses menggunakan beberapa indeks berurutan",
-        "Nested list tidak dapat diubah setelah dibuat",
-        "Nested list hanya bisa berisi angka"
-      ],
-      correct: 2,
-      explanation: "Nested list dapat diakses dengan indeks bertingkat, misal list[i][j][k]."
-    },
-    {
-      id: 5,
-      type: "multiple_choice",
-      text: "Hasil dari kode berikut adalah ....\n\n```python\nlst = [[0] * 3] * 3\nlst[0][1] = 5\nprint(lst)\n```",
-      options: [
-        "[[0,5,0], [0,0,0], [0,0,0]]",
-        "[[0,5,0], [0,5,0], [0,5,0]]",
-        "[[0,0,0], [0,5,0], [0,0,0]]",
-        "Error",
-        "[[5,0,0], [0,0,0], [0,0,0]]"
-      ],
-      correct: 1,
-      explanation: "Perkalian list menghasilkan referensi ke list yang sama, sehingga perubahan pada satu baris mempengaruhi semua baris."
-    },
-    {
-      id: 6,
-      type: "multiple_choice",
-      text: "Diberikan nested list `nilai = [[80, 90], [70, 85]]`. Perintah yang benar untuk mengakses nilai 85 adalah ....",
-      options: [
-        "nilai[0][1]",
-        "nilai[1][0]",
-        "nilai[1][1]",
-        "nilai[2][1]",
-        "nilai[1][2]"
-      ],
-      correct: 2,
-      explanation: "nilai[1] adalah [70,85], kemudian indeks [1] mengambil 85."
-    },
-    {
-      id: 7,
-      type: "multiple_choice",
-      text: "Diberikan nested list `data = [[1,2],[3,4],[5,6,7]]`. Perintah yang benar untuk mengakses angka 7 adalah ....",
-      options: [
-        "data[2][2]",
-        "data[3][0]",
-        "data[2][1]",
-        "data[1][2]",
-        "data[2][3]"
-      ],
-      correct: 0,
-      explanation: "data[2] adalah [5,6,7], kemudian indeks [2] mengambil 7."
-    },
-    {
-      id: 8,
-      type: "multiple_choice",
-      text: "Perhatikan kode berikut:\n\n```python\nmatrix = [[1, 2], [3, 4]]\nmatrix[0].append(5)\nprint(matrix)\n```\nOutput dari kode diatas adalah ....",
-      options: [
-        "[[1,2,5], [3,4]]",
-        "[[1,2], [3,4,5]]",
-        "[[1,2], [3,4]]",
-        "Error",
-        "[[1,2,5], [3,4,5]]"
-      ],
-      correct: 0,
-      explanation: "matrix[0] adalah sublist pertama [1,2], kemudian append(5) menambahkan 5 ke sublist tersebut."
-    },
-    {
-      id: 9,
-      type: "multiple_choice",
-      text: "Diberikan `matrix = [[1,2],[3,4]]`. Perintah untuk menambahkan angka 99 ke dalam sublist kedua (indeks 1) adalah ....",
-      options: [
-        "matrix[0].append(99)",
-        "matrix[1].append(99)",
-        "matrix[2].append(99)",
-        "matrix[-1].append(99)",
-        "matrix.append(99)"
-      ],
-      correct: 1,
-      explanation: "Indeks 1 mengakses sublist [3,4], lalu append(99) menambahkannya."
-    },
-    {
-      id: 10,
-      type: "multiple_choice",
-      text: "Cara yang benar untuk membuat nested list dengan isi baris pertama [1,2] dan baris kedua [3,4] secara manual adalah ....",
-      options: [
-        "matrix = [1,2,3,4]",
-        "matrix = [[1,2], [3,4]]",
-        "matrix = [(1,2), (3,4)]",
-        "matrix = [[1,2,3,4]]",
-        "matrix = [1,2],[3,4]"
-      ],
-      correct: 1,
-      explanation: "Nested list dibuat dengan tanda kurung siku bersarang: [[1,2],[3,4]]."
+  // Inisialisasi state jawaban saat soal berubah
+  useEffect(() => {
+    if (questions.length > 0) {
+      setAnswers(Array(questions.length).fill(null));
+      setFlags(Array(questions.length).fill(false));
+      setUnsures(Array(questions.length).fill(false));
     }
-  ];
+  }, [questions]);
 
-  // ---------- HELPER FUNCTIONS ----------
+  // ---------- TIMER ----------
   const stopTimer = () => {
     if (timerRef.current) clearInterval(timerRef.current);
   };
@@ -205,9 +173,10 @@ export default function KuisNestedList() {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  const handleMCAnswer = (answer) => {
+  // ---------- HANDLER ----------
+  const handleMCAnswer = (answerIndex) => {
     const newAnswers = [...answers];
-    newAnswers[currentQuestion] = answer;
+    newAnswers[currentQuestion] = answerIndex;
     setAnswers(newAnswers);
   };
 
@@ -224,19 +193,17 @@ export default function KuisNestedList() {
   };
 
   const handleSubmit = async (auto = false) => {
-    if (submitted) return;
+    if (submitted || questions.length === 0) return;
     stopTimer();
     setSubmitted(true);
-    
+
+    // Hitung skor
     let score = 0;
     const results = [];
     for (let i = 0; i < questions.length; i++) {
       const q = questions[i];
-      let userAnswer = answers[i];
-      let isCorrect = false;
-      if (q.type === "multiple_choice") {
-        isCorrect = (userAnswer === q.correct);
-      }
+      const userAnswer = answers[i];
+      const isCorrect = (userAnswer === q.jawaban_benar);
       if (isCorrect) score++;
       results.push({ ...q, userAnswer, isCorrect });
     }
@@ -244,63 +211,52 @@ export default function KuisNestedList() {
     const waktuDigunakan = (20 * 60) - timeLeft;
     setResultsData({ results, finalScore, waktuDigunakan });
 
-    setSavingData(true);
-    try {
-      const userId = localStorage.getItem('userId');
-      if (!userId) throw new Error("User ID tidak ditemukan");
-
-      const nilaiRef = doc(db, "nilai", userId);
-      const nilaiDoc = await getDoc(nilaiRef);
-      if (nilaiDoc.exists()) {
+    // Hanya mahasiswa yang menyimpan ke database
+    if (role === 'mahasiswa') {
+      setSavingData(true);
+      try {
+        const userId = localStorage.getItem('userId');
+        if (!userId) throw new Error("User ID tidak ditemukan");
+        const nilaiRef = doc(db, "nilai", userId);
         await updateDoc(nilaiRef, {
-          "Kuis Nested List": finalScore * 10
+          "Kuis Nested List": finalScore * (questions[0]?.bobot || 10)
         });
-      } else {
-        console.warn("Dokumen nilai tidak ditemukan, membuat baru");
+
+        // Cek kelulusan dan bonus progres
+        const mahasiswaRef = doc(db, "mahasiswa", userId);
+        const mahasiswaDoc = await getDoc(mahasiswaRef);
+        if (!mahasiswaDoc.exists()) throw new Error("Data mahasiswa tidak ditemukan");
+
+        const nilaiAkhir = finalScore * (questions[0]?.bobot || 10);
+        const isPassed = nilaiAkhir >= kkm;
+
+        if (isPassed) {
+          const bonusKey = `kuis_nested_bonus_done_${kelasId}`;
+          const alreadyBonus = localStorage.getItem(bonusKey);
+          if (!alreadyBonus) {
+            await updateDoc(mahasiswaRef, {
+              progres_belajar: increment(1)
+            });
+            localStorage.setItem(bonusKey, "true");
+          }
+        }
+      } catch (error) {
+        console.error("Gagal menyimpan nilai:", error);
+        alert("Terjadi kesalahan saat menyimpan nilai.");
+      } finally {
+        setSavingData(false);
       }
-
-      const mahasiswaRef = doc(db, "mahasiswa", userId);
-      const mahasiswaDoc = await getDoc(mahasiswaRef);
-      if (!mahasiswaDoc.exists()) throw new Error("Data mahasiswa tidak ditemukan");
-      const tokenMahasiswa = mahasiswaDoc.data().Token_mahasiswa;
-      if (!tokenMahasiswa) throw new Error("Token kelas tidak ditemukan");
-
-      const kkmRef = doc(db, "kkm", tokenMahasiswa);
-      const kkmDoc = await getDoc(kkmRef);
-      if (!kkmDoc.exists()) throw new Error("Data KKM tidak ditemukan");
-      const kkm = kkmDoc.data()["Nilai Kuis Nested List"];
-      if (kkm === undefined) throw new Error("KKM Kuis Nested List belum diatur oleh dosen");
-
-      const nilaiAkhir = finalScore * 10;
-      const isPassed = nilaiAkhir >= kkm;
-
-      const bonusKey = "kuis_nested_bonus_done";
-      const alreadyBonus = localStorage.getItem(bonusKey);
-      if (isPassed && !alreadyBonus) {
-        await updateDoc(mahasiswaRef, {
-          progres_belajar: increment(1)
-        });
-        localStorage.setItem(bonusKey, "true");
-        console.log("Bonus progres +1 diberikan karena lulus KKM");
-      } else if (!isPassed) {
-        console.log("Nilai belum mencapai KKM, tidak mendapat bonus progres");
-      } else {
-        console.log("Bonus sudah pernah diberikan sebelumnya");
-      }
-    } catch (error) {
-      console.error("Gagal menyimpan data ke Firestore:", error);
-      alert("Terjadi kesalahan saat menyimpan nilai. Silakan hubungi administrator.");
-    } finally {
-      setSavingData(false);
     }
   };
 
   const resetQuiz = () => {
     setQuizStarted(false);
     setCurrentQuestion(0);
-    setAnswers(Array(10).fill(null));
-    setFlags(Array(10).fill(false));
-    setUnsures(Array(10).fill(false));
+    if (questions.length > 0) {
+      setAnswers(Array(questions.length).fill(null));
+      setFlags(Array(questions.length).fill(false));
+      setUnsures(Array(questions.length).fill(false));
+    }
     setSubmitted(false);
     setTimeLeft(20 * 60);
     setResultsData(null);
@@ -312,9 +268,11 @@ export default function KuisNestedList() {
     setTimeLeft(20 * 60);
     setSubmitted(false);
     setCurrentQuestion(0);
-    setAnswers(Array(10).fill(null));
-    setFlags(Array(10).fill(false));
-    setUnsures(Array(10).fill(false));
+    if (questions.length > 0) {
+      setAnswers(Array(questions.length).fill(null));
+      setFlags(Array(questions.length).fill(false));
+      setUnsures(Array(questions.length).fill(false));
+    }
     setResultsData(null);
     stopTimer();
     startTimer();
@@ -378,7 +336,42 @@ export default function KuisNestedList() {
     };
   }, []);
 
-  // ---------- RENDER HALAMAN PETUNJUK ----------
+  // ---------- RENDER ----------
+  if (loadingSoal) {
+    return (
+      <>
+        <Navbar />
+        <SidebarMateri />
+        <div className="main-content" style={{ paddingTop: "64px", textAlign: "center", padding: "40px" }}>
+          <h2>Memuat soal...</h2>
+        </div>
+      </>
+    );
+  }
+
+  // Jika soal tidak tersedia
+  if (questions.length === 0 && !submitted) {
+    return (
+      <>
+        <Navbar />
+        <SidebarMateri />
+        <div className="main-content" style={{ paddingTop: "64px" }}>
+          <div style={styles.page}>
+            <div style={styles.header}>
+              <div style={styles.headerAccent}></div>
+              <h1 style={styles.headerTitle}>KUIS NESTED LIST</h1>
+            </div>
+            <div style={styles.cardInstruction}>
+              <h2 style={styles.instructionTitle}>Petunjuk</h2>
+              <p>Belum ada soal untuk kuis ini. Hubungi dosen pengampu.</p>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
+
+  // Halaman Petunjuk
   if (!quizStarted && !submitted) {
     return (
       <>
@@ -393,16 +386,15 @@ export default function KuisNestedList() {
             <div style={styles.cardInstruction}>
               <h2 style={styles.instructionTitle}>Petunjuk Pengerjaan</h2>
               <ul style={styles.instructionList}>
-                <li>Kuis terdiri dari 10 soal pilihan ganda.</li>
-                <li>Setiap soal bernilai 10 poin (total maksimal 100).</li>
+                <li>Kuis terdiri dari {questions.length} soal pilihan ganda.</li>
+                <li>Setiap soal bernilai {questions[0]?.bobot || 10} poin (total maksimal {questions.length * (questions[0]?.bobot || 10)}).</li>
                 <li>Waktu pengerjaan: 20 menit (timer berjalan setelah mulai).</li>
                 <li>Jika waktu habis, jawaban yang sudah terisi akan tersimpan dan terkirim secara otomatis.</li>
                 <li>Pastikan semua jawaban sudah dipilih sebelum menekan KUMPULKAN JAWABAN.</li>
-                <li>Pastikan perangkat terhubung dengan koneksi internet yang stabil.</li>
               </ul>
-              <button 
+              <button
                 className="btn-hover-primary"
-                style={styles.startButton} 
+                style={styles.startButton}
                 onClick={startQuiz}
               >MULAI KUIS</button>
             </div>
@@ -412,14 +404,16 @@ export default function KuisNestedList() {
     );
   }
 
-  // ---------- RENDER HALAMAN HASIL ----------
+  // Halaman Hasil
   if (submitted && resultsData) {
     const { finalScore, waktuDigunakan } = resultsData;
     const minutesUsed = Math.floor(waktuDigunakan / 60);
     const secondsUsed = waktuDigunakan % 60;
-    const skor100 = finalScore * 10;
-    const isPassed = skor100 >= 70;
-    const percentage = skor100;
+    const totalSoal = questions.length;
+    const skorMaks = totalSoal * (questions[0]?.bobot || 10);
+    const skorAkhir = finalScore * (questions[0]?.bobot || 10);
+    const isPassed = skorAkhir >= kkm;
+    const percentage = Math.round((finalScore / totalSoal) * 100);
 
     return (
       <div style={styles.fullscreenResult}>
@@ -429,8 +423,8 @@ export default function KuisNestedList() {
             <div style={styles.headerAccentResultNew}></div>
           </div>
           <div style={styles.scoreDisplay}>
-            <span style={styles.scoreNumberNew}>{skor100}</span>
-            <span style={styles.scoreTotalNew}>/100</span>
+            <span style={styles.scoreNumberNew}>{skorAkhir}</span>
+            <span style={styles.scoreTotalNew}>/{skorMaks}</span>
           </div>
           <div style={styles.progressContainer}>
             <div style={styles.progressBar}>
@@ -444,7 +438,7 @@ export default function KuisNestedList() {
                 }}
               ></div>
             </div>
-            <div style={styles.progressLabel}>{skor100}%</div>
+            <div style={styles.progressLabel}>{percentage}%</div>
           </div>
           <div style={styles.statsGridNew}>
             <div style={styles.statItemNew}>
@@ -458,7 +452,7 @@ export default function KuisNestedList() {
               <div style={styles.statIcon}>✗</div>
               <div>
                 <div style={styles.statLabelNew}>Salah</div>
-                <div style={styles.statValueNew}>{10 - finalScore}</div>
+                <div style={styles.statValueNew}>{totalSoal - finalScore}</div>
               </div>
             </div>
             <div style={styles.statItemNew}>
@@ -471,27 +465,36 @@ export default function KuisNestedList() {
           </div>
           <div style={styles.resultMessageNew}>
             {isPassed ? (
-              <div style={styles.passedBoxNew}>SELAMAT! Anda LULUS dengan nilai {skor100}</div>
+              <div style={styles.passedBoxNew}>
+                SELAMAT! Anda LULUS dengan nilai {skorAkhir} (KKM {kkm})
+              </div>
             ) : (
-              <div style={styles.failedBoxNew}>MOHON MAAF, Anda TIDAK LULUS (Nilai {skor100} &lt; 70)</div>
+              <div style={styles.failedBoxNew}>
+                MOHON MAAF, Anda TIDAK LULUS (Nilai {skorAkhir} &lt; KKM {kkm})
+              </div>
+            )}
+            {role === 'dosen' && (
+              <div style={{ marginTop: '10px', fontStyle: 'italic', color: '#64748b' }}>
+                * Sebagai dosen, nilai tidak disimpan.
+              </div>
             )}
           </div>
           <div style={styles.resultActionsNew}>
-            <button 
+            <button
               className="btn-hover-retry"
-              style={styles.retryButtonNew} 
+              style={styles.retryButtonNew}
               onClick={resetQuiz}
               disabled={savingData}
             >Ulangi Kuis</button>
-            {!isPassed && (
-              <button 
+            {role === 'mahasiswa' && !isPassed && (
+              <button
                 className="btn-hover-back"
-                style={styles.backMaterialButtonNew} 
+                style={styles.backMaterialButtonNew}
                 onClick={goToPreviousMaterial}
               >Kembali ke Materi Sebelumnya</button>
             )}
-            {isPassed && (
-              <button 
+            {role === 'mahasiswa' && isPassed && (
+              <button
                 className="btn-hover-next"
                 style={styles.nextMaterialButtonNew}
                 onClick={() => window.location.href = '/Dictionary/PendahuluanDictionary'}
@@ -503,7 +506,7 @@ export default function KuisNestedList() {
     );
   }
 
-  // ---------- RENDER HALAMAN KUIS ----------
+  // Halaman Kuis
   const q = questions[currentQuestion];
   const isFlagged = flags[currentQuestion];
   const isUnsure = unsures[currentQuestion];
@@ -524,7 +527,7 @@ export default function KuisNestedList() {
         {/* Kolom Kiri - Soal */}
         <div style={styles.questionCard}>
           <div style={styles.questionHeader}>
-            <h3 style={styles.questionNumber}>Soal {currentQuestion + 1} dari 10</h3>
+            <h3 style={styles.questionNumber}>Soal {currentQuestion + 1} dari {questions.length}</h3>
             <div style={styles.actionButtons}>
               <button
                 className="btn-hover-flag"
@@ -542,10 +545,10 @@ export default function KuisNestedList() {
               </button>
             </div>
           </div>
-          <p style={styles.questionText}>{q.text}</p>
+          <p style={styles.questionText}>{q.pertanyaan}</p>
 
           <div style={styles.optionsContainer}>
-            {q.options.map((opt, idx) => (
+            {q.pilihan.map((opt, idx) => (
               <label key={idx} style={styles.optionLabel}>
                 <input
                   type="radio"
@@ -579,9 +582,9 @@ export default function KuisNestedList() {
           </div>
 
           <div style={styles.submitWrapper}>
-            <button 
+            <button
               className="btn-hover-submit"
-              onClick={() => handleSubmit()} 
+              onClick={() => handleSubmit()}
               style={styles.submitButton}
               disabled={savingData}
             >
@@ -596,17 +599,16 @@ export default function KuisNestedList() {
           <div style={styles.navGrid}>
             {questions.map((_, idx) => {
               let boxStyle = styles.navBox;
-              let additionalClass = "nav-box-hover";
               if (idx === currentQuestion) boxStyle = { ...styles.navBox, ...styles.navBoxActive };
               else if (flags[idx]) boxStyle = { ...styles.navBox, ...styles.navBoxFlagged };
               else if (unsures[idx]) boxStyle = { ...styles.navBox, ...styles.navBoxUnsure };
-              else if (answers[idx] !== null && answers[idx] !== "") boxStyle = { ...styles.navBox, ...styles.navBoxAnswered };
+              else if (answers[idx] !== null) boxStyle = { ...styles.navBox, ...styles.navBoxAnswered };
               else boxStyle = styles.navBox;
 
               return (
                 <div
                   key={idx}
-                  className={additionalClass}
+                  className="nav-box-hover"
                   style={boxStyle}
                   onClick={() => setCurrentQuestion(idx)}
                 >
