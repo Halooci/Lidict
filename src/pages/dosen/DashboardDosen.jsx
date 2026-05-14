@@ -9,13 +9,15 @@ import {
   doc,
   getDoc,
   updateDoc,
+  setDoc,
   addDoc,
   arrayUnion,
   arrayRemove,
   onSnapshot,
+  writeBatch,
 } from 'firebase/firestore';
 import Navbar from '../komponen/Navbar';
-import SidebarDosen from './SidebarDosen'; // <-- sidebar di-render di sini
+import SidebarDosen from './SidebarDosen';
 import {
   Copy,
   CheckCircle,
@@ -30,7 +32,7 @@ import {
   Trash2,
 } from 'lucide-react';
 
-// ==================== STYLES (disesuaikan) ====================
+// ==================== STYLES ====================
 const styles = `
   .dashboard-content {
     margin-left: 250px;
@@ -39,7 +41,7 @@ const styles = `
   }
   .content-inner {
     padding: 2rem;
-    padding-top: 80px; /* tambahan */
+    padding-top: 80px;
     max-width: 1280px;
     margin: 0 auto;
   }
@@ -269,13 +271,340 @@ const generateRandomToken = () => {
   return token;
 };
 
+// ==================== DATA SOAL DEFAULT ====================
+const getDefaultQuizzes = () => [
+  {
+    judul: 'Kuis List',
+    tipe: 'list',
+    soal: [
+      {
+        pertanyaan: 'Cara membuat list kosong yang benar adalah ....',
+        pilihan: ['list = ()', 'list = []', 'list = {}', 'list = list[]', 'list = empty()'],
+        jawaban_benar: 1,
+        bobot: 10,
+      },
+      {
+        pertanyaan: "Output dari kode berikut adalah ….\nbuah = ['apel', 'mangga', 'jeruk']\nprint(buah[-1])",
+        pilihan: ['apel', 'mangga', 'jeruk', 'Error', 'None'],
+        jawaban_benar: 2,
+        bobot: 10,
+      },
+      {
+        pertanyaan: 'Perhatikan kode berikut:\nangka = [10, 20, 30, 40, 50]\nprint(angka[1:4])\nOutputnya adalah ...',
+        pilihan: ['[10, 20, 30]', '[20, 30, 40]', '[20, 30, 40, 50]', '[10, 20, 30, 40]', '[30, 40, 50]'],
+        jawaban_benar: 1,
+        bobot: 10,
+      },
+      {
+        pertanyaan: 'Method yang digunakan untuk menambahkan elemen di akhir list adalah ....',
+        pilihan: ['insert()', 'extend()', 'add()', 'append()', 'push()'],
+        jawaban_benar: 3,
+        bobot: 10,
+      },
+      {
+        pertanyaan: 'Hasil dari kode berikut adalah ….\na = [1, 2, 3]\nb = a\na.append(4)\nprint(b)',
+        pilihan: ['[1, 2, 3]', '[1, 2, 3, 4]', 'Error', '[1, 2, 3, 4, 4]', 'None'],
+        jawaban_benar: 1,
+        bobot: 10,
+      },
+      {
+        pertanyaan: "Elemen ke 3 dari list warna = ['merah', 'kuning', 'hijau', 'biru'] memiliki indeks ....",
+        pilihan: ['0', '1', '2', '3', '4'],
+        jawaban_benar: 2,
+        bobot: 10,
+      },
+      {
+        pertanyaan: "Perintah yang benar untuk mengubah elemen pertama list bahasa = ['Java', 'C++', 'JavaScript'] menjadi 'Python' adalah ....",
+        pilihan: ["bahasa[0] = 'Python'", "bahasa[1] = 'Python'", "bahasa[-1] = 'Python'", "bahasa.append('Python')", "bahasa.insert(0, 'Python')"],
+        jawaban_benar: 0,
+        bobot: 10,
+      },
+      {
+        pertanyaan: 'Method yang tepat untuk menggabungkan list2 ke dalam list1 sehingga list1 berisi semua elemen dari kedua list adalah ....',
+        pilihan: ['append()', 'extend()', 'merge()', 'join()', 'add()'],
+        jawaban_benar: 1,
+        bobot: 10,
+      },
+      {
+        pertanyaan: "Perintah yang tepat untuk menghapus elemen terakhir dari list buah = ['apel', 'mangga', 'jeruk'] dan mengembalikan nilai elemen tersebut adalah ....",
+        pilihan: ['buah.pop()', 'buah.remove(-1)', 'buah.del[-1]', 'buah.pop(-1)', 'buah.delete()'],
+        jawaban_benar: 0,
+        bobot: 10,
+      },
+      {
+        pertanyaan: "Perintah yang tepat untuk menghapus elemen 'mangga' dari list buah = ['apel', 'mangga', 'jeruk'] adalah ....",
+        pilihan: ["buah.pop('mangga')", "buah.remove('mangga')", "del buah['mangga']", "buah.delete('mangga')", "buah.discard('mangga')"],
+        jawaban_benar: 1,
+        bobot: 10,
+      },
+    ],
+  },
+  {
+    judul: 'Kuis Nested List',
+    tipe: 'nested_list',
+    soal: [
+      {
+        pertanyaan: 'Cara mengakses angka 30 dari nested list berikut adalah ….\ndata = [[10, 20], [30, 40]]',
+        pilihan: ['data[0][1]', 'data[1][0]', 'data[1][1]', 'data[0][0]', 'data[2][0]'],
+        jawaban_benar: 1,
+        bobot: 10,
+      },
+      {
+        pertanyaan: 'Output dari kode berikut adalah ….\nmatrix = [[1,2,3],[4,5,6],[7,8,9]]\nprint(matrix[1][2])',
+        pilihan: ['2', '4', '5', '6', '8'],
+        jawaban_benar: 3,
+        bobot: 10,
+      },
+      {
+        pertanyaan: 'Perhatikan kode berikut:\nnested = [[1], [2, 3], [4, 5, 6]]\nprint(len(nested[1]))\nOutputnya adalah ....',
+        pilihan: ['1', '2', '3', '4', 'Error'],
+        jawaban_benar: 1,
+        bobot: 10,
+      },
+      {
+        pertanyaan: 'Pernyataan berikut yang BENAR tentang nested list di Python adalah ....',
+        pilihan: ['Nested list hanya bisa memiliki 2 tingkat kedalaman', 'Setiap elemen dalam nested list harus memiliki tipe data yang sama', 'Nested list dapat diakses menggunakan beberapa indeks berurutan', 'Nested list tidak dapat diubah setelah dibuat', 'Nested list hanya bisa berisi angka'],
+        jawaban_benar: 2,
+        bobot: 10,
+      },
+      {
+        pertanyaan: 'Hasil dari kode berikut adalah ....\nlst = [[0] * 3] * 3\nlst[0][1] = 5\nprint(lst)',
+        pilihan: ['[[0,5,0],[0,0,0],[0,0,0]]', '[[0,5,0],[0,5,0],[0,5,0]]', '[[0,0,0],[0,5,0],[0,0,0]]', 'Error', '[[5,0,0],[0,0,0],[0,0,0]]'],
+        jawaban_benar: 1,
+        bobot: 10,
+      },
+      {
+        pertanyaan: 'Diberikan nested list nilai = [[80, 90], [70, 85]]. Perintah yang benar untuk mengakses nilai 85 adalah ....',
+        pilihan: ['nilai[0][1]', 'nilai[1][0]', 'nilai[1][1]', 'nilai[2][1]', 'nilai[1][2]'],
+        jawaban_benar: 2,
+        bobot: 10,
+      },
+      {
+        pertanyaan: 'Diberikan nested list data = [[1,2],[3,4],[5,6,7]]. Perintah yang benar untuk mengakses angka tujuh adalah ....',
+        pilihan: ['data[2][2]', 'data[3][0]', 'data[2][1]', 'data[1][2]', 'data[2][3]'],
+        jawaban_benar: 0,
+        bobot: 10,
+      },
+      {
+        pertanyaan: 'Perhatikan kode berikut:\nmatrix = [[1, 2], [3, 4]]\nmatrix[0].append(5)\nprint(matrix)\nOutput dari kode diatas adalah ....',
+        pilihan: ['[[1,2,5],[3,4]]', '[[1,2],[3,4,5]]', '[[1,2,5],[3,4,5]]', '[[1,2],[3,4]]', 'Error'],
+        jawaban_benar: 0,
+        bobot: 10,
+      },
+      {
+        pertanyaan: 'Diberikan matrix = [[1,2],[3,4]]. Perintah untuk menambahkan angka 99 ke dalam sublist kedua (indeks 1) adalah ....',
+        pilihan: ['matrix[0].append(99)', 'matrix[1].append(99)', 'matrix[2].append(99)', 'matrix[-1].append(99)', 'matrix.append(99)'],
+        jawaban_benar: 1,
+        bobot: 10,
+      },
+      {
+        pertanyaan: 'Cara yang benar untuk membuat nested list dengan isi baris pertama [1,2] dan baris kedua [3,4] secara manual adalah ....',
+        pilihan: ['matrix = [1,2,3,4]', 'matrix = [[1,2],[3,4]]', 'matrix = [(1,2),(3,4)]', 'matrix = [[1,2,3,4]]', 'matrix = [1,2],[3,4]'],
+        jawaban_benar: 1,
+        bobot: 10,
+      },
+    ],
+  },
+  {
+    judul: 'Kuis Dictionary',
+    tipe: 'dictionary',
+    soal: [
+      {
+        pertanyaan: 'Pernyataan yang BENAR tentang dictionary di Python adalah ...',
+        pilihan: ['Dictionary dapat diakses menggunakan indeks angka seperti list', 'Key dalam dictionary harus bersifat unik dan immutable', 'Dictionary tidak dapat diubah setelah dibuat (immutable)', 'Dictionary hanya bisa menyimpan tipe data string sebagai value', 'Key dalam dictionary boleh berupa list'],
+        jawaban_benar: 1,
+        bobot: 10,
+      },
+      {
+        pertanyaan: "Output dari kode berikut adalah ….\ndata = {'a': 1, 'b': 2, 'c': 3}\nprint(data.get('d', 0))",
+        pilihan: ['None', 'Error', '0', "'d'", '3'],
+        jawaban_benar: 2,
+        bobot: 10,
+      },
+      {
+        pertanyaan: 'Metode yang digunakan untuk menggabungkan dua dictionary adalah ...',
+        pilihan: ['merge()', 'combine()', 'update()', 'join()', 'concat()'],
+        jawaban_benar: 2,
+        bobot: 10,
+      },
+      {
+        pertanyaan: "Perhatikan kode berikut:\ndata = {'a': 1, 'b': 2, 'c': 3}\ndata['b'] = 99\nprint(data['b'])\nOutputnya adalah ...",
+        pilihan: ['1', '2', '3', '99', 'Error'],
+        jawaban_benar: 3,
+        bobot: 10,
+      },
+      {
+        pertanyaan: 'Cara yang benar untuk menghapus semua item dalam dictionary data adalah ...',
+        pilihan: ['data.removeAll()', 'data.delete()', 'data.clear()', 'data.popall()', 'del data'],
+        jawaban_benar: 2,
+        bobot: 10,
+      },
+      {
+        pertanyaan: "Perhatikan kode berikut:\nnilai = {'fisika': 85, 'kimia': 90, 'matematika': 95}\nprint(nilai['biologi'])\nMaka outputnya adalah ….",
+        pilihan: ['None', '0', "Error KeyError karena key 'biologi' tidak ditemukan", "'biologi'", '95'],
+        jawaban_benar: 2,
+        bobot: 10,
+      },
+      {
+        pertanyaan: 'Method dictionary yang digunakan untuk mengembalikan nilai dari suatu key, dan jika key tidak ada mengembalikan nilai default (tanpa error) adalah ....',
+        pilihan: ['get()', 'pop()', 'setdefault()', 'items()', 'values()'],
+        jawaban_benar: 0,
+        bobot: 10,
+      },
+      {
+        pertanyaan: "Perintah untuk menghapus key 'mangga' dari dictionary buah = {'apel': 5000, 'mangga': 8000, 'jeruk': 6000} sekaligus mengembalikan nilainya adalah ....",
+        pilihan: ["buah.del('mangga')", "buah.pop('mangga')", "buah.remove('mangga')", "del buah['mangga']", "buah.popitem('mangga')"],
+        jawaban_benar: 1,
+        bobot: 10,
+      },
+      {
+        pertanyaan: 'Method dictionary yang menghapus dan mengembalikan pasangan (key, value) terakhir yang ditambahkan adalah ....',
+        pilihan: ['pop()', 'popitem()', 'clear()', 'del', 'remove()'],
+        jawaban_benar: 1,
+        bobot: 10,
+      },
+      {
+        pertanyaan: 'Perintah untuk menggabungkan dictionary b ke dalam dictionary a (memperbarui atau menambah) adalah ....',
+        pilihan: ['a.merge(b)', 'a.extend(b)', 'a.append(b)', 'a.update(b)', 'a+b'],
+        jawaban_benar: 3,
+        bobot: 10,
+      },
+    ],
+  },
+  {
+    judul: 'Evaluasi',
+    tipe: 'evaluasi',
+    soal: [
+      {
+        pertanyaan: 'Perhatikan pernyataan tentang list pada Python:\n(1) List dapat menyimpan elemen dengan tipe data berbeda.\n(2) List bersifat immutable (tidak bisa diubah).\n(3) List didefinisikan dengan tanda kurung siku [].\n(4) Elemen list dapat diakses menggunakan indeks mulai dari 0.\nPernyataan yang benar adalah ….',
+        pilihan: ['(1), (2), dan (3)', '(1), (3), dan (4)', '(2) dan (4)', '(1), (2), dan (4)', 'Semua benar'],
+        jawaban_benar: 1,
+        bobot: 5,
+      },
+      {
+        pertanyaan: "Diberikan kode berikut:\nbuah = ['apel', 'pisang', 'jeruk', 'mangga']\nprint(buah[-2])\nOutput yang dihasilkan adalah ….",
+        pilihan: ['apel', 'pisang', 'jeruk', 'mangga', 'Error'],
+        jawaban_benar: 2,
+        bobot: 5,
+      },
+      {
+        pertanyaan: 'Cara yang tepat untuk membuat list berisi angka 1, 2, 3, 4, 5 secara berurutan adalah ….',
+        pilihan: ['list(1,2,3,4,5)', '[1;2;3;4;5]', '{1,2,3,4,5}', '[1,2,3,4,5]', '(1,2,3,4,5)'],
+        jawaban_benar: 3,
+        bobot: 5,
+      },
+      {
+        pertanyaan: 'Perhatikan potongan kode berikut:\nnilai = [80, 75, 90, 85]\nnilai.append(95)\nnilai.insert(1, 70)\nPanjang list nilai setelah kedua operasi tersebut adalah ….',
+        pilihan: ['4', '5', '6', '7', 'Error'],
+        jawaban_benar: 2,
+        bobot: 5,
+      },
+      {
+        pertanyaan: 'Method yang paling tepat digunakan untuk menghapus elemen terakhir dari list sekaligus mengembalikan nilainya adalah ….',
+        pilihan: ['remove()', 'pop()', 'delete()', 'discard()', 'clear()'],
+        jawaban_benar: 1,
+        bobot: 5,
+      },
+      {
+        pertanyaan: 'Analisislah kode berikut:\ndata = [3, 1, 4, 1, 5]\ndata.sort(reverse=True)\nprint(data[2])\nOutput yang dihasilkan adalah ….',
+        pilihan: ['1', '4', '3', '5', 'Error'],
+        jawaban_benar: 2,
+        bobot: 5,
+      },
+      {
+        pertanyaan: 'Operasi yang menghasilkan list baru [10, 20, 30, 40] jika diketahui list awal a = [10, 20, 30] adalah ….',
+        pilihan: ['a.append(40)', 'a + [40]', 'a.extend([40])', 'a.insert(3, 40)', 'a.add(40)'],
+        jawaban_benar: 1,
+        bobot: 5,
+      },
+      {
+        pertanyaan: 'Yang dimaksud dengan nested list dalam Python adalah ….',
+        pilihan: ['List yang hanya berisi tipe data numerik', 'List yang di dalamnya terdapat list lain sebagai elemen', 'List yang didefinisikan di dalam fungsi', 'List yang tidak memiliki indeks', 'List yang hanya memiliki satu elemen'],
+        jawaban_benar: 1,
+        bobot: 5,
+      },
+      {
+        pertanyaan: 'Diberikan nested list:\nmatrix = [[1,2,3], [4,5,6], [7,8,9]]\nCara mengakses angka 5 adalah ….',
+        pilihan: ['matrix[1][1]', 'matrix[2][1]', 'matrix[1][2]', 'matrix[2][2]', 'matrix[0][1]'],
+        jawaban_benar: 0,
+        bobot: 5,
+      },
+      {
+        pertanyaan: 'Kode yang benar untuk membuat nested list dengan tiga baris dan dua kolom, semua elemen bernilai 0 adalah ….',
+        pilihan: ['[[0]*2]*3', '[[0 for _ in range(2)] for _ in range(3)]', '[0,0] * 3', 'A dan B benar', 'Hanya B yang benar'],
+        jawaban_benar: 4,
+        bobot: 5,
+      },
+      {
+        pertanyaan: 'Perhatikan kode berikut:\nA = [[1,2], [3,4]]\nB = A[0]\nB.append(5)\nprint(A)\nOutput yang dihasilkan adalah ….',
+        pilihan: ['[[1,2],[3,4]]', '[[1,2,5],[3,4]]', 'Error', '[[1,2],[3,4,5]]', '[[1,2,5],[3,4,5]]'],
+        jawaban_benar: 1,
+        bobot: 5,
+      },
+      {
+        pertanyaan: "Jika diketahui nested list data = [['a','b'], ['c','d'], ['e','f']], maka perintah yang akan mengubah elemen 'd' menjadi 'z' adalah ….",
+        pilihan: ["data[1][1] = 'z'", "data[2][1] = 'z'", "data[1][2] = 'z'", "data[2][2] = 'z'", "data[0][1] = 'z'"],
+        jawaban_benar: 0,
+        bobot: 5,
+      },
+      {
+        pertanyaan: 'Pernyataan berikut yang tepat tentang operasi pada nested list adalah ….',
+        pilihan: ['Kita dapat menggunakan perulangan bersarang (nested loop) untuk mengakses setiap elemen', 'Nested list tidak bisa digabung dengan operator +', 'Method append() hanya dapat menambah elemen di level paling luar', 'Nested list bersifat immutable seperti string', 'Semua pernyataan salah'],
+        jawaban_benar: 0,
+        bobot: 5,
+      },
+      {
+        pertanyaan: 'Analisislah kode berikut:\nmatrix = [[i*j for j in range(3)] for i in range(2)]\nprint(matrix[1][2])\nOutput yang dihasilkan adalah ….',
+        pilihan: ['0', '1', '2', '3', 'Error'],
+        jawaban_benar: 2,
+        bobot: 5,
+      },
+      {
+        pertanyaan: 'Pernyataan yang benar tentang dictionary di Python adalah ….',
+        pilihan: ['Dictionary menyimpan data dalam pasangan key-value', 'Key dalam dictionary harus unik dan immutable', 'Dictionary didefinisikan dengan tanda kurung siku []', 'A dan B benar', 'Semua benar'],
+        jawaban_benar: 3,
+        bobot: 5,
+      },
+      {
+        pertanyaan: "Diberikan kode:\nsiswa = {'nama': 'Andi', 'umur': 17}\nprint(siswa.get('kelas', 'Tidak ada'))\nOutput yang dihasilkan adalah ….",
+        pilihan: ['Error', 'None', 'Tidak ada', 'kelas', "'' (string kosong)"],
+        jawaban_benar: 2,
+        bobot: 5,
+      },
+      {
+        pertanyaan: "Cara yang benar untuk mengubah nilai dari key 'hobi' menjadi 'membaca' pada dictionary profil = {'nama': 'Budi', 'hobi': 'berenang'} adalah ….",
+        pilihan: ["profil['hobi'] = 'membaca'", "profil.update(hobi='membaca')", "profil.setdefault('hobi', 'membaca')", 'A dan B benar', 'Hanya A yang benar'],
+        jawaban_benar: 3,
+        bobot: 5,
+      },
+      {
+        pertanyaan: "Perhatikan kode berikut:\ndata = {'a':1, 'b':2, 'c':3}\ndel data['b']\ndata['d'] = 4\nprint(len(data))\nOutputnya adalah ….",
+        pilihan: ['2', '3', '4', 'Error', '5'],
+        jawaban_benar: 1,
+        bobot: 5,
+      },
+      {
+        pertanyaan: 'Method yang digunakan untuk mengambil semua key dari dictionary adalah ….',
+        pilihan: ['values()', 'items()', 'keys()', 'get()', 'pop()'],
+        jawaban_benar: 2,
+        bobot: 5,
+      },
+      {
+        pertanyaan: "Analisislah potongan kode berikut:\ncounter = {}\nkata = 'python'\nfor huruf in kata:\n\tcounter[huruf] = counter.get(huruf, 0) + 1\nprint(counter['p'])\nOutput yang dihasilkan adalah ….",
+        pilihan: ['0', '1', '2', 'Error', 'None'],
+        jawaban_benar: 1,
+        bobot: 5,
+      },
+    ],
+  },
+];
+
 // ==================== MAIN COMPONENT ====================
 const DashboardDosen = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [dosenData, setDosenData] = useState(null);
 
-  // Data kelas
   const [daftarKelas, setDaftarKelas] = useState([]);
   const [kelasAktif, setKelasAktif] = useState(null);
 
@@ -289,7 +618,6 @@ const DashboardDosen = () => {
   const [copySuccess, setCopySuccess] = useState(false);
   const [updatingKKM, setUpdatingKKM] = useState(false);
 
-  // State modal buat kelas
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [newKelas, setNewKelas] = useState({
     nama_kelas: '',
@@ -298,29 +626,25 @@ const DashboardDosen = () => {
   });
   const [creating, setCreating] = useState(false);
 
-  // State modal gabung kelas
   const [showJoinModal, setShowJoinModal] = useState(false);
   const [joinToken, setJoinToken] = useState('');
   const [joining, setJoining] = useState(false);
 
-  // State kelola dosen di kelas aktif
   const [showManageDosen, setShowManageDosen] = useState(false);
   const [dosenInClass, setDosenInClass] = useState([]);
   const [newDosenNIP, setNewDosenNIP] = useState('');
   const [addingDosen, setAddingDosen] = useState(false);
   const [error, setError] = useState('');
 
-  const userId = localStorage.getItem('userId'); // NIP dosen
+  const userId = localStorage.getItem('userId');
   const userEmail = localStorage.getItem('userEmail');
 
-  // Cek login
   useEffect(() => {
     if (!userId || !userEmail) {
       navigate('/loginregister');
     }
   }, [userId, userEmail, navigate]);
 
-  // === Ambil data dosen & semua kelas yang diampu ===
   useEffect(() => {
     if (!userId) return;
     const fetchDosenDanKelas = async () => {
@@ -357,7 +681,6 @@ const DashboardDosen = () => {
     fetchDosenDanKelas();
   }, [userId, navigate]);
 
-  // === Simpan token & id kelas aktif ke localStorage ===
   useEffect(() => {
     if (kelasAktif) {
       localStorage.setItem('activeKelasToken', kelasAktif.token);
@@ -368,7 +691,6 @@ const DashboardDosen = () => {
     }
   }, [kelasAktif]);
 
-  // === Saat kelas aktif berubah, ambil KKM & daftar mahasiswa (untuk ringkasan di dashboard) ===
   useEffect(() => {
     if (!kelasAktif) {
       setMahasiswaList([]);
@@ -393,7 +715,6 @@ const DashboardDosen = () => {
     return () => unsubscribe();
   }, [kelasAktif]);
 
-  // === Ambil data dosen yang ada di kelas aktif (untuk kelola dosen) ===
   useEffect(() => {
     if (!kelasAktif || !showManageDosen) return;
     const fetchDosenInClass = async () => {
@@ -449,6 +770,46 @@ const DashboardDosen = () => {
     navigate('/loginregister');
   };
 
+  // === Fungsi untuk membuat kuis default dengan ID unik per kelas ===
+  const buatKuisDefault = async (kelasId) => {
+    const quizzes = getDefaultQuizzes();
+    const batch = writeBatch(db);
+
+    // ID kuis sekarang digabung dengan token kelas agar unik
+    const idMap = {
+      'Kuis List': `${kelasId}_List`,
+      'Kuis Nested List': `${kelasId}_NestedList`,
+      'Kuis Dictionary': `${kelasId}_Dictionary`,
+      'Evaluasi': `${kelasId}_Evaluasi`
+    };
+
+    for (const quiz of quizzes) {
+      const kuisId = idMap[quiz.judul];
+      const kuisRef = doc(db, 'kuis', kuisId);
+      batch.set(kuisRef, {
+        kelas_id: kelasId,
+        judul: quiz.judul,
+        tipe: quiz.tipe,
+        deskripsi: `Kuis default ${quiz.judul}`,
+      });
+
+      quiz.soal.forEach((soal, index) => {
+        const soalRef = doc(collection(db, 'soal_kuis'));
+        batch.set(soalRef, {
+          kuis_id: kuisRef.id, // ID yang sudah unik
+          nomor: index + 1,
+          pertanyaan: soal.pertanyaan,
+          pilihan: soal.pilihan,
+          jawaban_benar: soal.jawaban_benar,
+          bobot: soal.bobot,
+          pembahasan: soal.pembahasan || '',
+        });
+      });
+    }
+
+    await batch.commit();
+  };
+
   // === BUAT KELAS BARU ===
   const openCreateModal = () => {
     setNewKelas({ nama_kelas: '', tahun_ajaran: '', semester: 'Ganjil' });
@@ -475,11 +836,16 @@ const DashboardDosen = () => {
         kkm_kuis_dictionary: 75,
         kkm_evaluasi: 75,
       };
-      const docRef = await addDoc(collection(db, 'kelas'), kelasBaru);
-      const kelasDenganId = { id: docRef.id, ...kelasBaru };
+      // ID kelas = token
+      await setDoc(doc(db, 'kelas', token), kelasBaru);
+      const kelasDenganId = { id: token, ...kelasBaru };
       setDaftarKelas(prev => [...prev, kelasDenganId]);
       setKelasAktif(kelasDenganId);
       setShowCreateModal(false);
+
+      // Buat kuis default dengan ID mengandung token
+      await buatKuisDefault(token);
+
       alert(`Kelas berhasil dibuat! Token: ${token}`);
     } catch (err) {
       console.error(err);
@@ -489,7 +855,7 @@ const DashboardDosen = () => {
     }
   };
 
-  // === GABUNG KELAS (BERDASARKAN TOKEN) ===
+  // === GABUNG KELAS ===
   const openJoinModal = () => {
     setJoinToken('');
     setShowJoinModal(true);
@@ -539,7 +905,7 @@ const DashboardDosen = () => {
     }
   };
 
-  // === KELOLA DOSEN DI KELAS AKTIF ===
+  // === KELOLA DOSEN ===
   const openManageDosen = () => {
     setNewDosenNIP('');
     setError('');
@@ -564,9 +930,7 @@ const DashboardDosen = () => {
         return;
       }
       const kelasRef = doc(db, 'kelas', kelasAktif.id);
-      await updateDoc(kelasRef, {
-        dosen_ids: arrayUnion(nipToAdd)
-      });
+      await updateDoc(kelasRef, { dosen_ids: arrayUnion(nipToAdd) });
       setKelasAktif(prev => ({
         ...prev,
         dosen_ids: [...(prev.dosen_ids || []), nipToAdd]
@@ -586,9 +950,7 @@ const DashboardDosen = () => {
     if (!window.confirm(`Hapus dosen dengan NIP ${nipToRemove} dari kelas?`)) return;
     try {
       const kelasRef = doc(db, 'kelas', kelasAktif.id);
-      await updateDoc(kelasRef, {
-        dosen_ids: arrayRemove(nipToRemove)
-      });
+      await updateDoc(kelasRef, { dosen_ids: arrayRemove(nipToRemove) });
       setKelasAktif(prev => ({
         ...prev,
         dosen_ids: prev.dosen_ids.filter(nip => nip !== nipToRemove)
@@ -708,7 +1070,7 @@ const DashboardDosen = () => {
                 </button>
               </div>
 
-              {/* Daftar Mahasiswa (ringkasan) */}
+              {/* Daftar Mahasiswa */}
               <div className="card">
                 <div className="card-title"><Users size={22} /> Mahasiswa ({mahasiswaList.length})</div>
                 {mahasiswaList.length === 0 ? (
@@ -742,7 +1104,7 @@ const DashboardDosen = () => {
           )}
         </div>
 
-        {/* ===== MODAL BUAT KELAS BARU ===== */}
+        {/* Modal Buat Kelas Baru */}
         {showCreateModal && (
           <div className="modal-overlay" onClick={() => setShowCreateModal(false)}>
             <div className="modal-content" onClick={e => e.stopPropagation()}>
@@ -773,7 +1135,7 @@ const DashboardDosen = () => {
           </div>
         )}
 
-        {/* ===== MODAL GABUNG KELAS ===== */}
+        {/* Modal Gabung Kelas */}
         {showJoinModal && (
           <div className="modal-overlay" onClick={() => setShowJoinModal(false)}>
             <div className="modal-content" onClick={e => e.stopPropagation()}>
@@ -794,7 +1156,7 @@ const DashboardDosen = () => {
           </div>
         )}
 
-        {/* ===== MODAL KELOLA DOSEN ===== */}
+        {/* Modal Kelola Dosen */}
         {showManageDosen && (
           <div className="modal-overlay" onClick={() => setShowManageDosen(false)}>
             <div className="modal-content" onClick={e => e.stopPropagation()}>

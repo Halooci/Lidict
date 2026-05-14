@@ -1,16 +1,35 @@
 import React, { useState, useEffect } from 'react';
 import { db } from '../../config/firebase';
-import { collection, query, where, onSnapshot, doc, getDoc } from 'firebase/firestore';
+import {
+  collection,
+  query,
+  where,
+  onSnapshot,
+  doc,
+  getDoc,
+  getDocs,
+} from 'firebase/firestore';
 import Navbar from '../komponen/Navbar';
 import SidebarDosen from './SidebarDosen';
-import { Users } from 'lucide-react';
+import { Users, BookOpen } from 'lucide-react';
 
 const styles = `
-  .mahasiswa-page {
+  .mahasiswa-container {
+    margin-left: 250px;
+    min-height: 100vh;
+    background: #f3f4f6;
+  }
+  .mahasiswa-inner {
+    padding: 80px 2rem 2rem 2rem;
+    max-width: 1280px;
+    margin: 0 auto;
+  }
+  .card {
     background: white;
     border-radius: 0.75rem;
-    padding: 1.5rem;
     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
   }
   .title {
     font-size: 1.5rem;
@@ -20,6 +39,26 @@ const styles = `
     display: flex;
     align-items: center;
     gap: 0.5rem;
+  }
+  .kelas-selector {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+  }
+  .kelas-btn {
+    background: white;
+    border: 1px solid #d1d5db;
+    padding: 0.5rem 1rem;
+    border-radius: 0.375rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.9rem;
+  }
+  .kelas-btn.active {
+    background: #3b82f6;
+    color: white;
+    border-color: #3b82f6;
   }
   table {
     width: 100%;
@@ -70,44 +109,83 @@ const NilaiCell = ({ nim, jenis }) => {
 };
 
 const DaftarMahasiswa = () => {
+  const [daftarKelas, setDaftarKelas] = useState([]);
+  const [kelasAktif, setKelasAktif] = useState(null);
   const [mahasiswaList, setMahasiswaList] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  const tokenKelas = localStorage.getItem('activeKelasToken');
+  const userId = localStorage.getItem('userId');
 
+  // 1. Ambil semua kelas yang diampu dosen
   useEffect(() => {
-    if (!tokenKelas) {
+    if (!userId) {
       setLoading(false);
       return;
     }
 
-    const q = query(collection(db, 'mahasiswa'), where('Token_mahasiswa', '==', tokenKelas));
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const siswa = [];
-      snapshot.forEach((docSnap) => {
-        siswa.push({ id: docSnap.id, ...docSnap.data() });
+    const fetchKelasDosen = async () => {
+      try {
+        const q = query(collection(db, 'kelas'), where('dosen_ids', 'array-contains', userId));
+        const snapshot = await getDocs(q);
+        const kelasList = [];
+        snapshot.forEach(doc => kelasList.push({ id: doc.id, ...doc.data() }));
+        setDaftarKelas(kelasList);
+
+        // Tentukan kelas aktif: ambil dari localStorage atau kelas pertama
+        const savedKelasId = localStorage.getItem('activeKelasId');
+        const kelasFromStorage = savedKelasId ? kelasList.find(k => k.id === savedKelasId) : null;
+        const active = kelasFromStorage || (kelasList.length > 0 ? kelasList[0] : null);
+        setKelasAktif(active);
+        if (active) {
+          localStorage.setItem('activeKelasId', active.id);
+          localStorage.setItem('activeKelasToken', active.token);
+        }
+        setLoading(false);
+      } catch (error) {
+        console.error(error);
+        setLoading(false);
+      }
+    };
+
+    fetchKelasDosen();
+  }, [userId]);
+
+  // 2. Saat kelasAktif berubah, update localStorage dan subscribe ke mahasiswa
+  useEffect(() => {
+    if (kelasAktif) {
+      localStorage.setItem('activeKelasId', kelasAktif.id);
+      localStorage.setItem('activeKelasToken', kelasAktif.token);
+      const token = kelasAktif.token;
+
+      const q = query(collection(db, 'mahasiswa'), where('Token_mahasiswa', '==', token));
+      const unsubscribe = onSnapshot(q, (snapshot) => {
+        const siswa = [];
+        snapshot.forEach((docSnap) => {
+          siswa.push({ id: docSnap.id, ...docSnap.data() });
+        });
+        setMahasiswaList(siswa);
+      }, (error) => {
+        console.error(error);
       });
-      setMahasiswaList(siswa);
-      setLoading(false);
-    }, (error) => {
-      console.error(error);
-      setLoading(false);
-    });
 
-    return () => unsubscribe();
-  }, [tokenKelas]);
+      return () => unsubscribe();
+    } else {
+      setMahasiswaList([]);
+    }
+  }, [kelasAktif]);
 
-  if (!tokenKelas) {
+  // Jika belum login
+  if (!userId) {
     return (
       <>
         <style>{styles}</style>
         <SidebarDosen />
-        <div style={{ marginLeft: '250px', minHeight: '100vh', background: '#f3f4f6' }}>
+        <div className="mahasiswa-container">
           <Navbar />
-          <div style={{ padding: '80px 2rem 2rem 2rem', maxWidth: '1280px', margin: '0 auto' }}>
-            <div className="mahasiswa-page">
+          <div className="mahasiswa-inner">
+            <div className="card">
               <div className="title"><Users size={22} /> Daftar Mahasiswa</div>
-              <p className="empty">Silakan pilih kelas terlebih dahulu di halaman Dashboard.</p>
+              <p className="empty">Silakan login terlebih dahulu.</p>
             </div>
           </div>
         </div>
@@ -115,14 +193,15 @@ const DaftarMahasiswa = () => {
     );
   }
 
+  // Jika masih loading
   if (loading) {
     return (
       <>
         <style>{styles}</style>
         <SidebarDosen />
-        <div style={{ marginLeft: '250px', minHeight: '100vh', background: '#f3f4f6' }}>
+        <div className="mahasiswa-container">
           <Navbar />
-          <div className="loading-text" style={{ paddingTop: '80px' }}>Memuat data mahasiswa...</div>
+          <div className="loading-text" style={{ paddingTop: '80px' }}>Memuat data...</div>
         </div>
       </>
     );
@@ -132,38 +211,80 @@ const DaftarMahasiswa = () => {
     <>
       <style>{styles}</style>
       <SidebarDosen />
-      <div style={{ marginLeft: '250px', minHeight: '100vh', background: '#f3f4f6' }}>
+      <div className="mahasiswa-container">
         <Navbar />
-        <div style={{ padding: '80px 2rem 2rem 2rem', maxWidth: '1280px', margin: '0 auto' }}>
-          <div className="mahasiswa-page">
-            <div className="title"><Users size={22} /> Daftar Mahasiswa ({mahasiswaList.length})</div>
-            {mahasiswaList.length === 0 ? (
-              <p className="empty">Belum ada mahasiswa yang mendaftar dengan token ini.</p>
+        <div className="mahasiswa-inner">
+          {/* Header & Pilih Kelas */}
+          <div className="card">
+            <div className="title"><Users size={22} /> Daftar Mahasiswa</div>
+            {daftarKelas.length === 0 ? (
+              <p className="empty">Anda belum memiliki kelas. Silakan buat kelas di Dashboard.</p>
             ) : (
-              <div style={{ overflowX: 'auto' }}>
-                <table>
-                  <thead>
-                    <tr>
-                      <th>NIM</th><th>Nama</th><th>Email</th><th>Kuis List</th><th>Kuis Nested</th><th>Kuis Dict</th><th>Evaluasi</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {mahasiswaList.map(mhs => (
-                      <tr key={mhs.id}>
-                        <td>{mhs.NIM}</td>
-                        <td>{mhs.Nama}</td>
-                        <td>{mhs.Email}</td>
-                        <NilaiCell nim={mhs.NIM} jenis="Kuis List" />
-                        <NilaiCell nim={mhs.NIM} jenis="Kuis Nested List" />
-                        <NilaiCell nim={mhs.NIM} jenis="Kuis Dictionary" />
-                        <NilaiCell nim={mhs.NIM} jenis="Evaluasi" />
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+              <>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                  <BookOpen size={18} />
+                  <span style={{ fontWeight: 500 }}>Pilih Kelas:</span>
+                </div>
+                <div className="kelas-selector">
+                  {daftarKelas.map(kelas => (
+                    <button
+                      key={kelas.id}
+                      className={`kelas-btn ${kelasAktif?.id === kelas.id ? 'active' : ''}`}
+                      onClick={() => setKelasAktif(kelas)}
+                    >
+                      {kelas.nama_kelas} ({kelas.tahun_ajaran} {kelas.semester})
+                    </button>
+                  ))}
+                </div>
+                {kelasAktif && (
+                  <p className="empty" style={{ marginTop: '0.75rem' }}>
+                    Kelas aktif: {kelasAktif.nama_kelas} ({kelasAktif.tahun_ajaran} {kelasAktif.semester})
+                  </p>
+                )}
+              </>
             )}
           </div>
+
+          {/* Tabel Mahasiswa (hanya jika kelas aktif) */}
+          {kelasAktif && (
+            <div className="card">
+              <div className="title">
+                <Users size={22} /> Daftar Mahasiswa ({mahasiswaList.length})
+              </div>
+              {mahasiswaList.length === 0 ? (
+                <p className="empty">Belum ada mahasiswa yang mendaftar dengan token kelas ini.</p>
+              ) : (
+                <div style={{ overflowX: 'auto' }}>
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>NIM</th>
+                        <th>Nama</th>
+                        <th>Email</th>
+                        <th>Kuis List</th>
+                        <th>Kuis Nested</th>
+                        <th>Kuis Dict</th>
+                        <th>Evaluasi</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {mahasiswaList.map(mhs => (
+                        <tr key={mhs.id}>
+                          <td>{mhs.NIM}</td>
+                          <td>{mhs.Nama}</td>
+                          <td>{mhs.Email}</td>
+                          <NilaiCell nim={mhs.NIM} jenis="Kuis List" />
+                          <NilaiCell nim={mhs.NIM} jenis="Kuis Nested List" />
+                          <NilaiCell nim={mhs.NIM} jenis="Kuis Dictionary" />
+                          <NilaiCell nim={mhs.NIM} jenis="Evaluasi" />
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </>
