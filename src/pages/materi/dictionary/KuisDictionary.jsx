@@ -26,22 +26,21 @@ export default function KuisDictionary() {
   const [timeLeft, setTimeLeft] = useState(20 * 60);
   const timerRef = useRef(null);
   const [resultsData, setResultsData] = useState(null);
-  const [dragAnswers, setDragAnswers] = useState(Array(5).fill().map(() => []));
   const [savingData, setSavingData] = useState(false);
 
-  // ---------- DATA SOAL (10 soal: 5 PG + 5 Drag-Drop) ----------
+  // ---------- DATA SOAL (10 SOAL PILIHAN GANDA) ----------
+  // Perbaikan: hapus "A. ", "B. ", dll dari setiap opsi
   const questions = [
-    // 5 PILIHAN GANDA
     {
       id: 1,
       type: "multiple_choice",
       text: "Pernyataan yang BENAR tentang dictionary di Python adalah ...",
       options: [
-        "A. Dictionary dapat diakses menggunakan indeks angka seperti list",
-        "B. Key dalam dictionary harus bersifat unik dan immutable",
-        "C. Dictionary tidak dapat diubah setelah dibuat (immutable)",
-        "D. Dictionary hanya bisa menyimpan tipe data string sebagai value",
-        "E. Key dalam dictionary boleh berupa list"
+        "Dictionary dapat diakses menggunakan indeks angka seperti list",
+        "Key dalam dictionary harus bersifat unik dan immutable",
+        "Dictionary tidak dapat diubah setelah dibuat (immutable)",
+        "Dictionary hanya bisa menyimpan tipe data string sebagai value",
+        "Key dalam dictionary boleh berupa list"
       ],
       correct: 1,
       explanation: "Key dalam dictionary harus unik dan immutable (string, integer, tuple)."
@@ -50,7 +49,7 @@ export default function KuisDictionary() {
       id: 2,
       type: "multiple_choice",
       text: "Output dari kode berikut adalah ...\n\n```python\ndata = {'a': 1, 'b': 2, 'c': 3}\nprint(data.get('d', 0))\n```",
-      options: ["A. None", "B. Error", "C. 0", "D. 'd'", "E. 3"],
+      options: ["None", "Error", "0", "'d'", "3"],
       correct: 2,
       explanation: "Metode get() mengembalikan nilai default (0) jika key 'd' tidak ditemukan."
     },
@@ -58,76 +57,77 @@ export default function KuisDictionary() {
       id: 3,
       type: "multiple_choice",
       text: "Metode yang digunakan untuk menggabungkan dua dictionary adalah ...",
-      options: ["A. merge()", "B. combine()", "C. update()", "D. join()", "E. concat()"],
+      options: ["merge()", "combine()", "update()", "join()", "concat()"],
       correct: 2,
       explanation: "update() menambah/memperbarui dictionary dengan dictionary lain."
     },
     {
       id: 4,
       type: "multiple_choice",
-      text: "Perhatikan kode berikut:\n\n```python\nx = {'a': 10, 'b': 20}\ny = x.copy()\ny['a'] = 99\nprint(x['a'])\n```\nOutputnya adalah ...",
-      options: ["A. 99", "B. 10", "C. Error", "D. None", "E. 20"],
-      correct: 1,
-      explanation: "copy() membuat salinan dangkal, perubahan pada y tidak mempengaruhi x."
+      text: "Perhatikan kode berikut:\n\n```python\ndata = {'a': 1, 'b': 2, 'c': 3}\ndata['b'] = 99\nprint(data['b'])\n```\nOutputnya adalah ...",
+      options: ["1", "2", "3", "99", "Error"],
+      correct: 3,
+      explanation: "Nilai key 'b' diubah menjadi 99, sehingga outputnya 99."
     },
     {
       id: 5,
       type: "multiple_choice",
       text: "Cara yang benar untuk menghapus semua item dalam dictionary `data` adalah ...",
-      options: ["A. data.removeAll()", "B. data.delete()", "C. data.clear()", "D. data.popall()", "E. del data"],
+      options: ["data.removeAll()", "data.delete()", "data.clear()", "data.popall()", "del data"],
       correct: 2,
       explanation: "clear() menghapus semua item, dictionary tetap ada."
     },
-    // 5 DRAG AND DROP
     {
       id: 6,
-      type: "dragdrop",
-      text: "Lengkapi kode berikut untuk membuat dictionary dari dua list menggunakan dictionary comprehension:",
-      codeTemplate: `keys = ['a', 'b', 'c']\nvalues = [1, 2, 3]\ndict_hasil = {keys[i]: values[i] for i in range(______)}\nprint(dict_hasil)`,
-      placeholders: ["range(len(keys))"],
-      dragItems: ["len(keys)", "range(len(keys))", "keys", "values", "3"],
-      correct: ["range(len(keys))"],
-      explanation: "range(len(keys)) menghasilkan indeks 0,1,2 untuk mengakses keys dan values."
+      type: "multiple_choice",
+      text: "Perhatikan kode berikut:\n\n```python\nnilai = {'fisika': 85, 'kimia': 90, 'matematika': 95}\nprint(nilai['biologi'])\n```\nApa yang akan terjadi?",
+      options: [
+        "Output: None",
+        "Output: 0",
+        "Output: Error KeyError karena key 'biologi' tidak ditemukan",
+        "Output: 'biologi'",
+        "Output: 95"
+      ],
+      correct: 2,
+      explanation: "Mengakses key yang tidak ada pada dictionary dengan kurung siku akan menyebabkan KeyError."
     },
     {
       id: 7,
-      type: "dragdrop",
-      text: "Lengkapi kode untuk mencetak nilai dari key 'fisika' dengan default 0 jika tidak ada:",
-      codeTemplate: `nilai = {'matematika': 85, 'kimia': 90}\nprint(nilai.______('fisika', 0))`,
-      placeholders: ["get"],
-      dragItems: ["get", "pop", "setdefault", "items", "values"],
-      correct: ["get"],
-      explanation: "get(key, default) mengembalikan nilai key atau default."
+      type: "multiple_choice",
+      text: "Method dictionary yang digunakan untuk mengembalikan nilai dari suatu key, dan jika key tidak ada mengembalikan nilai default (tanpa error) adalah ...",
+      options: ["get()", "pop()", "setdefault()", "items()", "values()"],
+      correct: 0,
+      explanation: "get(key, default) mengembalikan nilai key atau default jika key tidak ada."
     },
     {
       id: 8,
-      type: "dragdrop",
-      text: "Lengkapi kode berikut untuk menghapus key 'mangga' dan menyimpan nilainya ke variabel 'harga':",
-      codeTemplate: `buah = {'apel': 5000, 'mangga': 8000, 'jeruk': 6000}\nharga = buah.______('mangga')\nprint(harga)`,
-      placeholders: ["pop"],
-      dragItems: ["pop", "popitem", "del", "remove", "get"],
-      correct: ["pop"],
+      type: "multiple_choice",
+      text: "Perintah untuk menghapus key 'mangga' dari dictionary `buah = {'apel': 5000, 'mangga': 8000, 'jeruk': 6000}` sekaligus mengembalikan nilainya adalah ...",
+      options: [
+        "buah.del('mangga')",
+        "buah.pop('mangga')",
+        "buah.remove('mangga')",
+        "del buah['mangga']",
+        "buah.popitem('mangga')"
+      ],
+      correct: 1,
       explanation: "pop(key) menghapus key dan mengembalikan nilainya."
     },
     {
       id: 9,
-      type: "dragdrop",
-      text: "Lengkapi kode untuk melakukan iterasi pasangan key-value:",
-      codeTemplate: `data = {'x': 10, 'y': 20}\nfor key, value in data.______():\n    print(key, value)`,
-      placeholders: ["items"],
-      dragItems: ["items", "keys", "values", "get", "copy"],
-      correct: ["items"],
-      explanation: "items() mengembalikan pasangan (key, value)."
+      type: "multiple_choice",
+      text: "Method dictionary yang menghapus dan mengembalikan pasangan (key, value) terakhir yang ditambahkan adalah ...",
+      options: ["pop()", "popitem()", "clear()", "del", "remove()"],
+      correct: 1,
+      explanation: "popitem() menghapus dan mengembalikan pasangan (key, value) terakhir yang ditambahkan (sejak Python 3.7)."
     },
     {
       id: 10,
-      type: "dragdrop",
-      text: "Lengkapi kode untuk menambah/memperbarui dictionary 'b' ke 'a':",
-      codeTemplate: `a = {'a':1, 'b':2}\nb = {'c':3, 'd':4}\na.______(b)\nprint(a)`,
-      placeholders: ["update"],
-      dragItems: ["update", "merge", "extend", "append", "concat"],
-      correct: ["update"],
-      explanation: "update() menambah/memperbarui dictionary."
+      type: "multiple_choice",
+      text: "Perintah untuk menggabungkan dictionary `b` ke dalam dictionary `a` (memperbarui atau menambah) adalah ...",
+      options: ["a.merge(b)", "a.extend(b)", "a.append(b)", "a.update(b)", "a + b"],
+      correct: 3,
+      explanation: "update() menambahkan semua pasangan key-value dari b ke a."
     }
   ];
 
@@ -167,29 +167,6 @@ export default function KuisDictionary() {
     setAnswers(newAnswers);
   };
 
-  const handleDragStart = (e, item) => {
-    e.dataTransfer.setData("text/plain", item);
-    e.dataTransfer.effectAllowed = "copy";
-  };
-
-  const handleDragOver = (e) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = "copy";
-  };
-
-  const handleDrop = (e, dragQuestionIdx, placeholderIdx) => {
-    e.preventDefault();
-    const draggedItem = e.dataTransfer.getData("text/plain");
-    const newDragAnswers = [...dragAnswers];
-    if (!newDragAnswers[dragQuestionIdx]) newDragAnswers[dragQuestionIdx] = [];
-    newDragAnswers[dragQuestionIdx][placeholderIdx] = draggedItem;
-    setDragAnswers(newDragAnswers);
-    const globalIdx = 5 + dragQuestionIdx;
-    const newAnswers = [...answers];
-    newAnswers[globalIdx] = newDragAnswers[dragQuestionIdx].join("|");
-    setAnswers(newAnswers);
-  };
-
   const toggleFlag = () => {
     const newFlags = [...flags];
     newFlags[currentQuestion] = !newFlags[currentQuestion];
@@ -213,11 +190,6 @@ export default function KuisDictionary() {
       let isCorrect = false;
       if (q.type === "multiple_choice") {
         isCorrect = (userAnswer === q.correct);
-      } else if (q.type === "dragdrop") {
-        const userAnswersArray = userAnswer ? userAnswer.split("|") : [];
-        if (userAnswersArray.length === q.correct.length) {
-          isCorrect = userAnswersArray.every((val, idx) => val === q.correct[idx]);
-        }
       }
       if (isCorrect) score++;
     }
@@ -225,31 +197,27 @@ export default function KuisDictionary() {
     const waktuDigunakan = (20 * 60) - timeLeft;
     setResultsData({ finalScore, waktuDigunakan });
 
-    // Simpan nilai ke Firestore dan update progres
     setSavingData(true);
     try {
       const userId = localStorage.getItem('userId');
       if (!userId) throw new Error("User ID tidak ditemukan");
 
-      // 1. Simpan nilai ke koleksi "nilai" dengan field "Kuis Dictionary"
       const nilaiRef = doc(db, "nilai", userId);
       const nilaiDoc = await getDoc(nilaiRef);
       if (nilaiDoc.exists()) {
         await updateDoc(nilaiRef, {
-          "Kuis Dictionary": finalScore * 10 // simpan dalam skala 0-100
+          "Kuis Dictionary": finalScore * 10
         });
       } else {
         console.warn("Dokumen nilai tidak ditemukan, membuat baru");
       }
 
-      // 2. Ambil token mahasiswa dari koleksi mahasiswa
       const mahasiswaRef = doc(db, "mahasiswa", userId);
       const mahasiswaDoc = await getDoc(mahasiswaRef);
       if (!mahasiswaDoc.exists()) throw new Error("Data mahasiswa tidak ditemukan");
       const tokenMahasiswa = mahasiswaDoc.data().Token_mahasiswa;
       if (!tokenMahasiswa) throw new Error("Token kelas tidak ditemukan");
 
-      // 3. Ambil KKM dari koleksi kkm berdasarkan token
       const kkmRef = doc(db, "kkm", tokenMahasiswa);
       const kkmDoc = await getDoc(kkmRef);
       if (!kkmDoc.exists()) throw new Error("Data KKM tidak ditemukan");
@@ -259,7 +227,6 @@ export default function KuisDictionary() {
       const nilaiAkhir = finalScore * 10;
       const isPassed = nilaiAkhir >= kkm;
 
-      // 4. Jika lulus dan bonus belum pernah diberikan, update progres_belajar +1
       const bonusKey = "kuis_dictionary_bonus_done";
       const alreadyBonus = localStorage.getItem(bonusKey);
       if (isPassed && !alreadyBonus) {
@@ -289,7 +256,6 @@ export default function KuisDictionary() {
     setUnsures(Array(10).fill(false));
     setSubmitted(false);
     setTimeLeft(20 * 60);
-    setDragAnswers(Array(5).fill().map(() => []));
     setResultsData(null);
     stopTimer();
   };
@@ -302,7 +268,6 @@ export default function KuisDictionary() {
     setAnswers(Array(10).fill(null));
     setFlags(Array(10).fill(false));
     setUnsures(Array(10).fill(false));
-    setDragAnswers(Array(5).fill().map(() => []));
     setResultsData(null);
     stopTimer();
     startTimer();
@@ -345,7 +310,7 @@ export default function KuisDictionary() {
             <div style={styles.cardInstruction}>
               <h2 style={styles.instructionTitle}>Petunjuk Pengerjaan</h2>
               <ul style={styles.instructionList}>
-                <li>Kuis terdiri dari 10 soal.</li>
+                <li>Kuis terdiri dari 10 soal pilihan ganda.</li>
                 <li>Setiap soal bernilai 10 poin (total maksimal 100).</li>
                 <li>Waktu pengerjaan: 20 menit (timer berjalan setelah mulai).</li>
                 <li>Jika waktu habis, jawaban yang sudah terisi akan tersimpan dan terkirim secara otomatis.</li>
@@ -366,7 +331,7 @@ export default function KuisDictionary() {
     const minutesUsed = Math.floor(waktuDigunakan / 60);
     const secondsUsed = waktuDigunakan % 60;
     const skor100 = finalScore * 10;
-    const isPassed = skor100 >= 70; // Nilai KKM sementara, nanti diganti dinamis dari Firestore
+    const isPassed = skor100 >= 70;
     const percentage = skor100;
 
     return (
@@ -438,12 +403,10 @@ export default function KuisDictionary() {
     );
   }
 
-  // ---------- RENDER HALAMAN KUIS (fullscreen dua kolom) ----------
+  // ---------- RENDER HALAMAN KUIS ----------
   const q = questions[currentQuestion];
   const isFlagged = flags[currentQuestion];
   const isUnsure = unsures[currentQuestion];
-  const isDragDrop = q.type === "dragdrop";
-  const dragQuestionIdx = currentQuestion - 5;
 
   return (
     <div style={styles.fullscreenQuiz}>
@@ -481,58 +444,20 @@ export default function KuisDictionary() {
           </div>
           <p style={styles.questionText}>{q.text}</p>
 
-          {q.type === "multiple_choice" && (
-            <div style={styles.optionsContainer}>
-              {q.options.map((opt, idx) => (
-                <label key={idx} style={styles.optionLabel}>
-                  <input
-                    type="radio"
-                    name="question"
-                    value={idx}
-                    checked={answers[currentQuestion] === idx}
-                    onChange={() => handleMCAnswer(idx)}
-                  />
-                  <span style={styles.optionLetter}>{String.fromCharCode(65 + idx)}.</span> {opt}
-                </label>
-              ))}
-            </div>
-          )}
-
-          {isDragDrop && (
-            <div>
-              <div style={styles.codeBlock}>
-                {q.codeTemplate.split('______').map((part, idx) => (
-                  <span key={idx}>
-                    {part}
-                    {idx < q.placeholders.length && (
-                      <span
-                        style={styles.dropZone}
-                        onDragOver={handleDragOver}
-                        onDrop={(e) => handleDrop(e, dragQuestionIdx, idx)}
-                      >
-                        {dragAnswers[dragQuestionIdx] && dragAnswers[dragQuestionIdx][idx]
-                          ? dragAnswers[dragQuestionIdx][idx]
-                          : '______'}
-                      </span>
-                    )}
-                  </span>
-                ))}
-              </div>
-              <div style={styles.dragItems}>
-                {q.dragItems.map((item, idx) => (
-                  <div
-                    key={idx}
-                    draggable
-                    onDragStart={(e) => handleDragStart(e, item)}
-                    style={styles.dragItem}
-                  >
-                    {item}
-                  </div>
-                ))}
-              </div>
-              <p style={{ fontSize: '12px', marginTop: '10px', color: '#666' }}>Seret kata/kode ke area kosong di atas.</p>
-            </div>
-          )}
+          <div style={styles.optionsContainer}>
+            {q.options.map((opt, idx) => (
+              <label key={idx} style={styles.optionLabel}>
+                <input
+                  type="radio"
+                  name="question"
+                  value={idx}
+                  checked={answers[currentQuestion] === idx}
+                  onChange={() => handleMCAnswer(idx)}
+                />
+                <span style={styles.optionLetter}>{String.fromCharCode(65 + idx)}.</span> {opt}
+              </label>
+            ))}
+          </div>
 
           <div style={styles.navButtons}>
             <button
@@ -600,9 +525,8 @@ export default function KuisDictionary() {
   );
 }
 
-/* ==================== STYLE RAPI ==================== */
+/* ==================== STYLE (TIDAK BERUBAH) ==================== */
 const styles = {
-  // ----- INSTRUCTION PAGE -----
   page: {
     padding: "30px 40px",
     backgroundColor: "#f5f7fa",
@@ -668,8 +592,6 @@ const styles = {
     transition: "0.2s",
     boxShadow: "0 4px 10px rgba(48,105,152,0.3)",
   },
-
-  // ----- FULLSCREEN QUIZ -----
   fullscreenQuiz: {
     minHeight: "100vh",
     backgroundColor: "#f5f7fa",
@@ -804,44 +726,6 @@ const styles = {
     fontWeight: "bold",
     color: "#306998",
     width: "28px",
-  },
-  codeBlock: {
-    backgroundColor: "#272822",
-    color: "#f8f8f2",
-    padding: "15px",
-    borderRadius: "8px",
-    fontFamily: "monospace",
-    fontSize: "14px",
-    overflowX: "auto",
-    lineHeight: "1.8",
-  },
-  dropZone: {
-    display: "inline-block",
-    minWidth: "100px",
-    backgroundColor: "#3c3c3c",
-    border: "2px dashed #FFD43B",
-    borderRadius: "4px",
-    padding: "2px 8px",
-    margin: "0 2px",
-    textAlign: "center",
-    color: "#FFD43B",
-    fontWeight: "bold",
-  },
-  dragItems: {
-    display: "flex",
-    flexWrap: "wrap",
-    gap: "10px",
-    marginTop: "20px",
-    justifyContent: "center",
-  },
-  dragItem: {
-    backgroundColor: "#306998",
-    color: "white",
-    padding: "6px 12px",
-    borderRadius: "6px",
-    cursor: "grab",
-    userSelect: "none",
-    fontSize: "14px",
   },
   navButtons: {
     display: "flex",
@@ -987,8 +871,6 @@ const styles = {
     marginRight: "6px",
     verticalAlign: "middle",
   },
-
-  // ----- FULLSCREEN RESULT -----
   fullscreenResult: {
     minHeight: "100vh",
     backgroundColor: "#f5f7fa",

@@ -531,7 +531,7 @@ export default function PendahuluanDictionary() {
               </section>
 
               <section style={styles.section}>
-                <h2 style={styles.sectionTitle}>Latihan Pemahaman</h2>
+                <h2 style={styles.sectionTitle}>Latihan</h2>
                 <div style={styles.card}>
                   <p style={styles.text}>
                     Kerjakan soal-soal berikut untuk menguji pemahaman Anda tentang konsep dasar dictionary. 

@@ -14,27 +14,11 @@ export default function RangkumanList() {
     }
   }, [navigate]);
 
-  
   const [pyodideReady, setPyodideReady] = useState(false);
   const pyodideRef = useRef(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [codeOutputs, setCodeOutputs] = useState({});
   const [codeInputs, setCodeInputs] = useState({
-    // Karakteristik List
-    ordered: `buah = ["durian", "nanas", "mangga", "rambutan"]
-print(buah)`,
-    indexed: `data = ["durian", "nanas", "mangga", "rambutan"]
-print(data[0])
-print(data[-1])`,
-    mutable: `buah = ["durian", "nanas", "mangga"]
-buah[1] = "semangka"
-print(buah)`,
-    heterogeneous: `data = ["Andi", 20, 175.5, True]
-print(data)`,
-    dynamic: `angka = [1, 2, 3]
-angka.append(4)
-print(angka)`,
-    
     // Membuat List
     createList: `# List kosong
 kosong = []
@@ -217,21 +201,15 @@ sys.stdout = StringIO()
                 List sangat fleksibel karena ukurannya dapat berubah secara dinamis.
               </p>
 
-              {/* ========== 1. KARAKTERISTIK LIST ========== */}
+              {/* ========== 1. KARAKTERISTIK LIST (TANPA CONTOH KODE) ========== */}
               <h3 style={styles.subTitle}>1. Karakteristik List</h3>
               <ul style={styles.list}>
-                <li><strong>Ordered (Terurut):</strong> Urutan elemen sesuai saat dibuat.</li>
-                <li><strong>Indexed (Memiliki Indeks):</strong> Indeks positif (0,1,2,...) dan negatif (-1,-2,...).</li>
-                <li><strong>Mutable (Dapat Diubah):</strong> Elemen dapat ditambah, dihapus, atau diubah.</li>
-                <li><strong>Heterogeneous (Tipe Campuran):</strong> Bisa berisi integer, string, boolean, float, dll.</li>
-                <li><strong>Dynamic Size (Ukuran Dinamis):</strong> Ukuran otomatis bertambah saat ditambah elemen.</li>
+                <li><strong>Ordered (Terurut):</strong> Urutan elemen sesuai saat dibuat. List mempertahankan urutan penyisipan.</li>
+                <li><strong>Indexed (Memiliki Indeks):</strong> Setiap elemen memiliki posisi (indeks). Indeks positif dimulai dari 0 (kiri), indeks negatif dari -1 (kanan).</li>
+                <li><strong>Mutable (Dapat Diubah):</strong> Elemen list dapat ditambah, dihapus, atau diubah nilainya setelah list dibuat.</li>
+                <li><strong>Heterogeneous (Tipe Campuran):</strong> Satu list bisa berisi integer, string, boolean, float, bahkan list lain.</li>
+                <li><strong>Dynamic Size (Ukuran Dinamis):</strong> Ukuran list otomatis bertambah saat kita menambah elemen, tanpa perlu menentukan kapasitas awal.</li>
               </ul>
-
-              <CodeEditor codeKey="ordered" title="Contoh Ordered" />
-              <CodeEditor codeKey="indexed" title="Contoh Indeks Positif & Negatif" />
-              <CodeEditor codeKey="mutable" title="Contoh Mutable (Ubah Elemen)" />
-              <CodeEditor codeKey="heterogeneous" title="Contoh Tipe Data Campuran" />
-              <CodeEditor codeKey="dynamic" title="Contoh Ukuran Dinamis (append)" />
 
               {/* ========== 2. MEMBUAT LIST ========== */}
               <h3 style={styles.subTitle}>2. Membuat List</h3>
@@ -255,10 +233,10 @@ sys.stdout = StringIO()
               {/* ========== 4. OPERASI DASAR LIST ========== */}
               <h3 style={styles.subTitle}>4. Operasi Dasar List</h3>
               <ul style={styles.list}>
-                <li><strong>Concatenation (+):</strong> Menggabungkan dua list.</li>
+                <li><strong>Concatenation (+):</strong> Menggabungkan dua list menjadi list baru.</li>
                 <li><strong>Repetition (*):</strong> Mengulang list sebanyak n kali.</li>
-                <li><strong>Keanggotaan (in):</strong> Mengecek apakah nilai ada di dalam list.</li>
-                <li><strong>Panjang (len):</strong> Menghitung jumlah elemen.</li>
+                <li><strong>Keanggotaan (in):</strong> Mengecek apakah suatu nilai ada di dalam list (hasil <code>True</code>/<code>False</code>).</li>
+                <li><strong>Panjang (len):</strong> Menghitung jumlah elemen list.</li>
               </ul>
               <CodeEditor codeKey="concat" title="Concatenation (+)" />
               <CodeEditor codeKey="repeat" title="Repetition (*)" />
@@ -270,9 +248,9 @@ sys.stdout = StringIO()
               
               <h4 style={styles.subSubTitle}>a. Menambah Elemen</h4>
               <ul style={styles.list}>
-                <li><code>append(x)</code> – tambah x di akhir.</li>
-                <li><code>insert(i, x)</code> – sisip x pada indeks i.</li>
-                <li><code>extend(iterable)</code> – tambah semua elemen dari iterable.</li>
+                <li><code>append(x)</code> – tambah x di akhir list.</li>
+                <li><code>insert(i, x)</code> – sisip x pada indeks i (elemen di i dan seterusnya bergeser ke kanan).</li>
+                <li><code>extend(iterable)</code> – tambah semua elemen dari iterable (list, tuple, dll) ke akhir list.</li>
               </ul>
               <CodeEditor codeKey="append" title="append()" />
               <CodeEditor codeKey="insert" title="insert()" />
@@ -280,10 +258,10 @@ sys.stdout = StringIO()
 
               <h4 style={styles.subSubTitle}>b. Menghapus Elemen</h4>
               <ul style={styles.list}>
-                <li><code>remove(x)</code> – hapus elemen pertama yang bernilai x.</li>
-                <li><code>pop(i)</code> – hapus elemen indeks i (kembalikan nilainya).</li>
-                <li><code>clear()</code> – hapus semua elemen.</li>
-                <li><code>del list[i]</code> atau <code>del list[i:j]</code> – hapus berdasarkan indeks/slice.</li>
+                <li><code>remove(x)</code> – hapus elemen pertama yang bernilai x (jika tidak ada akan error).</li>
+                <li><code>pop(i)</code> – hapus elemen di indeks i dan mengembalikan nilainya; jika i tidak diberikan, hapus elemen terakhir.</li>
+                <li><code>clear()</code> – hapus semua elemen sehingga list menjadi kosong.</li>
+                <li><code>del list[i]</code> atau <code>del list[i:j]</code> – hapus berdasarkan indeks atau slice.</li>
               </ul>
               <CodeEditor codeKey="remove" title="remove()" />
               <CodeEditor codeKey="pop" title="pop()" />
@@ -296,19 +274,27 @@ sys.stdout = StringIO()
 
               <h4 style={styles.subSubTitle}>d. Pengurutan & Pembalikan</h4>
               <ul style={styles.list}>
-                <li><code>sort()</code> – mengurutkan ascending (permanen).</li>
-                <li><code>reverse()</code> – membalik urutan (permanen).</li>
+                <li><code>sort()</code> – mengurutkan list secara ascending (nilai terkecil ke terbesar) secara permanen.</li>
+                <li><code>reverse()</code> – membalik urutan list secara permanen.</li>
               </ul>
               <CodeEditor codeKey="sort" title="sort()" />
               <CodeEditor codeKey="reverse" title="reverse()" />
 
               <h4 style={styles.subSubTitle}>e. Method Informasi Lainnya</h4>
               <ul style={styles.list}>
-                <li><code>count(x)</code> – jumlah kemunculan x.</li>
-                <li><code>index(x)</code> – indeks pertama x.</li>
+                <li>
+                  <strong><code>count(x)</code> – jumlah kemunculan x</strong><br />
+                  Penjelasan: Method ini menghitung berapa kali nilai <code>x</code> muncul di dalam list. Hasilnya adalah bilangan bulat (integer). Jika <code>x</code> tidak ditemukan, hasilnya 0.<br />
+                  Contoh: <code>[1, 2, 2, 3].count(2)</code> menghasilkan <code>2</code> karena angka 2 muncul dua kali.
+                </li>
+                <li>
+                  <strong><code>index(x)</code> – indeks pertama x</strong><br />
+                  Penjelasan: Method ini mencari kemunculan <strong>pertama</strong> dari nilai <code>x</code> dalam list, lalu mengembalikan posisi indeksnya (dimulai dari 0). Jika <code>x</code> tidak ada, akan memunculkan error (ValueError).<br />
+                  Contoh: <code>[10, 20, 30, 20].index(20)</code> menghasilkan <code>1</code> karena angka 20 pertama kali berada di indeks 1.
+                </li>
               </ul>
-              <CodeEditor codeKey="count" title="count()" />
-              <CodeEditor codeKey="index" title="index()" />
+              <CodeEditor codeKey="count" title="count() – Jumlah Kemunculan" />
+              <CodeEditor codeKey="index" title="index() – Indeks Pertama" />
 
               <p style={styles.text}>
                 Dengan memahami karakteristik, pembuatan, akses, operasi dasar, dan manipulasi list, 
