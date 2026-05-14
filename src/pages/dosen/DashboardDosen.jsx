@@ -1077,22 +1077,28 @@ const DashboardDosen = () => {
                   <p style={{ color: '#6b7280' }}>Belum ada mahasiswa yang mendaftar dengan token ini.</p>
                 ) : (
                   <div style={{ overflowX: 'auto' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                    <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
                       <thead>
                         <tr>
-                          <th>NIM</th><th>Nama</th><th>Email</th><th>Kuis List</th><th>Kuis Nested</th><th>Kuis Dict</th><th>Evaluasi</th>
+                          <th style={{ width: '15%', textAlign: 'center', padding: '12px 8px', borderBottom: '2px solid #e5e7eb' }}>NIM</th>
+                          <th style={{ width: '20%', textAlign: 'center', padding: '12px 8px', borderBottom: '2px solid #e5e7eb' }}>Nama</th>
+                          <th style={{ width: '25%', textAlign: 'center', padding: '12px 8px', borderBottom: '2px solid #e5e7eb' }}>Email</th>
+                          <th style={{ width: '10%', textAlign: 'center', padding: '12px 8px', borderBottom: '2px solid #e5e7eb' }}>Kuis List</th>
+                          <th style={{ width: '10%', textAlign: 'center', padding: '12px 8px', borderBottom: '2px solid #e5e7eb' }}>Kuis Nested</th>
+                          <th style={{ width: '10%', textAlign: 'center', padding: '12px 8px', borderBottom: '2px solid #e5e7eb' }}>Kuis Dict</th>
+                          <th style={{ width: '10%', textAlign: 'center', padding: '12px 8px', borderBottom: '2px solid #e5e7eb' }}>Evaluasi</th>
                         </tr>
                       </thead>
                       <tbody>
                         {mahasiswaList.map(mhs => (
                           <tr key={mhs.id}>
-                            <td>{mhs.NIM}</td>
-                            <td>{mhs.Nama}</td>
-                            <td>{mhs.Email}</td>
-                            <NilaiCell nim={mhs.NIM} jenis="Kuis List" />
-                            <NilaiCell nim={mhs.NIM} jenis="Kuis Nested List" />
-                            <NilaiCell nim={mhs.NIM} jenis="Kuis Dictionary" />
-                            <NilaiCell nim={mhs.NIM} jenis="Evaluasi" />
+                            <td style={{ textAlign: 'center', padding: '10px 8px', borderBottom: '1px solid #e5e7eb', wordBreak: 'break-word' }}>{mhs.NIM}</td>
+                            <td style={{ textAlign: 'center', padding: '10px 8px', borderBottom: '1px solid #e5e7eb', wordBreak: 'break-word' }}>{mhs.Nama}</td>
+                            <td style={{ textAlign: 'center', padding: '10px 8px', borderBottom: '1px solid #e5e7eb', wordBreak: 'break-word' }}>{mhs.Email}</td>
+                            <td style={{ textAlign: 'center', padding: '10px 8px', borderBottom: '1px solid #e5e7eb' }}><NilaiCell nim={mhs.NIM} jenis="Kuis List" /></td>
+                            <td style={{ textAlign: 'center', padding: '10px 8px', borderBottom: '1px solid #e5e7eb' }}><NilaiCell nim={mhs.NIM} jenis="Kuis Nested List" /></td>
+                            <td style={{ textAlign: 'center', padding: '10px 8px', borderBottom: '1px solid #e5e7eb' }}><NilaiCell nim={mhs.NIM} jenis="Kuis Dictionary" /></td>
+                            <td style={{ textAlign: 'center', padding: '10px 8px', borderBottom: '1px solid #e5e7eb' }}><NilaiCell nim={mhs.NIM} jenis="Evaluasi" /></td>
                           </tr>
                         ))}
                       </tbody>

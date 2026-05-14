@@ -849,17 +849,17 @@ nilai3 = 78
               <h2 style={modalStyles.title}>Selamat!</h2>
             </div>
             <p style={modalStyles.message}>
-              Anda telah menyelesaikan semua soal Latihan dengan sempurna.
+              Kamu sudah menyelesaikan materi Pendahuluan List.
             </p>
             <p style={modalStyles.subMessage}>
-              Progres belajar Anda akan bertambah dan Anda akan melanjutkan ke materi berikutnya.
+              Materi berikutnya sudah terbuka.
             </p>
             <button 
               style={modalStyles.button} 
               onClick={handleCompleteAndContinue}
               disabled={isProcessing}
             >
-              {isProcessing ? "Memproses..." : "OKE, Lanjutkan"}
+              {isProcessing ? "Memproses..." : "Materi berikutnya"}
             </button>
           </div>
         </div>

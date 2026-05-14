@@ -1467,11 +1467,11 @@ nilai3 = 78
             <div style={styles.modalIcon}>🎉</div>
             <h2 style={styles.modalTitle}>Selamat!</h2>
             <p style={styles.modalText}>
-              Anda telah menyelesaikan semua latihan dengan sempurna.<br />
-              Progres belajar Anda bertambah! Materi selanjutnya akan terbuka.
+              Kamu sudah menyelesaikan materi Pembuatan dan Akses Elemen List.<br />
+              Materi selanjutnya sudah terbuka.
             </p>
             <button style={styles.modalButton} onClick={handleCompleteAndNavigate}>
-              Lanjut ke Operasi dan Manipulasi 🚀
+              Materi Selanjutnya
             </button>
           </div>
         </div>

@@ -2235,11 +2235,11 @@ export default function OperasiManipulasiList() {
             <div style={styles.modalIcon}>🎉</div>
             <h2 style={styles.modalTitle}>Selamat!</h2>
             <p style={styles.modalText}>
-              Anda telah menyelesaikan semua latihan dengan sempurna.<br />
-              Progres belajar Anda bertambah! Materi selanjutnya akan terbuka.
+              Kamu sudah menyelesaikan materi Operasi dan Manipulasi List.<br />
+              Materi selanjutnya sudah terbuka.
             </p>
             <button style={styles.modalButton} onClick={handleCompleteAndNavigate}>
-              Lanjut ke Rangkuman List 🚀
+              Materi Selanjutnya
             </button>
           </div>
         </div>
