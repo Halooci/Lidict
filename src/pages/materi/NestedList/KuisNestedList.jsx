@@ -630,10 +630,10 @@ export default function KuisNestedList() {
   );
 }
 
-/* ================== STYLE (SAMA PERSIS DENGAN ASLINYA) ================== */
+/* ================== STYLE (padding top diperbaiki) ================== */
 const styles = {
   page: {
-    padding: "30px 40px",
+    padding: "94px 40px 30px 40px", // sebelumnya "30px 40px"
     backgroundColor: "#f5f7fa",
     minHeight: "calc(100vh - 64px)",
     fontFamily: "Poppins, sans-serif",
@@ -701,7 +701,7 @@ const styles = {
     minHeight: "100vh",
     backgroundColor: "#f5f7fa",
     fontFamily: "Poppins, sans-serif",
-    padding: "20px 40px",
+    padding: "80px 40px 20px 40px", // sebelumnya "20px 40px"
   },
   quizHeader: {
     display: "flex",
@@ -983,7 +983,7 @@ const styles = {
     alignItems: "center",
     justifyContent: "center",
     fontFamily: "Poppins, sans-serif",
-    padding: "20px",
+    padding: "80px 20px 20px 20px", // sebelumnya "20px"
   },
   resultCardNew: {
     backgroundColor: "white",

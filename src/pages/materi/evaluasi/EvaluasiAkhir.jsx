@@ -500,9 +500,9 @@ export default function EvaluasiAkhir() {
   );
 }
 
+/* ================== STYLE (padding top diperbaiki) ================== */
 const styles = {
-  // ... (style object sama persis dengan yang dikirim, tidak diubah)
-  page: { padding: "30px 40px", backgroundColor: "#f5f7fa", minHeight: "calc(100vh - 64px)", fontFamily: "Poppins, sans-serif" },
+  page: { padding: "94px 40px 30px 40px", backgroundColor: "#f5f7fa", minHeight: "calc(100vh - 64px)", fontFamily: "Poppins, sans-serif" },
   header: { backgroundColor: "#306998", color: "white", padding: "18px 24px", position: "relative", marginBottom: "30px", borderRadius: "6px" },
   headerAccent: { position: "absolute", left: 0, top: 0, bottom: 0, width: "8px", backgroundColor: "#FFD43B", borderRadius: "6px 0 0 6px" },
   headerTitle: { margin: 0, textAlign: "center", fontSize: "28px", fontWeight: "700" },
@@ -510,7 +510,7 @@ const styles = {
   instructionTitle: { fontSize: "24px", fontWeight: "600", color: "#306998", marginBottom: "20px", borderLeft: "5px solid #FFD43B", paddingLeft: "16px" },
   instructionList: { lineHeight: "1.9", fontSize: "16px", color: "#2d3748", marginBottom: "32px", paddingLeft: "24px" },
   startButton: { backgroundColor: "#306998", color: "white", border: "none", padding: "14px 28px", fontSize: "18px", fontWeight: "600", borderRadius: "40px", cursor: "pointer", width: "100%", boxShadow: "0 4px 10px rgba(48,105,152,0.3)" },
-  fullscreenQuiz: { minHeight: "100vh", backgroundColor: "#f5f7fa", fontFamily: "Poppins, sans-serif", padding: "20px 40px" },
+  fullscreenQuiz: { minHeight: "100vh", backgroundColor: "#f5f7fa", fontFamily: "Poppins, sans-serif", padding: "80px 40px 20px 40px" },
   quizHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", backgroundColor: "#306998", borderRadius: "20px", padding: "16px 32px", marginBottom: "30px", color: "white", boxShadow: "0 6px 14px rgba(0,0,0,0.1)" },
   quizTitle: { fontSize: "28px", fontWeight: "bold", letterSpacing: "1px" },
   timerBox: { display: "flex", alignItems: "center", gap: "12px", backgroundColor: "rgba(0,0,0,0.2)", padding: "8px 20px", borderRadius: "60px" },
@@ -543,7 +543,7 @@ const styles = {
   legendFlagged: { display: "inline-block", width: "16px", height: "16px", backgroundColor: "#f59e0b", borderRadius: "4px", marginRight: "6px", verticalAlign: "middle" },
   legendActive: { display: "inline-block", width: "16px", height: "16px", backgroundColor: "#306998", borderRadius: "4px", marginRight: "6px", verticalAlign: "middle", boxShadow: "0 0 0 1px #FFD43B" },
   legendUnanswered: { display: "inline-block", width: "16px", height: "16px", backgroundColor: "#e2e8f0", borderRadius: "4px", marginRight: "6px", verticalAlign: "middle" },
-  fullscreenResult: { minHeight: "100vh", backgroundColor: "#f5f7fa", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Poppins, sans-serif", padding: "20px" },
+  fullscreenResult: { minHeight: "100vh", backgroundColor: "#f5f7fa", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Poppins, sans-serif", padding: "80px 20px 20px 20px" },
   resultCardNew: { backgroundColor: "white", borderRadius: "32px", padding: "40px 30px", maxWidth: "600px", width: "100%", textAlign: "center", boxShadow: "0 20px 35px -10px rgba(0,0,0,0.1)", borderTop: "6px solid #306998" },
   resultHeaderNew: { marginBottom: "20px" },
   headerAccentResultNew: { width: "60px", height: "4px", backgroundColor: "#FFD43B", margin: "12px auto 0", borderRadius: "2px" },
