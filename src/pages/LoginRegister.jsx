@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { User, Mail, Lock, Eye, EyeOff, ChevronDown, Key } from 'lucide-react';
+import ReactDOM from 'react-dom';
+import { User, Mail, Lock, Eye, EyeOff, ChevronDown, Key, AlertCircle, X } from 'lucide-react';
 import Navbar from './komponen/Navbar';
 import { db } from '../config/firebase';
-import { collection, query, where, getDocs, setDoc, doc } from 'firebase/firestore';
+import { collection, query, where, getDocs, setDoc, doc, getDoc } from 'firebase/firestore';
 
 // ==================== STYLES (dengan perbaikan posisi login) ====================
 const styles = `
@@ -59,7 +60,7 @@ const styles = `
   right: 0;
   transform: translateX(0);
   opacity: 1;
-  justify-content: center;  /* <--- added: membuat form login di tengah */
+  justify-content: center;
 }
 
 /* Form register tetap di atas agar bisa scroll */
@@ -68,7 +69,7 @@ const styles = `
   transform: translateX(-100%);
   opacity: 0;
   pointer-events: none;
-  justify-content: flex-start; /* memastikan scroll berfungsi */
+  justify-content: flex-start;
   padding-bottom: 60px;
 }
 
@@ -445,6 +446,104 @@ const styles = `
     margin-top: 10px;
   }
 }
+
+/* ===== MODAL FULL SCREEN OVERLAY ===== */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  background-color: rgba(0, 0, 0, 0.75);
+  backdrop-filter: blur(6px);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  animation: fadeIn 0.2s ease;
+}
+
+.modal-container {
+  background: white;
+  border-radius: 24px;
+  width: 90%;
+  max-width: 420px;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  animation: slideIn 0.3s cubic-bezier(0.34, 1.2, 0.64, 1);
+  overflow: hidden;
+}
+
+.modal-header {
+  background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+  padding: 20px;
+  text-align: center;
+  color: white;
+}
+
+.modal-header .icon {
+  margin-bottom: 8px;
+}
+
+.modal-header h3 {
+  font-size: 24px;
+  font-weight: 600;
+  margin: 0;
+}
+
+.modal-body {
+  padding: 30px 24px;
+  text-align: center;
+}
+
+.modal-body p {
+  font-size: 16px;
+  color: #2d3748;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.modal-footer {
+  padding: 0 24px 28px 24px;
+  display: flex;
+  justify-content: center;
+}
+
+.modal-btn {
+  background: linear-gradient(135deg, #ecc94b 0%, #d69e2e 100%);
+  border: none;
+  padding: 12px 32px;
+  border-radius: 40px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #1e3a5f;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  width: 100%;
+  max-width: 200px;
+}
+
+.modal-btn:hover {
+  transform: scale(1.02);
+  box-shadow: 0 6px 14px rgba(214, 158, 46, 0.3);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9) translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
 `;
 
 // ==================== Helper: Generate random token 8 karakter ====================
@@ -552,7 +651,30 @@ const LoginForm = ({ onLoginSuccess }) => {
   );
 };
 
-// ==================== REGISTER FORM (revisi: dosen tanpa token kelas) ====================
+// ==================== MODAL COMPONENT (menggunakan Portal) ====================
+const CustomAlertModal = ({ isOpen, message, onClose }) => {
+  if (!isOpen) return null;
+
+  return ReactDOM.createPortal(
+    <div className="modal-overlay" onClick={onClose}>
+      <div className="modal-container" onClick={(e) => e.stopPropagation()}>
+        <div className="modal-header">
+          <div className="icon"><AlertCircle size={40} /></div>
+          <h3>Perhatian</h3>
+        </div>
+        <div className="modal-body">
+          <p>{message}</p>
+        </div>
+        <div className="modal-footer">
+          <button className="modal-btn" onClick={onClose}>OKE</button>
+        </div>
+      </div>
+    </div>,
+    document.body
+  );
+};
+
+// ==================== REGISTER FORM (revisi: pengecekan NIM unik + modal custom) ====================
 const RegisterForm = ({ onRegisterSuccess }) => {
   const [formData, setFormData] = useState({
     nama: '',
@@ -568,11 +690,18 @@ const RegisterForm = ({ onRegisterSuccess }) => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalMessage, setModalMessage] = useState('');
 
   const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
   const handleRoleChange = (e) => {
     const role = e.target.value;
     setFormData({ ...formData, role, nim: '', nip: '', tokenKelas: '' });
+  };
+
+  const showModal = (message) => {
+    setModalMessage(message);
+    setModalOpen(true);
   };
 
   const handleSubmit = async (e) => {
@@ -607,6 +736,16 @@ const RegisterForm = ({ onRegisterSuccess }) => {
       return;
     }
 
+    // Cek apakah NIM sudah terdaftar untuk mahasiswa (menggunakan modal)
+    if (formData.role === 'mahasiswa') {
+      const nimRef = doc(db, 'mahasiswa', formData.nim);
+      const nimSnap = await getDoc(nimRef);
+      if (nimSnap.exists()) {
+        showModal('NIM tersebut sudah terdaftar. Silakan login.');
+        return;
+      }
+    }
+
     setLoading(true);
     try {
       if (formData.role === 'mahasiswa') {
@@ -630,7 +769,6 @@ const RegisterForm = ({ onRegisterSuccess }) => {
         localStorage.setItem('userId', formData.nim);
       } 
       else if (formData.role === 'dosen') {
-        // ✅ REVISI: dosen tidak lagi menyimpan Token_kelas & tidak membuat dokumen kkm
         const dosenRef = doc(db, 'dosen', formData.nip);
         await setDoc(dosenRef, {
           Nama: formData.nama,
@@ -656,64 +794,73 @@ const RegisterForm = ({ onRegisterSuccess }) => {
   };
 
   return (
-    <div className="form-container">
-      <h1 className="form-title">Daftar</h1>
-      {error && <div style={{ color: 'red', marginBottom: '15px', textAlign: 'center' }}>{error}</div>}
-      <form onSubmit={handleSubmit}>
-        <div className="input-group">
-          <div className="input-icon"><User size={20} /></div>
-          <input type="text" name="nama" className="input-field" placeholder="Nama Lengkap" value={formData.nama} onChange={handleChange} required />
-        </div>
-        <div className="input-group">
-          <div className="input-icon"><Mail size={20} /></div>
-          <input type="email" name="email" className="input-field" placeholder="Email" value={formData.email} onChange={handleChange} required />
-        </div>
-        <div className="input-group">
-          <div className="input-icon"><Lock size={20} /></div>
-          <input type={showPassword ? 'text' : 'password'} name="password" className="input-field" placeholder="Password" value={formData.password} onChange={handleChange} required />
-          <span className="password-toggle" onClick={() => setShowPassword(!showPassword)}>
-            {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-          </span>
-        </div>
-        <div className="input-group">
-          <div className="input-icon"><Lock size={20} /></div>
-          <input type={showConfirmPassword ? 'text' : 'password'} name="confirmPassword" className="input-field" placeholder="Konfirmasi Password" value={formData.confirmPassword} onChange={handleChange} required />
-          <span className="password-toggle" onClick={() => setShowConfirmPassword(!showConfirmPassword)}>
-            {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
-          </span>
-        </div>
-        <div className="select-group">
-          <div className="select-icon"><User size={20} /></div>
-          <select className="select-field" name="role" value={formData.role} onChange={handleRoleChange} required>
-            <option value="" disabled>Daftar Sebagai</option>
-            <option value="dosen">Dosen</option>
-            <option value="mahasiswa">Mahasiswa</option>
-          </select>
-          <div className="select-arrow"><ChevronDown size={20} /></div>
-        </div>
-        {formData.role === 'mahasiswa' && (
-          <>
-            <div className="input-group">
-              <div className="input-icon"><User size={20} /></div>
-              <input type="text" name="nim" className="input-field" placeholder="NIM" value={formData.nim} onChange={handleChange} required />
-            </div>
-            <div className="input-group">
-              <div className="input-icon"><Key size={20} /></div>
-              <input type="text" name="tokenKelas" className="input-field" placeholder="Token Kelas (dari dosen)" value={formData.tokenKelas} onChange={handleChange} required />
-            </div>
-          </>
-        )}
-        {formData.role === 'dosen' && (
+    <>
+      <div className="form-container">
+        <h1 className="form-title">Daftar</h1>
+        {error && <div style={{ color: 'red', marginBottom: '15px', textAlign: 'center' }}>{error}</div>}
+        <form onSubmit={handleSubmit}>
           <div className="input-group">
             <div className="input-icon"><User size={20} /></div>
-            <input type="text" name="nip" className="input-field" placeholder="NIP" value={formData.nip} onChange={handleChange} required />
+            <input type="text" name="nama" className="input-field" placeholder="Nama Lengkap" value={formData.nama} onChange={handleChange} required />
           </div>
-        )}
-        <button type="submit" className="submit-btn register-btn" disabled={loading}>
-          {loading ? 'Memproses...' : 'Daftar'}
-        </button>
-      </form>
-    </div>
+          <div className="input-group">
+            <div className="input-icon"><Mail size={20} /></div>
+            <input type="email" name="email" className="input-field" placeholder="Email" value={formData.email} onChange={handleChange} required />
+          </div>
+          <div className="input-group">
+            <div className="input-icon"><Lock size={20} /></div>
+            <input type={showPassword ? 'text' : 'password'} name="password" className="input-field" placeholder="Password" value={formData.password} onChange={handleChange} required />
+            <span className="password-toggle" onClick={() => setShowPassword(!showPassword)}>
+              {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+            </span>
+          </div>
+          <div className="input-group">
+            <div className="input-icon"><Lock size={20} /></div>
+            <input type={showConfirmPassword ? 'text' : 'password'} name="confirmPassword" className="input-field" placeholder="Konfirmasi Password" value={formData.confirmPassword} onChange={handleChange} required />
+            <span className="password-toggle" onClick={() => setShowConfirmPassword(!showConfirmPassword)}>
+              {showConfirmPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+            </span>
+          </div>
+          <div className="select-group">
+            <div className="select-icon"><User size={20} /></div>
+            <select className="select-field" name="role" value={formData.role} onChange={handleRoleChange} required>
+              <option value="" disabled>Daftar Sebagai</option>
+              <option value="dosen">Dosen</option>
+              <option value="mahasiswa">Mahasiswa</option>
+            </select>
+            <div className="select-arrow"><ChevronDown size={20} /></div>
+          </div>
+          {formData.role === 'mahasiswa' && (
+            <>
+              <div className="input-group">
+                <div className="input-icon"><User size={20} /></div>
+                <input type="text" name="nim" className="input-field" placeholder="NIM" value={formData.nim} onChange={handleChange} required />
+              </div>
+              <div className="input-group">
+                <div className="input-icon"><Key size={20} /></div>
+                <input type="text" name="tokenKelas" className="input-field" placeholder="Token Kelas (dari dosen)" value={formData.tokenKelas} onChange={handleChange} required />
+              </div>
+            </>
+          )}
+          {formData.role === 'dosen' && (
+            <div className="input-group">
+              <div className="input-icon"><User size={20} /></div>
+              <input type="text" name="nip" className="input-field" placeholder="NIP" value={formData.nip} onChange={handleChange} required />
+            </div>
+          )}
+          <button type="submit" className="submit-btn register-btn" disabled={loading}>
+            {loading ? 'Memproses...' : 'Daftar'}
+          </button>
+        </form>
+      </div>
+
+      {/* Modal dengan Portal ke document.body */}
+      <CustomAlertModal 
+        isOpen={modalOpen} 
+        message={modalMessage} 
+        onClose={() => setModalOpen(false)} 
+      />
+    </>
   );
 };
 
