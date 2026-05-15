@@ -258,7 +258,7 @@ const NilaiCell = ({ nim, jenis }) => {
     fetchNilai();
   }, [nim, jenis]);
 
-  return <td>{nilai !== null ? (nilai === null || nilai === undefined ? '-' : nilai) : '...'}</td>;
+  return <span style={{ display: 'inline-block' }}>{nilai !== null ? (nilai === null || nilai === undefined ? '-' : nilai) : '...'}</span>;
 };
 
 // ==================== FUNGSI GENERATE TOKEN ====================
@@ -1080,25 +1080,25 @@ const DashboardDosen = () => {
                     <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
                       <thead>
                         <tr>
-                          <th style={{ width: '15%', textAlign: 'center', padding: '12px 8px', borderBottom: '2px solid #e5e7eb' }}>NIM</th>
-                          <th style={{ width: '20%', textAlign: 'center', padding: '12px 8px', borderBottom: '2px solid #e5e7eb' }}>Nama</th>
-                          <th style={{ width: '25%', textAlign: 'center', padding: '12px 8px', borderBottom: '2px solid #e5e7eb' }}>Email</th>
-                          <th style={{ width: '10%', textAlign: 'center', padding: '12px 8px', borderBottom: '2px solid #e5e7eb' }}>Kuis List</th>
-                          <th style={{ width: '10%', textAlign: 'center', padding: '12px 8px', borderBottom: '2px solid #e5e7eb' }}>Kuis Nested</th>
-                          <th style={{ width: '10%', textAlign: 'center', padding: '12px 8px', borderBottom: '2px solid #e5e7eb' }}>Kuis Dict</th>
-                          <th style={{ width: '10%', textAlign: 'center', padding: '12px 8px', borderBottom: '2px solid #e5e7eb' }}>Evaluasi</th>
+                          <th style={{ width: '15%', textAlign: 'center', verticalAlign: 'middle', padding: '12px 8px', borderBottom: '2px solid #e5e7eb' }}>NIM</th>
+                          <th style={{ width: '20%', textAlign: 'center', verticalAlign: 'middle', padding: '12px 8px', borderBottom: '2px solid #e5e7eb' }}>Nama</th>
+                          <th style={{ width: '25%', textAlign: 'center', verticalAlign: 'middle', padding: '12px 8px', borderBottom: '2px solid #e5e7eb' }}>Email</th>
+                          <th style={{ width: '10%', textAlign: 'center', verticalAlign: 'middle', padding: '12px 8px', borderBottom: '2px solid #e5e7eb' }}>Kuis List</th>
+                          <th style={{ width: '10%', textAlign: 'center', verticalAlign: 'middle', padding: '12px 8px', borderBottom: '2px solid #e5e7eb' }}>Kuis Nested</th>
+                          <th style={{ width: '10%', textAlign: 'center', verticalAlign: 'middle', padding: '12px 8px', borderBottom: '2px solid #e5e7eb' }}>Kuis Dict</th>
+                          <th style={{ width: '10%', textAlign: 'center', verticalAlign: 'middle', padding: '12px 8px', borderBottom: '2px solid #e5e7eb' }}>Evaluasi</th>
                         </tr>
                       </thead>
                       <tbody>
                         {mahasiswaList.map(mhs => (
                           <tr key={mhs.id}>
-                            <td style={{ textAlign: 'center', padding: '10px 8px', borderBottom: '1px solid #e5e7eb', wordBreak: 'break-word' }}>{mhs.NIM}</td>
-                            <td style={{ textAlign: 'center', padding: '10px 8px', borderBottom: '1px solid #e5e7eb', wordBreak: 'break-word' }}>{mhs.Nama}</td>
-                            <td style={{ textAlign: 'center', padding: '10px 8px', borderBottom: '1px solid #e5e7eb', wordBreak: 'break-word' }}>{mhs.Email}</td>
-                            <td style={{ textAlign: 'center', padding: '10px 8px', borderBottom: '1px solid #e5e7eb' }}><NilaiCell nim={mhs.NIM} jenis="Kuis List" /></td>
-                            <td style={{ textAlign: 'center', padding: '10px 8px', borderBottom: '1px solid #e5e7eb' }}><NilaiCell nim={mhs.NIM} jenis="Kuis Nested List" /></td>
-                            <td style={{ textAlign: 'center', padding: '10px 8px', borderBottom: '1px solid #e5e7eb' }}><NilaiCell nim={mhs.NIM} jenis="Kuis Dictionary" /></td>
-                            <td style={{ textAlign: 'center', padding: '10px 8px', borderBottom: '1px solid #e5e7eb' }}><NilaiCell nim={mhs.NIM} jenis="Evaluasi" /></td>
+                            <td style={{ textAlign: 'center', verticalAlign: 'middle', padding: '10px 8px', borderBottom: '1px solid #e5e7eb', wordBreak: 'break-word' }}>{mhs.NIM}</td>
+                            <td style={{ textAlign: 'center', verticalAlign: 'middle', padding: '10px 8px', borderBottom: '1px solid #e5e7eb', wordBreak: 'break-word' }}>{mhs.Nama}</td>
+                            <td style={{ textAlign: 'center', verticalAlign: 'middle', padding: '10px 8px', borderBottom: '1px solid #e5e7eb', wordBreak: 'break-word' }}>{mhs.Email}</td>
+                            <td style={{ textAlign: 'center', verticalAlign: 'middle', padding: '10px 8px', borderBottom: '1px solid #e5e7eb' }}><NilaiCell nim={mhs.NIM} jenis="Kuis List" /></td>
+                            <td style={{ textAlign: 'center', verticalAlign: 'middle', padding: '10px 8px', borderBottom: '1px solid #e5e7eb' }}><NilaiCell nim={mhs.NIM} jenis="Kuis Nested List" /></td>
+                            <td style={{ textAlign: 'center', verticalAlign: 'middle', padding: '10px 8px', borderBottom: '1px solid #e5e7eb' }}><NilaiCell nim={mhs.NIM} jenis="Kuis Dictionary" /></td>
+                            <td style={{ textAlign: 'center', verticalAlign: 'middle', padding: '10px 8px', borderBottom: '1px solid #e5e7eb' }}><NilaiCell nim={mhs.NIM} jenis="Evaluasi" /></td>
                           </tr>
                         ))}
                       </tbody>
