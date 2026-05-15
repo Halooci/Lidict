@@ -15,6 +15,7 @@ import {
   arrayRemove,
   onSnapshot,
   writeBatch,
+  deleteDoc,
 } from 'firebase/firestore';
 import Navbar from '../komponen/Navbar';
 import SidebarDosen from './SidebarDosen';
@@ -30,6 +31,7 @@ import {
   X,
   UserPlus,
   Trash2,
+  Edit,
 } from 'lucide-react';
 
 // ==================== STYLES ====================
@@ -142,12 +144,17 @@ const styles = `
     border: none;
   }
   .logout-btn:hover { background: #dc2626; }
-  .kelas-selector {
+  .kelas-list {
     display: flex;
-    flex-wrap: wrap;
-    gap: 0.75rem;
-    align-items: center;
+    flex-direction: column;
+    gap: 0.5rem;
     margin-bottom: 1rem;
+  }
+  .kelas-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    justify-content: space-between;
   }
   .kelas-btn {
     background: white;
@@ -157,6 +164,8 @@ const styles = `
     cursor: pointer;
     transition: all 0.2s;
     font-size: 0.9rem;
+    flex: 1;
+    text-align: left;
   }
   .kelas-btn.active {
     background: #3b82f6;
@@ -636,6 +645,11 @@ const DashboardDosen = () => {
   const [addingDosen, setAddingDosen] = useState(false);
   const [error, setError] = useState('');
 
+  // State untuk edit kelas
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editKelasData, setEditKelasData] = useState(null);
+  const [editingKelas, setEditingKelas] = useState(false);
+
   const userId = localStorage.getItem('userId');
   const userEmail = localStorage.getItem('userEmail');
 
@@ -775,7 +789,6 @@ const DashboardDosen = () => {
     const quizzes = getDefaultQuizzes();
     const batch = writeBatch(db);
 
-    // ID kuis sekarang digabung dengan token kelas agar unik
     const idMap = {
       'Kuis List': `${kelasId}_List`,
       'Kuis Nested List': `${kelasId}_NestedList`,
@@ -796,7 +809,7 @@ const DashboardDosen = () => {
       quiz.soal.forEach((soal, index) => {
         const soalRef = doc(collection(db, 'soal_kuis'));
         batch.set(soalRef, {
-          kuis_id: kuisRef.id, // ID yang sudah unik
+          kuis_id: kuisRef.id,
           nomor: index + 1,
           pertanyaan: soal.pertanyaan,
           pilihan: soal.pilihan,
@@ -836,22 +849,79 @@ const DashboardDosen = () => {
         kkm_kuis_dictionary: 75,
         kkm_evaluasi: 75,
       };
-      // ID kelas = token
       await setDoc(doc(db, 'kelas', token), kelasBaru);
       const kelasDenganId = { id: token, ...kelasBaru };
       setDaftarKelas(prev => [...prev, kelasDenganId]);
       setKelasAktif(kelasDenganId);
       setShowCreateModal(false);
-
-      // Buat kuis default dengan ID mengandung token
       await buatKuisDefault(token);
-
       alert(`Kelas berhasil dibuat! Token: ${token}`);
     } catch (err) {
       console.error(err);
       alert('Gagal membuat kelas.');
     } finally {
       setCreating(false);
+    }
+  };
+
+  // === EDIT KELAS ===
+  const openEditModal = (kelas) => {
+    setEditKelasData({
+      id: kelas.id,
+      nama_kelas: kelas.nama_kelas,
+      tahun_ajaran: kelas.tahun_ajaran,
+      semester: kelas.semester,
+    });
+    setShowEditModal(true);
+  };
+
+  const handleEditKelas = async (e) => {
+    e.preventDefault();
+    if (!editKelasData.nama_kelas.trim() || !editKelasData.tahun_ajaran.trim()) {
+      alert('Nama kelas dan tahun ajaran harus diisi.');
+      return;
+    }
+    setEditingKelas(true);
+    try {
+      const kelasRef = doc(db, 'kelas', editKelasData.id);
+      await updateDoc(kelasRef, {
+        nama_kelas: editKelasData.nama_kelas,
+        tahun_ajaran: editKelasData.tahun_ajaran,
+        semester: editKelasData.semester,
+      });
+      // Update state daftarKelas
+      setDaftarKelas(prev =>
+        prev.map(k => k.id === editKelasData.id ? { ...k, ...editKelasData } : k)
+      );
+      // Jika kelas yang diedit adalah kelas aktif, update juga kelasAktif
+      if (kelasAktif && kelasAktif.id === editKelasData.id) {
+        setKelasAktif(prev => ({ ...prev, ...editKelasData }));
+      }
+      setShowEditModal(false);
+      alert('Kelas berhasil diperbarui!');
+    } catch (err) {
+      console.error(err);
+      alert('Gagal memperbarui kelas.');
+    } finally {
+      setEditingKelas(false);
+    }
+  };
+
+  // === HAPUS KELAS ===
+  const handleDeleteKelas = async (kelasId) => {
+    if (!window.confirm('Apakah Anda yakin ingin menghapus kelas ini? Semua data terkait (mahasiswa, kuis) tidak akan dihapus secara otomatis, tetapi kelas akan hilang dari daftar.')) return;
+    try {
+      await deleteDoc(doc(db, 'kelas', kelasId));
+      setDaftarKelas(prev => prev.filter(k => k.id !== kelasId));
+      if (kelasAktif && kelasAktif.id === kelasId) {
+        // Pilih kelas pertama yang tersisa atau null
+        const remaining = daftarKelas.filter(k => k.id !== kelasId);
+        setKelasAktif(remaining.length > 0 ? remaining[0] : null);
+      }
+      alert('Kelas berhasil dihapus.');
+    } catch (err) {
+      console.error(err);
+      alert('Gagal menghapus kelas.');
     }
   };
 
@@ -998,19 +1068,29 @@ const DashboardDosen = () => {
           {/* Kelas Anda */}
           <div className="card">
             <div className="card-title"><BookOpen size={22} /> Kelas Anda</div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
-              <div className="kelas-selector">
-                {daftarKelas.map(kelas => (
-                  <button
-                    key={kelas.id}
-                    className={`kelas-btn ${kelasAktif?.id === kelas.id ? 'active' : ''}`}
-                    onClick={() => setKelasAktif(kelas)}
-                  >
-                    {kelas.nama_kelas} ({kelas.tahun_ajaran} {kelas.semester})
-                  </button>
-                ))}
-                {daftarKelas.length === 0 && (
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1rem' }}>
+              <div style={{ flex: 1 }}>
+                {daftarKelas.length === 0 ? (
                   <span style={{ color: '#6b7280' }}>Belum ada kelas.</span>
+                ) : (
+                  <div className="kelas-list">
+                    {daftarKelas.map(kelas => (
+                      <div key={kelas.id} className="kelas-item">
+                        <button
+                          className={`kelas-btn ${kelasAktif?.id === kelas.id ? 'active' : ''}`}
+                          onClick={() => setKelasAktif(kelas)}
+                        >
+                          {kelas.nama_kelas} ({kelas.tahun_ajaran} {kelas.semester})
+                        </button>
+                        <button className="btn btn-outline" onClick={() => openEditModal(kelas)} title="Edit Kelas">
+                          <Edit size={16} />
+                        </button>
+                        <button className="btn btn-red" onClick={() => handleDeleteKelas(kelas.id)} title="Hapus Kelas">
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
               <div style={{ display: 'flex', gap: '0.75rem', flexWrap: 'wrap' }}>
@@ -1135,6 +1215,37 @@ const DashboardDosen = () => {
                 <div className="form-actions">
                   <button type="button" className="btn btn-outline" onClick={() => setShowCreateModal(false)}>Batal</button>
                   <button type="submit" className="btn btn-blue" disabled={creating}>{creating ? 'Membuat...' : 'Buat Kelas'}</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
+        {/* Modal Edit Kelas */}
+        {showEditModal && editKelasData && (
+          <div className="modal-overlay" onClick={() => setShowEditModal(false)}>
+            <div className="modal-content" onClick={e => e.stopPropagation()}>
+              <div className="modal-close" onClick={() => setShowEditModal(false)}><X size={24} /></div>
+              <h2 className="modal-title">Edit Kelas</h2>
+              <form onSubmit={handleEditKelas}>
+                <div className="form-group">
+                  <label>Nama Kelas / Mata Kuliah</label>
+                  <input type="text" value={editKelasData.nama_kelas} onChange={e => setEditKelasData({...editKelasData, nama_kelas: e.target.value})} required />
+                </div>
+                <div className="form-group">
+                  <label>Tahun Ajaran</label>
+                  <input type="text" value={editKelasData.tahun_ajaran} onChange={e => setEditKelasData({...editKelasData, tahun_ajaran: e.target.value})} required />
+                </div>
+                <div className="form-group">
+                  <label>Semester</label>
+                  <select value={editKelasData.semester} onChange={e => setEditKelasData({...editKelasData, semester: e.target.value})}>
+                    <option value="Ganjil">Ganjil</option>
+                    <option value="Genap">Genap</option>
+                  </select>
+                </div>
+                <div className="form-actions">
+                  <button type="button" className="btn btn-outline" onClick={() => setShowEditModal(false)}>Batal</button>
+                  <button type="submit" className="btn btn-blue" disabled={editingKelas}>{editingKelas ? 'Menyimpan...' : 'Simpan Perubahan'}</button>
                 </div>
               </form>
             </div>
