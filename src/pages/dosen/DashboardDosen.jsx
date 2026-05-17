@@ -17,7 +17,7 @@ import {
   writeBatch,
   deleteDoc,
 } from 'firebase/firestore';
-import Navbar from '../komponen/Navbar';
+import NavbarDosen from './NavbarDosen';
 import SidebarDosen from './SidebarDosen';
 import {
   Copy,
@@ -1038,7 +1038,7 @@ const DashboardDosen = () => {
         <style>{styles}</style>
         <SidebarDosen />
         <div className="dashboard-content">
-          <Navbar />
+          <NavbarDosen />
           <div className="loading-page">Memuat dashboard...</div>
         </div>
       </>
@@ -1050,7 +1050,7 @@ const DashboardDosen = () => {
       <style>{styles}</style>
       <SidebarDosen />
       <div className="dashboard-content">
-        <Navbar />
+        <NavbarDosen />
         <div className="content-inner">
           {/* Header Card */}
           <div className="card">

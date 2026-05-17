@@ -1,7 +1,89 @@
 import { Link, useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
-import AvatarDropdown from "./AvatarDropdown";
+import { useState, useEffect, useRef } from "react";
 import logo from "../../assets/logo-media-terbaru.png";
+
+// Komponen AvatarDropdown built-in (tidak perlu import dari luar)
+const AvatarDropdown = ({ userName, userRole }) => {
+  const [open, setOpen] = useState(false);
+  const dropdownRef = useRef(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.clear();
+    navigate("/loginregister");
+  };
+
+  return (
+    <div className="avatar-dropdown" ref={dropdownRef}>
+      <div className="avatar" onClick={() => setOpen(!open)}>
+        {userName?.charAt(0) || "U"}
+      </div>
+      {open && (
+        <div className="dropdown-menu">
+          <div className="dropdown-item" style={{ fontWeight: "bold" }}>
+            {userName}
+          </div>
+          <div className="dropdown-item" style={{ fontSize: "12px", color: "#666" }}>
+            {userRole === "dosen" ? "Dosen" : "Mahasiswa"}
+          </div>
+          <hr style={{ margin: "8px 0" }} />
+          <div className="dropdown-item" onClick={handleLogout}>
+            Logout
+          </div>
+        </div>
+      )}
+      <style>{`
+        .avatar-dropdown {
+          position: relative;
+          display: inline-block;
+        }
+        .avatar {
+          width: 34px;
+          height: 34px;
+          border-radius: 50%;
+          background-color: #FFD43B;
+          color: #2f6fa3;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-weight: 600;
+          cursor: pointer;
+        }
+        .dropdown-menu {
+          position: absolute;
+          top: 45px;
+          right: 0;
+          background: white;
+          border-radius: 8px;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+          width: 160px;
+          padding: 8px 0;
+          z-index: 1000;
+        }
+        .dropdown-item {
+          padding: 8px 16px;
+          cursor: pointer;
+          transition: background 0.2s;
+          font-size: 14px;
+          color: #333;
+        }
+        .dropdown-item:hover {
+          background: #f3f4f6;
+        }
+      `}</style>
+    </div>
+  );
+};
 
 export default function NavbarDosen() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -18,7 +100,7 @@ export default function NavbarDosen() {
       setIsLoggedIn(true);
       setUserName(name || "User");
 
-      // Jika role dosen dan sedang di halaman root, redirect ke dashboard dosen
+      // Redirect ke dashboard dosen jika di halaman root
       if (userRole === "dosen" && window.location.pathname === "/") {
         navigate("/dosen/dashboard");
       }
@@ -46,7 +128,6 @@ export default function NavbarDosen() {
         )}
       </div>
 
-      {/* CSS Media Queries (sama seperti asli) */}
       <style>{`
         .navbar {
           position: fixed;
@@ -62,25 +143,21 @@ export default function NavbarDosen() {
           z-index: 1000;
           height: 64px;
         }
-
         .left {
           display: flex;
           align-items: center;
         }
-
         .logo-image {
           height: 50px;
           object-fit: contain;
           cursor: pointer;
           display: block;
         }
-
         .right-section {
           display: flex;
           align-items: center;
           gap: 30px;
         }
-
         .nav-item {
           text-decoration: none;
           color: #ffffff;
@@ -90,12 +167,10 @@ export default function NavbarDosen() {
           border-bottom: 2px solid transparent;
           transition: all 0.2s ease;
         }
-
         .nav-item:hover {
           border-bottom: 2px solid #FFD43B;
           color: #FFD43B;
         }
-
         .avatar {
           width: 34px;
           height: 34px;
@@ -108,7 +183,6 @@ export default function NavbarDosen() {
           font-weight: 600;
           cursor: pointer;
         }
-
         @media (max-width: 768px) {
           .navbar {
             padding: 0 16px;
@@ -121,7 +195,6 @@ export default function NavbarDosen() {
           .nav-item { font-size: 14px; }
           .avatar { width: 28px; height: 28px; font-size: 14px; }
         }
-
         @media (max-width: 480px) {
           .navbar { padding: 0 12px; }
           .logo-image { height: 32px; }
