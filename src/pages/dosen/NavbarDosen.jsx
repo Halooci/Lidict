@@ -2,7 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import logo from "../../assets/logo-media-terbaru.png";
 
-// Komponen AvatarDropdown built-in (tidak perlu import dari luar)
+// Komponen AvatarDropdown built-in
 const AvatarDropdown = ({ userName, userRole }) => {
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -119,12 +119,12 @@ export default function NavbarDosen() {
 
       <div className="right-section">
         <Link to="/dosen/dashboard" className="nav-item">Dashboard Dosen</Link>
-        <Link to="/PetaKonsep" className="nav-item">Materi</Link>
-        <Link to="/InformasiPage" className="nav-item">Informasi</Link>
+        <Link to="/dosen/materi" className="nav-item">Materi</Link>
+        <Link to="/dosen/informasi" className="nav-item">Informasi</Link>
         {isLoggedIn ? (
           <AvatarDropdown userName={userName} userRole={localStorage.getItem("userRole")} />
         ) : (
-          <div className="avatar">👤</div>
+        <div className="avatar">👤</div>
         )}
       </div>
 

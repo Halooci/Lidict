@@ -53,15 +53,14 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
+        {/* Rute public */}
         <Route path="/" element={<Landing />} />
         <Route path="/loginregister" element={<LoginRegister />} />
-        {/* <Route path="/register" element={<LoginRegister />} /> */}
        
-
+        {/* Rute materi untuk MAHASISWA (tetap seperti semula) */}
         <Route path="/PetaKonsep" element={<PetaKonsep />} />
         <Route path="/Apersepsi" element={<Apersepsi />} />
       
-        
         {/* <Route path="/Pengantar" element={<Pengantar />} /> */}
         <Route path="/List/PendahuluanList" element={<PendahuluanList />} />
         <Route path="/List/PembuatanAksesElement" element={<PembuatanAksesElement />} />
@@ -84,12 +83,10 @@ function App() {
         <Route path="/EvaluasiAkhir" element={<EvaluasiAkhir />} />
         <Route path="/InformasiPage" element={<InformasiPage />} />
 
-
+        {/* Rute untuk DOSEN */}
         <Route path="/dosen/dashboard" element={<DashboardDosen />} />
         <Route path="/dosen/mahasiswa" element={<DaftarMahasiswa />} />
         <Route path="/dosen/soal" element={<Soal />} />
-
-        
 
       </Routes>
     </BrowserRouter>
