@@ -6,16 +6,21 @@ import logo from "../../assets/logo-media-terbaru.png";
 export default function Navbar() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userName, setUserName] = useState("");
+  const [userRole, setUserRole] = useState("");
 
   useEffect(() => {
     const userId = localStorage.getItem("userId");
     const userEmail = localStorage.getItem("userEmail");
     const name = localStorage.getItem("userName");
+    const role = localStorage.getItem("userRole");
+
     if (userId && userEmail) {
       setIsLoggedIn(true);
       setUserName(name || "User");
+      setUserRole(role || "");
     } else {
       setIsLoggedIn(false);
+      setUserRole("");
     }
   }, []);
 
@@ -31,14 +36,19 @@ export default function Navbar() {
         <Link to="/" className="nav-item">Beranda</Link>
         <Link to="/PetaKonsep" className="nav-item">Materi</Link>
         <Link to="/InformasiPage" className="nav-item">Informasi</Link>
+        
+        {/* Navigasi Dashboard hanya untuk dosen yang sudah login */}
+        {isLoggedIn && userRole === "dosen" && (
+          <Link to="/dosen/dashboard" className="nav-item">Dashboard</Link>
+        )}
+
         {isLoggedIn ? (
-          <AvatarDropdown userName={userName} userRole={localStorage.getItem("userRole")} />
+          <AvatarDropdown userName={userName} userRole={userRole} />
         ) : (
           <div className="avatar">👤</div>
         )}
       </div>
 
-      {/* CSS Media Queries (sama seperti asli) */}
       <style>{`
         .navbar {
           position: fixed;
