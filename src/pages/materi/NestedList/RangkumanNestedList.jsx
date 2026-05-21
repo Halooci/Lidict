@@ -213,7 +213,7 @@ sys.stdout = StringIO()
           {/* PENGERTIAN DAN KARAKTERISTIK */}
           <section style={styles.section}>
             <div style={styles.card}>
-              <h2 style={styles.sectionTitle}>📖 Pengertian Nested List</h2>
+              <h2 style={styles.sectionTitle}>Pengertian Nested List</h2>
               <p style={styles.text}>
                 <strong>Nested list</strong> (list bersarang) adalah struktur data di mana sebuah list menjadi elemen dari list lain. 
                 Nested list sangat berguna untuk merepresentasikan data dua dimensi atau lebih, seperti tabel, matriks, atau data hierarkis.
@@ -231,7 +231,7 @@ sys.stdout = StringIO()
           {/* PEMBUATAN DAN AKSES ELEMEN */}
           <section style={styles.section}>
             <div style={styles.card}>
-              <h2 style={styles.sectionTitle}>🛠️ Membuat dan Mengakses Nested List</h2>
+              <h2 style={styles.sectionTitle}>Membuat dan Mengakses Nested List</h2>
               <p style={styles.text}>
                 <strong>Membuat nested list:</strong> Tulis list di dalam list, pisahkan dengan koma.
               </p>
@@ -242,7 +242,7 @@ ragged = [[1, 2], [3, 4, 5], [6]]     # panjang baris berbeda`}</pre>
               <p style={styles.text}>
                 <strong>Mengakses elemen:</strong> Gunakan indeks baris dan kolom (keduanya mulai dari 0).
               </p>
-              <CodeEditor codeKey="akses" title="Akses Elemen Nested List" />
+              <CodeEditor codeKey="akses" title="Contoh Akses Elemen Nested List" />
               <p style={styles.text}>
                 <strong>Indeks negatif:</strong> <code>data[-1][-2]</code> mengakses elemen kedua dari akhir pada baris terakhir.
               </p>
@@ -252,26 +252,26 @@ ragged = [[1, 2], [3, 4, 5], [6]]     # panjang baris berbeda`}</pre>
           {/* OPERASI DASAR NESTED LIST */}
           <section style={styles.section}>
             <div style={styles.card}>
-              <h2 style={styles.sectionTitle}>📊 Operasi Dasar Nested List</h2>
+              <h2 style={styles.sectionTitle}>Operasi Dasar Nested List</h2>
               <ul style={styles.list}>
                 <li><strong>Mengubah nilai elemen:</strong> <code>data[baris][kolom] = nilai_baru</code></li>
                 <li><strong>Mencari nilai:</strong> Perulangan bersarang dengan pengecekan kondisi.</li>
                 <li><strong>Iterasi seluruh elemen:</strong> Loop <code>for i in range(len(data))</code> di dalam <code>for j in range(len(data[i]))</code>.</li>
                 <li><strong>Menggabungkan nested list:</strong> Operator <code>+</code> menggabungkan dua nested list.</li>
-                <li><strong>Membuat nested list dengan list comprehension:</strong> <code>[[0 for j in range(kolom)] for i in range(baris)]</code>.</li>
+                {/* <li><strong>Membuat nested list dengan list comprehension:</strong> <code>[[0 for j in range(kolom)] for i in range(baris)]</code>.</li> */}
               </ul>
               <CodeEditor codeKey="ubah" title="Mengubah Elemen" />
               <CodeEditor codeKey="mencari" title="Mencari Nilai" />
               <CodeEditor codeKey="iterasi" title="Iterasi Seluruh Elemen" />
               <CodeEditor codeKey="menggabung" title="Menggabungkan Nested List" />
-              <CodeEditor codeKey="listComprehension" title="List Comprehension" />
+              {/* <CodeEditor codeKey="listComprehension" title="List Comprehension" /> */}
             </div>
           </section>
 
           {/* MANIPULASI NESTED LIST (BARIS DAN KOLOM) */}
           <section style={styles.section}>
             <div style={styles.card}>
-              <h2 style={styles.sectionTitle}>✏️ Manipulasi Nested List</h2>
+              <h2 style={styles.sectionTitle}>Manipulasi Nested List</h2>
               <h3 style={styles.subTitle}>Manipulasi Baris</h3>
               <ul style={styles.list}>
                 <li><strong>Menambah baris di akhir:</strong> <code>data.append([baris_baru])</code></li>
@@ -317,7 +317,7 @@ ragged = [[1, 2], [3, 4, 5], [6]]     # panjang baris berbeda`}</pre>
                     <tr><td style={styles.tableCell}>Hapus kolom</td><td style={styles.tableCell}><code>for row in data: row.pop(j)</code></td><td style={styles.tableCell}>Hapus kolom ke-j dari semua baris</td></tr>
                     <tr><td style={styles.tableCell}>Iterasi</td><td style={styles.tableCell}><code>for i in range(len(data)): for j in range(len(data[i])): ...</code></td><td style={styles.tableCell}>Perulangan bersarang untuk mengakses semua elemen</td></tr>
                     <tr><td style={styles.tableCell}>Penggabungan</td><td style={styles.tableCell}><code>c = a + b</code></td><td style={styles.tableCell}>Menggabungkan dua nested list</td></tr>
-                    <tr><td style={styles.tableCell}>List comprehension</td><td style={styles.tableCell}><code>[[0 for j in range(3)] for i in range(4)]</code></td><td style={styles.tableCell}>Membuat matriks 4x3 dengan nilai 0</td></tr>
+                    {/* <tr><td style={styles.tableCell}>List comprehension</td><td style={styles.tableCell}><code>[[0 for j in range(3)] for i in range(4)]</code></td><td style={styles.tableCell}>Membuat matriks 4x3 dengan nilai 0</td></tr> */}
                   </tbody>
                 </table>
               </div>

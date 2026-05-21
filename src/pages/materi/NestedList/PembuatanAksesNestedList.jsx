@@ -965,12 +965,12 @@ const Eksplorasi = ({ onComplete }) => {
 
   const questions = [
     {
-      text: "Nested list yang benar untuk merepresentasikan tabel 2 baris 3 kolom adalah ...",
+      text: "Nested list yang benar untuk merepresentasikan tabel 2 baris 3 kolom adalah ....",
       options: ["[[1,2,3],[4,5,6]]", "[1,2,3,4,5,6]", "[[1,2],[3,4],[5,6]]", "[(1,2,3),(4,5,6)]", "{1:2,3:4,5:6}"],
       correct: 0,
     },
     {
-      text: "Cara mengakses elemen baris ke-2 kolom ke-3 dari nested list 'data = [[1,2,3],[4,5,6]]' adalah ...",
+      text: "Cara mengakses elemen baris ke 2 kolom ke 3 dari nested list 'data = [[1,2,3],[4,5,6]]' adalah ....",
       options: ["data[2][3]", "data[1][2]", "data[2][2]", "data[1][1]", "data[2][1]"],
       correct: 1,
     },
@@ -1181,14 +1181,14 @@ print("Elemen baris 2 kolom 3:", matriks[1][2])`;
   ];
   const highlightAksesMapping = () => ({ cell: "0,0", explanation: "Perintah `matriks[0][0]` mengambil elemen pada baris indeks 0, kolom indeks 0 → nilai 1." });
 
-  const contohRagged = `# Nested list dengan panjang baris berbeda (ragged array)
+  const contohRagged = `# Nested list dengan panjang baris berbeda
 data = [[1, 2],
         [3, 4, 5],
         [6]]
 print(data[1][2])
 print(data[2][0])`;
   const lineExplanationsRagged = [
-    "Komentar: Membuat nested list dengan panjang baris berbeda (ragged array).",
+    "Komentar: Membuat nested list dengan panjang baris berbeda.",
     "Membuat variabel 'data' - baris pertama [1,2] (indeks 0, panjang 2).",
     "Baris kedua [3,4,5] (indeks 1, panjang 3).",
     "Baris ketiga [6] (indeks 2, panjang 1).",
@@ -1284,11 +1284,8 @@ _buffer.getvalue()`);
                 <div style={styles.card}>
                   <h3 style={{ fontSize: "20px", marginBottom: "15px", color: "#306998" }}>Membuat Nested List</h3>
                   <p style={styles.text}>
-                    <strong>Nested list</strong> adalah list yang di dalamnya berisi list lain. Struktur ini sangat berguna untuk
-                    merepresentasikan data dua dimensi seperti tabel, matriks, atau kumpulan data yang berelasi. Contoh sederhana:{" "}
-                    <code>matriks = [[1, 2, 3], [4, 5, 6]]</code> akan membuat sebuah nested list dengan 2 baris dan 3 kolom. Setiap baris
-                    ditulis sebagai list terpisah, dipisahkan koma, dan seluruhnya diapit tanda kurung siku. Anda juga dapat membuat nested list
-                    dengan panjang baris berbeda (dikenal sebagai <em>ragged array</em>), misalnya{" "}
+                    Setiap baris ditulis sebagai list terpisah, dipisahkan dengan koma, dan seluruhnya diapit tanda kurung siku. 
+                    Nested list juga bisa dengan panjang baris berbeda, misalnya{" "}
                     <code>data = [[1,2], [3,4,5], [6]]</code>.
                   </p>
                   <p style={styles.text}>
@@ -1367,7 +1364,6 @@ matriks = [[1, 2, 3], [4, 5, 6]]`}</pre>
                   </div>
                   <p style={styles.text}>
                     Dengan nested list, data menjadi terstruktur, mudah diakses dengan perulangan bersarang, dan lebih ringkas.
-                    Materi selanjutnya akan membahas operasi dan manipulasi nested list.
                   </p>
                 </div>
               </section>
@@ -1379,9 +1375,9 @@ matriks = [[1, 2, 3], [4, 5, 6]]`}</pre>
                     <strong>📝 Studi Kasus: Matriks Sederhana</strong>
                     <p>Buatlah program Python yang:</p>
                     <ol style={styles.list}>
-                      <li>Membuat nested list bernama <code>matriks</code> dengan isi <code>[[3,6,9],[12,15,18]]</code>.</li>
-                      <li>Menampilkan elemen <strong>3</strong> (baris 1 kolom 1) menggunakan <code>print(matriks[0][0])</code>.</li>
-                      <li>Menampilkan elemen <strong>18</strong> (baris 2 kolom 3) menggunakan <code>print(matriks[1][2])</code>.</li>
+                      <li>Membuat nested list bernama matriks dengan isi 3,6,9 dan 12,15,18.</li>
+                      <li>Menampilkan elemen <strong>3</strong> (baris 1 kolom 1).</li>
+                      <li>Menampilkan elemen <strong>18</strong> (baris 2 kolom 3).</li>
                     </ol>
                   </div>
                   <CodeEditorEditable
@@ -1395,8 +1391,8 @@ matriks = [[1, 2, 3], [4, 5, 6]]`}</pre>
                 <h2 style={styles.sectionTitle}>Latihan</h2>
                 <div style={styles.card}>
                   <p style={styles.text}>
-                    Isilah bagian yang kosong pada kode (soal 1-3) dan tentukan output (soal 4-5). 
-                    Jika jawaban salah, tombol reset akan muncul untuk mengulang per soal.
+                    Isilah bagian yang kosong pada kode dan tentukan output. 
+                    
                   </p>
 
                   <CodeCompletionQuestion
@@ -1409,7 +1405,7 @@ matriks = [[1, 2, 3], [4, 5, 6]]`}</pre>
                   />
 
                   <CodeCompletionQuestion
-                    question="2. Lengkapi baris kedua nested list agar menjadi [[1,2],[3,4]]:"
+                    question="2. Lengkapi baris kedua nested list agar menjadi 1,2 dan 3,4:"
                     codeParts={soal2CodeParts}
                     placeholders={soal2Placeholders}
                     expectedAnswers={soal2Expected}
@@ -1418,7 +1414,7 @@ matriks = [[1, 2, 3], [4, 5, 6]]`}</pre>
                   />
 
                   <CodeCompletionQuestion
-                    question="3. Lengkapi kode untuk mencetak angka 60 (baris 3 kolom 2) dari nested list data:"
+                    question="3. Lengkapi kode untuk mencetak angka 60 dari nested list data:"
                     codeParts={soal3CodeParts}
                     placeholders={soal3Placeholders}
                     expectedAnswers={soal3Expected}
@@ -1427,7 +1423,7 @@ matriks = [[1, 2, 3], [4, 5, 6]]`}</pre>
                   />
 
                   <GuessOutputQuestion
-                    question="4. Output dari kode berikut adalah ..."
+                    question="4. Output dari kode berikut adalah ...."
                     codeSnippet={soal4Code}
                     expectedOutput="9"
                     index={3}
@@ -1435,7 +1431,7 @@ matriks = [[1, 2, 3], [4, 5, 6]]`}</pre>
                   />
 
                   <GuessOutputQuestion
-                    question="5. Output dari kode berikut adalah ..."
+                    question="5. Output dari kode berikut adalah ...."
                     codeSnippet={soal5Code}
                     expectedOutput="4"
                     index={4}

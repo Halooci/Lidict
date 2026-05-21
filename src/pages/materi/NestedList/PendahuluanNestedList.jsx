@@ -100,7 +100,7 @@ const Eksplorasi = ({ onComplete }) => {
 
   const questions = [
     {
-      text: "Kita memerlukan nested list dalam pemrograman karena ...",
+      text: "Kita memerlukan nested list dalam pemrograman karena ....",
       options: [
         "Nested list lebih cepat dari list biasa",
         "Untuk menyimpan data yang memiliki struktur bertingkat atau tabel",
@@ -111,7 +111,7 @@ const Eksplorasi = ({ onComplete }) => {
       correct: 1,
     },
     {
-      text: "Pernyataan yang PALING TEPAT tentang nested list adalah ...",
+      text: "Pernyataan yang PALING TEPAT tentang nested list adalah ....",
       options: [
         "Nested list adalah list yang hanya berisi angka",
         "Nested list tidak dapat diakses menggunakan indeks",
@@ -195,7 +195,7 @@ const LatihanNestedList = ({ onAllCorrectChange }) => {
   const questions = [
     {
       id: 0,
-      text: "Yang dimaksud dengan nested list adalah ...",
+      text: "Yang dimaksud dengan nested list adalah ....",
       options: [
         "List yang berisi list lain sebagai elemennya",
         "List yang hanya berisi angka",
@@ -207,7 +207,7 @@ const LatihanNestedList = ({ onAllCorrectChange }) => {
     },
     {
       id: 1,
-      text: "Berikut ini yang merupakan bentuk nested list adalah ...",
+      text: "Berikut ini yang merupakan bentuk nested list adalah ....",
       options: [
         "[1, 2, 3]",
         "[[1, 2], [3, 4]]",
@@ -219,7 +219,7 @@ const LatihanNestedList = ({ onAllCorrectChange }) => {
     },
     {
       id: 2,
-      text: "Untuk merepresentasikan data tabel 2 baris 3 kolom, struktur data yang tepat adalah...",
+      text: "Untuk merepresentasikan data tabel 2 baris 3 kolom, struktur data yang tepat adalah ....",
       options: [
         "List biasa",
         "Nested list",
@@ -231,13 +231,13 @@ const LatihanNestedList = ({ onAllCorrectChange }) => {
     },
     {
       id: 3,
-      text: "Perhatikan kode berikut: `data = [[5, 10], [15, 20]]`. Banyak elemen yang ada pada nested list tersebut adalah ...",
+      text: "Perhatikan kode berikut: `data = [[5, 10], [15, 20]]`. Banyak elemen yang ada pada nested list tersebut adalah ....",
       options: ["2", "4", "6", "8", "3"],
       correct: 1,
     },
     {
       id: 4,
-      text: "Pernyataan yang BENAR tentang nested list adalah ...",
+      text: "Pernyataan yang BENAR tentang nested list adalah ....",
       options: [
         "Nested list hanya bisa memiliki 2 level",
         "Nested list tidak bisa berisi tipe data selain list",

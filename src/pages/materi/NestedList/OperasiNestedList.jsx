@@ -883,12 +883,12 @@ const Eksplorasi = ({ onComplete }) => {
 
   const questions = [
     {
-      text: "Untuk menambahkan baris baru (list) di akhir nested list, method yang tepat adalah ...",
+      text: "Untuk menambahkan baris baru (list) di akhir nested list, method yang tepat adalah ....",
       options: ["insert()", "append()", "pop()", "remove()", "extend()"],
       correct: 1,
     },
     {
-      text: "Jika ingin menghapus baris dengan indeks 1 dari nested list `data`, perintah yang tepat adalah ...",
+      text: "Jika ingin menghapus baris dengan indeks 1 dari nested list `data`, perintah yang tepat adalah ....",
       options: ["data.remove(1)", "data.pop(1)", "data.del(1)", "delete data[1]", "data[1].pop()"],
       correct: 1,
     }
@@ -1221,7 +1221,7 @@ for i in range(len(data)):
     for j in range(len(data[i])):
         print(f"data[{i}][{j}] = {data[i][j]}")`;
 
-  const codeRagged = `# Nested list dengan panjang baris berbeda (ragged array)
+  const codeRagged = `# Nested list dengan panjang baris berbeda.
 data = [[1, 2],
         [3, 4, 5, 6],
         [7]]
@@ -1322,15 +1322,15 @@ print("Setelah hapus kolom ke-2:", data)`;
                   <p style={styles.text}>Perulangan bersarang.</p>
                   <CodeEditorWithVisual code={codeIterasi} title="Contoh Kode Program" visualData={matrix2x3} visualTitle="Visualisasi Nested List 2x3" pyodideReady={pyodideReady} runPythonCode={runPythonCode} lineExplanations={lineExplIterasi} />
 
-                  <h3>5. Panjang Baris Berbeda (Ragged Array)</h3>
+                  <h3>5. Panjang Baris Berbeda</h3>
                   <p style={styles.text}>Setiap baris bisa beda panjang.</p>
                   <CodeEditorWithVisual code={codeRagged} title="Contoh Kode Program" visualData={raggedData} visualTitle="Visualisasi Ragged Array" pyodideReady={pyodideReady} runPythonCode={runPythonCode} lineExplanations={lineExplRagged} />
 
-                  <h3>6. Membuat dengan List Comprehension</h3>
+                  {/* <h3>6. Membuat dengan List Comprehension</h3>
                   <p style={styles.text}>Cara ringkas membuat matriks.</p>
-                  <CodeEditorWithVisual code={codeListComp} title="Contoh Kode Program" visualData={matrixZero} visualTitle="Matriks 3x4 dengan nilai 0" pyodideReady={pyodideReady} runPythonCode={runPythonCode} lineExplanations={lineExplListComp} />
+                  <CodeEditorWithVisual code={codeListComp} title="Contoh Kode Program" visualData={matrixZero} visualTitle="Matriks 3x4 dengan nilai 0" pyodideReady={pyodideReady} runPythonCode={runPythonCode} lineExplanations={lineExplListComp} /> */}
 
-                  <h3>7. Menggabungkan Dua Nested List</h3>
+                  <h3>6. Menggabungkan Dua Nested List</h3>
                   <p style={styles.text}>Operator +</p>
                   <CodeEditorWithVisual code={codeGabung} title="Contoh Kode Program" visualData={gabungan} visualTitle="Hasil Penggabungan a + b" pyodideReady={pyodideReady} runPythonCode={runPythonCode} lineExplanations={lineExplGabung} />
                 </div>
@@ -1364,7 +1364,7 @@ print("Setelah hapus kolom ke-2:", data)`;
                     <ul style={{ marginTop: "5px", paddingLeft: "20px" }}>
                       <li>Buatlah nested list dengan nama <code>data</code> yang berisi tiga baris: [1,2,3], [4,5,6], [7,8,9].</li>
                       <li>Ubah elemen baris pertama kolom pertama menjadi 100.</li>
-                      <li>Tampilkan elemen baris ketiga kolom kedua (nilai 8) menggunakan print.</li>
+                      <li>Tampilkan elemen baris ketiga kolom kedua (nilai 8).</li>
                     </ul>
                   </div>
                   <CodeEditorEditable pyodideReady={pyodideReady} runPythonCode={runPythonCode} />
@@ -1374,7 +1374,7 @@ print("Setelah hapus kolom ke-2:", data)`;
               <section style={styles.section}>
                 <h2 style={styles.sectionTitle}>Latihan</h2>
                 <div style={styles.card}>
-                  <p style={styles.text}>Isilah bagian yang kosong pada kode (soal 1-2) dan drag pilihan ke area kosong (soal 3-5).</p>
+                  <p style={styles.text}>Isilah bagian yang kosong pada kode dan drag pilihan ke area kosong.</p>
                   
                   <CodeCompletionQuestion question="1. Lengkapi kode untuk mengubah elemen baris pertama kolom kedua menjadi 99." codeParts={soal1CodeParts} placeholders={soal1Placeholders} expectedAnswers={soal1Expected} onCheck={(isCorrect) => updateExerciseStatus(0, isCorrect)} />
                   <CodeCompletionQuestion question="2. Lengkapi kode untuk menambahkan baris baru [5,6] di akhir nested list." codeParts={soal2CodeParts} placeholders={soal2Placeholders} expectedAnswers={soal2Expected} onCheck={(isCorrect) => updateExerciseStatus(1, isCorrect)} />
