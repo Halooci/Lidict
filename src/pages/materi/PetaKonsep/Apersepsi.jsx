@@ -289,13 +289,13 @@ export default function Apersepsi() {
                 <div style={styles.heroIcon}>🎒</div>
               </div>
               <div style={styles.heroRight}>
-                <h3 style={styles.heroTitle}>Seperti perjalanan, kita butuh tas yang tepat</h3>
+                <h3 style={styles.heroTitle}>Seperti perjalanan, kita butuh tas yang tepat untuk menyimpan barang-barang</h3>
                 <p style={styles.heroText}>
                   Menyimpan banyak data tanpa struktur akan berantakan. List, Nested List, dan Dictionary adalah "kompartemen" Python 
-                  yang akan mengatur data Anda. Tapi sebelumnya, pastikan Anda menguasai dasar-dasarnya.
+                  yang akan mengatur data Anda. Tapi sebelumnya, mari mengingat kembali dasar-dasarnya.
                 </p>
                 <div style={styles.heroBadge}>
-                  <span>Variabel</span> <span>Tipe Data</span> <span>Operator</span> <span>Input/Output</span>
+                  <span>Variabel</span> <span>|  Tipe Data    |</span> <span>Operator</span> <span>|   Input/Output</span>
                 </div>
               </div>
             </div>
@@ -320,6 +320,11 @@ export default function Apersepsi() {
                 <li><code>str</code> → teks (string), diapit kutip, contoh: <code>"Halo"</code>, <code>'Python'</code></li>
                 <li><code>bool</code> → nilai kebenaran, hanya <code>True</code> atau <code>False</code></li>
               </ul>
+
+              <p style={styles.text}>
+                <strong>Contoh Kode:</strong>
+              </p>
+
               <pre style={styles.codeBlock}>
                 {`x = 10       # integer
 y = 3.14     # float
@@ -370,7 +375,7 @@ status = True # boolean`}
 
               <div style={styles.activityWrapper}>
                 <div style={styles.activityTitle}>Aktivitas 1.2 - Aturan Penulisan Variabel</div>
-                <p style={styles.instruction}>Pilih satu jawaban yang paling benar.</p>
+                <p style={styles.instruction}>Penulisan variabel yang benar di Python adalah ….</p>
                 <div style={styles.options}>
                   {varPilihanOptions.map((opt, idx) => (
                     <div
@@ -391,11 +396,12 @@ status = True # boolean`}
 
               <div style={styles.activityWrapper}>
                 <div style={styles.activityTitle}>Aktivitas 1.3 - Tipe Data dari Nilai</div>
-                <p style={styles.instruction}>Tentukan tipe data dari nilai 5. Tulis jawaban dalam huruf kecil (contoh: int).</p>
+                <p style={styles.instruction}>(Tulis jawaban dalam huruf kecil contoh : str/int/float/bool)</p>
+                <p style={styles.instruction}>Tipe data dari nilai 5 adalah ....</p>
                 <div style={styles.inputGroup}>
                   <input
                     type="text"
-                    placeholder="Jawaban"
+                    placeholder=""
                     value={tipeNilaiAnswer}
                     onChange={(e) => setTipeNilaiAnswer(e.target.value)}
                     style={styles.inputText}
@@ -441,7 +447,7 @@ status = True # boolean`}
 
               <div style={styles.activityWrapper}>
                 <div style={styles.activityTitle}>Aktivitas 2.1 - Pembagian Bulat</div>
-                <p style={styles.instruction}>Pilih hasil dari 15 // 4 (pembagian bulat).</p>
+                <p style={styles.instruction}>Hasil dari 15 // 4 adalah ….</p>
                 <div style={styles.options}>
                   {operatorOptions.map((opt, idx) => (
                     <div
@@ -462,7 +468,7 @@ status = True # boolean`}
 
               <div style={styles.activityWrapper}>
                 <div style={styles.activityTitle}>Aktivitas 2.2 - Sisa Bagi (Modulus)</div>
-                <p style={styles.instruction}>Pilih hasil dari 10 % 3 (sisa bagi).</p>
+                <p style={styles.instruction}>Hasil dari 10 % 3 adalah ….</p>
                 <div style={styles.options}>
                   {modulusOptions.map((opt, idx) => (
                     <div
@@ -483,11 +489,12 @@ status = True # boolean`}
 
               <div style={styles.activityWrapper}>
                 <div style={styles.activityTitle}>Aktivitas 2.3 - Operator Pangkat</div>
-                <p style={styles.instruction}>Hitung hasil dari 2 ** 3, lalu tulis jawabannya (angka).</p>
+                <p style={styles.instruction}>(Tulis jawabannya dengan angka)</p>
+                <p style={styles.instruction}>Hasil dari 2 ** 3 adalah ….</p>
                 <div style={styles.inputGroup}>
                   <input
                     type="text"
-                    placeholder="Jawaban angka"
+                    placeholder=""
                     value={pangkatAnswer}
                     onChange={(e) => setPangkatAnswer(e.target.value)}
                     style={styles.inputText}
@@ -513,6 +520,11 @@ status = True # boolean`}
                 <strong>Input:</strong> Fungsi <code>input()</code> digunakan untuk membaca masukan dari pengguna. Hasilnya selalu berupa <strong>string</strong>. 
                 Jika ingin menerima angka, konversi dengan <code>int()</code> atau <code>float()</code>.
               </p>
+
+              <p style={styles.text}>
+                <strong>Contoh Kode:</strong>
+              </p>
+
               <pre style={styles.codeBlock}>
                 {`nama = input("Nama: ")
 print("Halo", nama)
@@ -525,7 +537,7 @@ umur = int(input("Umur: "))  # konversi ke integer`}
                 <div style={styles.inputGroup}>
                   <input
                     type="text"
-                    placeholder="Fungsi yang tepat"
+                    placeholder=""
                     value={ioAnswer}
                     onChange={(e) => setIoAnswer(e.target.value)}
                     style={styles.inputText}
@@ -564,7 +576,7 @@ print("Halo", ______)`}</pre>
                 <div style={styles.inputGroup}>
                   <input
                     type="text"
-                    placeholder="Variabel yang tepat"
+                    placeholder=""
                     value={printVarAnswer}
                     onChange={(e) => setPrintVarAnswer(e.target.value)}
                     style={styles.inputText}
