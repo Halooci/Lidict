@@ -195,8 +195,7 @@ sys.stdout = StringIO()
           <section style={styles.section}>
             <div style={styles.card}>
               <p style={styles.text}>
-                <strong>List</strong> adalah struktur data bawaan Python yang bersifat <strong>linier</strong>, 
-                <strong>ordered</strong>, <strong>mutable</strong>, dan dapat menyimpan <strong>tipe data campuran</strong>. 
+                <strong>List</strong> adalah struktur data Python yang dapat menyimpan <strong>tipe data campuran</strong>. 
                 Elemen list diakses menggunakan <strong>indeks</strong> (positif dari kiri, negatif dari kanan). 
                 List sangat fleksibel karena ukurannya dapat berubah secara dinamis.
               </p>
@@ -217,7 +216,7 @@ sys.stdout = StringIO()
                 List dibuat dengan tanda kurung siku <code>[]</code>, elemen dipisahkan koma. 
                 Dapat berupa list kosong, list dengan satu tipe data, atau campuran.
               </p>
-              <CodeEditor codeKey="createList" title="Berbagai Cara Membuat List" />
+              <CodeEditor codeKey="createList" title="Contoh Cara Membuat List" />
 
               {/* ========== 3. AKSES ELEMEN LIST ========== */}
               <h3 style={styles.subTitle}>3. Akses Elemen List</h3>
@@ -226,8 +225,8 @@ sys.stdout = StringIO()
                 <strong>Indeks negatif:</strong> dimulai dari -1 (elemen terakhir).<br />
                 <strong>Slicing:</strong> <code>list[awal:akhir]</code> mengambil elemen dari indeks <code>awal</code> hingga sebelum <code>akhir</code>.
               </p>
-              <CodeEditor codeKey="aksesPositif" title="Akses dengan Indeks Positif" />
-              <CodeEditor codeKey="aksesNegatif" title="Akses dengan Indeks Negatif" />
+              <CodeEditor codeKey="aksesPositif" title="Contoh Akses dengan Indeks Positif" />
+              <CodeEditor codeKey="aksesNegatif" title="Contoh Akses dengan Indeks Negatif" />
               <CodeEditor codeKey="slicing" title="Slicing List" />
 
               {/* ========== 4. OPERASI DASAR LIST ========== */}
@@ -248,9 +247,9 @@ sys.stdout = StringIO()
               
               <h4 style={styles.subSubTitle}>a. Menambah Elemen</h4>
               <ul style={styles.list}>
-                <li><code>append(x)</code> – tambah x di akhir list.</li>
-                <li><code>insert(i, x)</code> – sisip x pada indeks i (elemen di i dan seterusnya bergeser ke kanan).</li>
-                <li><code>extend(iterable)</code> – tambah semua elemen dari iterable (list, tuple, dll) ke akhir list.</li>
+                <li><code>append(x)</code> – menambahkan x di akhir list.</li>
+                <li><code>insert(i, x)</code> – menyisipkan x pada indeks i (elemen di i dan seterusnya bergeser ke kanan).</li>
+                <li><code>extend(iterable)</code> – menambahkan semua elemen dari iterable (list, tuple, dll) ke akhir list.</li>
               </ul>
               <CodeEditor codeKey="append" title="append()" />
               <CodeEditor codeKey="insert" title="insert()" />
@@ -296,10 +295,7 @@ sys.stdout = StringIO()
               <CodeEditor codeKey="count" title="count() – Jumlah Kemunculan" />
               <CodeEditor codeKey="index" title="index() – Indeks Pertama" />
 
-              <p style={styles.text}>
-                Dengan memahami karakteristik, pembuatan, akses, operasi dasar, dan manipulasi list, 
-                Anda siap menggunakan list untuk menyelesaikan berbagai masalah pemrograman secara efisien.
-              </p>
+              
             </div>
           </section>
         </div>

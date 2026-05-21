@@ -356,7 +356,7 @@ export default function PendahuluanList() {
 
   const eksplorasiQuestions = [
     {
-      text: "Yang dimaksud dengan 'list' dalam pemrograman Python adalah ...",
+      text: "Yang dimaksud dengan 'list' dalam pemrograman Python adalah ....",
       options: [
         "Tipe data untuk menyimpan satu angka saja",
         "Struktur data untuk menyimpan banyak nilai dalam satu variabel",
@@ -367,7 +367,7 @@ export default function PendahuluanList() {
       correct: 1,
     },
     {
-      text: "yang merupakan contoh penulisan list yang benar di Python adalah ...",
+      text: "yang merupakan contoh penulisan list yang benar di Python adalah ....",
       options: [
         "{1, 2, 3}",
         "(1, 2, 3)",
@@ -459,7 +459,7 @@ sys.stdout = StringIO()
   // ================= LATIHAN (QUIZ) =================
   const quizQuestions = [
     {
-      question: "Fungsi utama List dalam Python yaitu ...",
+      question: "Fungsi utama List dalam Python yaitu ....",
       options: [
         "Melakukan operasi matematika kompleks",
         "Menyimpan kumpulan data dalam satu variabel",
@@ -470,7 +470,7 @@ sys.stdout = StringIO()
       answer: 1,
     },
     {
-      question: "Cara membuat list kosong dalam Python yaitu ...",
+      question: "Cara membuat list kosong dalam Python yaitu ....",
       options: [
         "list = ()",
         "list = {}",
@@ -481,7 +481,7 @@ sys.stdout = StringIO()
       answer: 2,
     },
     {
-      question: "Apakah list dalam Python dapat menyimpan berbagai tipe data sekaligus (misal: angka, string, boolean dalam satu list)?",
+      question: "`List dalam Python dapat menyimpan berbagai tipe data seklaigus.` Pernyataan ini adalah ....",
       options: [
         "Benar, bisa",
         "Salah, hanya bisa satu tipe",
@@ -492,12 +492,12 @@ sys.stdout = StringIO()
       answer: 0,
     },
     {
-      question: "Output dari kode berikut?\n\nbuah = [\"apel\", \"jeruk\"]\nprint(len(buah)) adalah ...",
+      question: "Output dari kode berikut:\n\nbuah = [\"apel\", \"jeruk\"]\nprint(len(buah)) \n\nadalah ....",
       options: ["0", "1", "2", "3", "4"],
       answer: 2,
     },
     {
-      question: "Kita membutuhkan List dibanding variabel tunggal karena ...",
+      question: "Kita membutuhkan List dibanding variabel tunggal karena ....",
       options: [
         "program berjalan lebih cepat",
         "Untuk menyimpan banyak data secara terorganisir dalam satu variabel",
@@ -713,8 +713,9 @@ sys.stdout = StringIO()
                 <h2 style={styles.sectionTitle}>Fungsi dan Kegunaan List</h2>
                 <div style={styles.card}>
                   <p style={styles.text}>
-                    List digunakan ketika kita perlu menyimpan <strong>banyak data</strong> dalam satu wadah. Tanpa list, kita harus membuat banyak variabel terpisah (tidak efisien).
+                    List digunakan ketika kita perlu menyimpan <strong>banyak data</strong> dalam satu wadah. Tanpa list, kita harus membuat banyak variabel terpisah (tidak efisien). Contoh tanpa list:
                   </p>
+                  
                   <div style={styles.highlightBox}>
                     <pre style={styles.code}>{`# Tanpa list (tidak efisien)
 nilai1 = 85

@@ -1446,12 +1446,12 @@ export default function OperasiManipulasiList() {
 
   const eksplorasiQuestions = [
     { 
-      text: "Method yang digunakan untuk menambahkan elemen di akhir list adalah ...", 
+      text: "Method yang digunakan untuk menambahkan elemen di akhir list adalah ....", 
       options: ["append()", "insert()", "extend()", "add()", "push()"], 
       correct: 0
     },
     { 
-      text: "Fungsi dari method `remove()` pada list adalah ...", 
+      text: "Fungsi dari method `remove()` pada list adalah ....", 
       options: [
         "Menghapus elemen berdasarkan indeks", 
         "Menghapus elemen berdasarkan nilai pertama yang cocok", 
@@ -1999,7 +1999,7 @@ export default function OperasiManipulasiList() {
                   />
 
                   <h3>insert() – Menyisipkan Elemen di Posisi Tertentu</h3>
-                  <p><code>insert(posisi, elemen)</code> menyisipkan elemen pada indeks yang ditentukan, elemen lain bergeser ke kanan.</p>
+                  <p><code>insert(posisi, elemen)</code> menyisipkan elemen pada indeks yang ditentukan, lalu elemen lain akan bergeser ke kanan.</p>
                   <CodeEditorWithVisual
                     code={codeExamples.insert}
                     title="Contoh Kode Program"
@@ -2056,7 +2056,7 @@ export default function OperasiManipulasiList() {
                   />
 
                   <h3>pop() – Menghapus Elemen Berdasarkan Indeks</h3>
-                  <p><code>pop(indeks)</code> menghapus elemen pada indeks tertentu dan mengembalikannya. Jika indeks tidak diberikan, menghapus elemen terakhir.</p>
+                  <p><code>pop(indeks)</code> menghapus elemen pada indeks tertentu. Jika indeks tidak diberikan, maka akan otomatis menghapus elemen terakhir.</p>
                   <CodeEditorWithVisual
                     code={codeExamples.pop}
                     title="Contoh Kode Program"
@@ -2094,7 +2094,7 @@ export default function OperasiManipulasiList() {
                   />
 
                   <h3>del – Menghapus dengan Slicing</h3>
-                  <p>Keyword <code>del</code> dapat digunakan untuk menghapus elemen berdasarkan indeks atau slice, misalnya <code>del list[1:3]</code>.</p>
+                  <p><code>del</code> dapat digunakan untuk menghapus elemen berdasarkan indeks atau slice, misalnya <code>del list[1:3]</code>.</p>
                   <CodeEditorWithVisual
                     code={codeExamples.del_example}
                     title="Contoh Kode Program"
@@ -2197,15 +2197,16 @@ export default function OperasiManipulasiList() {
                     <strong>Studi Kasus: Manajemen Daftar Belanja</strong>
                   </p>
                   <p style={styles.text}>
-                    Andi pergi ke pasar untuk membeli buah. Ia ingin membeli apel, jeruk, dan mangga. 
-                    Karena lupa membawa catatan, ia menyimpan daftar belanjanya dalam sebuah list Python bernama <code>belanja</code>.
+                    Andi sedang belajar pemrograman Python.
+                    Sebagai latihan, ia ingin membuat program sederhana untuk mengelola daftar belanjaan sebelum berangkat ke pasar.
+                    Program ini akan menggunakan list untuk menyimpan item belanja.
                     Ikuti langkah-langkah berikut untuk menyelesaikan studi kasus ini:
                   </p>
                   <ol style={styles.list}>
-                    <li>Buat list bernama <code>belanja</code> yang berisi apel, jeruk, mangga</li>
-                    <li>Tambahkan pisang ke dalam list <code>belanja</code> menggunakan method <code>append()</code>.</li>
-                    <li>Hapus jeruk dari list <code>belanja</code> menggunakan <code>remove()</code> atau <code>pop()</code>.</li>
-                    <li>Cetak isi list <code>belanja</code> yang sudah diperbarui menggunakan <code>print()</code>.</li>
+                    <li>Buat list bernama belanja yang berisi apel, jeruk, mangga</li>
+                    <li>Tambahkan pisang ke dalam list belanja menggunakan method append().</li>
+                    <li>Hapus jeruk dari list belanja menggunakan remove() atau pop().</li>
+                    <li>Cetak isi list belanja yang sudah diperbarui.</li>
                   </ol>
                   <p style={styles.text}>Buatlah program Python sesuai langkah-langkah di atas!</p>
                   <CodeEditorEditable title="Ayo Praktik" pyodideReady={pyodideReady} runPythonCode={runPythonCode} />

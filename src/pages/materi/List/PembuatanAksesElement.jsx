@@ -950,7 +950,7 @@ export default function PembuatanAksesElement() {
 
   const eksplorasiQuestions = [
     {
-      text: "Yang digunakan untuk mengakses elemen pertama dalam list adalah ...",
+      text: "Yang digunakan untuk mengakses elemen pertama dalam list adalah ....",
       options: [
         "Indeks 0",
         "Indeks 1",
@@ -961,7 +961,7 @@ export default function PembuatanAksesElement() {
       correct: 0,
     },
     {
-      text: "Cara yang benar untuk membuat list berisi angka 5, 10, 15 adalah ...",
+      text: "Cara yang benar untuk membuat list berisi angka 5, 10, 15 adalah ....",
       options: [
         "angka = (5, 10, 15)",
         "angka = {5, 10, 15}",
@@ -1284,10 +1284,10 @@ sys.stdout = StringIO()
               </section>
 
               <section style={styles.section}>
-                <h2 style={styles.sectionTitle}>Akses Elemen (Indeks Positif)</h2>
+                <h2 style={styles.sectionTitle}>Akses Elemen dengan Indeks Positif</h2>
                 <div style={styles.card}>
                   <p style={styles.text}>
-                    Indeks dimulai dari <strong>0</strong> untuk elemen pertama. Contoh di bawah menggunakan list dengan tipe data campuran.
+                    Indeks dimulai dari <strong>0</strong> untuk elemen pertama. Setiap elemen dapat diakses dengan menuliskan nama_list[indeks].
                   </p>
                   <CodeEditorWithVisual
                     code={contohAksesPositif}
@@ -1304,10 +1304,10 @@ sys.stdout = StringIO()
               </section>
 
               <section style={styles.section}>
-                <h2 style={styles.sectionTitle}>Akses Elemen (Indeks Negatif)</h2>
+                <h2 style={styles.sectionTitle}>Akses Elemen dengan Indeks Negatif</h2>
                 <div style={styles.card}>
                   <p style={styles.text}>
-                    Python juga mendukung indeks negatif untuk mengakses elemen dari belakang. 
+                    Indeks negatif untuk mengakses elemen dari belakang. 
                     Indeks <strong>-1</strong> untuk elemen terakhir, <strong>-2</strong> untuk kedua terakhir, dst.
                   </p>
                   <CodeEditorWithVisual
@@ -1374,9 +1374,7 @@ nilai3 = 78
                   <div style={styles.infoBox}>
                     <strong>Keunggulan List:</strong> Menghemat jumlah variabel dan dapat ditambah, dihapus, atau diubah elemennya.
                   </div>
-                  <p style={styles.text}>
-                    Materi selanjutnya akan membahas lebih detail tentang pembuatan, akses, operasi, dan manipulasi list.
-                  </p>
+                  
                 </div>
               </section>
 
@@ -1388,7 +1386,7 @@ nilai3 = 78
                     Buatlah program Python yang:
                   </p>
                   <ol style={styles.list}>
-                    <li>Membuat list bernama <code>belanja</code> dengan isi <code>["apel", "jeruk", "mangga"]</code>.</li>
+                    <li>Membuat list bernama belanja dengan isi apel, jeruk, mangga.</li>
                     <li>Menampilkan elemen <strong>pertama</strong> (apel) menggunakan indeks positif.</li>
                     <li>Menampilkan elemen <strong>terakhir</strong> (mangga) menggunakan indeks negatif.</li>
                   </ol>
@@ -1433,7 +1431,7 @@ nilai3 = 78
                   />
 
                   <GuessOutputQuestion
-                    question="4. Output dari kode berikut adalah ..."
+                    question="4. Output dari kode berikut adalah ...."
                     codeSnippet={soal4Code}
                     expectedOutput="jeruk"
                     index={3}
@@ -1441,7 +1439,7 @@ nilai3 = 78
                   />
 
                   <GuessOutputQuestion
-                    question="5. Jika kita menjalankan kode berikut, maka yang akan tercetak adalah ..."
+                    question="5. Jika kita menjalankan kode berikut, maka yang akan tercetak adalah ...."
                     codeSnippet={soal5Code}
                     expectedOutput="200"
                     index={4}
