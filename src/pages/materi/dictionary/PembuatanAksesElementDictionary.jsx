@@ -872,14 +872,15 @@ _buffer.getvalue()
                   <div style={styles.alertBox}>
                     <strong>Studi Kasus: Data Mahasiswa</strong>
                     <p style={{ marginTop: "10px", marginBottom: "10px" }}>
-                      Seorang dosen ingin menyimpan data mahasiswa secara terstruktur. Ia membutuhkan sebuah wadah yang bisa menyimpan informasi seperti nama, usia, dan jurusan dengan mudah diakses. 
-                      Python menyediakan dictionary untuk kebutuhan ini, di mana setiap data memiliki label (key) sehingga memudahkan pencarian.
+                      Seorang dosen ingin menyimpan data mahasiswa secara terstruktur menggunakan Python. 
+                      Python menyediakan dictionary untuk kebutuhan ini, di mana setiap data
+                       memiliki label (key) sehingga memudahkan pencarian.
                     </p>
-                    <p style={{ marginBottom: "5px" }}><strong>Petunjuk:</strong> Ikuti instruksi secara berurutan. Kode Anda akan diperiksa langkah demi langkah. Pastikan Anda mengikuti setiap instruksi.</p>
+                    <p style={{ marginBottom: "5px" }}><strong>Petunjuk:</strong> Ikuti instruksi secara berurutan. Kode akan diperiksa langkah demi langkah. Pastikan Anda mengikuti setiap instruksi.</p>
                     <ul style={{ paddingLeft: "20px", marginTop: "10px" }}>
                       <li>Buatlah dictionary dengan nama <code>data_mahasiswa</code> yang berisi key: <code>"nama"</code> dengan value <code>"Citra"</code>, key <code>"usia"</code> dengan value <code>22</code>, dan key <code>"jurusan"</code> dengan value <code>"Sistem Informasi"</code>.</li>
-                      <li>Tampilkan nilai dari key <code>"nama"</code> menggunakan <code>print()</code>.</li>
-                      <li>Tampilkan nilai dari key <code>"usia"</code> menggunakan <code>print()</code>.</li>
+                      <li>Tampilkan nilai dari key <code>"nama"</code>.</li>
+                      <li>Tampilkan nilai dari key <code>"usia"</code>.</li>
                     </ul>
                   </div>
                   <CodeEditorEditable 
@@ -898,7 +899,7 @@ _buffer.getvalue()
                   <p style={styles.text}>Lengkapi kode berikut dengan mengetikkan jawaban pada kotak yang tersedia. Latihan ini akan menguji kemampuan Anda dalam membuat dictionary dan mengakses elemennya.</p>
                   
                   <CodeCompletionQuestion 
-                    question="1. Lengkapi kode untuk membuat dictionary dengan key 'usia' yang bernilai 20." 
+                    question="1. Lengkapi kode untuk membuat dictionary dengan key usia yang bernilai 20." 
                     codeParts={soal1CodeParts} 
                     placeholders={soal1Placeholders} 
                     expectedAnswers={soal1Expected}
@@ -907,7 +908,7 @@ _buffer.getvalue()
                   />
 
                   <CodeCompletionQuestion 
-                    question="2. Lengkapi kode untuk membuat dictionary menggunakan fungsi dict() dengan key 'nama' dan menampilkan nilai 'nama'." 
+                    question="2. Lengkapi kode untuk membuat dictionary menggunakan fungsi dict() dengan key nama dan menampilkan nilai nama." 
                     codeParts={soal2CodeParts} 
                     placeholders={soal2Placeholders} 
                     expectedAnswers={soal2Expected}
@@ -916,7 +917,7 @@ _buffer.getvalue()
                   />
 
                   <CodeCompletionQuestion 
-                    question="3. Lengkapi kode untuk mengakses nilai dari key 'Fisika' menggunakan tanda kurung siku []." 
+                    question="3. Lengkapi kode untuk mengakses nilai dari key Fisika menggunakan tanda kurung siku []." 
                     codeParts={soal3CodeParts} 
                     placeholders={soal3Placeholders} 
                     expectedAnswers={soal3Expected}
@@ -925,7 +926,7 @@ _buffer.getvalue()
                   />
 
                   <CodeCompletionQuestion 
-                    question="4. Lengkapi kode untuk mengakses nilai dari key 'alamat' menggunakan metode get() (key tidak ada, akan mencetak 'Tidak ditemukan')." 
+                    question="4. Lengkapi kode untuk mengakses nilai dari key alamat menggunakan metode get()." 
                     codeParts={soal4CodeParts} 
                     placeholders={soal4Placeholders} 
                     expectedAnswers={soal4Expected}
@@ -934,7 +935,7 @@ _buffer.getvalue()
                   />
 
                   <CodeCompletionQuestion 
-                    question="5. Lengkapi kode untuk menambahkan key 'usia' dan mengakses key 'nama' pada dictionary siswa." 
+                    question="5. Lengkapi kode untuk menambahkan key usia dan mengakses key nama pada dictionary siswa." 
                     codeParts={soal5CodeParts} 
                     placeholders={soal5Placeholders} 
                     expectedAnswers={soal5Expected}

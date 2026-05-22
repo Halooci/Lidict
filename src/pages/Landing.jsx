@@ -20,7 +20,7 @@ export default function Landing() {
         </p> */}
 
         <p style={styles.subtitle}>
-          Media pembelajaran yang dibuat untuk membantu mahasiswa memahami 
+          Media pembelajaran yang dibuat untuk membantu mahasiswa memahami List dan Dictionary dalam Struktur Data.
         </p>
 
         <div style={styles.buttonGroup}>

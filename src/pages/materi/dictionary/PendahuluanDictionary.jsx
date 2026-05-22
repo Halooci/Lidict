@@ -265,12 +265,12 @@ export default function PendahuluanDictionary() {
   // Soal latihan pilihan ganda (5 soal)
   const latihanSoal = [
     {
-      text: "Dictionary pada Python menggunakan tanda kurung ...",
+      text: "Dictionary pada Python menggunakan tanda kurung ....",
       options: ["[]", "{}", "()", "<>", "||"],
       correct: 1,
     },
     {
-      text: "Berikut ini yang BUKAN merupakan karakteristik dictionary adalah ...",
+      text: "Berikut ini yang BUKAN merupakan karakteristik dictionary adalah ....",
       options: [
         "Key harus unik",
         "Dapat diubah (mutable)",
@@ -281,7 +281,7 @@ export default function PendahuluanDictionary() {
       correct: 2,
     },
     {
-      text: "Tipe data apa saja yang dapat digunakan sebagai key dalam dictionary?",
+      text: "Tipe data yang dapat digunakan sebagai key dalam dictionary adalah ....",
       options: [
         "Hanya string",
         "Hanya angka",
@@ -292,7 +292,7 @@ export default function PendahuluanDictionary() {
       correct: 2,
     },
     {
-      text: "Apa yang terjadi jika kita menggunakan key yang sama dua kali saat membuat dictionary?",
+      text: "Jika kita menggunakan key yang sama dua kali saat membuat dictionary maka yang terjadi adalah ....",
       options: [
         "Error sintaks",
         "Nilai pertama akan diganti dengan nilai terakhir",
@@ -303,7 +303,7 @@ export default function PendahuluanDictionary() {
       correct: 1,
     },
     {
-      text: "Manakah cara yang tepat untuk mengakses nilai dari key 'nama' pada dictionary siswa?",
+      text: "Cara yang tepat untuk mengakses nilai dari key 'nama' pada dictionary siswa adalah ....",
       options: [
         "siswa(nama)",
         "siswa[nama]",
@@ -502,16 +502,17 @@ export default function PendahuluanDictionary() {
                 <div style={styles.card}>
                   <h3 style={styles.subTitle}>Apa itu Dictionary?</h3>
                   <p style={styles.text}>
-                    <strong>Dictionary</strong> adalah salah satu struktur data bawaan Python yang sangat berguna. 
-                    Dictionary menyimpan koleksi data dalam bentuk <strong>pasangan key-value</strong> (kunci-nilai). 
-                    Setiap <strong>key</strong> bersifat unik dan digunakan untuk mengakses <strong>value</strong> yang terkait.
+                    <strong>Dictionary</strong> adalah struktur data di Python yang menyimpan koleksi 
+                    pasangan key-value (kunci-nilai). Setiap key bersifat unik dan 
+                    digunakan untuk mengakses nilai yang terkait. Dictionary bersifat 
+                    mutable (dapat diubah), dinamis, dan sangat efisien untuk pencarian data.
                   </p>
                   
                   <h3 style={styles.subTitle}>Karakteristik Dictionary</h3>
                   <ul style={styles.list}>
                     <li><strong>Key unik</strong> → Tidak boleh ada dua key yang sama dalam satu dictionary.</li>
                     <li><strong>Mutable</strong> → Isi dictionary dapat diubah setelah dibuat (tambah, hapus, ubah).</li>
-                    <li><strong>Unordered</strong> → Sebelum Python 3.7, dictionary tidak menjamin urutan; setelah 3.7 urutan penyisipan diingat tetapi tetap tidak bisa diakses berdasarkan indeks.</li>
+                    <li><strong>Value</strong> dapat berupa apa saja → Dapat ditambah, diubah, dihapus.</li>
                     <li><strong>Key harus immutable</strong> → Key dapat berupa string, integer, tuple, tetapi tidak boleh list atau dictionary lain.</li>
                   </ul>
 

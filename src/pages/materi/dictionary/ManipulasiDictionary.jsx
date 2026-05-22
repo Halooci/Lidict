@@ -602,7 +602,7 @@ export default function ManipulasiDictionary() {
 
   const eksplorasiQuestions = [
     {
-      text: "Metode dictionary yang digunakan untuk menambah atau memperbarui beberapa pasangan key-value sekaligus adalah ...",
+      text: "Metode dictionary yang digunakan untuk menambah atau memperbarui beberapa pasangan key-value sekaligus adalah ....",
       options: ["append()", "update()", "add()", "insert()", "merge()"],
       correct: 1,
     },
@@ -612,7 +612,7 @@ export default function ManipulasiDictionary() {
       correct: 3,
     },
     {
-      text: "Metode dictionary yang menghapus semua item sehingga menghasilkan dictionary kosong adalah ...",
+      text: "Metode dictionary yang menghapus semua item sehingga menghasilkan dictionary kosong adalah ....",
       options: ["delete()", "removeAll()", "clear()", "empty()", "reset()"],
       correct: 2,
     },
@@ -704,7 +704,7 @@ print("Setelah clear:", data)`,
 
   const latihanQuestions = [
     {
-      text: "Kode yang BENAR untuk menambahkan pasangan key-value baru 'kota': 'Bandung' ke dalam dictionary `data` yang sudah ada adalah ...",
+      text: "Kode yang BENAR untuk menambahkan pasangan key-value baru 'kota': 'Bandung' ke dalam dictionary `data` yang sudah ada adalah ....",
       options: [
         "data.add('kota', 'Bandung')",
         "data['kota'] = 'Bandung'",
@@ -715,7 +715,7 @@ print("Setelah clear:", data)`,
       correctIndex: 1
     },
     {
-      text: "Perhatikan dictionary: `nilai = {'Matematika': 85, 'Fisika': 90, 'Kimia': 78}`. Kode yang akan menghapus key 'Fisika' beserta nilainya adalah ...",
+      text: "Perhatikan dictionary: `nilai = {'Matematika': 85, 'Fisika': 90, 'Kimia': 78}`. Kode yang akan menghapus key 'Fisika' beserta nilainya adalah ....",
       options: [
         "nilai.remove('Fisika')",
         "del nilai['Fisika']",
@@ -726,7 +726,7 @@ print("Setelah clear:", data)`,
       correctIndex: 1
     },
     {
-      text: "Kode yang tepat untuk menggabungkan dictionary `a = {'x':1}` dan `b = {'y':2}` menjadi satu dictionary `c` yang berisi {'x':1, 'y':2} adalah ...",
+      text: "Kode yang tepat untuk menggabungkan dictionary `a = {'x':1}` dan `b = {'y':2}` menjadi satu dictionary `c` yang berisi {'x':1, 'y':2} adalah ....",
       options: [
         "c = a + b",
         "c = a.update(b)",
@@ -737,7 +737,7 @@ print("Setelah clear:", data)`,
       correctIndex: 2
     },
     {
-      text: "Fungsi yang digunakan untuk menghapus semua item dalam dictionary adalah ...",
+      text: "Fungsi yang digunakan untuk menghapus semua item dalam dictionary adalah ....",
       options: [
         "delete()",
         "removeAll()",
@@ -748,7 +748,7 @@ print("Setelah clear:", data)`,
       correctIndex: 2
     },
     {
-      text: "Perhatikan kode berikut:\n`data = {'a': 10, 'b': 20, 'c': 30}`\n`hasil = data.pop('b')`\nNilai dari variabel `hasil` setelah kode dijalankan adalah ...",
+      text: "Perhatikan kode berikut:\n`data = {'a': 10, 'b': 20, 'c': 30}`\n`hasil = data.pop('b')`\nNilai dari variabel `hasil` setelah kode dijalankan adalah ....",
       options: ["10", "20", "30", "Error", "0"],
       correctIndex: 1
     }
@@ -969,7 +969,7 @@ _buffer.getvalue()
                       Sebuah toko buku memiliki dictionary <code>inventaris</code> yang menyimpan stok buku dengan format <code>{"{'judul buku': jumlah_stok}"}</code>. 
                       Saat ini inventaris berisi: <code>{"{'Python Dasar': 10, 'Data Science': 5, 'Web Programming': 7}"}</code>.
                     </p>
-                    <p><strong>Petunjuk:</strong> Ikuti instruksi secara berurutan. Kode Anda akan diperiksa langkah demi langkah. Pastikan Anda mengikuti setiap instruksi.</p>
+                    <p><strong>Petunjuk:</strong> Ikuti instruksi secara berurutan. Kode akan diperiksa langkah demi langkah. Pastikan mengikuti setiap instruksi.</p>
                     <ol style={{ marginLeft: "20px", lineHeight: "1.8", marginTop: "8px" }}>
                       <li>Buat dictionary <code>inventaris</code> dengan stok awal: 'Python Dasar':10, 'Data Science':5, 'Web Programming':7.</li>
                       <li>Tambah stok buku baru <code>"Machine Learning"</code> sebanyak 3 eksemplar menggunakan metode <code>update()</code>.</li>
@@ -991,7 +991,7 @@ _buffer.getvalue()
               <section style={styles.section}>
                 <h2 style={styles.sectionTitle}>Latihan</h2>
                 <div style={styles.card}>
-                  <p style={styles.text}>Pilihlah jawaban yang tepat untuk setiap soal. Jawab semua soal, lalu klik "Periksa Semua Jawaban". Soal yang benar akan terkunci, soal yang salah dapat diperbaiki. Setelah semua jawaban benar, akan muncul pesan sukses.</p>
+                  <p style={styles.text}>Pilihlah jawaban untuk semua soal, lalu klik "Periksa Semua Jawaban".</p>
                   <LatihanSoal 
                     questions={latihanQuestions} 
                     resetTrigger={resetInteractives} 

@@ -44,9 +44,9 @@ export default function RangkumanDictionary() {
             <div style={styles.card}>
               <h2 style={styles.sectionTitle}>Pengertian Dictionary</h2>
               <p style={styles.text}>
-                Dictionary adalah struktur data di Python yang menyimpan koleksi pasangan <strong>key-value</strong> (kunci-nilai). 
-                Setiap key bersifat <strong>unik</strong> dan digunakan untuk mengakses nilai yang terkait. 
-                Dictionary bersifat <strong>mutable</strong> (dapat diubah), dinamis, dan sangat efisien untuk pencarian data (rata-rata O(1)).
+                Dictionary adalah struktur data di Python yang menyimpan koleksi pasangan key-value (kunci-nilai). 
+                Setiap key bersifat unik dan digunakan untuk mengakses nilai yang terkait. 
+                Dictionary bersifat mutable (dapat diubah), dinamis, dan sangat efisien untuk pencarian data.
               </p>
             </div>
           </section>
@@ -59,7 +59,6 @@ export default function RangkumanDictionary() {
                 <li><strong>Key harus immutable (tidak bisa diubah)</strong> → Key hanya boleh berupa tipe data seperti string, integer, tuple. List <strong>tidak bisa</strong> dijadikan key karena bersifat mutable.</li>
                 <li><strong>Value dapat berupa apa saja</strong> → Bisa list, dictionary lain, fungsi, dll. (boleh mutable).</li>
                 <li><strong>Dictionary itu sendiri mutable</strong> → Dapat ditambah, diubah, dihapus; ukuran otomatis menyesuaikan.</li>
-                <li><strong>Urutan item terjaga</strong> → Item disimpan sesuai urutan penyisipan.</li>
               </ul>
             </div>
           </section>
@@ -127,7 +126,7 @@ print(mahasiswa.get("alamat", "Tidak tersedia"))   # Output: Tidak tersedia`}
                     <tr>
                       <td style={styles.tableCell}>Hapus item terakhir</td>
                       <td style={styles.tableCell}><code>item = dict.popitem()</code></td>
-                      <td style={styles.tableCell}>Menghapus item terakhir (sesuai urutan penyisipan) dan mengembalikan tuple (key, value).</td>
+                      <td style={styles.tableCell}>Menghapus item terakhir (sesuai urutan penyisipan).</td>
                     </tr>
                     <tr>
                       <td style={styles.tableCell}>Hapus semua item</td>
@@ -187,7 +186,7 @@ print(mahasiswa.get("alamat", "Tidak tersedia"))   # Output: Tidak tersedia`}
                     <tr>
                       <td style={styles.tableCell}>Batasan "kunci"</td>
                       <td style={styles.tableCell}>Tidak ada konsep kunci, hanya indeks angka.</td>
-                      <td style={styles.tableCell}>Key harus unik dan tidak boleh berubah (immutable). Contoh yang boleh: string, integer, tuple. Yang tidak boleh: list (karena bisa berubah).</td>
+                      <td style={styles.tableCell}>Key harus unik dan tidak boleh berubah (immutable). Contoh yang boleh: string, integer. Yang tidak boleh: list (karena bisa berubah).</td>
                     </tr>
                   </tbody>
                 </table>
@@ -202,7 +201,7 @@ print(mahasiswa.get("alamat", "Tidak tersedia"))   # Output: Tidak tersedia`}
               <ul style={styles.list}>
                 <li><strong>Data mahasiswa</strong> → NIM sebagai key, data diri sebagai value.</li>
                 <li><strong>Frekuensi kata</strong> → Kata sebagai key, jumlah kemunculan sebagai value.</li>
-                <li><strong>Konfigurasi aplikasi</strong> → Parameter sebagai key, nilai sebagai value (mirip JSON).</li>
+                {/* <li><strong>Konfigurasi aplikasi</strong> → Parameter sebagai key, nilai sebagai value (mirip JSON).</li> */}
                 <li><strong>Cache/memoization</strong> → Menyimpan hasil komputasi untuk input tertentu.</li>
                 <li><strong>Graf/network</strong> → Node sebagai key, daftar tetangga sebagai value.</li>
               </ul>
@@ -224,15 +223,15 @@ print(mahasiswa.get("alamat", "Tidak tersedia"))   # Output: Tidak tersedia`}
                   <tbody>
                     <tr><td style={styles.tableCell}><code>clear()</code></td><td style={styles.tableCell}>Menghapus semua item.</td></tr>
                     {/* <tr><td style={styles.tableCell}><code>copy()</code></td><td style={styles.tableCell}>Mengembalikan salinan dictionary (shallow copy).</td></tr> */}
-                    <tr><td style={styles.tableCell}><code>fromkeys(seq, v)</code></td><td style={styles.tableCell}>Membuat dictionary baru dengan key dari seq dan nilai v (default None).</td></tr>
+                    {/* <tr><td style={styles.tableCell}><code>fromkeys(seq, v)</code></td><td style={styles.tableCell}>Membuat dictionary baru dengan key dari seq dan nilai v (default None).</td></tr> */}
                     <tr><td style={styles.tableCell}><code>get(key, default)</code></td><td style={styles.tableCell}>Mengembalikan nilai key, atau default jika key tidak ada.</td></tr>
                     <tr><td style={styles.tableCell}><code>items()</code></td><td style={styles.tableCell}>Mengembalikan view of (key, value).</td></tr>
                     <tr><td style={styles.tableCell}><code>keys()</code></td><td style={styles.tableCell}>Mengembalikan view of keys.</td></tr>
                     <tr><td style={styles.tableCell}><code>pop(key, default)</code></td><td style={styles.tableCell}>Hapus key dan kembalikan value, atau default jika key tidak ada.</td></tr>
                     <tr><td style={styles.tableCell}><code>popitem()</code></td><td style={styles.tableCell}>Hapus dan kembalikan (key, value) terakhir (sesuai urutan).</td></tr>
-                    <tr><td style={styles.tableCell}><code>setdefault(key, default)</code></td><td style={styles.tableCell}>Kembalikan nilai key; jika key tidak ada, buat key dengan default.</td></tr>
-                    <tr><td style={styles.tableCell}><code>update(dict2)</code></td><td style={styles.tableCell}>Update dictionary dengan pasangan dari dict2 (atau iterable).</td></tr>
-                    <tr><td style={styles.tableCell}><code>values()</code></td><td style={styles.tableCell}>Mengembalikan view of values.</td></tr>
+                    {/* <tr><td style={styles.tableCell}><code>setdefault(key, default)</code></td><td style={styles.tableCell}>Kembalikan nilai key; jika key tidak ada, buat key dengan default.</td></tr> */}
+                    {/* <tr><td style={styles.tableCell}><code>update(dict2)</code></td><td style={styles.tableCell}>Update dictionary dengan pasangan dari dict2 (atau iterable).</td></tr> */}
+                    {/* <tr><td style={styles.tableCell}><code>values()</code></td><td style={styles.tableCell}>Mengembalikan view of values.</td></tr> */}
                   </tbody>
                 </table>
               </div>
@@ -247,7 +246,6 @@ print(mahasiswa.get("alamat", "Tidak tersedia"))   # Output: Tidak tersedia`}
                 <li>Gunakan <code>.get()</code> daripada <code>[]</code> jika key mungkin tidak ada, untuk menghindari <code>KeyError</code>.</li>
                 <li>Gunakan <code>in</code> untuk mengecek keberadaan key: <code>if "nama" in mahasiswa:</code></li>
                 <li>Untuk menggabungkan dua dictionary, gunakan <code>{'{**dict1, **dict2}'}</code> atau <code>dict1.update(dict2)</code>.</li>
-                <li>Dictionary comprehension sangat berguna untuk membuat dictionary secara dinamis.</li>
               </ul>
             </div>
           </section>
