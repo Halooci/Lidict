@@ -15,7 +15,7 @@ import { Users, BookOpen } from 'lucide-react';
 
 const styles = `
   .mahasiswa-container {
-    margin-left: 250px;
+    
     min-height: 100vh;
     background: #f3f4f6;
   }
