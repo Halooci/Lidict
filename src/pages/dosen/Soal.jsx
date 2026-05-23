@@ -26,7 +26,7 @@ import {
 // ==================== STYLES ====================
 const styles = `
   .soal-container {
-    
+    margin-left: 250px;
     min-height: 100vh;
     background: #f3f4f6;
   }
