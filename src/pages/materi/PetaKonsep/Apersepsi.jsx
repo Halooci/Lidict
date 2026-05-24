@@ -7,7 +7,6 @@ import { doc, updateDoc, increment } from "firebase/firestore";
 
 export default function Apersepsi() {
   const navigate = useNavigate();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [userId, setUserId] = useState(null);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -266,17 +265,9 @@ export default function Apersepsi() {
   return (
     <>
       <Navbar />
-      <SidebarMateri isOpen={isSidebarOpen} onToggle={() => setIsSidebarOpen(!isSidebarOpen)} />
-      <div
-        style={{
-          marginLeft: isSidebarOpen ? "280px" : "0",
-          transition: "margin-left 0.3s ease",
-          paddingTop: "64px",
-          minHeight: "100vh",
-          width: "auto",
-        }}
-      >
-        <div style={styles.page}>
+      <SidebarMateri />
+      <div className="main-content" style={{ paddingTop: "64px" }}>
+        <div className="apersepsi-page" style={styles.page}>
           <div style={styles.header}>
             <div style={styles.headerAccent}></div>
             <h1 style={styles.headerTitle}>APERSEPSI</h1>
@@ -626,6 +617,15 @@ print("Halo", ______)`}</pre>
           from { opacity: 0; transform: translateY(30px); }
           to { opacity: 1; transform: translateY(0); }
         }
+        /* Perbaikan responsif untuk layar kecil */
+        @media (max-width: 768px) {
+          .apersepsi-page {
+            padding: 20px 16px !important;
+          }
+          .drag-items, .drop-zones {
+            flex-direction: column;
+          }
+        }
       `}</style>
     </>
   );
@@ -638,6 +638,8 @@ const styles = {
     minHeight: "calc(100vh - 64px)",
     fontFamily: "'Poppins', sans-serif",
     width: "100%",
+    maxWidth: "100%",
+    overflowX: "hidden",
     boxSizing: "border-box",
   },
   header: {
