@@ -5,6 +5,8 @@ import {
   query,
   where,
   onSnapshot,
+  doc,
+  getDoc,
   getDocs,
 } from 'firebase/firestore';
 import Navbar from '../komponen/Navbar';
@@ -74,29 +76,22 @@ const styles = `
     padding: 0.75rem 1rem;
     border-bottom: 1px solid #e5e7eb;
     color: #374151;
+    text-align: left;
   }
-  .progres-bar-wrapper {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-  .progres-bar-bg {
-    flex: 1;
-    background: #e5e7eb;
+  .nilai-badge {
+    display: inline-block;
+    padding: 0.2rem 0.65rem;
     border-radius: 999px;
-    height: 8px;
-    min-width: 80px;
-  }
-  .progres-bar-fill {
-    height: 8px;
-    border-radius: 999px;
-    background: #3b82f6;
-    transition: width 0.4s ease;
-  }
-  .progres-label {
     font-size: 0.85rem;
-    color: #6b7280;
-    white-space: nowrap;
+    font-weight: 600;
+    background: #eff6ff;
+    color: #2563eb;
+    min-width: 36px;
+    text-align: center;
+  }
+  .nilai-badge.kosong {
+    background: #f3f4f6;
+    color: #9ca3af;
   }
   .empty {
     color: #6b7280;
@@ -110,10 +105,37 @@ const styles = `
   }
 `;
 
-// Asumsi total progres maksimal = 100 (sesuaikan jika berbeda)
-const MAX_PROGRES = 100;
+const NilaiCell = ({ nim, jenis }) => {
+  const [nilai, setNilai] = useState(null);
 
-const DaftarMahasiswa = () => {
+  useEffect(() => {
+    const fetchNilai = async () => {
+      if (!nim) return;
+      const snap = await getDoc(doc(db, 'nilai', nim));
+      if (snap.exists()) {
+        const data = snap.data();
+        setNilai(data[jenis] ?? '-');
+      } else {
+        setNilai('-');
+      }
+    };
+    fetchNilai();
+  }, [nim, jenis]);
+
+  const isEmpty = nilai === '-' || nilai === null;
+
+  return (
+    <td>
+      {nilai === null ? (
+        <span className="nilai-badge kosong">...</span>
+      ) : (
+        <span className={`nilai-badge${isEmpty ? ' kosong' : ''}`}>{nilai}</span>
+      )}
+    </td>
+  );
+};
+
+const NilaiMahasiswa = () => {
   const [daftarKelas, setDaftarKelas] = useState([]);
   const [kelasAktif, setKelasAktif] = useState(null);
   const [mahasiswaList, setMahasiswaList] = useState([]);
@@ -133,7 +155,7 @@ const DaftarMahasiswa = () => {
         const q = query(collection(db, 'kelas'), where('dosen_ids', 'array-contains', userId));
         const snapshot = await getDocs(q);
         const kelasList = [];
-        snapshot.forEach(doc => kelasList.push({ id: doc.id, ...doc.data() }));
+        snapshot.forEach(d => kelasList.push({ id: d.id, ...d.data() }));
         setDaftarKelas(kelasList);
 
         const savedKelasId = localStorage.getItem('activeKelasId');
@@ -187,7 +209,7 @@ const DaftarMahasiswa = () => {
           <Navbar />
           <div className="mahasiswa-inner">
             <div className="card">
-              <div className="title"><Users size={22} /> Daftar Mahasiswa</div>
+              <div className="title"><Users size={22} /> Daftar Nilai Mahasiswa</div>
               <p className="empty">Silakan login terlebih dahulu.</p>
             </div>
           </div>
@@ -219,7 +241,7 @@ const DaftarMahasiswa = () => {
 
           {/* Header & Pilih Kelas */}
           <div className="card">
-            <div className="title"><Users size={22} /> Daftar Mahasiswa</div>
+            <div className="title"><Users size={22} /> Daftar Nilai Mahasiswa</div>
             {daftarKelas.length === 0 ? (
               <p className="empty">Anda belum memiliki kelas. Silakan buat kelas di Dashboard.</p>
             ) : (
@@ -248,11 +270,11 @@ const DaftarMahasiswa = () => {
             )}
           </div>
 
-          {/* Tabel Mahasiswa */}
+          {/* Tabel Nilai */}
           {kelasAktif && (
             <div className="card">
               <div className="title">
-                <Users size={22} /> Daftar Mahasiswa ({mahasiswaList.length})
+                <Users size={22} /> Nilai Mahasiswa ({mahasiswaList.length})
               </div>
               {mahasiswaList.length === 0 ? (
                 <p className="empty">Belum ada mahasiswa yang mendaftar dengan token kelas ini.</p>
@@ -264,34 +286,24 @@ const DaftarMahasiswa = () => {
                         <th>No</th>
                         <th>NIM</th>
                         <th>Nama</th>
-                        <th>Email</th>
-                        <th>Progres Belajar</th>
+                        <th>Kuis List</th>
+                        <th>Kuis Nested List</th>
+                        <th>Kuis Dictionary</th>
+                        <th>Evaluasi</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {mahasiswaList.map((mhs, index) => {
-                        const progres = mhs.progres_belajar ?? 0;
-                        const persen = Math.min(Math.round((progres / MAX_PROGRES) * 100), 100);
-                        return (
-                          <tr key={mhs.id}>
-                            <td>{index + 1}</td>
-                            <td>{mhs.NIM}</td>
-                            <td>{mhs.Nama}</td>
-                            <td>{mhs.Email}</td>
-                            <td>
-                              <div className="progres-bar-wrapper">
-                                <div className="progres-bar-bg">
-                                  <div
-                                    className="progres-bar-fill"
-                                    style={{ width: `${persen}%` }}
-                                  />
-                                </div>
-                                <span className="progres-label">{progres} / {MAX_PROGRES}</span>
-                              </div>
-                            </td>
-                          </tr>
-                        );
-                      })}
+                      {mahasiswaList.map((mhs, index) => (
+                        <tr key={mhs.id}>
+                          <td>{index + 1}</td>
+                          <td>{mhs.NIM}</td>
+                          <td>{mhs.Nama}</td>
+                          <NilaiCell nim={mhs.NIM} jenis="Kuis List" />
+                          <NilaiCell nim={mhs.NIM} jenis="Kuis Nested List" />
+                          <NilaiCell nim={mhs.NIM} jenis="Kuis Dictionary" />
+                          <NilaiCell nim={mhs.NIM} jenis="Evaluasi" />
+                        </tr>
+                      ))}
                     </tbody>
                   </table>
                 </div>
@@ -305,4 +317,4 @@ const DaftarMahasiswa = () => {
   );
 };
 
-export default DaftarMahasiswa;
+export default NilaiMahasiswa;

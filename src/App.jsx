@@ -34,6 +34,7 @@ import InformasiPage from "./pages/komponen/informasi/InformasiPage";
 import DashboardDosen from "./pages/dosen/DashboardDosen";
 import DaftarMahasiswa from "./pages/dosen/DaftarMahasiswa";
 import Soal from "./pages/dosen/Soal";
+import NilaiMahasiswa from "./pages/dosen/NilaiMahasiswa";
 
 function App() {
   // Cek koneksi Firestore (bisa dihapus nanti setelah yakin koneksi berhasil)
@@ -87,6 +88,7 @@ function App() {
         <Route path="/dosen/dashboard" element={<DashboardDosen />} />
         <Route path="/dosen/mahasiswa" element={<DaftarMahasiswa />} />
         <Route path="/dosen/soal" element={<Soal />} />
+        <Route path="/dosen/nilai" element={<NilaiMahasiswa />} />
 
       </Routes>
     </BrowserRouter>
