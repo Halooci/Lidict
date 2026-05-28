@@ -25,13 +25,13 @@ export default function Apersepsi() {
     "42": false,
   });
   const [dragDropAllDone, setDragDropAllDone] = useState(false);
-  const dragItems = ["int", "float", "str", "bool"];
+  const dragItems = ["integer", "float", "string", "boolean"];
   const targets = ["3.14", "True", "'Python'", "42"];
   const correctMatches = {
     "3.14": "float",
-    "True": "bool",
-    "'Python'": "str",
-    "42": "int",
+    "True": "boolean",
+    "'Python'": "string",
+    "42": "integer",
   };
 
   const handleDragStart = (e, item) => {
@@ -76,7 +76,7 @@ export default function Apersepsi() {
     setVarPilihanAnswer(idx);
     setVarPilihanFeedback(
       idx === varPilihanCorrect
-        ? "✓ Benar! Variabel harus diawali huruf atau underscore, tidak boleh angka di awal."
+        ? "✓ Benar! Variabel harus diawali huruf atau underscore, tidak boleh diawali angka."
         : "✗ Salah. Perhatikan aturan penamaan variabel di Python."
     );
   };
@@ -114,7 +114,7 @@ export default function Apersepsi() {
     setModulusAnswer(idx);
     setModulusFeedback(
       idx === modulusCorrect
-        ? "✓ Benar! 10 % 3 = 1 (sisa bagi)."
+        ? "✓ Benar! 7 % 3 = 1 (sisa bagi)."
         : "✗ Salah. Operator % menghasilkan sisa pembagian."
     );
   };
@@ -123,10 +123,10 @@ export default function Apersepsi() {
   const [pangkatFeedback, setPangkatFeedback] = useState("");
   const checkPangkat = () => {
     const jawaban = pangkatAnswer.trim();
-    if (jawaban === "8") {
-      setPangkatFeedback("✓ Benar! 2 ** 3 = 8.");
+    if (jawaban === "27") {
+      setPangkatFeedback("✓ Benar! 3 ** 3 = 27.");
     } else {
-      setPangkatFeedback("✗ Salah. Ingat: ** adalah operator pangkat. 2 pangkat 3 = 8.");
+      setPangkatFeedback("✗ Salah. Ingat: ** adalah operator pangkat. 3 pangkat 3 = 27.");
     }
   };
 
@@ -300,32 +300,87 @@ export default function Apersepsi() {
                 <div style={styles.materialTitle}>Variabel dan Tipe Data</div>
               </div>
               <p style={styles.text}>
-                Variabel adalah tempat menyimpan data. Setiap variabel memiliki <strong>tipe data</strong> yang menentukan nilai apa yang bisa disimpan.
+                Variabel adalah wadah untuk menyimpan data. Sederhananya, variabel seperti sebuah kotak kecil yang diberi label nama. 
+                Kotak ini bisa diisi dengan berbagai macam nilai, seperti angka, huruf, atau nilai kebenaran. Isi kotak (nilai variabel) 
+                dapat berubah sewaktu-waktu selama program berjalan. Penulisan variable di Python memiliki beberapa aturan sebagai berikut:
               </p>
+              <ol style={styles.listOrdered}>
+                <li>Hanya boleh mengandung huruf (a-z, A-Z), angka (0-9), dan garis bawah (_).</li>
+                <li>
+                  Harus diawali dengan huruf atau garis bawah. Tidak boleh diawali angka.
+                  <br />
+                  <code>nama_siswa → <strong style={{color: "#10b981"}}>BENAR</strong></code>
+                  <br />
+                  <code>_nilai, angka1 → <strong style={{color: "#10b981"}}>BENAR</strong></code>
+                  <br />
+                  <code>1siswa → <strong style={{color: "#ef4444"}}>SALAH</strong></code>
+                  <br />
+                  <code>2nilai → <strong style={{color: "#ef4444"}}>SALAH</strong></code>
+                </li>
+                <li>
+                  Tidak boleh ada spasi. Gunakan garis bawah untuk memisahkan kata.
+                  <br />
+                  <code>jumlah_mahasiswa → <strong style={{color: "#10b981"}}>BENAR</strong></code>
+                  <br />
+                  <code>jumlah mahasiswa → <strong style={{color: "#ef4444"}}>SALAH</strong></code>
+                </li>
+                <li>
+                  Tidak boleh sama dengan kata kunci (keyword) Python, seperti <code>print, if, for, while, input, return, def, True, False, and, or</code>, dll.
+                </li>
+                <li>
+                  Bersifat case-sensitive, huruf besar dan kecil dibedakan. Jadi <code>Harga</code>, <code>harga</code>, dan <code>HARGA</code> adalah variabel yang berbeda.
+                </li>
+                <li>
+                  Buat nama yang deskriptif agar mudah dipahami. Misalnya <code>rata_rata</code> lebih jelas daripada <code>rt</code>.
+                </li>
+              </ol>
               <p style={styles.text}>
                 <strong>Tipe data dasar di Python:</strong>
               </p>
               <ul style={styles.list}>
-                <li><code>int</code> → bilangan bulat, contoh: <code>10</code>, <code>-5</code>, <code>0</code></li>
-                <li><code>float</code> → bilangan desimal, contoh: <code>3.14</code>, <code>-0.5</code>, <code>2.0</code></li>
-                <li><code>str</code> → teks (string), diapit kutip, contoh: <code>"Halo"</code>, <code>'Python'</code></li>
-                <li><code>bool</code> → nilai kebenaran, hanya <code>True</code> atau <code>False</code></li>
+                <li>
+                  <code>integer</code> → bilangan bulat (tanpa koma), seperti <code>10</code>, <code>-5</code>, <code>0</code>.
+                  <br />
+                  Contoh:  
+                  <strong style={{ color: "#306998" }}> panjang</strong> = <strong style={{ color: "#306998" }}>int(input("Masukkan panjang: "))</strong>
+                </li>
+                <li>
+                  <code>float</code> → bilangan desimal (ada koma), seperti <code>3.14</code>, <code>-0.5</code>, <code>2.0</code>.
+                  <br />
+                  Contoh:  
+                  <strong style={{ color: "#306998" }}> lebar</strong> = <strong style={{ color: "#306998" }}> float(input("Masukkan lebar: "))</strong>
+                </li>
+                <li>
+                  <code>string</code> → teks, diapit kutip (bisa kutip satu atau kutip dua).
+                  <br />
+                  Contoh:   
+                  <strong style={{ color: "#306998" }}> jurusan</strong> = <strong style={{ color: "#306998" }}>"Pendidikan Komputer"</strong>
+                </li>
+                <li>
+                  <code>boolean</code> → nilai kebenaran, hanya <code>True</code> atau <code>False</code>.
+                  <br />
+                  Contoh: (konteks apakah siswa masih aktif bersekolah)
+                  <br />
+                  <strong style={{ color: "#306998" }}>status_lulus</strong> = <strong style={{ color: "#306998" }}>True</strong>
+                  <br />
+                  <strong style={{ color: "#306998" }}>status_aktif</strong> = <strong style={{ color: "#306998" }}>True</strong>
+                </li>
               </ul>
 
-              <p style={styles.text}>
+              {/* <p style={styles.text}>
                 <strong>Contoh Kode:</strong>
               </p>
 
               <pre style={styles.codeBlock}>
-                {`x = 10       # integer
-y = 3.14     # float
-nama = "Andi" # string
-status = True # boolean`}
-              </pre>
+                {`panjang = int(input("Masukkan panjang: "))
+lebar = float(input("Masukkan lebar: "))
+jurusan = "Pendidikan Komputer"
+status_lulus = True`}
+              </pre> */}
 
               <div style={styles.activityWrapper}>
                 <div style={styles.activityTitle}>Aktivitas 1.1 - Cocokkan Tipe Data</div>
-                <p style={styles.instruction}>Seret kotak tipe data (int, float, str, bool) ke nilai yang sesuai.</p>
+                <p style={styles.instruction}>Seret kotak tipe data (integer, float, string, boolean) ke nilai yang sesuai.</p>
                 <div style={styles.dragContainer}>
                   <div style={styles.dragItems}>
                     {dragItems.map((item) => (
@@ -387,7 +442,7 @@ status = True # boolean`}
 
               <div style={styles.activityWrapper}>
                 <div style={styles.activityTitle}>Aktivitas 1.3 - Tipe Data dari Nilai</div>
-                <p style={styles.instruction}>(Tulis jawaban dalam huruf kecil contoh : str/int/float/bool)</p>
+                <p style={styles.instruction}>(Tulis jawaban dalam huruf kecil contoh : string/integer/float/boolean)</p>
                 <p style={styles.instruction}>Tipe data dari nilai 5 adalah ....</p>
                 <div style={styles.inputGroup}>
                   <input
@@ -459,7 +514,7 @@ status = True # boolean`}
 
               <div style={styles.activityWrapper}>
                 <div style={styles.activityTitle}>Aktivitas 2.2 - Sisa Bagi (Modulus)</div>
-                <p style={styles.instruction}>Hasil dari 10 % 3 adalah ….</p>
+                <p style={styles.instruction}>Hasil dari 7 % 3 adalah ….</p>
                 <div style={styles.options}>
                   {modulusOptions.map((opt, idx) => (
                     <div
@@ -481,7 +536,7 @@ status = True # boolean`}
               <div style={styles.activityWrapper}>
                 <div style={styles.activityTitle}>Aktivitas 2.3 - Operator Pangkat</div>
                 <p style={styles.instruction}>(Tulis jawabannya dengan angka)</p>
-                <p style={styles.instruction}>Hasil dari 2 ** 3 adalah ….</p>
+                <p style={styles.instruction}>Hasil dari 3 ** 3 adalah ….</p>
                 <div style={styles.inputGroup}>
                   <input
                     type="text"
@@ -505,7 +560,7 @@ status = True # boolean`}
                 <div style={styles.materialTitle}>Input dan Output</div>
               </div>
               <p style={styles.text}>
-                <strong>Output:</strong> Fungsi <code>print()</code> digunakan untuk menampilkan teks atau nilai ke layar. Contoh: <code>print("Halo Dunia")</code>
+                <strong>Output:</strong> Fungsi <code>print()</code> digunakan untuk menampilkan teks atau nilai ke layar. Contoh: <code>print("Hello World!")</code>
               </p>
               <p style={styles.text}>
                 <strong>Input:</strong> Fungsi <code>input()</code> digunakan untuk membaca masukan dari pengguna. Hasilnya selalu berupa <strong>string</strong>. 
@@ -524,7 +579,7 @@ umur = int(input("Umur: "))  # konversi ke integer`}
 
               <div style={styles.activityWrapper}>
                 <div style={styles.activityTitle}>Aktivitas 3.1 - Konversi ke Integer</div>
-                <p style={styles.instruction}>Lengkapi kode agar variabel umur bertipe integer: <code>umur = ______(input("Umur: "))</code></p>
+                <p style={styles.instruction}>Lengkapi kode agar variabel nim bertipe integer:<br /> <code>nim = ______(input("NIM: "))</code></p>
                 <div style={styles.inputGroup}>
                   <input
                     type="text"
@@ -540,7 +595,7 @@ umur = int(input("Umur: "))  # konversi ke integer`}
 
               <div style={styles.activityWrapper}>
                 <div style={styles.activityTitle}>Aktivitas 3.2 - Fungsi Output</div>
-                <p style={styles.instruction}>Pilih fungsi yang benar untuk menampilkan teks ke layar.</p>
+                <p style={styles.instruction}>Fungsi yang benar untuk menampilkan teks ke layar adalah ....</p>
                 <div style={styles.options}>
                   {outputOptions.map((opt, idx) => (
                     <div
@@ -561,7 +616,7 @@ umur = int(input("Umur: "))  # konversi ke integer`}
 
               <div style={styles.activityWrapper}>
                 <div style={styles.activityTitle}>Aktivitas 3.3 - Mencetak Variabel</div>
-                <p style={styles.instruction}>Lengkapi kode berikut agar program mencetak "Halo Andi". Tulis variabel yang tepat.</p>
+                <p style={styles.instruction}>Semisal user menginput namanya Andi, lengkapi agar program mencetak "Halo Andi". Tulis variabel yang tepat.</p>
                 <pre style={styles.codeBlockSmall}>{`nama = input("Nama: ")
 print("Halo", ______)`}</pre>
                 <div style={styles.inputGroup}>
@@ -703,6 +758,7 @@ const styles = {
   materialTitle: { fontSize: "24px", fontWeight: "700", color: "#0f172a" },
   text: { fontSize: "16px", lineHeight: "1.6", color: "#1e293b", marginBottom: "16px" },
   list: { marginLeft: "24px", marginBottom: "16px", lineHeight: "1.6", color: "#1e293b" },
+  listOrdered: { marginLeft: "24px", marginBottom: "16px", lineHeight: "1.8", color: "#1e293b" },
   codeBlock: { background: "#0f172a", color: "#e2e8f0", padding: "16px", borderRadius: "20px", fontFamily: "monospace", fontSize: "14px", overflow: "auto", margin: "20px 0" },
   codeBlockSmall: { background: "#0f172a", color: "#e2e8f0", padding: "12px", borderRadius: "16px", fontFamily: "monospace", fontSize: "13px", margin: "12px 0" },
   tableWrapper: { overflowX: "auto", margin: "20px 0", borderRadius: "16px", border: "1px solid #e2e8f0" },
@@ -720,7 +776,7 @@ const styles = {
     background: "#306998",
     color: "white",
     padding: "8px 20px",
-    borderRadius: "40px",
+    borderRadius: "0px",
     cursor: "grab",
     userSelect: "none",
     fontWeight: "500",
