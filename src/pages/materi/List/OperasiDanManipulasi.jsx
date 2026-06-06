@@ -493,7 +493,7 @@ const SingleListVisualization = ({ data, title, hoverContext = {}, highlightInde
             </div>
             {!hideIndices && (
               <>
-                <div style={{ fontSize: "10px", color: "#555" }}>Indeks +{idx}</div>
+                <div style={{ fontSize: "10px", color: "#555" }}>Indeks {idx}</div>
                 <div style={{ fontSize: "10px", color: "#888" }}>Indeks {negativeIndices[idx]}</div>
               </>
             )}
@@ -933,7 +933,7 @@ const DoubleBeforeVisualization = ({ dataA, dataB, titleA, titleB, hoverContextA
   );
 };
 
-// ================= KOMPONEN CODE EDITOR DENGAN ANIMASI DAN PENJELASAN =================
+// ================= KOMPONEN CODE EDITOR DENGAN ANIMASI DAN PENJELASAN (DIPERBAIKI) =================
 const CodeEditorWithVisual = ({
   code,
   title,
@@ -973,6 +973,30 @@ const CodeEditorWithVisual = ({
     setTriggerAnimation(prev => prev + 1);
   }, [pyodideReady, code, runPythonCode]);
 
+  // Fungsi untuk merender penjelasan per baris (sama seperti di halaman PembuatanAksesElement)
+  const renderLineExplanations = () => {
+    if (!codeExplanation || !codeExplanation.length) return null;
+    const lines = code.split("\n");
+    const explanations = codeExplanation;
+    return (
+      <div>
+        {lines.map((line, idx) => {
+          const explanation = explanations[idx] || "";
+          if (!explanation.trim() && !line.trim()) return null;
+          const lineNumber = idx + 1;
+          return (
+            <div key={idx} style={styles.explanationLine}>
+              <span style={styles.explanationLineNumber}>Baris {lineNumber}:</span>
+              <code style={styles.explanationCode}>{line}</code>
+              <span style={styles.explanationArrow}> → </span>
+              <span style={styles.explanationText}>{explanation}</span>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
   return (
     <div style={styles.codeEditorContainer}>
       <div style={styles.codeEditorHeader}>
@@ -984,7 +1008,7 @@ const CodeEditorWithVisual = ({
       <div style={styles.codeInputReadOnly}>
         <pre style={styles.codePre}>{code}</pre>
       </div>
-      <div style={styles.visualHeader}>Visualisasi Kode Program</div>
+      <div style={styles.visualHeader}>Visualisasi</div>
       <div style={styles.visualArea}>
         {showVisual ? (
           <AnimatedVisualization
@@ -1011,16 +1035,10 @@ const CodeEditorWithVisual = ({
       {showExplanation && codeExplanation && (
         <div>
           <div style={styles.explanationHeader}>
-            <span style={styles.outputTitle}>Penjelasan baris kode program</span>
+            <span style={styles.outputTitle}>Penjelasan Kode Program</span>
           </div>
           <div style={styles.explanationContent}>
-            {Array.isArray(codeExplanation) ? (
-              codeExplanation.map((line, idx) => (
-                <div key={idx} style={styles.explanationLine}>{line}</div>
-              ))
-            ) : (
-              <div style={styles.explanationLine}>{codeExplanation}</div>
-            )}
+            {renderLineExplanations()}
           </div>
         </div>
       )}
@@ -1638,84 +1656,84 @@ export default function OperasiManipulasiList() {
     { highlightIndex: 3, explanation: "Menghitung elemen ke-4 (rambutan) -> panjang = 4" },
   ];
 
-  // Penjelasan kode per baris (sama seperti asli)
+  // Penjelasan kode per baris (sama seperti asli, namun akan dirender dengan format baru)
   const codeExplanations = {
     concat: [
-      "Baris 1: a = [1, 2, 3]  -> Membuat list a dengan elemen 1,2,3.",
-      "Baris 2: b = [4, 5, 6]  -> Membuat list b dengan elemen 4,5,6.",
-      "Baris 3: c = a + b       -> Menggabungkan list a dan b menjadi list baru c = [1,2,3,4,5,6].",
-      "Baris 4: print(c)        -> Mencetak isi list c ke layar."
+      "Membuat list a dengan elemen 1,2,3.",
+      "Membuat list b dengan elemen 4,5,6.",
+      "Menggabungkan list a dan b menjadi list baru c = [1,2,3,4,5,6].",
+      "Mencetak isi list c ke layar."
     ],
     repeat: [
-      "Baris 1: data = [1, 2, 3]    -> Membuat list data.",
-      "Baris 2: print(data * 3)     -> Mengulang list data sebanyak 3 kali, menghasilkan [1,2,3,1,2,3,1,2,3], lalu dicetak."
+      "Membuat list data.",
+      "Mengulang list data sebanyak 3 kali, menghasilkan [1,2,3,1,2,3,1,2,3], lalu dicetak."
     ],
     search: [
-      "Baris 1: buah = [\"apel\", \"jeruk\", \"mangga\"]  -> Membuat list buah.",
-      "Baris 2: print(\"mangga\" in buah)                 -> Mengecek apakah 'mangga' ada di list, hasil True.",
-      "Baris 3: print(\"pisang\" in buah)                 -> Mengecek apakah 'pisang' ada di list, hasil False."
+      "Membuat list buah.",
+      "Mengecek apakah 'mangga' ada di list, hasil True.",
+      "Mengecek apakah 'pisang' ada di list, hasil False."
     ],
     sort: [
-      "Baris 1: angka = [5, 3, 8, 1, 7, 2]  -> Membuat list angka.",
-      "Baris 2: angka.sort()                 -> Mengurutkan list secara ascending (menjadi [1,2,3,5,7,8]).",
-      "Baris 3: print(angka)                -> Mencetak list yang sudah terurut."
+      "Membuat list angka.",
+      "Mengurutkan list secara ascending (menjadi [1,2,3,5,7,8]).",
+      "Mencetak list yang sudah terurut."
     ],
     append: [
-      "Baris 1: buah = [\"durian\", \"nanas\", \"mangga\", \"rambutan\"] -> Membuat list buah.",
-      "Baris 2: buah.append(\"alpukat\")                               -> Menambahkan 'alpukat' di akhir list.",
-      "Baris 3: print(buah)                                          -> Mencetak list setelah ditambah."
+      "Membuat list buah.",
+      "Menambahkan 'alpukat' di akhir list.",
+      "Mencetak list setelah ditambah."
     ],
     insert: [
-      "Baris 1: buah = [\"durian\", \"nanas\", \"mangga\", \"rambutan\"] -> Membuat list buah.",
-      "Baris 2: buah.insert(1, \"alpukat\")                           -> Menyisipkan 'alpukat' pada indeks 1.",
-      "Baris 3: print(buah)                                          -> Mencetak list setelah penyisipan."
+      "Membuat list buah.",
+      "Menyisipkan 'alpukat' pada indeks 1.",
+      "Mencetak list setelah penyisipan."
     ],
     extend: [
-      "Baris 1: buah = [\"durian\", \"nanas\", \"mangga\", \"rambutan\"] -> Membuat list buah.",
-      "Baris 2: buah.extend([\"salak\", \"jeruk\", \"manggis\"])        -> Menambahkan semua elemen dari list lain ke akhir buah.",
-      "Baris 3: print(buah)                                          -> Mencetak list setelah extend."
+      "Membuat list buah.",
+      "Menambahkan semua elemen dari list lain ke akhir buah.",
+      "Mencetak list setelah extend."
     ],
     remove: [
-      "Baris 1: buah = [\"durian\", \"nanas\", \"mangga\", \"rambutan\", \"jeruk\"] -> Membuat list buah.",
-      "Baris 2: buah.remove(\"jeruk\")                                            -> Menghapus elemen 'jeruk' pertama yang ditemukan.",
-      "Baris 3: print(buah)                                                      -> Mencetak list setelah penghapusan."
+      "Membuat list buah.",
+      "Menghapus elemen 'jeruk' pertama yang ditemukan.",
+      "Mencetak list setelah penghapusan."
     ],
     pop: [
-      "Baris 1: buah = [\"durian\", \"nanas\", \"mangga\", \"rambutan\"] -> Membuat list buah.",
-      "Baris 2: buah.pop(2)                                         -> Menghapus elemen pada indeks 2 ('mangga').",
-      "Baris 3: print(buah)                                         -> Mencetak list setelah penghapusan."
+      "Membuat list buah.",
+      "Menghapus elemen pada indeks 2 ('mangga').",
+      "Mencetak list setelah penghapusan."
     ],
     change: [
-      "Baris 1: buah = [\"durian\", \"nanas\", \"mangga\", \"rambutan\"] -> Membuat list buah.",
-      "Baris 2: buah[3] = \"belimbing\"                               -> Mengubah nilai indeks 3 menjadi 'belimbing'.",
-      "Baris 3: print(buah)                                          -> Mencetak list setelah perubahan."
+      "Membuat list buah.",
+      "Mengubah nilai indeks 3 menjadi 'belimbing'.",
+      "Mencetak list setelah perubahan."
     ],
     reverse: [
-      "Baris 1: angka = [1, 2, 3, 4]  -> Membuat list angka.",
-      "Baris 2: angka.reverse()       -> Membalik urutan list menjadi [4,3,2,1].",
-      "Baris 3: print(angka)         -> Mencetak list yang sudah dibalik."
+      "Membuat list angka.",
+      "Membalik urutan list menjadi [4,3,2,1].",
+      "Mencetak list yang sudah dibalik."
     ],
     clear: [
-      "Baris 1: data = [1, 2, 3]  -> Membuat list data.",
-      "Baris 2: data.clear()      -> Menghapus semua elemen list.",
-      "Baris 3: print(data)       -> Mencetak list kosong []."
+      "Membuat list data.",
+      "Menghapus semua elemen list.",
+      "Mencetak list kosong []."
     ],
     count: [
-      "Baris 1: data = [1, 2, 2, 3]  -> Membuat list data.",
-      "Baris 2: print(data.count(2)) -> Menghitung jumlah kemunculan angka 2, hasil 2."
+      "Membuat list data.",
+      "Menghitung jumlah kemunculan angka 2, hasil 2."
     ],
     index: [
-      "Baris 1: data = [10, 20, 30, 20] -> Membuat list data.",
-      "Baris 2: print(data.index(20))   -> Mencari indeks pertama nilai 20, hasil 1."
+      "Membuat list data.",
+      "Mencari indeks pertama nilai 20, hasil 1."
     ],
     del_example: [
-      "Baris 1: angka = [10, 20, 30, 40] -> Membuat list angka.",
-      "Baris 2: del angka[1:3]           -> Menghapus elemen indeks 1 sampai 2 (20 dan 30).",
-      "Baris 3: print(angka)            -> Mencetak list setelah penghapusan [10,40]."
+      "Membuat list angka.",
+      "Menghapus elemen indeks 1 sampai 2 (20 dan 30).",
+      "Mencetak list setelah penghapusan [10,40]."
     ],
     length: [
-      "Baris 1: buah = [\"durian\", \"nanas\", \"mangga\", \"rambutan\"] -> Membuat list buah.",
-      "Baris 2: print(len(buah))                                      -> Menghitung panjang list, hasil 4."
+      "Membuat list buah.",
+      "Menghitung panjang list, hasil 4."
     ],
   };
 

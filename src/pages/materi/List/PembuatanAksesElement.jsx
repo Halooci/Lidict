@@ -392,7 +392,7 @@ const styles = {
   },
 };
 
-// ================= KOMPONEN VISUALISASI LIST (sama seperti asli) =================
+// ================= KOMPONEN VISUALISASI LIST (sama seperti asli, plus dihapus) =================
 const ListVisualization = ({ data, title, highlightSequence, processExplanation, hidePositive = false, hideNegative = false, disableHover = false }) => {
   const [currentHighlight, setCurrentHighlight] = useState(null);
   const [explanationText, setExplanationText] = useState("");
@@ -480,7 +480,8 @@ const ListVisualization = ({ data, title, highlightSequence, processExplanation,
             >
               <div style={visStyles.value}>{String(item)}</div>
             </div>
-            {!hidePositive && <div style={visStyles.indexLabel}>Indeks +{idx}</div>}
+            {/* PERUBAHAN: tanda + dihapus dari indeks positif */}
+            {!hidePositive && <div style={visStyles.indexLabel}>Indeks {idx}</div>}
             {!hideNegative && <div style={visStyles.indexLabelNeg}>Indeks {negativeIndices[idx]}</div>}
           </div>
         ))}
@@ -612,7 +613,7 @@ const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, highlightM
         <pre style={styles.codePre}>{code}</pre>
       </div>
 
-      <div style={styles.visualHeader}>Visualisasi Kode Program</div>
+      <div style={styles.visualHeader}>Visualisasi</div>
       <div style={styles.visualArea}>
         {showVisual && visualData ? (
           <ListVisualization
@@ -639,7 +640,7 @@ const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, highlightM
       {showExplanations && lineExplanations && lineExplanations.length > 0 && (
         <>
           <div style={styles.explanationHeader}>
-            <span style={styles.outputTitle}>Penjelasan Kode (per baris)</span>
+            <span style={styles.outputTitle}>Penjelasan Kode Program</span>
           </div>
           <div style={styles.explanationContent}>
             {renderLineExplanations()}
