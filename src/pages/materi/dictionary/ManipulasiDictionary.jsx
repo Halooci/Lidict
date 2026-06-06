@@ -979,7 +979,7 @@ _buffer.getvalue()
                   </div>
                   <CodeEditorEditable
                     codeKey="latihan_inventaris"
-                    title="Ayo Praktik: Manipulasi Inventaris Toko Buku"
+                    title="Ayo Praktik"
                     pyodideReady={pyodideReady}
                     runPythonCode={runPythonCode}
                     expectedOutput="'Python Dasar': 10, 'Web Programming': 7, 'Machine Learning': 3"

@@ -885,7 +885,7 @@ _buffer.getvalue()
                   </div>
                   <CodeEditorEditable 
                     codeKey="latihan" 
-                    title="Ayo Praktik: Membuat dan Mengakses Dictionary" 
+                    title="Ayo Praktik" 
                     pyodideReady={pyodideReady} 
                     runPythonCode={runPythonCode} 
                     expectedOutput={["Citra", "22"]} 
