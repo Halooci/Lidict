@@ -300,7 +300,7 @@ const CodeEditor = ({ code, codeKey, pyodideReady, runPythonCode, explanations, 
       {hasRun && hasExplanations && (
         <div style={styles.explanationsContainer}>
           <div style={styles.explanationsHeader}>
-            <span style={styles.explanationsTitle}>Penjelasan Kode (per baris)</span>
+            <span style={styles.explanationsTitle}>Penjelasan Kode Program</span>
           </div>
           <div style={styles.explanationsContent}>
             {codeLines.map((line, idx) => {

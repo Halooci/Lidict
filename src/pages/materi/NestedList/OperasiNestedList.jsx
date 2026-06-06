@@ -493,7 +493,7 @@ const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, pyodideRea
       </div>
 
       {/* Visualisasi Kode Program - selalu ditampilkan, dengan placeholder atau konten */}
-      <div style={styles.visualHeader}>Visualisasi Kode Program</div>
+      <div style={styles.visualHeader}>Visualisasi</div>
       <div style={styles.visualArea}>
         {showDetail && visualData ? (
           <NestedListVisualization data={visualData} title={visualTitle} />
@@ -516,7 +516,7 @@ const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, pyodideRea
       {showDetail && lineExplanations && lineExplanations.length > 0 && (
         <>
           <div style={styles.explanationHeader}>
-            <span style={styles.outputTitle}>Penjelasan Kode (per baris)</span>
+            <span style={styles.outputTitle}>Penjelasan Kode Program</span>
           </div>
           {renderLineExplanations()}
         </>

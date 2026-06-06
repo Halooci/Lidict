@@ -634,7 +634,7 @@ const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, highlightC
         <pre style={styles.codePre}>{code}</pre>
       </div>
 
-      <div style={styles.visualHeader}>Visualisasi Kode Program</div>
+      <div style={styles.visualHeader}>Visualisasi</div>
       <div style={styles.visualArea}>
         {showVisual && visualData ? (
           <NestedListVisualization
@@ -658,7 +658,7 @@ const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, highlightC
       {showExplanations && lineExplanations && lineExplanations.length > 0 && (
         <>
           <div style={styles.explanationHeader}>
-            <span style={styles.outputTitle}>Penjelasan Kode (per baris)</span>
+            <span style={styles.outputTitle}>Penjelasan Kode Program</span>
           </div>
           <div style={styles.explanationContent}>
             {renderLineExplanations()}
