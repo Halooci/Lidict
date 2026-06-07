@@ -160,101 +160,54 @@ const styles = {
     textAlign: "center",
     color: "#084298",
   },
-  quizBox: {
-    border: "2px solid #2fa69a",
-    borderRadius: "12px",
-    overflow: "hidden",
-    backgroundColor: "#ffffff",
-  },
-  quizHeader: { backgroundColor: "#cfd8e6", padding: "15px", fontWeight: "600" },
-  quizContent: { padding: "20px" },
-  quizQuestion: { marginBottom: "20px", whiteSpace: "pre-line" },
   quizOption: {
     padding: "12px",
-    marginBottom: "10px",
     borderRadius: "8px",
-    border: "1px solid #2fa69a",
     cursor: "pointer",
+    transition: "all 0.2s",
+    border: "1px solid #306998",
+    backgroundColor: "#fff",
+    marginBottom: "8px",
   },
   quizOptionDisabled: {
     padding: "12px",
-    marginBottom: "10px",
     borderRadius: "8px",
     border: "1px solid #ccc",
     backgroundColor: "#e9ecef",
     color: "#6c757d",
     cursor: "not-allowed",
     opacity: 0.7,
+    marginBottom: "8px",
   },
-  quizError: {
-    marginTop: "15px",
-    backgroundColor: "#f8d7da",
-    color: "#842029",
-    padding: "12px",
-    borderRadius: "8px",
-  },
-  quizSuccess: {
-    marginTop: "15px",
-    backgroundColor: "#d1e7dd",
-    color: "#0f5132",
-    padding: "12px",
-    borderRadius: "8px",
+  checkAllButton: {
+    backgroundColor: "#306998",
+    color: "white",
+    border: "none",
+    padding: "10px 24px",
+    borderRadius: "6px",
+    cursor: "pointer",
+    fontWeight: "600",
+    fontSize: "14px",
+    transition: "all 0.2s",
+    marginTop: "10px",
   },
   quizWarning: {
     marginTop: "15px",
+    marginBottom: "10px",
+    padding: "12px",
     backgroundColor: "#fff3cd",
     color: "#856404",
-    padding: "12px",
     borderRadius: "8px",
+    textAlign: "center",
   },
-  quizFooter: {
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center",
+  resultBox: {
+    marginTop: "20px",
     padding: "15px",
-    gap: "10px",
-  },
-  quizNavButton: {
-    border: "none",
-    padding: "8px 18px",
+    backgroundColor: "#d1e7dd",
     borderRadius: "8px",
-    cursor: "pointer",
-    fontWeight: "600",
-    transition: "all 0.2s ease",
-    whiteSpace: "nowrap",
-  },
-  quizNavButtonDisabled: {
-    border: "none",
-    padding: "8px 18px",
-    borderRadius: "8px",
-    backgroundColor: "#ccc",
-    color: "#666",
-    cursor: "not-allowed",
-    fontWeight: "600",
-    whiteSpace: "nowrap",
-  },
-  checkButton: {
-    flex: 1,
     textAlign: "center",
-    border: "none",
-    padding: "8px 18px",
-    borderRadius: "8px",
-    cursor: "pointer",
-    fontWeight: "600",
-    transition: "all 0.2s ease",
-    backgroundColor: "#1e63d5",
-    color: "white",
-  },
-  checkButtonDisabled: {
-    flex: 1,
-    textAlign: "center",
-    border: "none",
-    padding: "8px 18px",
-    borderRadius: "8px",
-    fontWeight: "600",
-    backgroundColor: "#ccc",
-    color: "#666",
-    cursor: "not-allowed",
+    color: "#0f5132",
+    fontWeight: "bold",
   },
   feedbackCorrect: {
     marginTop: "10px",
@@ -281,6 +234,44 @@ const styles = {
     textAlign: "center",
     fontSize: "16px",
     fontWeight: "bold",
+  },
+  // Modal styles (sama dengan nested list)
+  modalOverlay: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    backdropFilter: "blur(4px)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 2000,
+  },
+  modal: {
+    background: "white",
+    borderRadius: "32px",
+    padding: "32px",
+    maxWidth: "450px",
+    width: "90%",
+    textAlign: "center",
+    boxShadow: "0 20px 35px rgba(0,0,0,0.2)",
+    animation: "fadeInUp 0.3s ease",
+  },
+  modalIcon: { fontSize: "64px", marginBottom: "16px" },
+  modalTitle: { fontSize: "28px", fontWeight: "700", color: "#1e3a5f", marginBottom: "12px" },
+  modalText: { fontSize: "16px", color: "#334155", lineHeight: "1.5", marginBottom: "24px" },
+  modalButton: {
+    background: "linear-gradient(135deg, #3182ce, #2c5282)",
+    color: "white",
+    border: "none",
+    padding: "12px 24px",
+    borderRadius: "40px",
+    fontSize: "16px",
+    fontWeight: "600",
+    cursor: "pointer",
+    transition: "transform 0.2s, box-shadow 0.2s",
   },
 };
 
@@ -321,12 +312,211 @@ const CodeEditor = ({ code, title, pyodideReady, runPythonCode }) => {
   );
 };
 
+// ================= KOMPONEN LATIHAN (sama persis seperti nested list) =================
+const LatihanList = ({ onAllCorrectChange }) => {
+  const quizQuestions = [
+    {
+      id: 0,
+      question: "Fungsi utama List dalam Python yaitu ....",
+      options: [
+        "Melakukan operasi matematika kompleks",
+        "Menyimpan kumpulan data dalam satu variabel",
+        "Menggantikan fungsi percabangan",
+        "Menampilkan output ke layar",
+        "Mengurutkan data secara otomatis"
+      ],
+      answer: 1,
+      explanation: "List adalah struktur data yang dirancang untuk menyimpan banyak nilai (koleksi) dalam satu variabel, sehingga memudahkan pengelolaan data."
+    },
+    {
+      id: 1,
+      question: "Cara membuat list kosong dalam Python yaitu ....",
+      options: [
+        "list = ()",
+        "list = {}",
+        "list = []",
+        "list = \"\"",
+        "list = set()"
+      ],
+      answer: 2,
+      explanation: "List kosong dibuat dengan sepasang kurung siku tanpa isi: `[]`."
+    },
+    {
+      id: 2,
+      question: "`List dalam Python dapat menyimpan berbagai tipe data sekaligus.` Pernyataan ini adalah ....",
+      options: [
+        "Benar, bisa",
+        "Salah, hanya bisa satu tipe",
+        "Hanya untuk angka dan string",
+        "Hanya untuk string dan boolean",
+        "Tergantung versi Python"
+      ],
+      answer: 0,
+      explanation: "Benar, Python list bersifat heterogen – dapat menampung tipe data berbeda (angka, string, boolean, bahkan list lain) dalam satu list."
+    },
+    {
+      id: 3,
+      question: "Output dari kode berikut:\n\nbuah = [\"apel\", \"jeruk\"]\nprint(len(buah)) \n\nadalah ....",
+      options: ["0", "1", "2", "3", "4"],
+      answer: 2,
+      explanation: "Fungsi `len()` mengembalikan jumlah elemen dalam list. Karena ada dua elemen ('apel' dan 'jeruk'), hasilnya adalah 2."
+    },
+    {
+      id: 4,
+      question: "Kita membutuhkan List dibanding variabel tunggal karena ....",
+      options: [
+        "program berjalan lebih cepat",
+        "Untuk menyimpan banyak data secara terorganisir dalam satu variabel",
+        "tidak perlu menggunakan perulangan",
+        "tipe data lebih ketat",
+        "Agar kode lebih sulit dibaca"
+      ],
+      answer: 1,
+      explanation: "List memungkinkan kita menyimpan kumpulan data terstruktur dalam satu variabel, mempermudah pengolahan data secara berulang (looping) dan pengelolaan data yang jumlahnya banyak."
+    },
+  ];
+
+  const [selected, setSelected] = useState(Array(quizQuestions.length).fill(null));
+  const [locked, setLocked] = useState(Array(quizQuestions.length).fill(false));
+  const [feedbackMsg, setFeedbackMsg] = useState(Array(quizQuestions.length).fill(""));
+  const [warning, setWarning] = useState(null);
+  const [allCorrect, setAllCorrect] = useState(false);
+
+  // Notify parent when allCorrect changes
+  useEffect(() => {
+    onAllCorrectChange(allCorrect);
+  }, [allCorrect, onAllCorrectChange]);
+
+  const handleSelect = (qId, optionIndex) => {
+    if (locked[qId]) return;
+    const newSelected = [...selected];
+    newSelected[qId] = optionIndex;
+    setSelected(newSelected);
+    if (allCorrect) setAllCorrect(false);
+    const newFeedback = [...feedbackMsg];
+    newFeedback[qId] = "";
+    setFeedbackMsg(newFeedback);
+    setWarning(null);
+  };
+
+  const handleCheckAll = () => {
+    const allAnswered = selected.every(sel => sel !== null);
+    if (!allAnswered) {
+      setWarning("⚠️ Semua soal harus dijawab terlebih dahulu sebelum diperiksa.");
+      return;
+    }
+    setWarning(null);
+
+    let newLocked = [...locked];
+    let newFeedback = [...feedbackMsg];
+    let allNowCorrect = true;
+
+    for (let i = 0; i < quizQuestions.length; i++) {
+      if (locked[i]) {
+        newFeedback[i] = "benar";
+        continue;
+      }
+      const isCorrect = (selected[i] === quizQuestions[i].answer);
+      if (isCorrect) {
+        newLocked[i] = true;
+        newFeedback[i] = "benar";
+      } else {
+        newLocked[i] = false;
+        newFeedback[i] = "salah";
+        allNowCorrect = false;
+      }
+    }
+    setLocked(newLocked);
+    setFeedbackMsg(newFeedback);
+    setAllCorrect(allNowCorrect);
+  };
+
+  return (
+    <div>
+      <h2 style={styles.sectionTitle}>Latihan</h2>
+      <div style={styles.card}>
+        <p style={styles.text}>
+          Jawab semua soal dengan memilih opsi yang benar. Klik "Cek Semua Jawaban" untuk memeriksa.
+          Soal yang sudah benar akan terkunci. Soal yang salah dapat diperbaiki, lalu periksa kembali.
+        </p>
+        {quizQuestions.map((q, idx) => {
+          const isLocked = locked[idx];
+          const selectedIdx = selected[idx];
+          const fb = feedbackMsg[idx];
+          return (
+            <div key={idx} style={{ marginBottom: "30px", borderBottom: "1px solid #e0e0e0", paddingBottom: "20px" }}>
+              <p style={{ fontWeight: "600", marginBottom: "12px" }}>{idx + 1}. {q.question}</p>
+              <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                {q.options.map((opt, optIdx) => {
+                  let optionStyle = styles.quizOption;
+                  if (isLocked) {
+                    optionStyle = { ...styles.quizOptionDisabled };
+                    if (selectedIdx === optIdx) {
+                      optionStyle = {
+                        ...optionStyle,
+                        backgroundColor: "#d4edda",
+                        borderColor: "#28a745",
+                        color: "#155724",
+                      };
+                    }
+                  } else {
+                    if (selectedIdx === optIdx) {
+                      optionStyle = { ...optionStyle, backgroundColor: "#306998", color: "white", borderColor: "#306998" };
+                    }
+                  }
+                  return (
+                    <div
+                      key={optIdx}
+                      onClick={() => !isLocked && handleSelect(idx, optIdx)}
+                      style={optionStyle}
+                      onMouseEnter={(e) => {
+                        if (!isLocked && selectedIdx !== optIdx) {
+                          e.currentTarget.style.backgroundColor = "#fef9e6";
+                          e.currentTarget.style.borderColor = "#FFD43B";
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!isLocked && selectedIdx !== optIdx) {
+                          e.currentTarget.style.backgroundColor = "#fff";
+                          e.currentTarget.style.borderColor = "#306998";
+                        }
+                      }}
+                    >
+                      {String.fromCharCode(65 + optIdx)}. {opt}
+                    </div>
+                  );
+                })}
+              </div>
+              {fb === "benar" && (
+                <div style={styles.feedbackCorrect}>
+                  ✓ Benar – {quizQuestions[idx].explanation}
+                </div>
+              )}
+              {fb === "salah" && (
+                <div style={styles.feedbackWrong}>
+                  ✗ Salah, coba pilih jawaban lain
+                </div>
+              )}
+            </div>
+          );
+        })}
+        {warning && <div style={styles.quizWarning}>{warning}</div>}
+        <div style={{ display: "flex", justifyContent: "center" }}>
+          <button style={styles.checkAllButton} onClick={handleCheckAll}>
+            Cek Semua Jawaban
+          </button>
+        </div>
+        {allCorrect && <div style={styles.resultBox}>🎉 Selamat! Semua jawaban sudah dijawab dengan benar.</div>}
+      </div>
+    </div>
+  );
+};
+
 // ================= KOMPONEN UTAMA =================
 export default function PendahuluanList() {
   const navigate = useNavigate();
   const [userId, setUserId] = useState(null);
-  const [showCompletionModal, setShowCompletionModal] = useState(false);
-  const [isProcessing, setIsProcessing] = useState(false);
+  const [showModal, setShowModal] = useState(false);
   const [bonusGiven, setBonusGiven] = useState(false);
 
   // Ambil userId dari localStorage
@@ -401,6 +591,34 @@ export default function PendahuluanList() {
     }
   }, [eksplorasiSelected, isEksplorasiCompleted]);
 
+  // State untuk latihan (callback dari komponen LatihanList)
+  const [allLatihanCorrect, setAllLatihanCorrect] = useState(false);
+
+  // Efek untuk memunculkan modal ketika semua latihan benar dan bonus belum diberikan
+  useEffect(() => {
+    if (!userId) return;
+    if (bonusGiven) return;
+    if (allLatihanCorrect && !showModal) {
+      setShowModal(true);
+    }
+  }, [allLatihanCorrect, userId, bonusGiven, showModal]);
+
+  // Fungsi untuk menangani konfirmasi dari modal
+  const handleCompleteAndNavigate = async () => {
+    try {
+      const mahasiswaRef = doc(db, "mahasiswa", userId);
+      await updateDoc(mahasiswaRef, {
+        progres_belajar: increment(1)
+      });
+      localStorage.setItem("pendahuluanlist_bonus_done", "true");
+      setShowModal(false);
+      navigate("/List/PembuatanAksesElement");
+    } catch (error) {
+      console.error("Gagal update progres:", error);
+      alert("Terjadi kesalahan saat menyimpan progres. Silakan coba lagi.");
+    }
+  };
+
   // Kode contoh
   const exampleCodes = {
     listSederhana: `# Membuat list sederhana
@@ -455,146 +673,6 @@ sys.stdout = StringIO()
       return `Error: ${error.message}`;
     }
   }, []);
-
-  // ================= LATIHAN (QUIZ) =================
-  const quizQuestions = [
-    {
-      question: "Fungsi utama List dalam Python yaitu ....",
-      options: [
-        "Melakukan operasi matematika kompleks",
-        "Menyimpan kumpulan data dalam satu variabel",
-        "Menggantikan fungsi percabangan",
-        "Menampilkan output ke layar",
-        "Mengurutkan data secara otomatis"
-      ],
-      answer: 1,
-    },
-    {
-      question: "Cara membuat list kosong dalam Python yaitu ....",
-      options: [
-        "list = ()",
-        "list = {}",
-        "list = []",
-        "list = \"\"",
-        "list = set()"
-      ],
-      answer: 2,
-    },
-    {
-      question: "`List dalam Python dapat menyimpan berbagai tipe data seklaigus.` Pernyataan ini adalah ....",
-      options: [
-        "Benar, bisa",
-        "Salah, hanya bisa satu tipe",
-        "Hanya untuk angka dan string",
-        "Hanya untuk string dan boolean",
-        "Tergantung versi Python"
-      ],
-      answer: 0,
-    },
-    {
-      question: "Output dari kode berikut:\n\nbuah = [\"apel\", \"jeruk\"]\nprint(len(buah)) \n\nadalah ....",
-      options: ["0", "1", "2", "3", "4"],
-      answer: 2,
-    },
-    {
-      question: "Kita membutuhkan List dibanding variabel tunggal karena ....",
-      options: [
-        "program berjalan lebih cepat",
-        "Untuk menyimpan banyak data secara terorganisir dalam satu variabel",
-        "tidak perlu menggunakan perulangan",
-        "tipe data lebih ketat",
-        "Agar kode lebih sulit dibaca"
-      ],
-      answer: 1,
-    },
-  ];
-
-  // State untuk quiz
-  const [quizCurrent, setQuizCurrent] = useState(0);
-  const [quizSelected, setQuizSelected] = useState(Array(quizQuestions.length).fill(null));
-  const [quizFeedback, setQuizFeedback] = useState(Array(quizQuestions.length).fill(null));
-  const [quizLocked, setQuizLocked] = useState(Array(quizQuestions.length).fill(false));
-  const [quizWarning, setQuizWarning] = useState(null);
-  const [hoverPrev, setHoverPrev] = useState(false);
-  const [hoverCheck, setHoverCheck] = useState(false);
-  const [hoverNext, setHoverNext] = useState(false);
-
-  const selectAnswer = (idx) => {
-    if (quizLocked[quizCurrent]) return;
-    const newSelected = [...quizSelected];
-    newSelected[quizCurrent] = idx;
-    setQuizSelected(newSelected);
-    const newFeedback = [...quizFeedback];
-    newFeedback[quizCurrent] = null;
-    setQuizFeedback(newFeedback);
-    setQuizWarning(null);
-  };
-
-  const checkQuizAnswer = () => {
-    if (quizSelected[quizCurrent] === null) {
-      setQuizWarning("Pilih jawaban terlebih dahulu!");
-      return;
-    }
-    setQuizWarning(null);
-    const isCorrect = quizSelected[quizCurrent] === quizQuestions[quizCurrent].answer;
-    const newFeedback = [...quizFeedback];
-    newFeedback[quizCurrent] = isCorrect ? "benar" : "salah";
-    setQuizFeedback(newFeedback);
-    if (isCorrect) {
-      const newLocked = [...quizLocked];
-      newLocked[quizCurrent] = true;
-      setQuizLocked(newLocked);
-    }
-  };
-
-  const prevQuiz = () => {
-    if (quizCurrent > 0) {
-      setQuizCurrent(quizCurrent - 1);
-      setQuizWarning(null);
-    }
-  };
-
-  const nextQuiz = () => {
-    if (quizCurrent < quizQuestions.length - 1 && quizLocked[quizCurrent]) {
-      setQuizCurrent(quizCurrent + 1);
-      setQuizWarning(null);
-    }
-  };
-
-  const isPrevDisabled = quizCurrent === 0;
-  const isLastQuestion = quizCurrent === quizQuestions.length - 1;
-  const isAllCorrect = quizLocked.every(locked => locked === true);
-
-  // Effect untuk memunculkan modal ketika semua jawaban benar dan bonus belum diberikan
-  useEffect(() => {
-    if (!userId) return;
-    if (bonusGiven) return;
-    if (isAllCorrect && !showCompletionModal && !isProcessing) {
-      setShowCompletionModal(true);
-    }
-  }, [isAllCorrect, userId, bonusGiven, showCompletionModal, isProcessing]);
-
-  // Fungsi untuk menangani konfirmasi dari modal
-  const handleCompleteAndContinue = async () => {
-    if (isProcessing) return;
-    setIsProcessing(true);
-
-    try {
-      const mahasiswaRef = doc(db, "mahasiswa", userId);
-      await updateDoc(mahasiswaRef, {
-        progres_belajar: increment(1)
-      });
-      localStorage.setItem("pendahuluanlist_bonus_done", "true");
-      setBonusGiven(true);
-      setShowCompletionModal(false);
-      navigate("/List/PembuatanAksesElement");
-    } catch (error) {
-      console.error("Gagal update progres:", error);
-      alert("Terjadi kesalahan saat menyimpan progres. Silakan coba lagi.");
-      setIsProcessing(false);
-      setShowCompletionModal(false);
-    }
-  };
 
   return (
     <>
@@ -685,10 +763,10 @@ sys.stdout = StringIO()
                 <h2 style={styles.sectionTitle}>Apa Itu List?</h2>
                 <div style={styles.card}>
                   <p style={styles.text}>
-                    <strong>List</strong> adalah salah satu struktur data bawaan Python yang digunakan untuk menyimpan <strong>kumpulan item (elemen)</strong> dalam satu variabel. List bersifat <strong>mutable</strong> (dapat diubah) dan <strong>berurutan (ordered)</strong>. Elemen dalam list dapat diakses melalui <strong>indeks</strong> yang dimulai dari 0.
+                    List adalah salah satu struktur data bawaan Python yang digunakan untuk menyimpan kumpulan item (elemen) dalam satu variabel. List bersifat mutable (dapat diubah) dan berurutan (ordered). Elemen dalam list dapat diakses melalui indeks yang dimulai dari 0.
                   </p>
                   <p style={styles.text}>
-                    List sangat fleksibel karena dapat menampung <strong>berbagai tipe data</strong> sekaligus (angka, string, boolean, bahkan list lain).
+                    List sangat fleksibel karena dapat menampung berbagai tipe data sekaligus (angka, string, boolean, bahkan list lain).
                   </p>
                   <div style={styles.infoBox}>
                     <strong>Ciri-ciri List:</strong>
@@ -713,7 +791,7 @@ sys.stdout = StringIO()
                 <h2 style={styles.sectionTitle}>Fungsi dan Kegunaan List</h2>
                 <div style={styles.card}>
                   <p style={styles.text}>
-                    List digunakan ketika kita perlu menyimpan <strong>banyak data</strong> dalam satu wadah. Tanpa list, kita harus membuat banyak variabel terpisah (tidak efisien). Contoh tanpa list:
+                    List digunakan ketika kita perlu menyimpan banyak data dan dengan tipe data yang berbeda di dalam satu wadah. Tanpa list, kita harus membuat banyak variabel terpisah (tidak efisien). Contoh tanpa list:
                   </p>
                   
                   <div style={styles.highlightBox}>
@@ -724,7 +802,7 @@ nilai3 = 78
 # ... sulit diolah`}</pre>
                   </div>
                   <p style={styles.text}>
-                    Dengan list, data menjadi <strong>terstruktur</strong>, <strong>mudah diakses</strong>, <strong>ringkas</strong>, menghemat <strong>jumlah variabel</strong>, dan dengan mudah di<strong>manipulasi</strong> dengan cara mengakses langsung elemen atau nilai yang ingin dimanipulasi.
+                    Dengan list, data menjadi terstruktur, mudah diakses, ringkas, menghemat jumlah variabel, dan dengan mudah dimanipulasi dengan cara mengakses langsung elemen atau nilai yang ingin dimanipulasi.
                   </p>
                 </div>
               </section>
@@ -752,180 +830,41 @@ nilai3 = 78
                 </div>
               </section>
 
-              {/* LATIHAN (QUIZ) */}
-              <section style={styles.section}>
-                <h2 style={styles.sectionTitle}>Latihan</h2>
-                <div style={styles.quizBox}>
-                  <div style={styles.quizHeader}>Soal {quizCurrent+1} dari {quizQuestions.length}</div>
-                  <div style={styles.quizContent}>
-                    <p style={styles.quizQuestion}>{quizQuestions[quizCurrent].question}</p>
-                    {quizQuestions[quizCurrent].options.map((opt, idx) => {
-                      const isLocked = quizLocked[quizCurrent];
-                      const isSelected = quizSelected[quizCurrent] === idx;
-                      return (
-                        <div
-                          key={idx}
-                          onClick={() => !isLocked && selectAnswer(idx)}
-                          style={isLocked ? styles.quizOptionDisabled : styles.quizOption}
-                        >
-                          <span style={{
-                            backgroundColor: isLocked && isSelected ? "#d4edda" : (isSelected ? "#2fa69a" : "transparent"),
-                            color: isLocked && isSelected ? "#155724" : (isSelected ? "white" : "inherit"),
-                            display: "block",
-                            padding: "12px",
-                            borderRadius: "8px",
-                            margin: "-12px",
-                          }}>
-                            {String.fromCharCode(65+idx)}. {opt}
-                          </span>
-                        </div>
-                      );
-                    })}
-                    {quizWarning && <div style={styles.quizWarning}>{quizWarning}</div>}
-                    {quizFeedback[quizCurrent] === "salah" && <div style={styles.quizError}>Salah! Coba periksa kembali.</div>}
-                    {quizFeedback[quizCurrent] === "benar" && <div style={styles.quizSuccess}>Benar! Jawaban tepat.</div>}
-                  </div>
-                  <div style={styles.quizFooter}>
-                    <button
-                      style={isPrevDisabled ? styles.quizNavButtonDisabled : {
-                        ...styles.quizNavButton,
-                        backgroundColor: hoverPrev ? "#FFD43B" : "#9ca3af",
-                        color: hoverPrev ? "#306998" : "white",
-                      }}
-                      onClick={prevQuiz}
-                      disabled={isPrevDisabled}
-                      onMouseEnter={() => setHoverPrev(true)}
-                      onMouseLeave={() => setHoverPrev(false)}
-                    >
-                      Sebelumnya
-                    </button>
-                    <button
-                      style={quizLocked[quizCurrent] ? styles.checkButtonDisabled : {
-                        ...styles.checkButton,
-                        backgroundColor: hoverCheck ? "#FFD43B" : "#1e63d5",
-                        color: hoverCheck ? "#306998" : "white",
-                      }}
-                      onClick={checkQuizAnswer}
-                      onMouseEnter={() => setHoverCheck(true)}
-                      onMouseLeave={() => setHoverCheck(false)}
-                      disabled={quizLocked[quizCurrent]}
-                    >
-                      Periksa Jawaban
-                    </button>
-                    {!isLastQuestion && (
-                      <button
-                        style={{
-                          ...styles.quizNavButton,
-                          backgroundColor: hoverNext ? "#FFD43B" : "#9ca3af",
-                          color: hoverNext ? "#306998" : "white",
-                        }}
-                        onClick={nextQuiz}
-                        onMouseEnter={() => setHoverNext(true)}
-                        onMouseLeave={() => setHoverNext(false)}
-                        disabled={!quizLocked[quizCurrent]}
-                      >
-                        Selanjutnya
-                      </button>
-                    )}
-                  </div>
-                  {/* Hanya sebagai fallback, modal akan menggantikan pesan sukses ini */}
-                  {isAllCorrect && !bonusGiven && (
-                    <div style={styles.finalSuccessBox}>
-                      Selamat! Anda telah menyelesaikan semua soal dengan benar.
-                    </div>
-                  )}
-                </div>
-              </section>
+              {/* LATIHAN - menggunakan komponen terpisah seperti nested list */}
+              <LatihanList onAllCorrectChange={setAllLatihanCorrect} />
             </>
           )}
         </div>
       </div>
 
-      {/* MODAL POP-UP */}
-      {showCompletionModal && (
-        <div style={modalStyles.overlay}>
-          <div style={modalStyles.modal}>
-            <div style={modalStyles.modalHeader}>
-              <div style={modalStyles.icon}>🎉</div>
-              <h2 style={modalStyles.title}>Selamat!</h2>
-            </div>
-            <p style={modalStyles.message}>
-              Kamu sudah menyelesaikan materi Pendahuluan List.
+      {/* MODAL POP-UP (sama persis dengan nested list) */}
+      {showModal && (
+        <div style={styles.modalOverlay}>
+          <div style={styles.modal}>
+            <div style={styles.modalIcon}>🎉</div>
+            <h2 style={styles.modalTitle}>Selamat!</h2>
+            <p style={styles.modalText}>
+              Anda telah menyelesaikan materi ini dengan sempurna.
+              <br />
+              Materi selanjutnya akan terbuka.
             </p>
-            <p style={modalStyles.subMessage}>
-              Materi berikutnya sudah terbuka.
-            </p>
-            <button 
-              style={modalStyles.button} 
-              onClick={handleCompleteAndContinue}
-              disabled={isProcessing}
-            >
-              {isProcessing ? "Memproses..." : "Materi berikutnya"}
+            <button style={styles.modalButton} onClick={handleCompleteAndNavigate}>
+              Lanjut ke materi selanjutnya 🚀
             </button>
           </div>
         </div>
       )}
 
       <style>{`
-        @keyframes fadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
-        }
-        @keyframes slideUp {
+        @keyframes fadeInUp {
           from { opacity: 0; transform: translateY(30px); }
           to { opacity: 1; transform: translateY(0); }
+        }
+        .modalButton:hover {
+          transform: scale(1.02);
+          box-shadow: 0 5px 15px rgba(49,130,206,0.3);
         }
       `}</style>
     </>
   );
 }
-
-// Styles untuk modal
-const modalStyles = {
-  overlay: {
-    position: "fixed",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: "rgba(0, 0, 0, 0.6)",
-    backdropFilter: "blur(4px)",
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    zIndex: 1000,
-    animation: "fadeIn 0.2s ease-out",
-  },
-  modal: {
-    backgroundColor: "white",
-    borderRadius: "32px",
-    padding: "32px",
-    width: "90%",
-    maxWidth: "450px",
-    textAlign: "center",
-    boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
-    animation: "slideUp 0.3s ease-out",
-  },
-  modalHeader: {
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    marginBottom: "20px",
-  },
-  icon: { fontSize: "56px", marginBottom: "8px" },
-  title: { fontSize: "28px", fontWeight: "700", color: "#1e293b", margin: 0 },
-  message: { fontSize: "18px", color: "#334155", marginBottom: "12px", lineHeight: "1.5" },
-  subMessage: { fontSize: "14px", color: "#64748b", marginBottom: "28px", lineHeight: "1.5" },
-  button: {
-    background: "linear-gradient(135deg, #306998, #2b4b8a)",
-    color: "white",
-    border: "none",
-    padding: "12px 28px",
-    borderRadius: "40px",
-    fontSize: "16px",
-    fontWeight: "600",
-    cursor: "pointer",
-    transition: "transform 0.1s ease, box-shadow 0.1s ease",
-    boxShadow: "0 4px 10px rgba(0, 0, 0, 0.1)",
-  },
-};
