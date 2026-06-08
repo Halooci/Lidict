@@ -5,7 +5,7 @@ import SidebarMateri from "../../komponen/SidebarMateri";
 import { db } from "../../../config/firebase";
 import { doc, updateDoc, increment } from "firebase/firestore";
 
-// ================= STYLE GLOBAL (sama seperti kode asli, ditambah style modal) =================
+// ================= STYLE GLOBAL =================
 const styles = {
   page: {
     padding: "30px 40px",
@@ -257,6 +257,17 @@ const styles = {
     cursor: "pointer",
     fontSize: "14px",
     marginTop: "15px",
+    marginRight: "10px",
+  },
+  resetAllButton: {
+    backgroundColor: "#dc3545",
+    color: "white",
+    border: "none",
+    padding: "8px 16px",
+    borderRadius: "6px",
+    cursor: "pointer",
+    fontSize: "14px",
+    marginTop: "15px",
   },
   feedback: {
     marginTop: "8px",
@@ -282,6 +293,16 @@ const styles = {
     backgroundColor: "#d4edda",
     color: "#155724",
     border: "2px solid #28a745",
+  },
+  finalSuccessBox: {
+    marginTop: "20px",
+    padding: "15px",
+    backgroundColor: "#d1e7dd",
+    color: "#0f5132",
+    borderRadius: "8px",
+    textAlign: "center",
+    fontSize: "16px",
+    fontWeight: "bold",
   },
   visualWrapper: {
     display: "flex",
@@ -933,7 +954,7 @@ const DoubleBeforeVisualization = ({ dataA, dataB, titleA, titleB, hoverContextA
   );
 };
 
-// ================= KOMPONEN CODE EDITOR DENGAN ANIMASI DAN PENJELASAN (DIPERBAIKI) =================
+// ================= KOMPONEN CODE EDITOR DENGAN ANIMASI DAN PENJELASAN =================
 const CodeEditorWithVisual = ({
   code,
   title,
@@ -973,7 +994,6 @@ const CodeEditorWithVisual = ({
     setTriggerAnimation(prev => prev + 1);
   }, [pyodideReady, code, runPythonCode]);
 
-  // Fungsi untuk merender penjelasan per baris (sama seperti di halaman PembuatanAksesElement)
   const renderLineExplanations = () => {
     if (!codeExplanation || !codeExplanation.length) return null;
     const lines = code.split("\n");
@@ -1138,7 +1158,7 @@ const CodeEditorEditable = ({ title, pyodideReady, runPythonCode }) => {
   );
 };
 
-// ================= KOMPONEN DRAG-N-DROP MATCHING (DENGAN PERBAIKAN PESAN DAN CALLBACK) =================
+// ================= KOMPONEN DRAG-N-DROP MATCHING (FINAL - TIDAK RESET OTOMATIS) =================
 const DragDropMatching = ({ items, resetTrigger, onAllCorrectChange }) => {
   const shuffleArray = (arr) => {
     const shuffled = [...arr];
@@ -1164,7 +1184,8 @@ const DragDropMatching = ({ items, resetTrigger, onAllCorrectChange }) => {
   const [correctFuncIds, setCorrectFuncIds] = useState(new Set());
   const [correctDescIds, setCorrectDescIds] = useState(new Set());
 
-  const recalculateCorrect = useCallback(() => {
+  // Hitung pasangan yang benar
+  const calculateCorrect = useCallback(() => {
     const newCorrectFuncIds = new Set();
     const newCorrectDescIds = new Set();
     for (const func of functions) {
@@ -1179,19 +1200,23 @@ const DragDropMatching = ({ items, resetTrigger, onAllCorrectChange }) => {
     setCorrectFuncIds(newCorrectFuncIds);
     setCorrectDescIds(newCorrectDescIds);
     const allMatched = functions.every(f => f.matchedDescId !== null);
-    if (allMatched && newCorrectFuncIds.size === items.length) {
-      setAllCorrect(true);
-      setFeedbackMsg("🎉 SELAMAT! Semua jawaban benar! 🎉");
-      if (onAllCorrectChange) onAllCorrectChange(true);
-    } else {
-      setAllCorrect(false);
-      if (onAllCorrectChange) onAllCorrectChange(false);
-      if (checked && allMatched) {
-        setFeedbackMsg(`❌ Masih ada ${items.length - newCorrectFuncIds.size} pasangan yang salah. Silakan perbaiki.`);
-      }
+    const allNowCorrect = (allMatched && newCorrectFuncIds.size === items.length);
+    if (allNowCorrect !== allCorrect) {
+      setAllCorrect(allNowCorrect);
+      if (onAllCorrectChange) onAllCorrectChange(allNowCorrect);
     }
-  }, [functions, descriptions, items.length, checked, onAllCorrectChange]);
+    if (checked && allMatched && !allNowCorrect) {
+      setFeedbackMsg(`❌ Masih ada ${items.length - newCorrectFuncIds.size} pasangan yang salah. Silakan perbaiki.`);
+    } else if (allNowCorrect) {
+      setFeedbackMsg("");
+    }
+  }, [functions, descriptions, items.length, checked, allCorrect, onAllCorrectChange]);
 
+  useEffect(() => {
+    calculateCorrect();
+  });
+
+  // Reset hanya yang salah
   const resetWrongOnly = () => {
     if (!checked) {
       setFeedbackMsg("⚠️ Silakan lengkapi jawaban terlebih dahulu! ⚠️");
@@ -1202,6 +1227,7 @@ const DragDropMatching = ({ items, resetTrigger, onAllCorrectChange }) => {
       return;
     }
     const wrongFuncs = functions.filter(f => !correctFuncIds.has(f.id));
+    if (wrongFuncs.length === 0) return;
     wrongFuncs.forEach(f => f.matchedDescId = null);
     const shuffledWrongFuncs = shuffleArray(wrongFuncs);
     const newFunctions = [
@@ -1220,12 +1246,11 @@ const DragDropMatching = ({ items, resetTrigger, onAllCorrectChange }) => {
     setFunctions(newFunctions);
     setDescriptions(newDescriptions);
     setFeedbackMsg("🔄 Pasangan yang salah telah direset dan diacak. Silakan perbaiki pasangan yang masih salah.");
-    setTimeout(() => {
-      recalculateCorrect();
-    }, 0);
+    setChecked(false);
   };
 
-  const fullReset = () => {
+  // Reset semua (hanya dipanggil oleh tombol Reset Semua)
+  const resetAll = () => {
     setFunctions(initFunctions());
     setDescriptions(initDescriptions());
     setChecked(false);
@@ -1236,17 +1261,16 @@ const DragDropMatching = ({ items, resetTrigger, onAllCorrectChange }) => {
     if (onAllCorrectChange) onAllCorrectChange(false);
   };
 
+  // Efek dari resetTrigger (dari parent) - hanya untuk reset awal, bukan otomatis
   useEffect(() => {
-    fullReset();
-  }, [resetTrigger, items]);
-
-  useEffect(() => {
-    if (checked) {
-      recalculateCorrect();
-    }
-  }, [functions, descriptions, checked, recalculateCorrect]);
+    resetAll();
+  }, [resetTrigger]);
 
   const handleDragStart = (e, funcId) => {
+    if (allCorrect) {
+      e.preventDefault();
+      return false;
+    }
     if (correctFuncIds.has(funcId)) {
       e.preventDefault();
       return false;
@@ -1257,6 +1281,7 @@ const DragDropMatching = ({ items, resetTrigger, onAllCorrectChange }) => {
 
   const handleDrop = (e, descId) => {
     e.preventDefault();
+    if (allCorrect) return;
     if (correctDescIds.has(descId)) {
       setFeedbackMsg("✅ Pasangan yang sudah benar tidak dapat diubah.");
       return;
@@ -1279,6 +1304,7 @@ const DragDropMatching = ({ items, resetTrigger, onAllCorrectChange }) => {
     setDescriptions(prev => prev.map(d => d.id === descId ? { ...d, matchedFuncId: funcId } : d));
 
     if (checked) {
+      setChecked(false);
       setFeedbackMsg("");
     }
   };
@@ -1289,18 +1315,20 @@ const DragDropMatching = ({ items, resetTrigger, onAllCorrectChange }) => {
   };
 
   const handleCheck = () => {
+    if (allCorrect) return;
     const totalMatched = functions.filter(f => f.matchedDescId !== null).length;
     if (totalMatched !== items.length) {
       setFeedbackMsg(`⚠️ Lengkapi semua pasangan terlebih dahulu. ⚠️`);
       setChecked(false);
-      setAllCorrect(false);
-      if (onAllCorrectChange) onAllCorrectChange(false);
       return;
     }
     setChecked(true);
   };
 
   const getDragItemStyle = (func) => {
+    if (allCorrect) {
+      return { backgroundColor: "#28a745", cursor: "default", opacity: 0.8, text: `${func.text} [Benar]` };
+    }
     if (checked) {
       if (correctFuncIds.has(func.id)) {
         return { backgroundColor: "#28a745", cursor: "default", opacity: 0.8, text: `${func.text} [Benar]` };
@@ -1318,6 +1346,9 @@ const DragDropMatching = ({ items, resetTrigger, onAllCorrectChange }) => {
   };
 
   const getDropZoneStyle = (desc) => {
+    if (allCorrect) {
+      return { backgroundColor: "#d1e7dd", border: "2px solid #198754", text: `${desc.text} [Benar]` };
+    }
     if (checked) {
       if (correctDescIds.has(desc.id)) {
         return { backgroundColor: "#d1e7dd", border: "2px solid #198754", text: `${desc.text} [Benar]` };
@@ -1347,7 +1378,7 @@ const DragDropMatching = ({ items, resetTrigger, onAllCorrectChange }) => {
             return (
               <div
                 key={func.id}
-                draggable={!(checked && correctFuncIds.has(func.id))}
+                draggable={!(allCorrect || (checked && correctFuncIds.has(func.id)))}
                 onDragStart={(e) => handleDragStart(e, func.id)}
                 style={{
                   ...styles.dragItem,
@@ -1386,22 +1417,29 @@ const DragDropMatching = ({ items, resetTrigger, onAllCorrectChange }) => {
           {feedbackMsg}
         </div>
       )}
-      <div>
-        <button 
-          style={styles.checkMatchingButton} 
-          onClick={handleCheck} 
-          disabled={allCorrect}
-        >
-          {allCorrect ? "✅ Semua Benar" : "🔍 Periksa Jawaban"}
-        </button>
-        <button 
-          style={styles.resetWrongButton} 
-          onClick={resetWrongOnly}
-          disabled={allCorrect}
-        >
-          ↻ Reset Jawaban Salah
-        </button>
-      </div>
+      {/* Tombol berdasarkan status allCorrect */}
+      {!allCorrect && (
+        <div>
+          <button style={styles.checkMatchingButton} onClick={handleCheck}>
+            🔍 Periksa Jawaban
+          </button>
+          <button style={styles.resetWrongButton} onClick={resetWrongOnly}>
+            ↻ Reset Jawaban Salah
+          </button>
+        </div>
+      )}
+      {allCorrect && (
+        <div>
+          <button style={styles.resetAllButton} onClick={resetAll}>
+            🔄 Reset Semua
+          </button>
+        </div>
+      )}
+      {allCorrect && (
+        <div style={styles.finalSuccessBox}>
+          Selamat! Semua jawaban sudah dijawab dengan benar.
+        </div>
+      )}
     </div>
   );
 };
@@ -1503,7 +1541,7 @@ export default function OperasiManipulasiList() {
     }
   }, [eksplorasiSelected, isEksplorasiCompleted]);
 
-  // DATA VISUALISASI (sama seperti asli)
+  // DATA VISUALISASI (sama seperti asli) - disingkat karena panjang
   const concatBeforeA = [1,2,3];
   const concatBeforeB = [4,5,6];
   const concatAfter = [1,2,3,4,5,6];
@@ -1538,7 +1576,7 @@ export default function OperasiManipulasiList() {
   const lengthBefore = [1,2,3,4];
   const lengthAfter = [4];
 
-  // Hover context (sama seperti asli)
+  // Hover context (sama seperti asli) - disingkat
   const concatHoverBeforeA = { 0:"a:1",1:"a:2",2:"a:3" };
   const concatHoverBeforeB = { 0:"b:4",1:"b:5",2:"b:6" };
   const concatHoverAfter = { 0:"1",1:"2",2:"3",3:"4",4:"5",5:"6" };
@@ -1578,7 +1616,7 @@ export default function OperasiManipulasiList() {
   const lengthHoverBefore = { 0:"1",1:"2",2:"3",3:"4" };
   const lengthHoverAfter = {};
 
-  // ANIMATION STEPS (sama seperti asli)
+  // ANIMATION STEPS (sama seperti asli) - disingkat
   const concatSteps = [
     { highlightIndex: 0, explanation: "Mengambil elemen pertama dari a (1)" },
     { highlightIndex: 1, explanation: "Mengambil elemen kedua dari a (2)" },
@@ -1656,7 +1694,7 @@ export default function OperasiManipulasiList() {
     { highlightIndex: 3, explanation: "Menghitung elemen ke-4 (rambutan) -> panjang = 4" },
   ];
 
-  // Penjelasan kode per baris (sama seperti asli, namun akan dirender dengan format baru)
+  // Penjelasan kode per baris
   const codeExplanations = {
     concat: [
       "Membuat list a dengan elemen 1,2,3.",

@@ -5,7 +5,7 @@ import SidebarMateri from "../../komponen/SidebarMateri";
 import { db } from "../../../config/firebase";
 import { doc, updateDoc, increment } from "firebase/firestore";
 
-// ================= STYLE GLOBAL (sama seperti kode asli, ditambah style modal) =================
+// ================= STYLE GLOBAL =================
 const styles = {
   page: {
     padding: "30px 40px",
@@ -392,7 +392,7 @@ const styles = {
   },
 };
 
-// ================= KOMPONEN VISUALISASI LIST (sama seperti asli, plus dihapus) =================
+// ================= KOMPONEN VISUALISASI LIST =================
 const ListVisualization = ({ data, title, highlightSequence, processExplanation, hidePositive = false, hideNegative = false, disableHover = false }) => {
   const [currentHighlight, setCurrentHighlight] = useState(null);
   const [explanationText, setExplanationText] = useState("");
@@ -480,7 +480,6 @@ const ListVisualization = ({ data, title, highlightSequence, processExplanation,
             >
               <div style={visStyles.value}>{String(item)}</div>
             </div>
-            {/* PERUBAHAN: tanda + dihapus dari indeks positif */}
             {!hidePositive && <div style={visStyles.indexLabel}>Indeks {idx}</div>}
             {!hideNegative && <div style={visStyles.indexLabelNeg}>Indeks {negativeIndices[idx]}</div>}
           </div>
@@ -542,7 +541,7 @@ const visStyles = {
   note: { fontSize: "12px", color: "#666", marginTop: "10px", textAlign: "center" },
 };
 
-// ================= KOMPONEN CODE EDITOR (sama seperti asli) =================
+// ================= KOMPONEN CODE EDITOR =================
 const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, highlightMapping, pyodideReady, runPythonCode, hidePositive = false, hideNegative = false, disableHover = false, lineExplanations }) => {
   const [output, setOutput] = useState("");
   const [isRunning, setIsRunning] = useState(false);
@@ -651,7 +650,7 @@ const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, highlightM
   );
 };
 
-// ================= KOMPONEN UNTUK LATIHAN PRAKTIK CODING (sama seperti asli) =================
+// ================= KOMPONEN LATIHAN PRAKTIK CODING =================
 const CodeEditorEditable = ({ title, pyodideReady, runPythonCode }) => {
   const [localCode, setLocalCode] = useState("");
   const [output, setOutput] = useState("");
@@ -750,7 +749,7 @@ const CodeEditorEditable = ({ title, pyodideReady, runPythonCode }) => {
 };
 
 // ================= KOMPONEN SOAL MELENGKAPI KODE =================
-const CodeCompletionQuestion = ({ question, codeParts, placeholders, expectedAnswers, index, onCorrectChange }) => {
+const CodeCompletionQuestion = ({ question, codeParts, placeholders, expectedAnswers, explanation, index, onCorrectChange }) => {
   const [answers, setAnswers] = useState(placeholders.map(() => ""));
   const [feedback, setFeedback] = useState("");
   const [checked, setChecked] = useState(false);
@@ -789,11 +788,11 @@ const CodeCompletionQuestion = ({ question, codeParts, placeholders, expectedAns
     }
     setChecked(true);
     if (allCorrect) {
-      setFeedback("Benar!");
+      setFeedback(`✓ Benar – ${explanation}`);
       setIsCorrect(true);
       if (onCorrectChange) onCorrectChange(index, true);
     } else {
-      setFeedback("Salah. Coba lagi!");
+      setFeedback("✗ Salah. Coba lagi!");
       setIsCorrect(false);
       if (onCorrectChange) onCorrectChange(index, false);
     }
@@ -845,13 +844,13 @@ const CodeCompletionQuestion = ({ question, codeParts, placeholders, expectedAns
           </button>
         )}
       </div>
-      {feedback && <div style={styles.feedback}>{feedback}</div>}
+      {feedback && <div style={feedback.includes("✓") ? styles.feedbackCorrect : styles.feedbackWrong}>{feedback}</div>}
     </div>
   );
 };
 
 // ================= KOMPONEN SOAL MENENTUKAN OUTPUT =================
-const GuessOutputQuestion = ({ question, codeSnippet, expectedOutput, index, onCorrectChange }) => {
+const GuessOutputQuestion = ({ question, codeSnippet, expectedOutput, explanation, index, onCorrectChange }) => {
   const [userAnswer, setUserAnswer] = useState("");
   const [feedback, setFeedback] = useState("");
   const [checked, setChecked] = useState(false);
@@ -871,11 +870,11 @@ const GuessOutputQuestion = ({ question, codeSnippet, expectedOutput, index, onC
     const correct = userAnswer.trim() === expectedOutput;
     setChecked(true);
     if (correct) {
-      setFeedback("Benar!");
+      setFeedback(`✓ Benar – ${explanation}`);
       setIsCorrect(true);
       if (onCorrectChange) onCorrectChange(index, true);
     } else {
-      setFeedback("Salah. Coba lagi!");
+      setFeedback("✗ Salah. Coba lagi!");
       setIsCorrect(false);
       if (onCorrectChange) onCorrectChange(index, false);
     }
@@ -912,7 +911,7 @@ const GuessOutputQuestion = ({ question, codeSnippet, expectedOutput, index, onC
           </button>
         )}
       </div>
-      {feedback && <div style={styles.feedback}>{feedback}</div>}
+      {feedback && <div style={feedback.includes("✓") ? styles.feedbackCorrect : styles.feedbackWrong}>{feedback}</div>}
     </div>
   );
 };
@@ -1097,22 +1096,29 @@ print("Indeks 1 sampai 3:", angka[1:4])`;
     "Melakukan slicing dari indeks 1 sampai sebelum indeks 4, sehingga mengambil elemen indeks 1 (20), indeks 2 (30), indeks 3 (40). Hasilnya dicetak."
   ];
 
+  // Soal dengan penjelasan jawaban benar
   const soal1CodeParts = ["buah = [\"apel\", \"jeruk\", \"mangga\"]\nprint(buah[", "])"];
   const soal1Placeholders = [""];
   const soal1Expected = ["1"];
+  const soal1Explanation = "Indeks dalam Python dimulai dari 0. 'jeruk' adalah elemen kedua, maka indeksnya adalah 1.";
 
   const soal2CodeParts = ["nilai = [10, 20, 30, 40]\nprint(nilai[", "])"];
   const soal2Placeholders = [""];
   const soal2Expected = ["2"];
+  const soal2Explanation = "List nilai = [10,20,30,40]. Angka 30 berada pada indeks ke-2 (karena indeks 0=10, 1=20, 2=30).";
 
   const soal3CodeParts = ["data = [5, 10, 15, 20]\nprint(data[", "])"];
   const soal3Placeholders = [""];
   const soal3Expected = ["-2"];
+  const soal3Explanation = "Indeks negatif -1 adalah elemen terakhir (20), -2 adalah elemen kedua dari terakhir (15).";
 
   const soal4Code = `buah = ["apel", "jeruk", "mangga"]
 print(buah[1])`;
+  const soal4Explanation = "List buah berisi 'apel' (indeks 0), 'jeruk' (indeks 1), 'mangga' (indeks 2). Perintah print(buah[1]) mencetak 'jeruk'.";
+
   const soal5Code = `angka = [100, 200, 300]
 print(angka[-2])`;
+  const soal5Explanation = "Indeks -1 adalah elemen terakhir (300), -2 adalah elemen kedua dari belakang yaitu 200.";
 
   const handleCorrectChange = (index, isCorrect) => {
     setCorrectStatus(prev => {
@@ -1409,6 +1415,7 @@ nilai3 = 78
                     codeParts={soal1CodeParts}
                     placeholders={soal1Placeholders}
                     expectedAnswers={soal1Expected}
+                    explanation={soal1Explanation}
                     index={0}
                     onCorrectChange={handleCorrectChange}
                   />
@@ -1418,6 +1425,7 @@ nilai3 = 78
                     codeParts={soal2CodeParts}
                     placeholders={soal2Placeholders}
                     expectedAnswers={soal2Expected}
+                    explanation={soal2Explanation}
                     index={1}
                     onCorrectChange={handleCorrectChange}
                   />
@@ -1427,6 +1435,7 @@ nilai3 = 78
                     codeParts={soal3CodeParts}
                     placeholders={soal3Placeholders}
                     expectedAnswers={soal3Expected}
+                    explanation={soal3Explanation}
                     index={2}
                     onCorrectChange={handleCorrectChange}
                   />
@@ -1435,6 +1444,7 @@ nilai3 = 78
                     question="4. Output dari kode berikut adalah ...."
                     codeSnippet={soal4Code}
                     expectedOutput="jeruk"
+                    explanation={soal4Explanation}
                     index={3}
                     onCorrectChange={handleCorrectChange}
                   />
@@ -1443,13 +1453,15 @@ nilai3 = 78
                     question="5. Jika kita menjalankan kode berikut, maka yang akan tercetak adalah ...."
                     codeSnippet={soal5Code}
                     expectedOutput="200"
+                    explanation={soal5Explanation}
                     index={4}
                     onCorrectChange={handleCorrectChange}
                   />
 
-                  {allCorrect && !bonusGiven && (
+                  {/* Ucapan selamat setelah semua soal benar (tanpa emoji, persis seperti gambar) */}
+                  {allCorrect && (
                     <div style={styles.finalSuccessBox}>
-                      Selamat! Anda telah menyelesaikan semua soal dengan benar. Klik tombol di bawah untuk melanjutkan.
+                      Selamat! Semua jawaban sudah dijawab dengan benar.
                     </div>
                   )}
                 </div>
