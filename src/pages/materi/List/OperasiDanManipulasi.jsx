@@ -396,7 +396,6 @@ const styles = {
     marginBottom: "10px",
     color: "white",
   },
-  // Modal styles
   modalOverlay: {
     position: "fixed",
     top: 0,
@@ -1158,7 +1157,7 @@ const CodeEditorEditable = ({ title, pyodideReady, runPythonCode }) => {
   );
 };
 
-// ================= KOMPONEN DRAG-N-DROP MATCHING (FINAL - TIDAK RESET OTOMATIS) =================
+// ================= KOMPONEN DRAG-N-DROP MATCHING (DIPERBAIKI) =================
 const DragDropMatching = ({ items, resetTrigger, onAllCorrectChange }) => {
   const shuffleArray = (arr) => {
     const shuffled = [...arr];
@@ -1184,8 +1183,18 @@ const DragDropMatching = ({ items, resetTrigger, onAllCorrectChange }) => {
   const [correctFuncIds, setCorrectFuncIds] = useState(new Set());
   const [correctDescIds, setCorrectDescIds] = useState(new Set());
 
-  // Hitung pasangan yang benar
-  const calculateCorrect = useCallback(() => {
+  // Fungsi untuk memeriksa jawaban (dipanggil saat klik Periksa)
+  const checkAnswers = () => {
+    const allMatched = functions.every(f => f.matchedDescId !== null);
+    if (!allMatched) {
+      setFeedbackMsg("⚠️ Lengkapi semua pasangan terlebih dahulu. ⚠️");
+      setChecked(false);
+      setAllCorrect(false);
+      if (onAllCorrectChange) onAllCorrectChange(false);
+      return;
+    }
+
+    // Hitung pasangan yang benar
     const newCorrectFuncIds = new Set();
     const newCorrectDescIds = new Set();
     for (const func of functions) {
@@ -1199,24 +1208,18 @@ const DragDropMatching = ({ items, resetTrigger, onAllCorrectChange }) => {
     }
     setCorrectFuncIds(newCorrectFuncIds);
     setCorrectDescIds(newCorrectDescIds);
-    const allMatched = functions.every(f => f.matchedDescId !== null);
-    const allNowCorrect = (allMatched && newCorrectFuncIds.size === items.length);
-    if (allNowCorrect !== allCorrect) {
-      setAllCorrect(allNowCorrect);
-      if (onAllCorrectChange) onAllCorrectChange(allNowCorrect);
-    }
-    if (checked && allMatched && !allNowCorrect) {
+    const nowAllCorrect = (newCorrectFuncIds.size === items.length);
+    setAllCorrect(nowAllCorrect);
+    setChecked(true);
+    if (onAllCorrectChange) onAllCorrectChange(nowAllCorrect);
+    if (!nowAllCorrect) {
       setFeedbackMsg(`❌ Masih ada ${items.length - newCorrectFuncIds.size} pasangan yang salah. Silakan perbaiki.`);
-    } else if (allNowCorrect) {
+    } else {
       setFeedbackMsg("");
     }
-  }, [functions, descriptions, items.length, checked, allCorrect, onAllCorrectChange]);
+  };
 
-  useEffect(() => {
-    calculateCorrect();
-  });
-
-  // Reset hanya yang salah
+  // Reset hanya yang salah (setelah diperiksa)
   const resetWrongOnly = () => {
     if (!checked) {
       setFeedbackMsg("⚠️ Silakan lengkapi jawaban terlebih dahulu! ⚠️");
@@ -1247,9 +1250,11 @@ const DragDropMatching = ({ items, resetTrigger, onAllCorrectChange }) => {
     setDescriptions(newDescriptions);
     setFeedbackMsg("🔄 Pasangan yang salah telah direset dan diacak. Silakan perbaiki pasangan yang masih salah.");
     setChecked(false);
+    setAllCorrect(false);
+    if (onAllCorrectChange) onAllCorrectChange(false);
   };
 
-  // Reset semua (hanya dipanggil oleh tombol Reset Semua)
+  // Reset semua (tombol Reset Semua)
   const resetAll = () => {
     setFunctions(initFunctions());
     setDescriptions(initDescriptions());
@@ -1261,7 +1266,6 @@ const DragDropMatching = ({ items, resetTrigger, onAllCorrectChange }) => {
     if (onAllCorrectChange) onAllCorrectChange(false);
   };
 
-  // Efek dari resetTrigger (dari parent) - hanya untuk reset awal, bukan otomatis
   useEffect(() => {
     resetAll();
   }, [resetTrigger]);
@@ -1271,7 +1275,7 @@ const DragDropMatching = ({ items, resetTrigger, onAllCorrectChange }) => {
       e.preventDefault();
       return false;
     }
-    if (correctFuncIds.has(funcId)) {
+    if (checked && correctFuncIds.has(funcId)) {
       e.preventDefault();
       return false;
     }
@@ -1282,7 +1286,7 @@ const DragDropMatching = ({ items, resetTrigger, onAllCorrectChange }) => {
   const handleDrop = (e, descId) => {
     e.preventDefault();
     if (allCorrect) return;
-    if (correctDescIds.has(descId)) {
+    if (checked && correctDescIds.has(descId)) {
       setFeedbackMsg("✅ Pasangan yang sudah benar tidak dapat diubah.");
       return;
     }
@@ -1290,7 +1294,7 @@ const DragDropMatching = ({ items, resetTrigger, onAllCorrectChange }) => {
     const func = functions.find(f => f.id === funcId);
     const desc = descriptions.find(d => d.id === descId);
     if (!func || !desc) return;
-    if (correctFuncIds.has(func.id)) return;
+    if (checked && correctFuncIds.has(func.id)) return;
 
     if (func.matchedDescId !== null) {
       const oldDescId = func.matchedDescId;
@@ -1305,24 +1309,15 @@ const DragDropMatching = ({ items, resetTrigger, onAllCorrectChange }) => {
 
     if (checked) {
       setChecked(false);
+      setAllCorrect(false);
       setFeedbackMsg("");
+      if (onAllCorrectChange) onAllCorrectChange(false);
     }
   };
 
   const handleDragOver = (e) => {
     e.preventDefault();
     e.dataTransfer.dropEffect = "copy";
-  };
-
-  const handleCheck = () => {
-    if (allCorrect) return;
-    const totalMatched = functions.filter(f => f.matchedDescId !== null).length;
-    if (totalMatched !== items.length) {
-      setFeedbackMsg(`⚠️ Lengkapi semua pasangan terlebih dahulu. ⚠️`);
-      setChecked(false);
-      return;
-    }
-    setChecked(true);
   };
 
   const getDragItemStyle = (func) => {
@@ -1417,13 +1412,12 @@ const DragDropMatching = ({ items, resetTrigger, onAllCorrectChange }) => {
           {feedbackMsg}
         </div>
       )}
-      {/* Tombol berdasarkan status allCorrect */}
       {!allCorrect && (
         <div>
-          <button style={styles.checkMatchingButton} onClick={handleCheck}>
+          <button style={styles.checkMatchingButton} onClick={checkAnswers}>
             🔍 Periksa Jawaban
           </button>
-          <button style={styles.resetWrongButton} onClick={resetWrongOnly}>
+          <button style={styles.resetWrongButton} onClick={resetWrongOnly} disabled={!checked}>
             ↻ Reset Jawaban Salah
           </button>
         </div>
@@ -1448,7 +1442,6 @@ const DragDropMatching = ({ items, resetTrigger, onAllCorrectChange }) => {
 export default function OperasiManipulasiList() {
   const navigate = useNavigate();
 
-  // Auth check
   useEffect(() => {
     const userId = localStorage.getItem('userId');
     const userEmail = localStorage.getItem('userEmail');
@@ -1461,19 +1454,16 @@ export default function OperasiManipulasiList() {
   const pyodideRef = useRef(null);
   const [resetMatching, setResetMatching] = useState(0);
 
-  // State untuk bonus progres
   const [allMatchingCorrect, setAllMatchingCorrect] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [bonusGiven, setBonusGiven] = useState(false);
   const userId = localStorage.getItem('userId');
 
-  // Cek apakah bonus sudah pernah diberikan untuk halaman ini
   useEffect(() => {
     const already = localStorage.getItem("operasi_manipulasi_bonus_done");
     if (already === "true") setBonusGiven(true);
   }, []);
 
-  // Ketika allMatchingCorrect berubah menjadi true, muncul modal
   useEffect(() => {
     if (allMatchingCorrect && !bonusGiven && userId) {
       setShowModal(true);
@@ -1541,7 +1531,7 @@ export default function OperasiManipulasiList() {
     }
   }, [eksplorasiSelected, isEksplorasiCompleted]);
 
-  // DATA VISUALISASI (sama seperti asli) - disingkat karena panjang
+  // DATA VISUALISASI (sama seperti asli)
   const concatBeforeA = [1,2,3];
   const concatBeforeB = [4,5,6];
   const concatAfter = [1,2,3,4,5,6];
@@ -1576,7 +1566,6 @@ export default function OperasiManipulasiList() {
   const lengthBefore = [1,2,3,4];
   const lengthAfter = [4];
 
-  // Hover context (sama seperti asli) - disingkat
   const concatHoverBeforeA = { 0:"a:1",1:"a:2",2:"a:3" };
   const concatHoverBeforeB = { 0:"b:4",1:"b:5",2:"b:6" };
   const concatHoverAfter = { 0:"1",1:"2",2:"3",3:"4",4:"5",5:"6" };
@@ -1616,7 +1605,6 @@ export default function OperasiManipulasiList() {
   const lengthHoverBefore = { 0:"1",1:"2",2:"3",3:"4" };
   const lengthHoverAfter = {};
 
-  // ANIMATION STEPS (sama seperti asli) - disingkat
   const concatSteps = [
     { highlightIndex: 0, explanation: "Mengambil elemen pertama dari a (1)" },
     { highlightIndex: 1, explanation: "Mengambil elemen kedua dari a (2)" },
@@ -1694,7 +1682,6 @@ export default function OperasiManipulasiList() {
     { highlightIndex: 3, explanation: "Menghitung elemen ke-4 (rambutan) -> panjang = 4" },
   ];
 
-  // Penjelasan kode per baris
   const codeExplanations = {
     concat: [
       "Membuat list a dengan elemen 1,2,3.",
@@ -1794,7 +1781,6 @@ export default function OperasiManipulasiList() {
     length: `buah = ["durian", "nanas", "mangga", "rambutan"]\nprint(len(buah))`,
   };
 
-  // Load Pyodide
   useEffect(() => {
     const loadPyodide = async () => {
       if (!window.loadPyodide) {
