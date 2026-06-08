@@ -39,50 +39,92 @@ const CodeEditor = ({ code, codeKey, pyodideReady, runPythonCode }) => {
   );
 };
 
-// ===================== VISUALISASI PERBANDINGAN =====================
+// ===================== VISUALISASI PERBANDINGAN (TEKS LUAR TABEL DIPERBESAR) =====================
 const IlustrasiPerbandingan = () => {
-  const dataBiasa = [85, 90, 78, 88, 92, 80];
-  const dataNested = [
-    [85, 90, 78],
-    [88, 92, 80]
-  ];
+  // Style untuk sel tabel tetap kecil dan rapat
+  const thStyle = {
+    border: "1px solid #ccc",
+    padding: "4px 2px",
+    backgroundColor: "#f0f0f0",
+    fontWeight: "bold",
+    textAlign: "center",
+    fontSize: "11px",
+  };
+  const tdStyle = {
+    border: "1px solid #ccc",
+    padding: "4px 2px",
+    textAlign: "center",
+    fontSize: "11px",
+  };
 
   return (
     <div style={styles.perbandinganContainer}>
-      <h4 style={styles.perbandinganTitle}>Perbandingan Penyimpanan Data Nilai Siswa</h4>
+      <h4 style={styles.perbandinganTitle}>Contoh Perbandingan: List Biasa vs Nested List</h4>
       <div style={styles.perbandinganWrapper}>
-        {/* List Biasa */}
+        {/* Tabel List Biasa */}
         <div style={styles.perbandinganCard}>
           <h5 style={styles.perbandinganCardTitleRed}>Tanpa Nested List (List Biasa)</h5>
           <pre style={styles.perbandinganCode}>nilai = [85, 90, 78, 88, 92, 80]</pre>
           <p style={styles.perbandinganWarning}>⚠️ Semua nilai tercampur. Tidak jelas mana nilai milik siswa 1 dan mana milik siswa 2.</p>
-          <table style={styles.perbandinganTable}>
+          <table style={{ width: "100%", borderCollapse: "collapse", marginTop: "10px" }}>
             <thead>
-              <tr style={{ backgroundColor: "#f0f0f0" }}>
-                <th>Indeks</th><th>0</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th>
-               </tr>
+              <tr>
+                <th style={thStyle}>Mata Pelajaran</th>
+                <th style={thStyle}>IPA<br/>(siswa 1)</th>
+                <th style={thStyle}>Informatika<br/>(siswa 1)</th>
+                <th style={thStyle}>Matematika<br/>(siswa 1)</th>
+                <th style={thStyle}>IPA<br/>(siswa 2)</th>
+                <th style={thStyle}>Informatika<br/>(siswa 2)</th>
+                <th style={thStyle}>Matematika<br/>(siswa 2)</th>
+              </tr>
             </thead>
             <tbody>
-              <tr><td style={{ fontWeight: "bold" }}>Nilai</td><td>85</td><td>90</td><td>78</td><td>88</td><td>92</td><td>80</td></tr>
+              <tr>
+                <td style={{ ...tdStyle, fontWeight: "bold" }}>Nilai</td>
+                <td style={tdStyle}>85</td>
+                <td style={tdStyle}>90</td>
+                <td style={tdStyle}>78</td>
+                <td style={tdStyle}>88</td>
+                <td style={tdStyle}>92</td>
+                <td style={tdStyle}>80</td>
+              </tr>
             </tbody>
           </table>
-          <p style={styles.perbandinganNote}>Seharusnya nilai siswa 1: 85,90,78 dan siswa 2: 88,92,80, tetapi di sini tercampur.</p>
+          <p style={styles.perbandinganNote}>
+            Seharusnya nilai {"\n"}
+            siswa 1: 85,90,78 {"\n"}
+            siswa 2: 88,92,80 {"\n"}
+            tetapi di sini tercampur.
+          </p>
         </div>
 
-        {/* Nested List */}
+        {/* Tabel Nested List */}
         <div style={styles.perbandinganCard}>
           <h5 style={styles.perbandinganCardTitleGreen}>Dengan Nested List</h5>
           <pre style={styles.perbandinganCode}>nilai = [[85, 90, 78], [88, 92, 80]]</pre>
           <p style={styles.perbandinganSuccess}>✓ Data terkelompok per siswa (baris) menjadi lebih terstruktur.</p>
-          <table style={styles.perbandinganTable}>
+          <table style={{ width: "100%", borderCollapse: "collapse", marginTop: "10px" }}>
             <thead>
-              <tr style={{ backgroundColor: "#f0f0f0" }}>
-                <th>Baris (Siswa)</th><th>Kolom 0</th><th>Kolom 1</th><th>Kolom 2</th>
+              <tr>
+                <th style={thStyle}>Mata Pelajaran</th>
+                <th style={thStyle}>IPA</th>
+                <th style={thStyle}>Informatika</th>
+                <th style={thStyle}>Matematika</th>
               </tr>
             </thead>
             <tbody>
-              <tr><td style={{ fontWeight: "bold" }}>Siswa 1 (baris 0)</td><td>85</td><td>90</td><td>78</td></tr>
-              <tr><td style={{ fontWeight: "bold" }}>Siswa 2 (baris 1)</td><td>88</td><td>92</td><td>80</td></tr>
+              <tr>
+                <td style={{ ...tdStyle, fontWeight: "bold" }}>Siswa 1</td>
+                <td style={tdStyle}>85</td>
+                <td style={tdStyle}>90</td>
+                <td style={tdStyle}>78</td>
+              </tr>
+              <tr>
+                <td style={{ ...tdStyle, fontWeight: "bold" }}>Siswa 2</td>
+                <td style={tdStyle}>88</td>
+                <td style={tdStyle}>92</td>
+                <td style={tdStyle}>80</td>
+              </tr>
             </tbody>
           </table>
           <p style={styles.perbandinganItalic}>Jauh lebih mudah diakses per siswa!</p>
@@ -184,7 +226,7 @@ const Eksplorasi = ({ onComplete }) => {
   );
 };
 
-// ===================== LATIHAN (dengan callback ke parent) =====================
+// ===================== LATIHAN =====================
 const LatihanNestedList = ({ onAllCorrectChange }) => {
   const [selected, setSelected] = useState([null, null, null, null, null]);
   const [locked, setLocked] = useState([false, false, false, false, false]);
@@ -249,7 +291,6 @@ const LatihanNestedList = ({ onAllCorrectChange }) => {
     }
   ];
 
-  // Notify parent when allCorrect changes
   useEffect(() => {
     onAllCorrectChange(allCorrect);
   }, [allCorrect, onAllCorrectChange]);
@@ -386,19 +427,16 @@ export default function PendahuluanNestedList() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [isEksplorasiCompleted, setIsEksplorasiCompleted] = useState(false);
 
-  // State untuk bonus progres
   const [allLatihanCorrect, setAllLatihanCorrect] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [bonusGiven, setBonusGiven] = useState(false);
   const userId = localStorage.getItem('userId');
 
-  // Cek apakah bonus sudah pernah diberikan untuk halaman ini
   useEffect(() => {
     const already = localStorage.getItem("pendahuluan_nested_bonus_done");
     if (already === "true") setBonusGiven(true);
   }, []);
 
-  // Ketika semua latihan benar, tampilkan modal
   useEffect(() => {
     if (allLatihanCorrect && !bonusGiven && userId) {
       setShowModal(true);
@@ -420,7 +458,6 @@ export default function PendahuluanNestedList() {
     }
   };
 
-  // Load Pyodide
   useEffect(() => {
     const loadPyodide = async () => {
       if (!window.loadPyodide) {
@@ -468,6 +505,44 @@ _buffer.getvalue()
 
   const handleEksplorasiComplete = () => setIsEksplorasiCompleted(true);
 
+  const contohNilaiSiswa = `nilai_siswa = [
+    [85, 90, 78],  # Siswa 0: Matematika, Bahasa Inggris, IPA
+    [92, 88, 84],  # Siswa 1: Matematika, Bahasa Inggris, IPA
+    [75, 80, 91]   # Siswa 2: Matematika, Bahasa Inggris, IPA
+]
+print("Data Nilai Siswa:")
+for i, siswa in enumerate(nilai_siswa):
+    print(f"Siswa {i+1}: {siswa}")`;
+
+  const contohPapan = `papan = [
+    ['X', 'O', 'X'],
+    ['O', 'X', ' '],
+    [' ', ' ', 'O']
+]
+print("Papan Tic-Tac-Toe:")
+for baris in papan:
+    print(baris)`;
+
+  const contohCitra = `citra = [
+    [0, 50, 100, 255],
+    [30, 80, 120, 200],
+    [60, 90, 180, 220],
+    [10, 40, 70, 140]
+]
+print("Representasi citra digital (nilai piksel):")
+for baris in citra:
+    print(baris)`;
+
+  const contohKoordinat = `titik_koordinat = [
+    [0, 0],  # titik awal
+    [2, 3],
+    [5, 1],
+    [7, 8]
+]
+print("Daftar titik koordinat:")
+for titik in titik_koordinat:
+    print(f"({titik[0]}, {titik[1]})")`;
+
   return (
     <>
       <Navbar />
@@ -500,11 +575,16 @@ _buffer.getvalue()
                   <p style={styles.text}>
                     <strong>Nested list</strong> (list bersarang) adalah sebuah list yang di dalamnya terdapat list lain sebagai elemen. Dengan kata lain, nested list adalah "list di dalam list". Konsep ini memungkinkan kita menyimpan data dalam bentuk yang lebih kompleks, seperti tabel, matriks, atau struktur data bertingkat.
                   </p>
+
                   <div style={styles.infoBox}>
                     <strong>💡 Ilustrasi Konsep:</strong>
-                    <p>Bayangkan kita memiliki data nilai ujian dari beberapa siswa untuk beberapa mata pelajaran. Dengan list biasa, data akan tercampur dan sulit dibedakan. Namun dengan nested list, data dapat dikelompokkan per siswa menjadi lebih terstruktur seperti tabel di bawah ini.</p>
-                    <IlustrasiPerbandingan />
                   </div>
+                  <IlustrasiPerbandingan />
+
+                  <p style={styles.text}>
+                    Bayangkan kita memiliki data nilai ujian dari beberapa siswa untuk beberapa mata pelajaran. Dengan list biasa, data akan tercampur dan sulit dibedakan. Namun dengan nested list, data dapat dikelompokkan per siswa menjadi lebih terstruktur seperti tabel di atas.
+                  </p>
+
                   <h3 style={styles.subTitle}>Mengapa Menggunakan Nested List?</h3>
                   <ul style={styles.list}>
                     <li><strong>Data Terstruktur</strong>: Memudahkan representasi data seperti tabel, matriks, atau grid.</li>
@@ -512,13 +592,24 @@ _buffer.getvalue()
                     <li><strong>Fleksibilitas</strong>: Setiap list di dalam nested list bisa memiliki panjang yang berbeda (ragged array), memberikan fleksibilitas dalam menyimpan data.</li>
                     <li><strong>Dasar untuk Struktur Data Lanjutan</strong>: Nested list menjadi fondasi untuk struktur data multidimensi seperti matriks dalam komputasi numerik.</li>
                   </ul>
+
                   <h3 style={styles.subTitle}>Contoh Penggunaan dalam Kehidupan Nyata</h3>
-                  <ul style={styles.list}>
-                    <li><strong>Data Nilai Siswa</strong>: Baris mewakili siswa, kolom mewakili mata pelajaran.</li>
-                    <li><strong>Papan Permainan</strong>: Game seperti Tic-Tac-Toe atau Catur dapat direpresentasikan dengan nested list 3x3 atau 8x8.</li>
-                    <li><strong>Citra Digital</strong>: Gambar hitam-putih dapat direpresentasikan sebagai nested list di mana setiap elemen adalah nilai intensitas pixel.</li>
-                    <li><strong>Koordinat</strong>: Menyimpan titik-titik koordinat (x, y) dalam bentuk list of lists.</li>
-                  </ul>
+                  
+                  <h4 style={{ marginTop: "20px", marginBottom: "10px", color: "#306998" }}>1. Data Nilai Siswa</h4>
+                  <p>Baris mewakili siswa, kolom mewakili mata pelajaran.</p>
+                  <CodeEditor code={contohNilaiSiswa} codeKey="nilai_siswa" pyodideReady={pyodideReady} runPythonCode={runPythonCode} />
+
+                  <h4 style={{ marginTop: "20px", marginBottom: "10px", color: "#306998" }}>2. Papan Permainan (Tic-Tac-Toe)</h4>
+                  <p>Game seperti Tic-Tac-Toe dapat direpresentasikan dengan nested list 3x3.</p>
+                  <CodeEditor code={contohPapan} codeKey="papan" pyodideReady={pyodideReady} runPythonCode={runPythonCode} />
+
+                  <h4 style={{ marginTop: "20px", marginBottom: "10px", color: "#306998" }}>3. Citra Digital</h4>
+                  <p>Gambar hitam-putih dapat direpresentasikan sebagai nested list di mana setiap elemen adalah nilai pikselnya.</p>
+                  <CodeEditor code={contohCitra} codeKey="citra" pyodideReady={pyodideReady} runPythonCode={runPythonCode} />
+
+                  <h4 style={{ marginTop: "20px", marginBottom: "10px", color: "#306998" }}>4. Koordinat</h4>
+                  <p>Menyimpan titik-titik koordinat (x, y) dalam bentuk list of lists.</p>
+                  <CodeEditor code={contohKoordinat} codeKey="titik_koordinat" pyodideReady={pyodideReady} runPythonCode={runPythonCode} />
                 </div>
               </section>
               <section style={styles.section}>
@@ -533,7 +624,6 @@ _buffer.getvalue()
         </div>
       </div>
 
-      {/* Modal Sukses */}
       {showModal && (
         <div style={styles.modalOverlay}>
           <div style={styles.modal}>
@@ -615,7 +705,7 @@ const styles = {
     boxShadow: "0 5px 15px rgba(0,0,0,0.08)",
   },
   list: { paddingLeft: "20px", lineHeight: "1.8" },
-  text: { lineHeight: "1.8", color: "#333", marginBottom: "15px" },
+  text: { lineHeight: "1.8", color: "#333", marginBottom: "15px", fontSize: "15px" },
   subTitle: {
     marginTop: "24px",
     marginBottom: "14px",
@@ -810,16 +900,18 @@ const styles = {
   perbandinganTitle: {
     marginBottom: "15px",
     color: "#306998",
+    fontSize: "18px",
+    fontWeight: "bold",
   },
   perbandinganWrapper: {
     display: "flex",
-    gap: "30px",
+    gap: "20px",
     flexWrap: "wrap",
     justifyContent: "center",
   },
   perbandinganCard: {
     flex: 1,
-    minWidth: "250px",
+    minWidth: "280px",
     backgroundColor: "white",
     borderRadius: "10px",
     padding: "15px",
@@ -828,44 +920,51 @@ const styles = {
   perbandinganCardTitleRed: {
     textAlign: "center",
     color: "#dc3545",
+    fontSize: "16px",
+    fontWeight: "bold",
+    marginBottom: "10px",
   },
   perbandinganCardTitleGreen: {
     textAlign: "center",
     color: "#28a745",
+    fontSize: "16px",
+    fontWeight: "bold",
+    marginBottom: "10px",
   },
   perbandinganCode: {
     backgroundColor: "#f8f9fa",
     padding: "10px",
     borderRadius: "8px",
     overflowX: "auto",
+    fontSize: "14px",
+    fontFamily: "monospace",
+    marginBottom: "10px",
   },
   perbandinganWarning: {
     fontSize: "14px",
     marginTop: "10px",
     color: "#dc3545",
+    marginBottom: "10px",
   },
   perbandinganSuccess: {
     fontSize: "14px",
     marginTop: "10px",
     color: "#28a745",
-  },
-  perbandinganTable: {
-    width: "100%",
-    borderCollapse: "collapse",
-    marginTop: "10px",
-    fontSize: "13px",
+    marginBottom: "10px",
   },
   perbandinganNote: {
-    fontSize: "12px",
+    fontSize: "14px",
     marginTop: "8px",
     color: "#666",
+    whiteSpace: "pre-line",
+    marginBottom: "10px",
   },
   perbandinganItalic: {
-    fontSize: "13px",
+    fontSize: "14px",
     marginTop: "10px",
     fontStyle: "italic",
+    marginBottom: "10px",
   },
-  // Modal styles
   modalOverlay: {
     position: "fixed",
     top: 0,
