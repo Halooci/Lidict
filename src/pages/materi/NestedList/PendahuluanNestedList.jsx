@@ -5,7 +5,178 @@ import { useNavigate } from 'react-router-dom';
 import { db } from "../../../config/firebase";
 import { doc, updateDoc, increment } from "firebase/firestore";
 
-// ===================== KOMPONEN EDITOR READ-ONLY =====================
+// ===================== KOMPONEN VISUALISASI NESTED LIST (KOTAK + INDEKS + HOVER) =====================
+const VisualisasiNestedListCard = ({ data, title, rowLabels, colLabels }) => {
+  const [hoveredCell, setHoveredCell] = useState(null);
+  const [hoverInfo, setHoverInfo] = useState("");
+
+  const numRows = data.length;
+  const numCols = data[0]?.length || 0;
+
+  const negativeRowIndices = Array.from({ length: numRows }, (_, i) => -(numRows - i));
+  const negativeColIndices = Array.from({ length: numCols }, (_, i) => -(numCols - i));
+
+  const getHoverInfo = (rowIdx, colIdx, value) => {
+    const displayVal = value === ' ' ? '(kosong)' : value;
+    if (rowLabels && colLabels) {
+      return `${rowLabels[rowIdx]} - ${colLabels[colIdx]}: ${displayVal}`;
+    }
+    return `Baris ${rowIdx}, Kolom ${colIdx}: ${displayVal}`;
+  };
+
+  const formatValue = (val) => {
+    if (val === ' ' || val === '') return '\u00A0'; // &nbsp; agar tetap ada placeholder
+    return String(val);
+  };
+
+  return (
+    <div style={visStyles.container}>
+      <p style={visStyles.title}>{title}</p>
+      <div style={visStyles.gridWrapper}>
+        {data.map((row, rowIdx) => (
+          <div key={rowIdx} style={visStyles.row}>
+            {row.map((item, colIdx) => {
+              const displayValue = formatValue(item);
+              const isHovered = hoveredCell?.row === rowIdx && hoveredCell?.col === colIdx;
+              return (
+                <div
+                  key={colIdx}
+                  style={visStyles.itemWrapper}
+                  onMouseEnter={() => {
+                    setHoveredCell({ row: rowIdx, col: colIdx });
+                    setHoverInfo(getHoverInfo(rowIdx, colIdx, item));
+                  }}
+                  onMouseLeave={() => {
+                    setHoveredCell(null);
+                    setHoverInfo("");
+                  }}
+                >
+                  <div
+                    style={{
+                      ...visStyles.card,
+                      backgroundColor: isHovered ? "#FFA500" : "#306998",
+                      color: isHovered ? "#1f2937" : "white",
+                      transform: isHovered ? "scale(1.05)" : "scale(1)",
+                      transition: "all 0.3s ease",
+                      cursor: "pointer",
+                    }}
+                  >
+                    <div style={visStyles.value}>{displayValue}</div>
+                  </div>
+                  <div style={visStyles.indexLabel}>Indeks ({rowIdx},{colIdx})</div>
+                  <div style={visStyles.indexLabelNeg}>Indeks ({negativeRowIndices[rowIdx]},{negativeColIndices[colIdx]})</div>
+                </div>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+      {hoveredCell && (
+        <div style={visStyles.hoverInfoBox}>
+          <strong>Info:</strong> {hoverInfo}
+        </div>
+      )}
+      <div style={visStyles.note}>
+        <strong>Petunjuk:</strong> Arahkan kursor ke kotak untuk melihat detail indeks.
+      </div>
+    </div>
+  );
+};
+
+const visStyles = {
+  container: {
+    backgroundColor: "#f8f9fa",
+    borderRadius: "12px",
+    padding: "15px",
+    margin: "15px 0",
+    border: "1px solid #dee2e6",
+  },
+  title: {
+    fontSize: "16px",
+    fontWeight: "bold",
+    marginBottom: "15px",
+    color: "#306998",
+    textAlign: "center",
+  },
+  gridWrapper: {
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: "20px",
+  },
+  row: {
+    display: "flex",
+    justifyContent: "center",
+    gap: "25px",
+    flexWrap: "wrap",
+  },
+  itemWrapper: {
+    textAlign: "center",
+    minWidth: "70px",
+  },
+  card: {
+    width: "70px",
+    padding: "10px 5px",
+    borderRadius: "8px",
+    fontWeight: "500",
+    marginBottom: "5px",
+    fontSize: "13px",
+    boxSizing: "border-box",
+  },
+  value: {
+    fontSize: "14px",
+    textAlign: "center",
+  },
+  indexLabel: {
+    fontSize: "10px",
+    color: "#555",
+    marginTop: "4px",
+  },
+  indexLabelNeg: {
+    fontSize: "10px",
+    color: "#888",
+  },
+  hoverInfoBox: {
+    backgroundColor: "#fff3cd",
+    padding: "12px",
+    borderRadius: "8px",
+    marginTop: "15px",
+    fontSize: "14px",
+    color: "#856404",
+    borderLeft: "4px solid #ffc107",
+  },
+  note: {
+    fontSize: "12px",
+    color: "#666",
+    marginTop: "10px",
+    textAlign: "center",
+  },
+};
+
+// ===================== KOMPONEN UNTUK MENAMPILKAN CONTOH NESTED LIST =====================
+const ContohNestedList = ({ code, visualData, visualTitle, rowLabels, colLabels }) => {
+  return (
+    <div style={styles.codeEditorContainer}>
+      <div style={styles.codeEditorHeader}>
+        <span style={styles.codeEditorTitle}>Contoh Kode Program</span>
+      </div>
+      <div style={styles.codeInputReadOnly}>
+        <pre style={styles.codePre}>{code}</pre>
+      </div>
+      <div style={styles.visualHeader}>Visualisasi</div>
+      <div style={styles.visualArea}>
+        <VisualisasiNestedListCard 
+          data={visualData} 
+          title={visualTitle} 
+          rowLabels={rowLabels} 
+          colLabels={colLabels} 
+        />
+      </div>
+    </div>
+  );
+};
+
+// ===================== KOMPONEN CODE EDITOR (UNTUK KODE LAIN) =====================
 const CodeEditor = ({ code, codeKey, pyodideReady, runPythonCode }) => {
   const [output, setOutput] = useState("");
 
@@ -39,9 +210,8 @@ const CodeEditor = ({ code, codeKey, pyodideReady, runPythonCode }) => {
   );
 };
 
-// ===================== VISUALISASI PERBANDINGAN (TEKS LUAR TABEL DIPERBESAR) =====================
+// ===================== VISUALISASI PERBANDINGAN =====================
 const IlustrasiPerbandingan = () => {
-  // Style untuk sel tabel tetap kecil dan rapat
   const thStyle = {
     border: "1px solid #ccc",
     padding: "4px 2px",
@@ -61,7 +231,6 @@ const IlustrasiPerbandingan = () => {
     <div style={styles.perbandinganContainer}>
       <h4 style={styles.perbandinganTitle}>Contoh Perbandingan: List Biasa vs Nested List</h4>
       <div style={styles.perbandinganWrapper}>
-        {/* Tabel List Biasa */}
         <div style={styles.perbandinganCard}>
           <h5 style={styles.perbandinganCardTitleRed}>Tanpa Nested List (List Biasa)</h5>
           <pre style={styles.perbandinganCode}>nilai = [85, 90, 78, 88, 92, 80]</pre>
@@ -97,8 +266,6 @@ const IlustrasiPerbandingan = () => {
             tetapi di sini tercampur.
           </p>
         </div>
-
-        {/* Tabel Nested List */}
         <div style={styles.perbandinganCard}>
           <h5 style={styles.perbandinganCardTitleGreen}>Dengan Nested List</h5>
           <pre style={styles.perbandinganCode}>nilai = [[85, 90, 78], [88, 92, 80]]</pre>
@@ -505,43 +672,63 @@ _buffer.getvalue()
 
   const handleEksplorasiComplete = () => setIsEksplorasiCompleted(true);
 
-  const contohNilaiSiswa = `nilai_siswa = [
-    [85, 90, 78],  # Siswa 0: Matematika, Bahasa Inggris, IPA
-    [92, 88, 84],  # Siswa 1: Matematika, Bahasa Inggris, IPA
-    [75, 80, 91]   # Siswa 2: Matematika, Bahasa Inggris, IPA
-]
-print("Data Nilai Siswa:")
-for i, siswa in enumerate(nilai_siswa):
-    print(f"Siswa {i+1}: {siswa}")`;
-
-  const contohPapan = `papan = [
+  // Data untuk contoh (tanpa proses eksekusi)
+  const contohDataNilai = [
+    [85, 90, 78],
+    [92, 88, 84],
+    [75, 80, 91]
+  ];
+  const contohDataPapan = [
     ['X', 'O', 'X'],
     ['O', 'X', ' '],
     [' ', ' ', 'O']
-]
-print("Papan Tic-Tac-Toe:")
-for baris in papan:
-    print(baris)`;
-
-  const contohCitra = `citra = [
+  ];
+  const contohDataCitra = [
     [0, 50, 100, 255],
     [30, 80, 120, 200],
     [60, 90, 180, 220],
     [10, 40, 70, 140]
-]
-print("Representasi citra digital (nilai piksel):")
-for baris in citra:
-    print(baris)`;
+  ];
+  const contohDataKoordinat = [
+    [0, 0],
+    [2, 3],
+    [5, 1],
+    [7, 8]
+  ];
 
-  const contohKoordinat = `titik_koordinat = [
+  // Label untuk setiap contoh
+  const rowLabelsNilai = ["Siswa 1", "Siswa 2", "Siswa 3"];
+  const colLabelsNilai = ["IPA", "Informatika", "Matematika"];
+  const rowLabelsPapan = ["Baris 1", "Baris 2", "Baris 3"];
+  const colLabelsPapan = ["Kolom 1", "Kolom 2", "Kolom 3"];
+  const rowLabelsCitra = ["Baris 1", "Baris 2", "Baris 3", "Baris 4"];
+  const colLabelsCitra = ["Kolom 1", "Kolom 2", "Kolom 3", "Kolom 4"];
+  const rowLabelsKoordinat = ["Titik 1", "Titik 2", "Titik 3", "Titik 4"];
+  const colLabelsKoordinat = ["X", "Y"];
+
+  // Kode program untuk setiap contoh (hanya deklarasi variabel, tanpa print)
+  const kodeNilai = `nilai_siswa = [
+    [85, 90, 78],  # Siswa 0: Matematika, Bahasa Inggris, IPA
+    [92, 88, 84],  # Siswa 1: Matematika, Bahasa Inggris, IPA
+    [75, 80, 91]   # Siswa 2: Matematika, Bahasa Inggris, IPA
+]`;
+  const kodePapan = `papan = [
+    ['X', 'O', 'X'],
+    ['O', 'X', ' '],
+    [' ', ' ', 'O']
+]`;
+  const kodeCitra = `citra = [
+    [0, 50, 100, 255],
+    [30, 80, 120, 200],
+    [60, 90, 180, 220],
+    [10, 40, 70, 140]
+]`;
+  const kodeKoordinat = `titik_koordinat = [
     [0, 0],  # titik awal
     [2, 3],
     [5, 1],
     [7, 8]
-]
-print("Daftar titik koordinat:")
-for titik in titik_koordinat:
-    print(f"({titik[0]}, {titik[1]})")`;
+]`;
 
   return (
     <>
@@ -594,22 +781,46 @@ for titik in titik_koordinat:
                   </ul>
 
                   <h3 style={styles.subTitle}>Contoh Penggunaan dalam Kehidupan Nyata</h3>
-                  
+
                   <h4 style={{ marginTop: "20px", marginBottom: "10px", color: "#306998" }}>1. Data Nilai Siswa</h4>
                   <p>Baris mewakili siswa, kolom mewakili mata pelajaran.</p>
-                  <CodeEditor code={contohNilaiSiswa} codeKey="nilai_siswa" pyodideReady={pyodideReady} runPythonCode={runPythonCode} />
+                  <ContohNestedList 
+                    code={kodeNilai} 
+                    visualData={contohDataNilai} 
+                    visualTitle="Visualisasi Data Nilai Siswa" 
+                    rowLabels={rowLabelsNilai} 
+                    colLabels={colLabelsNilai} 
+                  />
 
                   <h4 style={{ marginTop: "20px", marginBottom: "10px", color: "#306998" }}>2. Papan Permainan (Tic-Tac-Toe)</h4>
                   <p>Game seperti Tic-Tac-Toe dapat direpresentasikan dengan nested list 3x3.</p>
-                  <CodeEditor code={contohPapan} codeKey="papan" pyodideReady={pyodideReady} runPythonCode={runPythonCode} />
+                  <ContohNestedList 
+                    code={kodePapan} 
+                    visualData={contohDataPapan} 
+                    visualTitle="Visualisasi Papan Tic-Tac-Toe" 
+                    rowLabels={rowLabelsPapan} 
+                    colLabels={colLabelsPapan} 
+                  />
 
                   <h4 style={{ marginTop: "20px", marginBottom: "10px", color: "#306998" }}>3. Citra Digital</h4>
                   <p>Gambar hitam-putih dapat direpresentasikan sebagai nested list di mana setiap elemen adalah nilai pikselnya.</p>
-                  <CodeEditor code={contohCitra} codeKey="citra" pyodideReady={pyodideReady} runPythonCode={runPythonCode} />
+                  <ContohNestedList 
+                    code={kodeCitra} 
+                    visualData={contohDataCitra} 
+                    visualTitle="Visualisasi Citra Digital (Nilai Piksel)" 
+                    rowLabels={rowLabelsCitra} 
+                    colLabels={colLabelsCitra} 
+                  />
 
                   <h4 style={{ marginTop: "20px", marginBottom: "10px", color: "#306998" }}>4. Koordinat</h4>
                   <p>Menyimpan titik-titik koordinat (x, y) dalam bentuk list of lists.</p>
-                  <CodeEditor code={contohKoordinat} codeKey="titik_koordinat" pyodideReady={pyodideReady} runPythonCode={runPythonCode} />
+                  <ContohNestedList 
+                    code={kodeKoordinat} 
+                    visualData={contohDataKoordinat} 
+                    visualTitle="Visualisasi Titik Koordinat" 
+                    rowLabels={rowLabelsKoordinat} 
+                    colLabels={colLabelsKoordinat} 
+                  />
                 </div>
               </section>
               <section style={styles.section}>
@@ -813,6 +1024,18 @@ const styles = {
     whiteSpace: "pre-wrap",
     wordWrap: "break-word",
     fontFamily: "monospace",
+  },
+  visualHeader: {
+    backgroundColor: "#306998",
+    color: "white",
+    padding: "10px 15px",
+    fontWeight: "600",
+    fontSize: "15px",
+  },
+  visualArea: {
+    backgroundColor: "#1e1e1e",
+    padding: "15px",
+    minHeight: "200px",
   },
   outputHeader: {
     backgroundColor: "#306998",
