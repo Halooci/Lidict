@@ -1435,7 +1435,7 @@ const DragDropMatching = ({ items, resetTrigger, onAllCorrectChange }) => {
       {!allCorrect && (
         <div>
           <button style={styles.checkMatchingButton} onClick={checkAnswers}>
-            🔍 Periksa Jawaban
+            Periksa Jawaban
           </button>
           <button style={styles.resetWrongButton} onClick={resetWrongOnly} disabled={!checked}>
             ↻ Reset Jawaban Salah
@@ -1445,7 +1445,7 @@ const DragDropMatching = ({ items, resetTrigger, onAllCorrectChange }) => {
       {allCorrect && (
         <div>
           <button style={styles.resetAllButton} onClick={resetAll}>
-            🔄 Reset Semua
+            Reset Semua
           </button>
         </div>
       )}
