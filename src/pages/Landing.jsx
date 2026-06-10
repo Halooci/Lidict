@@ -15,10 +15,6 @@ export default function Landing() {
           List & Dictionary
         </h1>
 
-        {/* <p style={styles.subtitle}>
-          Belajar <strong>List</strong> dan <strong>Dictionary</strong> secara interaktif dan mudah.
-        </p> */}
-
         <p style={styles.subtitle}>
           Media pembelajaran yang dibuat untuk membantu mahasiswa memahami List dan Dictionary dalam Struktur Data.
         </p>
@@ -26,7 +22,6 @@ export default function Landing() {
         <div style={styles.buttonGroup}>
           <button
             style={styles.primaryBtn}
-            // onClick={() => window.location.href = "/List/PendahuluanList"}
             onClick={() => window.location.href = "/PetaKonsep"}
           >
             Mulai Belajar
@@ -39,34 +34,58 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* MATERI */}
-      {/* <section style={styles.material}>
-        <div style={styles.card}>
-          <h2 style={styles.cardTitle}>📋 List</h2>
-          <p style={styles.cardText}>
-            List adalah struktur data Python yang digunakan untuk menyimpan
-            kumpulan data secara berurutan dan dapat diubah (mutable).
-          </p>
-        </div>
-
-        <div style={styles.card}>
-          <h2 style={styles.cardTitle}>🗂️ Dictionary</h2>
-          <p style={styles.cardText}>
-            Dictionary menyimpan data dalam pasangan <i>key-value</i>,
-            cocok untuk representasi data yang terstruktur dan cepat diakses.
-          </p>
-        </div>
-      </section> */}
-
       {/* FOOTER */}
       <footer style={styles.footer}>
         <p>© 2026 List Dictionary</p>
       </footer>
+
+      {/* TAMBAHAN MEDIA QUERY UNTUK RESPONSIVE ANDROID (tanpa mengubah style asli) */}
+      <style>
+        {`
+          @media (max-width: 768px) {
+            /* Judul utama */
+            h1 {
+              font-size: 28px !important;
+            }
+            /* Subtitle / deskripsi */
+            p {
+              font-size: 15px !important;
+              padding-left: 16px !important;
+              padding-right: 16px !important;
+            }
+            /* Tombol dibuat full-width dan ditumpuk */
+            div[style*="gap: 15px"] {
+              flex-direction: column !important;
+              width: 80% !important;
+              gap: 12px !important;
+            }
+            button {
+              width: 100% !important;
+              text-align: center;
+              padding: 12px 0 !important;
+            }
+            /* Hero section padding lebih kecil */
+            section {
+              padding-top: 40px !important;
+              padding-left: 16px !important;
+              padding-right: 16px !important;
+            }
+          }
+          @media (max-width: 480px) {
+            h1 {
+              font-size: 24px !important;
+            }
+            p {
+              font-size: 14px !important;
+            }
+          }
+        `}
+      </style>
     </div>
   );
 }
 
-/* ================== STYLE ================== */
+/* ================== STYLE ASLI (TIDAK DIUBAH) ================== */
 const styles = {
   container: {
     backgroundColor: "#f5f7fa",
