@@ -9,6 +9,23 @@ export default function SidebarMateri() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [progres, setProgres] = useState(0);
   const [userRole, setUserRole] = useState(null);
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+
+  // Deteksi resize untuk mobile
+  useEffect(() => {
+    const handleResize = () => {
+      const mobile = window.innerWidth <= 768;
+      setIsMobile(mobile);
+      if (!mobile && !isSidebarOpen) {
+        setIsSidebarOpen(true); // di desktop, sidebar terbuka otomatis
+      }
+      if (mobile && isSidebarOpen) {
+        // opsional: tutup sidebar di mobile saat resize? biarkan saja
+      }
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [isSidebarOpen]);
 
   // Ambil progres dari Firestore jika mahasiswa
   useEffect(() => {
@@ -35,14 +52,14 @@ export default function SidebarMateri() {
     }
   }, []);
 
-  // Tentukan accordion aktif berdasarkan URL (sudah diperbaiki untuk Apersepsi)
+  // Tentukan accordion aktif berdasarkan URL
   const getDefaultAccordion = () => {
     if (currentPath.startsWith("/List")) return "list";
     if (currentPath.startsWith("/NestedList")) return "NestedList";
     if (currentPath.startsWith("/Dictionary")) return "dictionary";
     if (currentPath.startsWith("/Evaluasi")) return "evaluasi";
     if (currentPath.startsWith("/PetaKonsep")) return "petaKonsep";
-    if (currentPath.startsWith("/Apersepsi")) return "petaKonsep"; // Perbaikan: Apersepsi termasuk Peta Konsep
+    if (currentPath.startsWith("/Apersepsi")) return "petaKonsep";
     return null;
   };
 
@@ -52,18 +69,30 @@ export default function SidebarMateri() {
   useEffect(() => {
     const mainContent = document.querySelector(".main-content");
     if (mainContent) {
-      mainContent.style.marginLeft = isSidebarOpen ? "280px" : "0";
+      if (isMobile) {
+        // di mobile, konten selalu full lebar (sidebar overlay)
+        mainContent.style.marginLeft = "0";
+      } else {
+        mainContent.style.marginLeft = isSidebarOpen ? "280px" : "0";
+      }
       mainContent.style.transition = "margin-left 0.3s ease";
     }
-  }, [isSidebarOpen]);
+  }, [isSidebarOpen, isMobile]);
 
   const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
+  const closeSidebar = () => setIsSidebarOpen(false);
 
   // Fungsi pengecekan apakah suatu sub item dapat diakses
   const isUnlocked = (requiredLevel) => progres >= requiredLevel;
 
   return (
     <>
+      {/* Overlay untuk mobile saat sidebar terbuka */}
+      {isMobile && isSidebarOpen && (
+        <div className="sidebar-overlay" onClick={closeSidebar}></div>
+      )}
+
+      {/* Floating hamburger (tampil hanya jika sidebar tertutup) */}
       {!isSidebarOpen && (
         <button onClick={toggleSidebar} style={styles.floatingHamburger}>
           ☰
@@ -76,6 +105,9 @@ export default function SidebarMateri() {
           width: isSidebarOpen ? "280px" : "0",
           padding: isSidebarOpen ? "10px" : "0",
           overflow: isSidebarOpen ? "auto" : "hidden",
+          // tambahan untuk mobile: sidebar menjadi absolute? tidak, tetap fixed tapi dengan transform
+          transform: isMobile && !isSidebarOpen ? "translateX(-100%)" : "translateX(0)",
+          transition: "transform 0.3s ease, width 0.3s ease",
         }}
       >
         {isSidebarOpen && (
@@ -255,11 +287,42 @@ export default function SidebarMateri() {
           />
         </Accordion>
       </aside>
+
+      {/* TAMBAHAN CSS UNTUK RESPONSIVE (tidak mengubah style asli) */}
+      <style>{`
+        /* Overlay untuk mobile */
+        .sidebar-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background: rgba(0,0,0,0.5);
+          z-index: 999;
+          cursor: pointer;
+        }
+
+        /* Pastikan navbar tidak tertutup sidebar */
+        @media (max-width: 768px) {
+          /* Sidebar tetap fixed, tapi dengan transform untuk hide/show */
+          aside {
+            z-index: 1001 !important;
+            top: 0 !important;
+            height: 100vh !important;
+            box-shadow: 2px 0 12px rgba(0,0,0,0.15);
+          }
+          /* Floating hamburger lebih tinggi dari overlay */
+          .floating-hamburger {
+            z-index: 1002 !important;
+          }
+          /* Tombol ☰ di dalam sidebar tetap terlihat */
+        }
+      `}</style>
     </>
   );
 }
 
-// Komponen Accordion
+// Komponen Accordion (tidak diubah)
 function Accordion({ id, title, children, activeAccordion, setActiveAccordion }) {
   const isOpen = activeAccordion === id;
 
@@ -282,7 +345,7 @@ function Accordion({ id, title, children, activeAccordion, setActiveAccordion })
   );
 }
 
-// Komponen SubItem dengan sistem kunci per sub (alert sudah diperbaiki)
+// Komponen SubItem (tidak diubah)
 function SubItem({ label, to, currentPath, requiredLevel, unlocked }) {
   const isActive = currentPath === to;
 
@@ -313,7 +376,7 @@ function SubItem({ label, to, currentPath, requiredLevel, unlocked }) {
   );
 }
 
-// Styles
+// Styles asli (tidak diubah, hanya ditambahkan class untuk floating)
 const styles = {
   sidebar: {
     position: "fixed",
