@@ -22,7 +22,10 @@ export default function KuisList() {
   const [role, setRole] = useState(null);
   const [tokenKelas, setTokenKelas] = useState(null);
   const [kelasId, setKelasId] = useState(null);
-  const [kkm, setKkm] = useState(75); // default sebelum fetch
+  const [kkm, setKkm] = useState(75);
+
+  // DURASI KUIS: 10 MENIT = 600 DETIK (ubah ke 60 untuk testing 1 menit)
+  const DURASI_KUIS = 60;
 
   useEffect(() => {
     const userId = localStorage.getItem('userId');
@@ -33,7 +36,6 @@ export default function KuisList() {
       return;
     }
     setRole(userRole);
-    // Ambil token kelas sesuai role
     const fetchUserData = async () => {
       try {
         if (userRole === 'mahasiswa') {
@@ -41,17 +43,15 @@ export default function KuisList() {
           if (mhsSnap.exists()) {
             const mhsData = mhsSnap.data();
             setTokenKelas(mhsData.Token_mahasiswa);
-            setKelasId(mhsData.Token_mahasiswa); // ID kelas = token
+            setKelasId(mhsData.Token_mahasiswa);
             setUserData(mhsData);
           }
         } else if (userRole === 'dosen') {
-          // Dosen menggunakan kelas aktif dari localStorage
           const savedToken = localStorage.getItem('activeKelasToken');
           const savedKelasId = localStorage.getItem('activeKelasId');
           if (savedToken) {
             setTokenKelas(savedToken);
             setKelasId(savedKelasId);
-            // Ambil data dosen untuk nama
             const dosenSnap = await getDoc(doc(db, 'dosen', userId));
             if (dosenSnap.exists()) setUserData(dosenSnap.data());
           }
@@ -63,7 +63,6 @@ export default function KuisList() {
     fetchUserData();
   }, [navigate]);
 
-  // ---------- AMBIL KKM DARI DOKUMEN KELAS ----------
   useEffect(() => {
     if (!kelasId) return;
     const fetchKkm = async () => {
@@ -80,7 +79,6 @@ export default function KuisList() {
     fetchKkm();
   }, [kelasId]);
 
-  // ---------- AMBIL SOAL DARI DATABASE ----------
   const [questions, setQuestions] = useState([]);
   const [loadingSoal, setLoadingSoal] = useState(true);
 
@@ -88,7 +86,6 @@ export default function KuisList() {
     if (!kelasId) return;
     const fetchSoal = async () => {
       try {
-        // Cari kuis dengan tipe 'list' milik kelas ini
         const kuisQuery = query(
           collection(db, 'kuis'),
           where('kelas_id', '==', kelasId),
@@ -101,7 +98,6 @@ export default function KuisList() {
           return;
         }
         const kuisId = kuisSnap.docs[0].id;
-        // Ambil soal
         const soalQuery = query(
           collection(db, 'soal_kuis'),
           where('kuis_id', '==', kuisId)
@@ -111,7 +107,6 @@ export default function KuisList() {
         soalSnap.forEach(doc => {
           soalList.push({ id: doc.id, ...doc.data() });
         });
-        // Urutkan berdasarkan nomor
         soalList.sort((a, b) => a.nomor - b.nomor);
         setQuestions(soalList);
         setLoadingSoal(false);
@@ -123,19 +118,20 @@ export default function KuisList() {
     fetchSoal();
   }, [kelasId]);
 
-  // ---------- STATE KUIS ----------
   const [quizStarted, setQuizStarted] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState([]);
   const [flags, setFlags] = useState([]);
   const [unsures, setUnsures] = useState([]);
   const [submitted, setSubmitted] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(20 * 60);
+  const [timeLeft, setTimeLeft] = useState(DURASI_KUIS);
   const timerRef = useRef(null);
   const [resultsData, setResultsData] = useState(null);
   const [savingData, setSavingData] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showWarningModal, setShowWarningModal] = useState(false);
+  const isSubmittingRef = useRef(false); // Mencegah multiple submit
 
-  // Inisialisasi state jawaban saat soal berubah
   useEffect(() => {
     if (questions.length > 0) {
       setAnswers(Array(questions.length).fill(null));
@@ -144,9 +140,11 @@ export default function KuisList() {
     }
   }, [questions]);
 
-  // ---------- TIMER ----------
   const stopTimer = () => {
-    if (timerRef.current) clearInterval(timerRef.current);
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
   };
 
   const startTimer = () => {
@@ -154,8 +152,11 @@ export default function KuisList() {
     timerRef.current = setInterval(() => {
       setTimeLeft(prev => {
         if (prev <= 1) {
-          clearInterval(timerRef.current);
-          if (!submitted && quizStarted) handleSubmit(true);
+          stopTimer();
+          // Auto submit saat waktu habis, hanya jika belum submit dan kuis sedang berjalan
+          if (!submitted && quizStarted && !isSubmittingRef.current) {
+            handleSubmit(true);
+          }
           return 0;
         }
         return prev - 1;
@@ -176,7 +177,6 @@ export default function KuisList() {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
-  // ---------- HANDLER ----------
   const handleMCAnswer = (answerIndex) => {
     const newAnswers = [...answers];
     newAnswers[currentQuestion] = answerIndex;
@@ -195,38 +195,41 @@ export default function KuisList() {
     setUnsures(newUnsures);
   };
 
+  // Fungsi utama submit (dipanggil baik manual maupun auto)
   const handleSubmit = async (auto = false) => {
-    if (submitted || questions.length === 0) return;
+    // Mencegah multiple submit
+    if (submitted || questions.length === 0 || isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
+    
     stopTimer();
     setSubmitted(true);
+    setShowConfirmModal(false);
+    setShowWarningModal(false);
 
-    // Hitung skor
+    // Hitung skor: jawaban null dianggap salah
     let score = 0;
     const results = [];
     for (let i = 0; i < questions.length; i++) {
       const q = questions[i];
       const userAnswer = answers[i];
-      const isCorrect = (userAnswer === q.jawaban_benar);
+      const isCorrect = (userAnswer !== null && userAnswer === q.jawaban_benar);
       if (isCorrect) score++;
       results.push({ ...q, userAnswer, isCorrect });
     }
-    const finalScore = score; // jumlah benar
-    const waktuDigunakan = (20 * 60) - timeLeft;
+    const finalScore = score;
+    const waktuDigunakan = DURASI_KUIS - (timeLeft < 0 ? 0 : timeLeft);
     setResultsData({ results, finalScore, waktuDigunakan });
 
-    // Hanya mahasiswa yang menyimpan ke database
     if (role === 'mahasiswa') {
       setSavingData(true);
       try {
         const userId = localStorage.getItem('userId');
         if (!userId) throw new Error("User ID tidak ditemukan");
         const nilaiRef = doc(db, "nilai", userId);
-        // Update field "Kuis List" dengan nilai akhir (skor * 10)
         await updateDoc(nilaiRef, {
           "Kuis List": finalScore * 10
         });
 
-        // Cek kelulusan dan bonus progres
         const mahasiswaRef = doc(db, "mahasiswa", userId);
         const mahasiswaDoc = await getDoc(mahasiswaRef);
         if (!mahasiswaDoc.exists()) throw new Error("Data mahasiswa tidak ditemukan");
@@ -235,7 +238,7 @@ export default function KuisList() {
         const isPassed = nilaiAkhir >= kkm;
 
         if (isPassed) {
-          const bonusKey = `kuis_list_bonus_done_${kelasId}`; // unik per kelas
+          const bonusKey = `kuis_list_bonus_done_${kelasId}`;
           const alreadyBonus = localStorage.getItem(bonusKey);
           if (!alreadyBonus) {
             await updateDoc(mahasiswaRef, {
@@ -251,9 +254,20 @@ export default function KuisList() {
         setSavingData(false);
       }
     }
+    isSubmittingRef.current = false;
+  };
+
+  const handleCollectClick = () => {
+    const allAnswered = answers.every(ans => ans !== null);
+    if (!allAnswered) {
+      setShowWarningModal(true);
+      return;
+    }
+    setShowConfirmModal(true);
   };
 
   const resetQuiz = () => {
+    if (timerRef.current) clearInterval(timerRef.current);
     setQuizStarted(false);
     setCurrentQuestion(0);
     if (questions.length > 0) {
@@ -262,14 +276,15 @@ export default function KuisList() {
       setUnsures(Array(questions.length).fill(false));
     }
     setSubmitted(false);
-    setTimeLeft(20 * 60);
+    setTimeLeft(DURASI_KUIS);
     setResultsData(null);
-    stopTimer();
+    isSubmittingRef.current = false;
   };
 
   const startQuiz = () => {
+    resetQuiz(); // bersihkan state lama
     setQuizStarted(true);
-    setTimeLeft(20 * 60);
+    setTimeLeft(DURASI_KUIS);
     setSubmitted(false);
     setCurrentQuestion(0);
     if (questions.length > 0) {
@@ -278,7 +293,6 @@ export default function KuisList() {
       setUnsures(Array(questions.length).fill(false));
     }
     setResultsData(null);
-    stopTimer();
     startTimer();
   };
 
@@ -286,7 +300,7 @@ export default function KuisList() {
     window.location.href = '/List/PendahuluanList';
   };
 
-  // ---------- EFEK HOVER ----------
+  // CSS hover effect
   useEffect(() => {
     const style = document.createElement('style');
     style.textContent = `
@@ -340,7 +354,7 @@ export default function KuisList() {
     };
   }, []);
 
-  // ---------- RENDER ----------
+  // RENDER LOADING
   if (loadingSoal) {
     return (
       <>
@@ -353,7 +367,7 @@ export default function KuisList() {
     );
   }
 
-  // Jika soal tidak tersedia
+  // Tidak ada soal
   if (questions.length === 0 && !submitted) {
     return (
       <>
@@ -375,7 +389,7 @@ export default function KuisList() {
     );
   }
 
-  // Halaman Petunjuk
+  // Halaman petunjuk
   if (!quizStarted && !submitted) {
     return (
       <>
@@ -392,7 +406,7 @@ export default function KuisList() {
               <ul style={styles.instructionList}>
                 <li>Kuis terdiri dari {questions.length} soal pilihan ganda.</li>
                 <li>Setiap soal bernilai {questions[0]?.bobot || 10} poin (total maksimal {questions.length * (questions[0]?.bobot || 10)}).</li>
-                <li>Waktu pengerjaan: 20 menit (timer berjalan setelah mulai).</li>
+                <li>Waktu pengerjaan: 10 menit (timer berjalan setelah mulai).</li>
                 <li>Jika waktu habis, jawaban yang sudah terisi akan tersimpan dan terkirim secara otomatis.</li>
                 <li>Pastikan semua jawaban sudah dipilih sebelum menekan KUMPULKAN JAWABAN.</li>
               </ul>
@@ -408,7 +422,7 @@ export default function KuisList() {
     );
   }
 
-  // Halaman Hasil
+  // Halaman hasil
   if (submitted && resultsData) {
     const { finalScore, waktuDigunakan } = resultsData;
     const minutesUsed = Math.floor(waktuDigunakan / 60);
@@ -510,7 +524,7 @@ export default function KuisList() {
     );
   }
 
-  // Halaman Kuis
+  // Halaman kuis aktif
   const q = questions[currentQuestion];
   const isFlagged = flags[currentQuestion];
   const isUnsure = unsures[currentQuestion];
@@ -528,7 +542,6 @@ export default function KuisList() {
       </div>
 
       <div style={styles.twoColumnLayout}>
-        {/* Kolom Kiri - Soal */}
         <div style={styles.questionCard}>
           <div style={styles.questionHeader}>
             <h3 style={styles.questionNumber}>Soal {currentQuestion + 1} dari {questions.length}</h3>
@@ -588,7 +601,7 @@ export default function KuisList() {
           <div style={styles.submitWrapper}>
             <button
               className="btn-hover-submit"
-              onClick={() => handleSubmit()}
+              onClick={handleCollectClick}
               style={styles.submitButton}
               disabled={savingData}
             >
@@ -597,7 +610,6 @@ export default function KuisList() {
           </div>
         </div>
 
-        {/* Kolom Kanan - Navigasi Soal */}
         <div style={styles.navGridContainer}>
           <div style={styles.navLabel}>Navigasi Soal</div>
           <div style={styles.navGrid}>
@@ -630,14 +642,65 @@ export default function KuisList() {
           </div>
         </div>
       </div>
+
+      {/* Modal Konfirmasi Kumpul */}
+      {showConfirmModal && (
+        <div style={styles.modalOverlay}>
+          <div style={styles.modalContainer}>
+            <h3 style={styles.modalTitle}>Konfirmasi Kumpulkan Jawaban</h3>
+            <p style={styles.modalMessage}>
+              Apakah Anda yakin ingin mengumpulkan semua jawaban?<br />
+              Pastikan Anda telah memeriksa kembali jawaban Anda.
+            </p>
+            <div style={styles.modalButtons}>
+              <button
+                style={styles.modalButtonYes}
+                onClick={() => handleSubmit(false)}
+                className="btn-hover-primary"
+              >
+                Ya
+              </button>
+              <button
+                style={styles.modalButtonCheck}
+                onClick={() => setShowConfirmModal(false)}
+                className="btn-hover-nav"
+              >
+                Periksa Jawaban Kembali
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Peringatan Belum Semua Terjawab */}
+      {showWarningModal && (
+        <div style={styles.modalOverlay}>
+          <div style={styles.modalContainerWarning}>
+            <h3 style={styles.modalTitleWarning}>⚠️ Peringatan</h3>
+            <p style={styles.modalMessageWarning}>
+              Anda belum menjawab semua soal.<br />
+              Harap selesaikan semua soal terlebih dahulu sebelum mengumpulkan.
+            </p>
+            <div style={styles.modalButtons}>
+              <button
+                style={styles.modalButtonWarning}
+                onClick={() => setShowWarningModal(false)}
+                className="btn-hover-nav"
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-/* ================== STYLE (hanya padding top yang diperbaiki) ================== */
+/* ================== STYLE ================== */
 const styles = {
   page: {
-    padding: "94px 40px 30px 40px", // sebelumnya "30px 40px"
+    padding: "94px 40px 30px 40px",
     backgroundColor: "#f5f7fa",
     minHeight: "calc(100vh - 64px)",
     fontFamily: "Poppins, sans-serif",
@@ -705,7 +768,7 @@ const styles = {
     minHeight: "100vh",
     backgroundColor: "#f5f7fa",
     fontFamily: "Poppins, sans-serif",
-    padding: "80px 40px 20px 40px", // sebelumnya "20px 40px"
+    padding: "80px 40px 20px 40px",
   },
   quizHeader: {
     display: "flex",
@@ -987,7 +1050,7 @@ const styles = {
     alignItems: "center",
     justifyContent: "center",
     fontFamily: "Poppins, sans-serif",
-    padding: "80px 20px 20px 20px", // sebelumnya "20px"
+    padding: "80px 20px 20px 20px",
   },
   resultCardNew: {
     backgroundColor: "white",
@@ -1125,5 +1188,101 @@ const styles = {
     fontWeight: "bold",
     color: "white",
     cursor: "pointer",
+  },
+  modalOverlay: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 1000,
+    backdropFilter: "blur(3px)",
+  },
+  modalContainer: {
+    backgroundColor: "white",
+    borderRadius: "24px",
+    padding: "32px 28px",
+    maxWidth: "450px",
+    width: "90%",
+    textAlign: "center",
+    boxShadow: "0 20px 35px rgba(0,0,0,0.2)",
+    borderTop: "6px solid #306998",
+  },
+  modalTitle: {
+    fontSize: "24px",
+    fontWeight: "700",
+    color: "#306998",
+    marginBottom: "16px",
+  },
+  modalMessage: {
+    fontSize: "16px",
+    color: "#334155",
+    marginBottom: "28px",
+    lineHeight: 1.5,
+  },
+  modalButtons: {
+    display: "flex",
+    gap: "16px",
+    justifyContent: "center",
+    flexWrap: "wrap",
+  },
+  modalButtonYes: {
+    backgroundColor: "#306998",
+    color: "white",
+    border: "none",
+    padding: "12px 28px",
+    borderRadius: "40px",
+    fontSize: "16px",
+    fontWeight: "bold",
+    cursor: "pointer",
+    minWidth: "140px",
+  },
+  modalButtonCheck: {
+    backgroundColor: "#f1f5f9",
+    color: "#1e293b",
+    border: "1px solid #cbd5e1",
+    padding: "12px 28px",
+    borderRadius: "40px",
+    fontSize: "16px",
+    fontWeight: "500",
+    cursor: "pointer",
+    minWidth: "180px",
+  },
+  modalContainerWarning: {
+    backgroundColor: "white",
+    borderRadius: "24px",
+    padding: "32px 28px",
+    maxWidth: "450px",
+    width: "90%",
+    textAlign: "center",
+    boxShadow: "0 20px 35px rgba(0,0,0,0.2)",
+    borderTop: "6px solid #f59e0b",
+  },
+  modalTitleWarning: {
+    fontSize: "24px",
+    fontWeight: "700",
+    color: "#f59e0b",
+    marginBottom: "16px",
+  },
+  modalMessageWarning: {
+    fontSize: "16px",
+    color: "#334155",
+    marginBottom: "28px",
+    lineHeight: 1.5,
+  },
+  modalButtonWarning: {
+    backgroundColor: "#f59e0b",
+    color: "white",
+    border: "none",
+    padding: "12px 28px",
+    borderRadius: "40px",
+    fontSize: "16px",
+    fontWeight: "bold",
+    cursor: "pointer",
+    minWidth: "100px",
   },
 };

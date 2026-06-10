@@ -390,6 +390,23 @@ const styles = {
     cursor: "pointer",
     transition: "transform 0.2s, box-shadow 0.2s",
   },
+  praktikMessageContainer: {
+    margin: "15px 0 10px 0",
+    padding: "10px 15px",
+    borderRadius: "8px",
+    backgroundColor: "#f8f9fa",
+    borderLeft: "4px solid",
+  },
+  warningMessage: {
+    color: "#856404",
+    borderLeftColor: "#ffc107",
+    backgroundColor: "#fff3cd",
+  },
+  successMessage: {
+    color: "#0f5132",
+    borderLeftColor: "#28a745",
+    backgroundColor: "#d1e7dd",
+  },
 };
 
 // ================= KOMPONEN VISUALISASI LIST =================
@@ -541,7 +558,7 @@ const visStyles = {
   note: { fontSize: "12px", color: "#666", marginTop: "10px", textAlign: "center" },
 };
 
-// ================= KOMPONEN CODE EDITOR =================
+// ================= KOMPONEN CODE EDITOR DENGAN VISUAL =================
 const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, highlightMapping, pyodideReady, runPythonCode, hidePositive = false, hideNegative = false, disableHover = false, lineExplanations }) => {
   const [output, setOutput] = useState("");
   const [isRunning, setIsRunning] = useState(false);
@@ -633,7 +650,7 @@ const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, highlightM
         <span style={styles.outputTitle}>Output</span>
       </div>
       <div style={styles.codeOutput}>
-        <pre style={styles.outputContent}>{output || "(Klik tombol di atas untuk menjalankan kode)"}</pre>
+        <pre style={styles.outputContent}>{output || ""}</pre>
       </div>
 
       {showExplanations && lineExplanations && lineExplanations.length > 0 && (
@@ -650,87 +667,78 @@ const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, highlightM
   );
 };
 
-// ================= KOMPONEN LATIHAN PRAKTIK CODING =================
-const CodeEditorEditable = ({ title, pyodideReady, runPythonCode }) => {
+// ================= KOMPONEN EDITOR UNTUK AYO PRAKTIK (dengan callback ke parent) =================
+const CodeEditorEditable = ({ title, pyodideReady, runPythonCode, onValidation }) => {
   const [localCode, setLocalCode] = useState("");
   const [output, setOutput] = useState("");
-  const [message, setMessage] = useState(null);
   const [isRunning, setIsRunning] = useState(false);
 
   const handleChange = useCallback((e) => {
     setLocalCode(e.target.value);
-    setMessage(null);
-  }, []);
+    // Reset validasi saat user mengetik ulang
+    if (onValidation) onValidation({ isValid: false, isComplete: false });
+  }, [onValidation]);
 
-  const validateAndRun = useCallback(async () => {
+  const handleRun = useCallback(async () => {
     if (!pyodideReady) {
-      setMessage({ type: 'error', text: "Pyodide sedang dimuat..." });
+      setOutput("Pyodide sedang dimuat, harap tunggu...");
       return;
     }
     setOutput("");
-    setMessage(null);
     setIsRunning(true);
 
+    // 1. Eksekusi kode user
+    let executionOutput = "";
+    let hasError = false;
+    try {
+      const result = await runPythonCode(localCode);
+      executionOutput = result;
+      if (result.startsWith("Error:")) {
+        hasError = true;
+        setOutput(result);
+        if (onValidation) onValidation({ isValid: false, isComplete: false });
+        setIsRunning(false);
+        return;
+      }
+    } catch (err) {
+      hasError = true;
+      setOutput(`Error: ${err.message}`);
+      if (onValidation) onValidation({ isValid: false, isComplete: false });
+      setIsRunning(false);
+      return;
+    }
+
+    // 2. Jika tidak error, validasi instruksi lengkap (list belanja, print pertama, print terakhir)
     const code = localCode;
-    
+    // Regex list belanja (toleransi spasi dan petik)
     const varRegex = /belanja\s*=\s*\[\s*['"]apel['"]\s*,\s*['"]jeruk['"]\s*,\s*['"]mangga['"]\s*\]/;
     const hasCorrectList = varRegex.test(code);
     const printFirstRegex = /print\s*\(\s*belanja\s*\[\s*0\s*\]\s*\)/;
     const hasPrintFirst = printFirstRegex.test(code);
     const printLastRegex = /print\s*\(\s*belanja\s*\[\s*-\s*1\s*\]\s*\)/;
     const hasPrintLast = printLastRegex.test(code);
-    
-    if (!hasCorrectList) {
-      setMessage({ 
-        type: 'error', 
-        text: "Periksa kembali kode Anda. Pastikan Anda membuat variabel 'belanja' dengan isi yang diminta (tiga buah: apel, jeruk, mangga)." 
-      });
-      setIsRunning(false);
-      return;
+
+    const isComplete = hasCorrectList && hasPrintFirst && hasPrintLast;
+    const isValid = hasCorrectList && hasPrintFirst && hasPrintLast; // sama saja untuk keperluan pesan
+
+    // Tampilkan output asli
+    setOutput(executionOutput);
+    setIsRunning(false);
+
+    // Beritahu parent tentang status validasi
+    if (onValidation) {
+      onValidation({ isValid: isValid, isComplete: isComplete });
     }
-    
-    if (!hasPrintFirst) {
-      setMessage({ 
-        type: 'success', 
-        text: "Bagus! Variabel 'belanja' sudah benar. Sekarang, cetak elemen pertama dari list 'belanja'." 
-      });
-      setIsRunning(false);
-      return;
-    }
-    
-    if (!hasPrintLast) {
-      setMessage({ 
-        type: 'success', 
-        text: "Bagus! Elemen pertama sudah dicetak. Lanjut ke instruksi selanjutnya." 
-      });
-      setIsRunning(false);
-      return;
-    }
-    
-    try {
-      const result = await runPythonCode(code);
-      setOutput(result + "\n\nSELAMAT! Semua instruksi sudah benar.");
-      setMessage({ type: 'success', text: "Semua instruksi selesai! Kode berjalan dengan baik." });
-    } catch (err) {
-      setMessage({ type: 'error', text: `Terjadi kesalahan saat menjalankan: ${err.message}` });
-    } finally {
-      setIsRunning(false);
-    }
-  }, [localCode, pyodideReady, runPythonCode]);
+  }, [localCode, pyodideReady, runPythonCode, onValidation]);
 
   return (
     <div style={styles.codeEditorContainer}>
       <div style={styles.codeEditorHeader}>
         <span style={styles.codeEditorTitle}>{title}</span>
-        <button style={styles.runButton} onClick={validateAndRun} disabled={!pyodideReady || isRunning}>
+        <button style={styles.runButton} onClick={handleRun} disabled={!pyodideReady || isRunning}>
           {isRunning ? "Menjalankan..." : pyodideReady ? "Jalankan" : "Memuat..."}
         </button>
       </div>
-      {message && (
-        <div style={message.type === 'error' ? styles.errorBox : styles.successBox}>
-          {message.text}
-        </div>
-      )}
       <textarea
         style={styles.codeInputEditable}
         value={localCode}
@@ -742,7 +750,7 @@ const CodeEditorEditable = ({ title, pyodideReady, runPythonCode }) => {
         <span style={styles.outputTitle}>Output</span>
       </div>
       <div style={styles.codeOutput}>
-        <pre style={styles.outputContent}>{output || "(Klik 'Jalankan' untuk melihat hasil)"}</pre>
+        <pre style={styles.outputContent}>{output}</pre>
       </div>
     </div>
   );
@@ -941,6 +949,10 @@ export default function PembuatanAksesElement() {
   const [showModal, setShowModal] = useState(false);
   const [bonusGiven, setBonusGiven] = useState(false);
   const userId = localStorage.getItem('userId');
+
+  // State untuk pesan praktik (di luar editor)
+  const [praktikMessage, setPraktikMessage] = useState("");
+  const [praktikMessageType, setPraktikMessageType] = useState(""); // "warning" atau "success"
 
   // Cek apakah sudah pernah dapat bonus
   useEffect(() => {
@@ -1185,11 +1197,22 @@ sys.stdout = StringIO()
       await pyodide.runPythonAsync(code);
       const output = await pyodide.runPythonAsync("sys.stdout.getvalue()");
       await pyodide.runPythonAsync("sys.stdout = sys.__stdout__");
-      return output || "(Tidak ada output)";
+      return output || "";
     } catch (error) {
       return `Error: ${error.message}`;
     }
   }, []);
+
+  // Callback dari editor praktik
+  const handlePraktikValidation = ({ isValid, isComplete }) => {
+    if (isComplete) {
+      setPraktikMessage("✅ Selamat! Semua instruksi sudah dikerjakan dengan benar.");
+      setPraktikMessageType("success");
+    } else {
+      setPraktikMessage("⚠️ Periksa kembali instruksi!");
+      setPraktikMessageType("warning");
+    }
+  };
 
   return (
     <>
@@ -1381,7 +1404,6 @@ nilai3 = 78
                   <div style={styles.infoBox}>
                     <strong>Keunggulan List:</strong> Menghemat jumlah variabel dan dapat ditambah, dihapus, atau diubah elemennya.
                   </div>
-                  
                 </div>
               </section>
 
@@ -1393,14 +1415,31 @@ nilai3 = 78
                     Buatlah program Python yang:
                   </p>
                   <ol style={styles.list}>
-                    <li>Membuat list bernama belanja dengan isi apel, jeruk, mangga.</li>
-                    <li>Menampilkan elemen <strong>pertama</strong> (apel) menggunakan indeks positif.</li>
-                    <li>Menampilkan elemen <strong>terakhir</strong> (mangga) menggunakan indeks negatif.</li>
+                    <li>Membuat list bernama belanja dengan isi "apel", "jeruk", "mangga".</li>
+                    <li>Menampilkan elemen <strong>pertama</strong> ("apel") menggunakan indeks positif.</li>
+                    <li>Menampilkan elemen <strong>terakhir</strong> ("mangga") menggunakan indeks negatif.</li>
                   </ol>
+                  <p style={styles.text}>
+                    Tulis kode Anda di area editor di bawah. Klik <strong>Jalankan</strong> untuk menjalankan.
+                  </p>
+
+                  {/* Tempat pesan peringatan / sukses di luar editor */}
+                  {praktikMessage && (
+                    <div
+                      style={{
+                        ...styles.praktikMessageContainer,
+                        ...(praktikMessageType === "warning" ? styles.warningMessage : styles.successMessage),
+                      }}
+                    >
+                      {praktikMessage}
+                    </div>
+                  )}
+
                   <CodeEditorEditable
                     title="Ayo Praktik"
                     pyodideReady={pyodideReady}
                     runPythonCode={runPythonCode}
+                    onValidation={handlePraktikValidation}
                   />
                 </div>
               </section>
@@ -1458,7 +1497,6 @@ nilai3 = 78
                     onCorrectChange={handleCorrectChange}
                   />
 
-                  {/* Ucapan selamat setelah semua soal benar (tanpa emoji, persis seperti gambar) */}
                   {allCorrect && (
                     <div style={styles.finalSuccessBox}>
                       Selamat! Semua jawaban sudah dijawab dengan benar.
