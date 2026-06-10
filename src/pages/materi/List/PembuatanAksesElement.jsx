@@ -1275,7 +1275,7 @@ sys.stdout = StringIO()
                 <h2 style={styles.sectionTitle}>Membuat List</h2>
                 <div style={styles.card}>
                   <p style={styles.text}>
-                    List dibuat dengan tanda kurung siku <code>[]</code> dan elemen dipisahkan koma. 
+                    List dibuat dengan tanda kurung siku <code>[]</code> dan setiap elemennya dipisahkan dengan koma. 
                     List dapat berisi berbagai tipe data (integer, string, boolean, float, dll) dalam satu list.
                     List bersifat <strong>mutable</strong> (dapat diubah setelah dibuat) dan <strong>ordered</strong> (mempertahankan urutan elemen sesuai saat dibuat).
                   </p>

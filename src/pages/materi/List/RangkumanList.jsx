@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import Navbar from "../../komponen/Navbar";
 import SidebarMateri from "../../komponen/SidebarMateri";
 import { useNavigate } from 'react-router-dom';
@@ -14,163 +14,7 @@ export default function RangkumanList() {
     }
   }, [navigate]);
 
-  const [pyodideReady, setPyodideReady] = useState(false);
-  const pyodideRef = useRef(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [codeOutputs, setCodeOutputs] = useState({});
-  const [codeInputs, setCodeInputs] = useState({
-    // Membuat List
-    createList: `# List kosong
-kosong = []
-
-# List dengan nilai
-buah = ["apel", "jeruk", "mangga"]
-angka = [10, 20, 30]
-campuran = ["teks", 100, True, 3.14]
-
-print("buah:", buah)
-print("angka:", angka)
-print("campuran:", campuran)`,
-
-    // Akses Elemen (Indeks Positif & Negatif)
-    aksesPositif: `data = ["apel", 100, True, 3.14]
-print("data[0]:", data[0])
-print("data[1]:", data[1])
-print("data[2]:", data[2])
-print("data[3]:", data[3])`,
-    aksesNegatif: `data = ["apel", 100, True, 3.14]
-print("data[-1]:", data[-1])
-print("data[-2]:", data[-2])
-print("data[-3]:", data[-3])
-print("data[-4]:", data[-4])`,
-    slicing: `angka = [10, 20, 30, 40, 50]
-print("angka[1:4]:", angka[1:4])   # indeks 1,2,3
-print("angka[:3]:", angka[:3])     # 3 elemen pertama
-print("angka[2:]:", angka[2:])     # dari indeks 2 sampai akhir`,
-
-    // Operasi Dasar
-    concat: `a = [1, 2, 3]
-b = [4, 5, 6]
-c = a + b
-print("a + b =", c)`,
-    repeat: `data = [1, 2, 3]
-print("data * 3 =", data * 3)`,
-    keanggotaan: `buah = ["apel", "jeruk", "mangga"]
-print("apel" in buah)
-print("pisang" in buah)`,
-    panjang: `buah = ["apel", "jeruk", "mangga"]
-print("len(buah) =", len(buah))`,
-
-    // Manipulasi List
-    append: `buah = ["durian", "nanas", "mangga"]
-buah.append("rambutan")
-print(buah)`,
-    insert: `buah = ["durian", "nanas", "mangga"]
-buah.insert(1, "alpukat")
-print(buah)`,
-    extend: `buah = ["durian", "nanas"]
-buah.extend(["mangga", "rambutan"])
-print(buah)`,
-    remove: `buah = ["durian", "nanas", "mangga", "jeruk"]
-buah.remove("jeruk")
-print(buah)`,
-    pop: `buah = ["durian", "nanas", "mangga"]
-buah.pop(1)
-print(buah)`,
-    ubah: `buah = ["durian", "nanas", "mangga"]
-buah[2] = "semangka"
-print(buah)`,
-    sort: `angka = [5, 3, 8, 1, 7, 2]
-angka.sort()
-print(angka)`,
-    reverse: `angka = [1, 2, 3, 4]
-angka.reverse()
-print(angka)`,
-    clear: `buah = ["apel", "jeruk", "mangga"]
-buah.clear()
-print(buah)`,
-    count: `data = [1, 2, 2, 3]
-print("Jumlah angka 2:", data.count(2))`,
-    index: `data = [10, 20, 30, 20]
-print("Indeks pertama 20:", data.index(20))`,
-    del_slice: `angka = [10, 20, 30, 40, 50]
-del angka[1:4]
-print(angka)`,
-  });
-
-  useEffect(() => {
-    const loadPyodide = async () => {
-      if (!window.loadPyodide) {
-        const script = document.createElement('script');
-        script.src = "https://cdn.jsdelivr.net/pyodide/v0.25.0/full/pyodide.js";
-        script.async = true;
-        script.onload = async () => {
-          const pyodide = await window.loadPyodide();
-          pyodideRef.current = pyodide;
-          setPyodideReady(true);
-        };
-        document.body.appendChild(script);
-      } else {
-        const pyodide = await window.loadPyodide();
-        pyodideRef.current = pyodide;
-        setPyodideReady(true);
-      }
-    };
-    loadPyodide();
-  }, []);
-
-  const runPythonCode = async (codeKey) => {
-    if (!pyodideReady || !pyodideRef.current) {
-      setCodeOutputs(prev => ({
-        ...prev,
-        [codeKey]: "Pyodide sedang dimuat, harap tunggu..."
-      }));
-      return;
-    }
-    try {
-      const pyodide = pyodideRef.current;
-      await pyodide.runPythonAsync(`
-import sys
-from io import StringIO
-sys.stdout = StringIO()
-      `);
-      await pyodide.runPythonAsync(codeInputs[codeKey]);
-      const output = await pyodide.runPythonAsync("sys.stdout.getvalue()");
-      await pyodide.runPythonAsync("sys.stdout = sys.__stdout__");
-      setCodeOutputs(prev => ({ ...prev, [codeKey]: output || "(Tidak ada output)" }));
-    } catch (error) {
-      setCodeOutputs(prev => ({
-        ...prev,
-        [codeKey]: `Error: ${error.message}`
-      }));
-    }
-  };
-
-  const CodeEditor = ({ codeKey, title }) => (
-    <div style={styles.codeEditorContainer}>
-      <div style={styles.codeEditorHeader}>
-        <span style={styles.codeEditorTitle}>{title}</span>
-        <button 
-          style={styles.runButton}
-          onClick={() => runPythonCode(codeKey)}
-          disabled={!pyodideReady}
-        >
-          {pyodideReady ? "Jalankan" : "Memuat..."}
-        </button>
-      </div>
-      <div style={styles.codeInputReadOnly}>
-        <pre style={styles.codePre}>{codeInputs[codeKey]}</pre>
-      </div>
-      <div style={styles.outputHeader}>
-        <span style={styles.outputTitle}>Output</span>
-      </div>
-      <div style={styles.codeOutput}>
-        <pre style={styles.outputContent}>
-          {codeOutputs[codeKey] || "(Klik 'Jalankan' untuk melihat hasil)"}
-        </pre>
-      </div>
-    </div>
-  );
 
   return (
     <>
@@ -195,107 +39,89 @@ sys.stdout = StringIO()
           <section style={styles.section}>
             <div style={styles.card}>
               <p style={styles.text}>
-                <strong>List</strong> adalah struktur data Python yang dapat menyimpan <strong>tipe data campuran</strong>. 
-                Elemen list diakses menggunakan <strong>indeks</strong> (positif dari kiri, negatif dari kanan). 
-                List sangat fleksibel karena ukurannya dapat berubah secara dinamis.
+                <strong>List</strong> adalah struktur data dalam Python yang dapat menyimpan <strong>tipe data campuran</strong> (integer, string, boolean, float, bahkan list lain). 
+                Elemen dalam list diakses menggunakan <strong>indeks</strong> (positif dari kiri, negatif dari kanan). 
+                List bersifat sangat fleksibel karena ukurannya dapat berubah secara dinamis (dapat ditambah, dihapus, atau diubah setelah list dibuat).
               </p>
 
-              {/* ========== 1. KARAKTERISTIK LIST (TANPA CONTOH KODE) ========== */}
+              {/* ========== 1. KARAKTERISTIK LIST ========== */}
               <h3 style={styles.subTitle}>1. Karakteristik List</h3>
               <ul style={styles.list}>
-                <li><strong>Ordered (Terurut):</strong> Urutan elemen sesuai saat dibuat. List mempertahankan urutan penyisipan.</li>
-                <li><strong>Indexed (Memiliki Indeks):</strong> Setiap elemen memiliki posisi (indeks). Indeks positif dimulai dari 0 (kiri), indeks negatif dari -1 (kanan).</li>
-                <li><strong>Mutable (Dapat Diubah):</strong> Elemen list dapat ditambah, dihapus, atau diubah nilainya setelah list dibuat.</li>
-                <li><strong>Heterogeneous (Tipe Campuran):</strong> Satu list bisa berisi integer, string, boolean, float, bahkan list lain.</li>
-                <li><strong>Dynamic Size (Ukuran Dinamis):</strong> Ukuran list otomatis bertambah saat kita menambah elemen, tanpa perlu menentukan kapasitas awal.</li>
+                <li><strong>Ordered (Terurut):</strong> Urutan elemen sesuai dengan urutan saat list dibuat. List akan mempertahankan urutan penyisipan elemen.</li>
+                <li><strong>Indexed (Memiliki Indeks):</strong> Setiap elemen memiliki posisi yang disebut indeks. Indeks positif dimulai dari 0 (elemen pertama) dan seterusnya. Indeks negatif dimulai dari -1 (elemen terakhir) dan mundur ke kiri.</li>
+                <li><strong>Mutable (Dapat Diubah):</strong> Elemen dalam list dapat ditambahkan, dihapus, atau diubah nilainya setelah list dibuat. List tidak bersifat tetap (immutable) seperti tuple.</li>
+                <li><strong>Heterogeneous (Tipe Campuran):</strong> Satu list dapat berisi berbagai tipe data sekaligus, misalnya angka, teks, nilai boolean, bilangan desimal, bahkan list lain di dalamnya (nested list).</li>
+                <li><strong>Dynamic Size (Ukuran Dinamis):</strong> Ukuran list otomatis bertambah atau berkurang saat kita menambah atau menghapus elemen. Tidak perlu menentukan kapasitas awal seperti pada array di bahasa pemrograman lain.</li>
               </ul>
 
               {/* ========== 2. MEMBUAT LIST ========== */}
               <h3 style={styles.subTitle}>2. Membuat List</h3>
               <p style={styles.text}>
-                List dibuat dengan tanda kurung siku <code>[]</code>, elemen dipisahkan koma. 
-                Dapat berupa list kosong, list dengan satu tipe data, atau campuran.
+                List dibuat dengan menggunakan tanda kurung siku <code>[]</code>. Elemen-elemen di dalam list dipisahkan dengan tanda koma. 
+                Kita dapat membuat list kosong (tanpa elemen), list dengan satu jenis tipe data, atau list dengan campuran berbagai tipe data. 
+                List juga dapat dibuat dari hasil operasi lain atau menggunakan fungsi bawaan <code>list()</code>.
               </p>
-              <CodeEditor codeKey="createList" title="Contoh Cara Membuat List" />
 
               {/* ========== 3. AKSES ELEMEN LIST ========== */}
               <h3 style={styles.subTitle}>3. Akses Elemen List</h3>
               <p style={styles.text}>
-                <strong>Indeks positif:</strong> dimulai dari 0 (elemen pertama).<br />
-                <strong>Indeks negatif:</strong> dimulai dari -1 (elemen terakhir).<br />
-                <strong>Slicing:</strong> <code>list[awal:akhir]</code> mengambil elemen dari indeks <code>awal</code> hingga sebelum <code>akhir</code>.
+                <strong>Indeks positif:</strong> dimulai dari 0 untuk elemen pertama, 1 untuk elemen kedua, dan seterusnya hingga (n-1) untuk elemen terakhir.<br />
+                <strong>Indeks negatif:</strong> dimulai dari -1 untuk elemen terakhir, -2 untuk elemen sebelum terakhir, dan seterusnya hingga -n untuk elemen pertama.<br />
+                <strong>Slicing (pengiris):</strong> digunakan untuk mengambil sebagian elemen dari list dengan format <code>list[awal:akhir]</code>. 
+                Elemen dari indeks <code>awal</code> hingga sebelum indeks <code>akhir</code> akan diambil. Jika <code>awal</code> dikosongkan, berarti dimulai dari indeks 0. 
+                Jika <code>akhir</code> dikosongkan, berarti sampai akhir list. Slicing juga dapat menggunakan langkah (step) dengan format <code>list[awal:akhir:langkah]</code>.
               </p>
-              <CodeEditor codeKey="aksesPositif" title="Contoh Akses dengan Indeks Positif" />
-              <CodeEditor codeKey="aksesNegatif" title="Contoh Akses dengan Indeks Negatif" />
-              <CodeEditor codeKey="slicing" title="Slicing List" />
 
               {/* ========== 4. OPERASI DASAR LIST ========== */}
               <h3 style={styles.subTitle}>4. Operasi Dasar List</h3>
               <ul style={styles.list}>
-                <li><strong>Concatenation (+):</strong> Menggabungkan dua list menjadi list baru.</li>
-                <li><strong>Repetition (*):</strong> Mengulang list sebanyak n kali.</li>
-                <li><strong>Keanggotaan (in):</strong> Mengecek apakah suatu nilai ada di dalam list (hasil <code>True</code>/<code>False</code>).</li>
-                <li><strong>Panjang (len):</strong> Menghitung jumlah elemen list.</li>
+                <li><strong>Concatenation (+):</strong> Menggabungkan dua list menjadi list baru yang berisi semua elemen dari list pertama diikuti semua elemen dari list kedua.</li>
+                <li><strong>Repetition (*):</strong> Mengulang isi list sebanyak n kali, menghasilkan list baru yang lebih panjang.</li>
+                <li><strong>Keanggotaan (in):</strong> Operator untuk mengecek apakah suatu nilai terdapat di dalam list. Hasilnya adalah <code>True</code> jika ada, <code>False</code> jika tidak.</li>
+                <li><strong>Panjang (len):</strong> Fungsi bawaan <code>len()</code> digunakan untuk menghitung jumlah elemen yang ada di dalam list.</li>
               </ul>
-              <CodeEditor codeKey="concat" title="Concatenation (+)" />
-              <CodeEditor codeKey="repeat" title="Repetition (*)" />
-              <CodeEditor codeKey="keanggotaan" title="Operator in" />
-              <CodeEditor codeKey="panjang" title="Fungsi len()" />
 
               {/* ========== 5. MANIPULASI LIST ========== */}
               <h3 style={styles.subTitle}>5. Manipulasi List (Menambah, Mengubah, Menghapus)</h3>
               
               <h4 style={styles.subSubTitle}>a. Menambah Elemen</h4>
               <ul style={styles.list}>
-                <li><code>append(x)</code> – menambahkan x di akhir list.</li>
-                <li><code>insert(i, x)</code> – menyisipkan x pada indeks i (elemen di i dan seterusnya bergeser ke kanan).</li>
-                <li><code>extend(iterable)</code> – menambahkan semua elemen dari iterable (list, tuple, dll) ke akhir list.</li>
+                <li><code>append(x)</code> – Menambahkan elemen <code>x</code> di akhir list. Hanya satu elemen setiap pemanggilan.</li>
+                <li><code>insert(i, x)</code> – Menyisipkan elemen <code>x</code> pada posisi indeks <code>i</code>. Elemen yang semula berada di indeks <code>i</code> dan seterusnya akan bergeser ke kanan.</li>
+                <li><code>extend(iterable)</code> – Menambahkan semua elemen dari suatu iterable (misalnya list lain, tuple, atau string) ke akhir list. Berbeda dengan <code>append</code> yang menambahkan satu objek utuh.</li>
               </ul>
-              <CodeEditor codeKey="append" title="append()" />
-              <CodeEditor codeKey="insert" title="insert()" />
-              <CodeEditor codeKey="extend" title="extend()" />
 
               <h4 style={styles.subSubTitle}>b. Menghapus Elemen</h4>
               <ul style={styles.list}>
-                <li><code>remove(x)</code> – hapus elemen pertama yang bernilai x (jika tidak ada akan error).</li>
-                <li><code>pop(i)</code> – hapus elemen di indeks i dan mengembalikan nilainya; jika i tidak diberikan, hapus elemen terakhir.</li>
-                <li><code>clear()</code> – hapus semua elemen sehingga list menjadi kosong.</li>
-                <li><code>del list[i]</code> atau <code>del list[i:j]</code> – hapus berdasarkan indeks atau slice.</li>
+                <li><code>remove(x)</code> – Menghapus elemen pertama yang bernilai <code>x</code> dari list. Jika nilai <code>x</code> tidak ditemukan, akan memunculkan error <code>ValueError</code>.</li>
+                <li><code>pop(i)</code> – Menghapus elemen pada indeks <code>i</code> dan mengembalikan nilai elemen tersebut. Jika <code>i</code> tidak diberikan, maka akan menghapus dan mengembalikan elemen terakhir.</li>
+                <li><code>clear()</code> – Menghapus semua elemen dalam list, sehingga list menjadi kosong (ukuran 0).</li>
+                <li><code>del list[i]</code> atau <code>del list[i:j]</code> – Pernyataan <code>del</code> dapat digunakan untuk menghapus elemen berdasarkan indeks tertentu atau menghapus irisan (slice) tertentu dari list.</li>
               </ul>
-              <CodeEditor codeKey="remove" title="remove()" />
-              <CodeEditor codeKey="pop" title="pop()" />
-              <CodeEditor codeKey="clear" title="clear()" />
-              <CodeEditor codeKey="del_slice" title="del (slice)" />
 
               <h4 style={styles.subSubTitle}>c. Mengubah Elemen</h4>
-              <p style={styles.text}>Menugaskan nilai baru ke indeks tertentu: <code>list[indeks] = nilai_baru</code></p>
-              <CodeEditor codeKey="ubah" title="Mengubah Elemen" />
+              <p style={styles.text}>
+                Untuk mengubah nilai elemen pada posisi tertentu, kita dapat langsung menugaskan (assign) nilai baru ke indeks yang dituju, dengan format <code>list[indeks] = nilai_baru</code>. 
+                Indeks harus berada dalam jangkauan list, jika tidak akan terjadi error <code>IndexError</code>.
+              </p>
 
               <h4 style={styles.subSubTitle}>d. Pengurutan & Pembalikan</h4>
               <ul style={styles.list}>
-                <li><code>sort()</code> – mengurutkan list secara ascending (nilai terkecil ke terbesar) secara permanen.</li>
-                <li><code>reverse()</code> – membalik urutan list secara permanen.</li>
+                <li><code>sort()</code> – Mengurutkan elemen list secara permanen (in-place) dalam urutan menaik (ascending) dari nilai terkecil ke terbesar. Untuk urutan menurun, dapat menggunakan parameter <code>reverse=True</code>.</li>
+                <li><code>reverse()</code> – Membalik urutan elemen list secara permanen (in-place). Elemen pertama menjadi terakhir, dan sebaliknya.</li>
               </ul>
-              <CodeEditor codeKey="sort" title="sort()" />
-              <CodeEditor codeKey="reverse" title="reverse()" />
 
               <h4 style={styles.subSubTitle}>e. Method Informasi Lainnya</h4>
               <ul style={styles.list}>
                 <li>
                   <strong><code>count(x)</code> – jumlah kemunculan x</strong><br />
-                  Penjelasan: Method ini menghitung berapa kali nilai <code>x</code> muncul di dalam list. Hasilnya adalah bilangan bulat (integer). Jika <code>x</code> tidak ditemukan, hasilnya 0.<br />
-                  Contoh: <code>[1, 2, 2, 3].count(2)</code> menghasilkan <code>2</code> karena angka 2 muncul dua kali.
+                  Method ini menghitung berapa kali nilai <code>x</code> muncul di dalam list. Hasilnya adalah bilangan bulat. Jika <code>x</code> tidak ditemukan, hasilnya adalah 0.
                 </li>
                 <li>
                   <strong><code>index(x)</code> – indeks pertama x</strong><br />
-                  Penjelasan: Method ini mencari kemunculan <strong>pertama</strong> dari nilai <code>x</code> dalam list, lalu mengembalikan posisi indeksnya (dimulai dari 0). Jika <code>x</code> tidak ada, akan memunculkan error (ValueError).<br />
-                  Contoh: <code>[10, 20, 30, 20].index(20)</code> menghasilkan <code>1</code> karena angka 20 pertama kali berada di indeks 1.
+                  Method ini mencari kemunculan <strong>pertama</strong> dari nilai <code>x</code> dalam list, lalu mengembalikan posisi indeksnya (dimulai dari 0). Jika <code>x</code> tidak ada dalam list, akan memunculkan error <code>ValueError</code>.
                 </li>
               </ul>
-              <CodeEditor codeKey="count" title="count() – Jumlah Kemunculan" />
-              <CodeEditor codeKey="index" title="index() – Indeks Pertama" />
-
-              
             </div>
           </section>
         </div>
@@ -348,69 +174,4 @@ const styles = {
   text: { lineHeight: "1.8", color: "#333", marginBottom: "15px" },
   subTitle: { marginTop: "28px", marginBottom: "10px", color: "#306998", fontSize: "1.4rem", fontWeight: "600" },
   subSubTitle: { marginTop: "20px", marginBottom: "8px", color: "#2c5282", fontSize: "1.2rem", fontWeight: "600" },
-  codeEditorContainer: {
-    border: "2px solid #306998",
-    borderRadius: "10px",
-    overflow: "hidden",
-    marginBottom: "20px",
-    backgroundColor: "#1e1e1e"
-  },
-  codeEditorHeader: {
-    backgroundColor: "#306998",
-    color: "white",
-    padding: "10px 15px",
-    display: "flex",
-    justifyContent: "space-between",
-    alignItems: "center"
-  },
-  codeEditorTitle: { fontWeight: "600", fontSize: "14px" },
-  runButton: {
-    backgroundColor: "#FFD43B",
-    color: "#306998",
-    border: "none",
-    padding: "6px 16px",
-    borderRadius: "6px",
-    cursor: "pointer",
-    fontWeight: "600",
-    fontSize: "13px",
-    transition: "all 0.2s"
-  },
-  codeInputReadOnly: {
-    width: "100%",
-    minHeight: "120px",
-    backgroundColor: "#272822",
-    color: "#f8f8f2",
-    border: "none",
-    padding: "15px",
-    fontFamily: "monospace",
-    fontSize: "14px",
-    lineHeight: "1.5",
-    overflow: "auto"
-  },
-  codePre: {
-    margin: 0,
-    whiteSpace: "pre-wrap",
-    wordWrap: "break-word",
-    fontFamily: "monospace"
-  },
-  outputHeader: {
-    backgroundColor: "#306998",
-    color: "white",
-    padding: "10px 15px",
-    borderTop: "2px solid #1e1e1e"
-  },
-  outputTitle: { fontWeight: "600", fontSize: "14px" },
-  codeOutput: {
-    backgroundColor: "#1e1e1e",
-    padding: "15px",
-    minHeight: "60px"
-  },
-  outputContent: {
-    color: "#4af",
-    fontFamily: "monospace",
-    fontSize: "14px",
-    margin: 0,
-    whiteSpace: "pre-wrap",
-    wordWrap: "break-word"
-  }
 };

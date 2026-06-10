@@ -345,8 +345,8 @@ const LatihanList = ({ onAllCorrectChange }) => {
       id: 2,
       question: "`List dalam Python dapat menyimpan berbagai tipe data sekaligus.` Pernyataan ini adalah ....",
       options: [
-        "Benar, bisa",
-        "Salah, hanya bisa satu tipe",
+        "Benar",
+        "Salah",
         "Hanya untuk angka dan string",
         "Hanya untuk string dan boolean",
         "Tergantung versi Python"
@@ -359,7 +359,7 @@ const LatihanList = ({ onAllCorrectChange }) => {
       question: "Output dari kode berikut:\n\nbuah = [\"apel\", \"jeruk\"]\nprint(len(buah)) \n\nadalah ....",
       options: ["0", "1", "2", "3", "4"],
       answer: 2,
-      explanation: "Fungsi `len()` mengembalikan jumlah elemen dalam list. Karena ada dua elemen ('apel' dan 'jeruk'), hasilnya adalah 2."
+      explanation: "Fungsi `len()` mengembalikan banyaknya elemen dalam list. Karena ada dua elemen ('apel' dan 'jeruk'), hasilnya adalah 2."
     },
     {
       id: 4,

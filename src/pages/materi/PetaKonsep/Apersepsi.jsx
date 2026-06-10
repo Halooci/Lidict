@@ -62,8 +62,9 @@ export default function Apersepsi() {
     setDragDropAllDone(allCorrect);
   };
 
-  const [varPilihanAnswer, setVarPilihanAnswer] = useState(null);
-  const [varPilihanFeedback, setVarPilihanFeedback] = useState("");
+  // Aktivitas 1.2 - diubah menjadi tanya jawab (input teks)
+  const [varTanyaJawabAnswer, setVarTanyaJawabAnswer] = useState("");
+  const [varTanyaJawabFeedback, setVarTanyaJawabFeedback] = useState("");
   const varPilihanOptions = [
     "1nama = 'Andi'",
     "nama = 'Andi'",
@@ -71,14 +72,26 @@ export default function Apersepsi() {
     "def = 10",
     "nama siswa = 'Andi'"
   ];
-  const varPilihanCorrect = 1;
-  const handleVarPilihan = (idx) => {
-    setVarPilihanAnswer(idx);
-    setVarPilihanFeedback(
-      idx === varPilihanCorrect
-        ? "✓ Benar! Variabel harus diawali huruf atau underscore, tidak boleh diawali angka."
-        : "✗ Salah. Perhatikan aturan penamaan variabel di Python."
-    );
+  const varPilihanCorrect = 1; // indeks ke-1 (B)
+  const checkVarTanyaJawab = () => {
+    const jawaban = varTanyaJawabAnswer.trim().toUpperCase();
+    let isCorrect = false;
+    let pesan = "";
+    if (jawaban === "B" || jawaban === "NAMA = 'ANDI'" || jawaban === "nama = 'Andi'") {
+      isCorrect = true;
+      pesan = "✓ Benar! 'nama = \"Andi\"' adalah penulisan variabel yang benar. Variabel harus diawali huruf atau underscore, tidak boleh diawali angka, tidak boleh ada spasi, dan tidak boleh menggunakan kata kunci Python.";
+    } else if (jawaban === "A") {
+      pesan = "✗ Salah. Variabel tidak boleh diawali angka.";
+    } else if (jawaban === "C") {
+      pesan = "✗ Salah. Tanda hubung (-) tidak diperbolehkan dalam nama variabel. Gunakan garis bawah (_).";
+    } else if (jawaban === "D") {
+      pesan = "✗ Salah. 'def' adalah kata kunci (keyword) Python, tidak bisa dijadikan nama variabel.";
+    } else if (jawaban === "E") {
+      pesan = "✗ Salah. Nama variabel tidak boleh mengandung spasi.";
+    } else {
+      pesan = "✗ Jawaban tidak dikenali. Ketik huruf A, B, C, D, atau E sesuai pilihan.";
+    }
+    setVarTanyaJawabFeedback(isCorrect ? pesan : pesan);
   };
 
   const [tipeNilaiAnswer, setTipeNilaiAnswer] = useState("");
@@ -160,7 +173,7 @@ export default function Apersepsi() {
   const checkPrintVar = () => {
     const jawaban = printVarAnswer.trim().toLowerCase();
     if (jawaban === "nama") {
-      setPrintVarFeedback("✓ Benar! Variabel 'nama' akan dicetak setelah 'Halo'.");
+      setPrintVarFeedback("✓ Benar! Nilai dari variabel 'nama' akan ditampilkan setelah kata 'Halo'.");
     } else {
       setPrintVarFeedback("✗ Coba lagi. Variabel yang menyimpan input nama adalah 'nama'.");
     }
@@ -186,7 +199,7 @@ export default function Apersepsi() {
   // Fungsi untuk mengecek apakah semua aktivitas sudah dijawab dengan benar
   const isAllActivitiesCorrect = () => {
     if (!dragDropAllDone) return false;
-    if (varPilihanAnswer !== varPilihanCorrect) return false;
+    if (!varTanyaJawabFeedback.startsWith("✓")) return false;
     if (!tipeNilaiFeedback.startsWith("✓")) return false;
     if (operatorAnswer !== operatorCorrect) return false;
     if (modulusAnswer !== modulusCorrect) return false;
@@ -207,7 +220,7 @@ export default function Apersepsi() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     dragDropAllDone,
-    varPilihanAnswer,
+    varTanyaJawabFeedback,
     tipeNilaiFeedback,
     operatorAnswer,
     modulusAnswer,
@@ -246,6 +259,26 @@ export default function Apersepsi() {
       setIsProcessing(false);
       setShowCompletionModal(false);
     }
+  };
+
+  // Fungsi untuk mewarnai komentar dalam kode (contoh kode)
+  const formatCodeWithComments = (code) => {
+    // Memisahkan baris, lalu untuk setiap baris cari pola komentar #
+    const lines = code.split('\n');
+    return lines.map((line, i) => {
+      const commentIndex = line.indexOf('#');
+      if (commentIndex !== -1) {
+        const codePart = line.substring(0, commentIndex);
+        const commentPart = line.substring(commentIndex);
+        return (
+          <div key={i}>
+            <span>{codePart}</span>
+            <span style={{ color: "#6a9955", fontStyle: "italic" }}>{commentPart}</span>
+          </div>
+        );
+      }
+      return <div key={i}>{line}</div>;
+    });
   };
 
   // Animasi fade-in
@@ -367,16 +400,14 @@ export default function Apersepsi() {
                 </li>
               </ul>
 
-              {/* <p style={styles.text}>
-                <strong>Contoh Kode:</strong>
-              </p>
-
+              {/* Contoh kode dengan komentar berwarna */}
+              <p style={styles.text}><strong>Contoh Kode:</strong></p>
               <pre style={styles.codeBlock}>
-                {`panjang = int(input("Masukkan panjang: "))
-lebar = float(input("Masukkan lebar: "))
-jurusan = "Pendidikan Komputer"
-status_lulus = True`}
-              </pre> */}
+                {formatCodeWithComments(`panjang = int(input("Masukkan panjang: "))  # input panjang dalam cm
+lebar = float(input("Masukkan lebar: "))      # input lebar dalam cm
+jurusan = "Pendidikan Komputer"               # data string
+status_lulus = True                           # boolean`)}
+              </pre>
 
               <div style={styles.activityWrapper}>
                 <div style={styles.activityTitle}>Aktivitas 1.1 - Cocokkan Tipe Data</div>
@@ -419,25 +450,29 @@ status_lulus = True`}
                 {dragDropAllDone && <div style={styles.successMsg}>✨ Semua cocok! Bagus.</div>}
               </div>
 
+              {/* Aktivitas 1.2 - Tanya jawab penulisan variabel */}
               <div style={styles.activityWrapper}>
-                <div style={styles.activityTitle}>Aktivitas 1.2 - Aturan Penulisan Variabel</div>
-                <p style={styles.instruction}>Penulisan variabel yang benar di Python adalah ….</p>
-                <div style={styles.options}>
-                  {varPilihanOptions.map((opt, idx) => (
-                    <div
-                      key={idx}
-                      onClick={() => handleVarPilihan(idx)}
-                      style={{
-                        ...styles.option,
-                        backgroundColor: varPilihanAnswer === idx ? "#2fa69a" : "#fff",
-                        color: varPilihanAnswer === idx ? "white" : "#1f2937",
-                      }}
-                    >
-                      <strong>{String.fromCharCode(65 + idx)}.</strong> {opt}
-                    </div>
-                  ))}
+                <div style={styles.activityTitle}>Aktivitas 1.2 - Aturan Penulisan Variabel (Tanya Jawab)</div>
+                <p style={styles.instruction}>
+                  Pilihlah penulisan variabel yang benar di Python:<br />
+                  A. 1nama = 'Andi'<br />
+                  B. nama = 'Andi'<br />
+                  C. nama-siswa = 'Andi'<br />
+                  D. def = 10<br />
+                  E. nama siswa = 'Andi'<br />
+                  <strong>Jawab dengan mengetik huruf (A, B, C, D, atau E) atau tuliskan nama variabel yang benar:</strong>
+                </p>
+                <div style={styles.inputGroup}>
+                  <input
+                    type="text"
+                    placeholder="Contoh: B atau nama = 'Andi'"
+                    value={varTanyaJawabAnswer}
+                    onChange={(e) => setVarTanyaJawabAnswer(e.target.value)}
+                    style={styles.inputText}
+                  />
+                  <button style={styles.checkButton} onClick={checkVarTanyaJawab}>Periksa Jawaban</button>
                 </div>
-                {varPilihanFeedback && <div style={styles.feedback}>{varPilihanFeedback}</div>}
+                {varTanyaJawabFeedback && <div style={styles.feedback}>{varTanyaJawabFeedback}</div>}
               </div>
 
               <div style={styles.activityWrapper}>
@@ -567,14 +602,11 @@ status_lulus = True`}
                 Jika ingin menerima angka, konversi dengan <code>int()</code> atau <code>float()</code>.
               </p>
 
-              <p style={styles.text}>
-                <strong>Contoh Kode:</strong>
-              </p>
-
+              <p style={styles.text}><strong>Contoh Kode (dengan komentar berwarna):</strong></p>
               <pre style={styles.codeBlock}>
-                {`nama = input("Nama: ")
-print("Halo", nama)
-umur = int(input("Umur: "))  # konversi ke integer`}
+                {formatCodeWithComments(`nama = input("Nama: ")          # membaca input dari user
+print("Halo", nama)             # menampilkan sapaan
+umur = int(input("Umur: "))     # konversi ke integer`)}
               </pre>
 
               <div style={styles.activityWrapper}>
@@ -672,7 +704,6 @@ print("Halo", ______)`}</pre>
           from { opacity: 0; transform: translateY(30px); }
           to { opacity: 1; transform: translateY(0); }
         }
-        /* Perbaikan responsif untuk layar kecil */
         @media (max-width: 768px) {
           .apersepsi-page {
             padding: 20px 16px !important;
@@ -759,7 +790,17 @@ const styles = {
   text: { fontSize: "16px", lineHeight: "1.6", color: "#1e293b", marginBottom: "16px" },
   list: { marginLeft: "24px", marginBottom: "16px", lineHeight: "1.6", color: "#1e293b" },
   listOrdered: { marginLeft: "24px", marginBottom: "16px", lineHeight: "1.8", color: "#1e293b" },
-  codeBlock: { background: "#0f172a", color: "#e2e8f0", padding: "16px", borderRadius: "20px", fontFamily: "monospace", fontSize: "14px", overflow: "auto", margin: "20px 0" },
+  codeBlock: { 
+    background: "#0f172a", 
+    color: "#e2e8f0", 
+    padding: "16px", 
+    borderRadius: "20px", 
+    fontFamily: "monospace", 
+    fontSize: "14px", 
+    overflow: "auto", 
+    margin: "20px 0",
+    whiteSpace: "pre-wrap",
+  },
   codeBlockSmall: { background: "#0f172a", color: "#e2e8f0", padding: "12px", borderRadius: "16px", fontFamily: "monospace", fontSize: "13px", margin: "12px 0" },
   tableWrapper: { overflowX: "auto", margin: "20px 0", borderRadius: "16px", border: "1px solid #e2e8f0" },
   table: { width: "100%", borderCollapse: "collapse", backgroundColor: "#fff" },
