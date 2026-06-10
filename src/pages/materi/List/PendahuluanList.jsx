@@ -28,6 +28,7 @@ const styles = {
     bottom: 0,
     width: "8px",
     backgroundColor: "#FFD43B",
+    borderRadius: "6px 0 0 6px",
   },
   headerTitle: {
     margin: 0,
@@ -235,7 +236,7 @@ const styles = {
     fontSize: "16px",
     fontWeight: "bold",
   },
-  // Modal styles (sama dengan nested list)
+  // Modal styles
   modalOverlay: {
     position: "fixed",
     top: 0,
@@ -312,7 +313,7 @@ const CodeEditor = ({ code, title, pyodideReady, runPythonCode }) => {
   );
 };
 
-// ================= KOMPONEN LATIHAN (sama persis seperti nested list) =================
+// ================= KOMPONEN LATIHAN =================
 const LatihanList = ({ onAllCorrectChange }) => {
   const quizQuestions = [
     {
@@ -382,7 +383,6 @@ const LatihanList = ({ onAllCorrectChange }) => {
   const [warning, setWarning] = useState(null);
   const [allCorrect, setAllCorrect] = useState(false);
 
-  // Notify parent when allCorrect changes
   useEffect(() => {
     onAllCorrectChange(allCorrect);
   }, [allCorrect, onAllCorrectChange]);
@@ -519,7 +519,13 @@ export default function PendahuluanList() {
   const [showModal, setShowModal] = useState(false);
   const [bonusGiven, setBonusGiven] = useState(false);
 
-  // Ambil userId dari localStorage
+  // ─────────── KONFIGURASI HALAMAN ───────────
+  // Ubah TOPIC_NAME untuk halaman lain: "nested_list", "dictionary", dll.
+  const TOPIC_NAME = "list";
+  const EKSPLORASI_ANSWERS_KEY = `eksplorasi_${TOPIC_NAME}_answers`;
+  const BONUS_DONE_KEY = `pendahuluan${TOPIC_NAME}_bonus_done`;
+  // ────────────────────────────────────────────
+
   useEffect(() => {
     const uid = localStorage.getItem('userId');
     const userEmail = localStorage.getItem('userEmail');
@@ -530,20 +536,15 @@ export default function PendahuluanList() {
     }
   }, [navigate]);
 
-  // Cek apakah bonus sudah pernah diberikan
   useEffect(() => {
-    const already = localStorage.getItem("pendahuluanlist_bonus_done");
+    const already = localStorage.getItem(BONUS_DONE_KEY);
     if (already === "true") setBonusGiven(true);
-  }, []);
+  }, [BONUS_DONE_KEY]);
 
   const [pyodideReady, setPyodideReady] = useState(false);
   const pyodideRef = useRef(null);
 
-  // State untuk eksplorasi (cukup dijawab, tidak harus benar)
-  const [eksplorasiSelected, setEksplorasiSelected] = useState([null, null]);
-  const [eksplorasiFeedback, setEksplorasiFeedback] = useState(["", ""]);
-  const [isEksplorasiCompleted, setIsEksplorasiCompleted] = useState(false);
-
+  // Eksplorasi questions
   const eksplorasiQuestions = [
     {
       text: "Yang dimaksud dengan 'list' dalam pemrograman Python adalah ....",
@@ -569,32 +570,58 @@ export default function PendahuluanList() {
     },
   ];
 
+  // State eksplorasi diinisialisasi dari localStorage
+  const [eksplorasiSelected, setEksplorasiSelected] = useState(() => {
+    try {
+      const saved = localStorage.getItem(EKSPLORASI_ANSWERS_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length === eksplorasiQuestions.length) {
+          return parsed;
+        }
+      }
+    } catch (e) {
+      // fallback
+    }
+    return Array(eksplorasiQuestions.length).fill(null);
+  });
+
+  const [eksplorasiFeedback, setEksplorasiFeedback] = useState(() => {
+    return eksplorasiSelected.map((selectedIdx, i) => {
+      if (selectedIdx === null) return "";
+      return selectedIdx === eksplorasiQuestions[i].correct ? "Benar" : "Salah";
+    });
+  });
+
+  const [isEksplorasiCompleted, setIsEksplorasiCompleted] = useState(
+    () => eksplorasiSelected.every(sel => sel !== null)
+  );
+
+  // Sinkronisasi: setiap kali eksplorasiSelected berubah, perbarui feedback dan simpan ke localStorage
+  useEffect(() => {
+    const newFeedback = eksplorasiSelected.map((sel, i) => {
+      if (sel === null) return "";
+      return sel === eksplorasiQuestions[i].correct ? "Benar" : "Salah";
+    });
+    setEksplorasiFeedback(newFeedback);
+    const allAnswered = eksplorasiSelected.every(sel => sel !== null);
+    setIsEksplorasiCompleted(allAnswered);
+    // Simpan jawaban ke localStorage dengan kunci terstruktur
+    localStorage.setItem(EKSPLORASI_ANSWERS_KEY, JSON.stringify(eksplorasiSelected));
+  }, [eksplorasiSelected, EKSPLORASI_ANSWERS_KEY]);
+
   const handleEksplorasiSelect = (questionIdx, optionIdx) => {
-    if (eksplorasiSelected[questionIdx] !== null) return;
+    if (eksplorasiSelected[questionIdx] !== null) return; // sudah dijawab, terkunci
     setEksplorasiSelected(prev => {
       const newSelected = [...prev];
       newSelected[questionIdx] = optionIdx;
       return newSelected;
     });
-    const isCorrect = optionIdx === eksplorasiQuestions[questionIdx].correct;
-    setEksplorasiFeedback(prev => {
-      const newFeedback = [...prev];
-      newFeedback[questionIdx] = isCorrect ? "Benar" : "Salah";
-      return newFeedback;
-    });
   };
-
-  useEffect(() => {
-    const allSelected = eksplorasiSelected.every(selected => selected !== null);
-    if (allSelected && !isEksplorasiCompleted) {
-      setIsEksplorasiCompleted(true);
-    }
-  }, [eksplorasiSelected, isEksplorasiCompleted]);
 
   // State untuk latihan (callback dari komponen LatihanList)
   const [allLatihanCorrect, setAllLatihanCorrect] = useState(false);
 
-  // Efek untuk memunculkan modal ketika semua latihan benar dan bonus belum diberikan
   useEffect(() => {
     if (!userId) return;
     if (bonusGiven) return;
@@ -603,14 +630,13 @@ export default function PendahuluanList() {
     }
   }, [allLatihanCorrect, userId, bonusGiven, showModal]);
 
-  // Fungsi untuk menangani konfirmasi dari modal
   const handleCompleteAndNavigate = async () => {
     try {
       const mahasiswaRef = doc(db, "mahasiswa", userId);
       await updateDoc(mahasiswaRef, {
         progres_belajar: increment(1)
       });
-      localStorage.setItem("pendahuluanlist_bonus_done", "true");
+      localStorage.setItem(BONUS_DONE_KEY, "true");
       setShowModal(false);
       navigate("/List/PembuatanAksesElement");
     } catch (error) {
@@ -705,6 +731,7 @@ sys.stdout = StringIO()
               <p style={styles.text}>
                 Sebelum mempelajari lebih dalam, jawab pertanyaan berikut dengan memilih opsi yang tersedia.
                 <strong style={{ color: "#0d6efd" }}> Materi akan terbuka setelah kedua pertanyaan dijawab.</strong>
+                {isEksplorasiCompleted && " (Anda sudah menyelesaikan eksplorasi ini sebelumnya.)"}
               </p>
               {eksplorasiQuestions.map((q, idx) => {
                 const isAnswered = eksplorasiSelected[idx] !== null;
@@ -753,10 +780,15 @@ sys.stdout = StringIO()
                   Jawab kedua pertanyaan di atas untuk membuka materi pembelajaran.
                 </div>
               )}
+              {isEksplorasiCompleted && (
+                <div style={styles.infoMessage}>
+                  ✅ Eksplorasi selesai. Materi telah terbuka di bawah ini.
+                </div>
+              )}
             </div>
           </section>
 
-          {/* MATERI UTAMA */}
+          {/* MATERI UTAMA (muncul jika eksplorasi selesai) */}
           {isEksplorasiCompleted && (
             <>
               <section style={styles.section}>
@@ -830,14 +862,14 @@ nilai3 = 78
                 </div>
               </section>
 
-              {/* LATIHAN - menggunakan komponen terpisah seperti nested list */}
+              {/* LATIHAN */}
               <LatihanList onAllCorrectChange={setAllLatihanCorrect} />
             </>
           )}
         </div>
       </div>
 
-      {/* MODAL POP-UP (sama persis dengan nested list) */}
+      {/* MODAL POP-UP */}
       {showModal && (
         <div style={styles.modalOverlay}>
           <div style={styles.modal}>

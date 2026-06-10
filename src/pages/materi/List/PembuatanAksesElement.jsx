@@ -667,7 +667,7 @@ const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, highlightM
   );
 };
 
-// ================= KOMPONEN EDITOR UNTUK AYO PRAKTIK (dengan callback ke parent) =================
+// ================= KOMPONEN EDITOR UNTUK AYO PRAKTIK =================
 const CodeEditorEditable = ({ title, pyodideReady, runPythonCode, onValidation }) => {
   const [localCode, setLocalCode] = useState("");
   const [output, setOutput] = useState("");
@@ -675,7 +675,6 @@ const CodeEditorEditable = ({ title, pyodideReady, runPythonCode, onValidation }
 
   const handleChange = useCallback((e) => {
     setLocalCode(e.target.value);
-    // Reset validasi saat user mengetik ulang
     if (onValidation) onValidation({ isValid: false, isComplete: false });
   }, [onValidation]);
 
@@ -687,7 +686,6 @@ const CodeEditorEditable = ({ title, pyodideReady, runPythonCode, onValidation }
     setOutput("");
     setIsRunning(true);
 
-    // 1. Eksekusi kode user
     let executionOutput = "";
     let hasError = false;
     try {
@@ -708,9 +706,7 @@ const CodeEditorEditable = ({ title, pyodideReady, runPythonCode, onValidation }
       return;
     }
 
-    // 2. Jika tidak error, validasi instruksi lengkap (list belanja, print pertama, print terakhir)
     const code = localCode;
-    // Regex list belanja (toleransi spasi dan petik)
     const varRegex = /belanja\s*=\s*\[\s*['"]apel['"]\s*,\s*['"]jeruk['"]\s*,\s*['"]mangga['"]\s*\]/;
     const hasCorrectList = varRegex.test(code);
     const printFirstRegex = /print\s*\(\s*belanja\s*\[\s*0\s*\]\s*\)/;
@@ -719,13 +715,11 @@ const CodeEditorEditable = ({ title, pyodideReady, runPythonCode, onValidation }
     const hasPrintLast = printLastRegex.test(code);
 
     const isComplete = hasCorrectList && hasPrintFirst && hasPrintLast;
-    const isValid = hasCorrectList && hasPrintFirst && hasPrintLast; // sama saja untuk keperluan pesan
+    const isValid = hasCorrectList && hasPrintFirst && hasPrintLast;
 
-    // Tampilkan output asli
     setOutput(executionOutput);
     setIsRunning(false);
 
-    // Beritahu parent tentang status validasi
     if (onValidation) {
       onValidation({ isValid: isValid, isComplete: isComplete });
     }
@@ -928,7 +922,12 @@ const GuessOutputQuestion = ({ question, codeSnippet, expectedOutput, explanatio
 export default function PembuatanAksesElement() {
   const navigate = useNavigate();
 
-  // Cek login
+  // ─────────── KONFIGURASI HALAMAN ───────────
+  const TOPIC_NAME = "pembuatan_akses_element";
+  const EKSPLORASI_ANSWERS_KEY = `eksplorasi_${TOPIC_NAME}_answers`;
+  const BONUS_DONE_KEY = `${TOPIC_NAME}_bonus_done`;
+  // ──────────────────────────────────────────
+
   useEffect(() => {
     const userId = localStorage.getItem('userId');
     const userEmail = localStorage.getItem('userEmail');
@@ -941,24 +940,17 @@ export default function PembuatanAksesElement() {
   const pyodideRef = useRef(null);
   const [correctStatus, setCorrectStatus] = useState([false, false, false, false, false]);
 
-  const [eksplorasiSelected, setEksplorasiSelected] = useState([null, null]);
-  const [eksplorasiFeedback, setEksplorasiFeedback] = useState(["", ""]);
-  const [isEksplorasiCompleted, setIsEksplorasiCompleted] = useState(false);
-
-  // State untuk modal dan bonus
   const [showModal, setShowModal] = useState(false);
   const [bonusGiven, setBonusGiven] = useState(false);
   const userId = localStorage.getItem('userId');
 
-  // State untuk pesan praktik (di luar editor)
   const [praktikMessage, setPraktikMessage] = useState("");
-  const [praktikMessageType, setPraktikMessageType] = useState(""); // "warning" atau "success"
+  const [praktikMessageType, setPraktikMessageType] = useState("");
 
-  // Cek apakah sudah pernah dapat bonus
   useEffect(() => {
-    const already = localStorage.getItem("pembuatan_akses_bonus_done");
+    const already = localStorage.getItem(BONUS_DONE_KEY);
     if (already === "true") setBonusGiven(true);
-  }, []);
+  }, [BONUS_DONE_KEY]);
 
   const eksplorasiQuestions = [
     {
@@ -985,6 +977,45 @@ export default function PembuatanAksesElement() {
     },
   ];
 
+  // State eksplorasi diinisialisasi dari localStorage
+  const [eksplorasiSelected, setEksplorasiSelected] = useState(() => {
+    try {
+      const saved = localStorage.getItem(EKSPLORASI_ANSWERS_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length === eksplorasiQuestions.length) {
+          return parsed;
+        }
+      }
+    } catch (e) {
+      // fallback
+    }
+    return Array(eksplorasiQuestions.length).fill(null);
+  });
+
+  const [eksplorasiFeedback, setEksplorasiFeedback] = useState(() => {
+    return eksplorasiSelected.map((selectedIdx, i) => {
+      if (selectedIdx === null) return "";
+      return selectedIdx === eksplorasiQuestions[i].correct ? "Benar" : "Salah";
+    });
+  });
+
+  const [isEksplorasiCompleted, setIsEksplorasiCompleted] = useState(
+    () => eksplorasiSelected.every(sel => sel !== null)
+  );
+
+  // Sinkronisasi: setiap kali eksplorasiSelected berubah, simpan ke localStorage
+  useEffect(() => {
+    const newFeedback = eksplorasiSelected.map((sel, i) => {
+      if (sel === null) return "";
+      return sel === eksplorasiQuestions[i].correct ? "Benar" : "Salah";
+    });
+    setEksplorasiFeedback(newFeedback);
+    const allAnswered = eksplorasiSelected.every(sel => sel !== null);
+    setIsEksplorasiCompleted(allAnswered);
+    localStorage.setItem(EKSPLORASI_ANSWERS_KEY, JSON.stringify(eksplorasiSelected));
+  }, [eksplorasiSelected, EKSPLORASI_ANSWERS_KEY]);
+
   const handleEksplorasiSelect = (questionIdx, optionIdx) => {
     if (eksplorasiSelected[questionIdx] !== null) return;
     setEksplorasiSelected(prev => {
@@ -992,20 +1023,7 @@ export default function PembuatanAksesElement() {
       newSelected[questionIdx] = optionIdx;
       return newSelected;
     });
-    const isCorrect = optionIdx === eksplorasiQuestions[questionIdx].correct;
-    setEksplorasiFeedback(prev => {
-      const newFeedback = [...prev];
-      newFeedback[questionIdx] = isCorrect ? "Benar" : "Salah";
-      return newFeedback;
-    });
   };
-
-  useEffect(() => {
-    const allSelected = eksplorasiSelected.every(selected => selected !== null);
-    if (allSelected && !isEksplorasiCompleted) {
-      setIsEksplorasiCompleted(true);
-    }
-  }, [eksplorasiSelected, isEksplorasiCompleted]);
 
   const campuranData = ["apel", 100, true, 3.14];
   const angkaData = [10, 20, 30, 40, 50];
@@ -1108,7 +1126,6 @@ print("Indeks 1 sampai 3:", angka[1:4])`;
     "Melakukan slicing dari indeks 1 sampai sebelum indeks 4, sehingga mengambil elemen indeks 1 (20), indeks 2 (30), indeks 3 (40). Hasilnya dicetak."
   ];
 
-  // Soal dengan penjelasan jawaban benar
   const soal1CodeParts = ["buah = [\"apel\", \"jeruk\", \"mangga\"]\nprint(buah[", "])"];
   const soal1Placeholders = [""];
   const soal1Expected = ["1"];
@@ -1142,7 +1159,6 @@ print(angka[-2])`;
 
   const allCorrect = correctStatus.every(v => v === true);
 
-  // Monitor ketika semua soal benar dan bonus belum diberikan -> tampilkan modal
   useEffect(() => {
     if (allCorrect && !bonusGiven && userId) {
       setShowModal(true);
@@ -1155,7 +1171,7 @@ print(angka[-2])`;
       await updateDoc(mahasiswaRef, {
         progres_belajar: increment(1)
       });
-      localStorage.setItem("pembuatan_akses_bonus_done", "true");
+      localStorage.setItem(BONUS_DONE_KEY, "true");
       setShowModal(false);
       navigate("/List/OperasiDanManipulasi");
     } catch (error) {
@@ -1203,7 +1219,6 @@ sys.stdout = StringIO()
     }
   }, []);
 
-  // Callback dari editor praktik
   const handlePraktikValidation = ({ isValid, isComplete }) => {
     if (isComplete) {
       setPraktikMessage("✅ Selamat! Semua instruksi sudah dikerjakan dengan benar.");
@@ -1241,6 +1256,7 @@ sys.stdout = StringIO()
               <p style={styles.text}>
                 Sebelum belajar lebih dalam, jawab pertanyaan berikut dengan memilih opsi yang tersedia.
                 <strong style={{ color: "#0d6efd" }}> Materi akan terbuka setelah kedua pertanyaan dijawab.</strong>
+                {isEksplorasiCompleted && " (Anda sudah menyelesaikan eksplorasi ini sebelumnya.)"}
               </p>
               {eksplorasiQuestions.map((q, idx) => {
                 const isAnswered = eksplorasiSelected[idx] !== null;
@@ -1423,7 +1439,6 @@ nilai3 = 78
                     Tulis kode Anda di area editor di bawah. Klik <strong>Jalankan</strong> untuk menjalankan.
                   </p>
 
-                  {/* Tempat pesan peringatan / sukses di luar editor */}
                   {praktikMessage && (
                     <div
                       style={{
