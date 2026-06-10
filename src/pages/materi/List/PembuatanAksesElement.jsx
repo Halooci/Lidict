@@ -1431,12 +1431,12 @@ nilai3 = 78
                     Buatlah program Python yang:
                   </p>
                   <ol style={styles.list}>
-                    <li>Membuat list bernama belanja dengan isi "apel", "jeruk", "mangga".</li>
-                    <li>Menampilkan elemen <strong>pertama</strong> ("apel") menggunakan indeks positif.</li>
-                    <li>Menampilkan elemen <strong>terakhir</strong> ("mangga") menggunakan indeks negatif.</li>
+                    <li>Membuat list bernama belanja dengan isi apel, jeruk, mangga.</li>
+                    <li>Menampilkan elemen pertama yaitu apel menggunakan indeks positif.</li>
+                    <li>Menampilkan elemen terakhir yaitu mangga menggunakan indeks negatif.</li>
                   </ol>
                   <p style={styles.text}>
-                    Tulis kode Anda di area editor di bawah. Klik <strong>Jalankan</strong> untuk menjalankan.
+                    Tulis kode Anda di area editor di bawah. Klik Jalankan untuk menjalankan.
                   </p>
 
                   {praktikMessage && (

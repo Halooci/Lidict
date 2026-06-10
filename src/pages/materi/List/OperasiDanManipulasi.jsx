@@ -433,6 +433,23 @@ const styles = {
     cursor: "pointer",
     transition: "transform 0.2s, box-shadow 0.2s",
   },
+  praktikMessageContainer: {
+    margin: "15px 0 10px 0",
+    padding: "10px 15px",
+    borderRadius: "8px",
+    backgroundColor: "#f8f9fa",
+    borderLeft: "4px solid",
+  },
+  warningMessage: {
+    color: "#856404",
+    borderLeftColor: "#ffc107",
+    backgroundColor: "#fff3cd",
+  },
+  successMessage: {
+    color: "#0f5132",
+    borderLeftColor: "#28a745",
+    backgroundColor: "#d1e7dd",
+  },
 };
 
 // ================= KOMPONEN VISUALISASI LIST SATU KOLOM =================
@@ -1065,99 +1082,106 @@ const CodeEditorWithVisual = ({
   );
 };
 
-// ================= KOMPONEN UNTUK LATIHAN PRAKTIK CODING =================
-const CodeEditorEditable = ({ title, pyodideReady, runPythonCode }) => {
+// ================= KOMPONEN UNTUK LATIHAN PRAKTIK CODING (DIPERBAIKI) =================
+const CodeEditorEditable = ({ title, pyodideReady, runPythonCode, onValidation }) => {
   const [localCode, setLocalCode] = useState("");
   const [output, setOutput] = useState("");
-  const [message, setMessage] = useState(null);
   const [isRunning, setIsRunning] = useState(false);
 
-  const handleChange = (e) => {
+  const handleChange = useCallback((e) => {
     setLocalCode(e.target.value);
-    setMessage(null);
+    if (onValidation) onValidation({ isValid: false, isComplete: false });
+  }, [onValidation]);
+
+  // Fungsi untuk memeriksa apakah suatu pola ada pada baris non-komentar
+  const hasNonCommentLine = (code, pattern) => {
+    const lines = code.split('\n');
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed === '' || trimmed.startsWith('#')) continue;
+      if (pattern.test(trimmed)) return true;
+    }
+    return false;
   };
 
-  const validateAndRun = useCallback(async () => {
+  const handleRun = useCallback(async () => {
     if (!pyodideReady) {
-      setMessage({ type: 'error', text: "Pyodide sedang dimuat, harap tunggu..." });
+      setOutput("Pyodide sedang dimuat, harap tunggu...");
       return;
     }
     setOutput("");
-    setMessage(null);
     setIsRunning(true);
 
-    const code = localCode;
-    
-    const varRegex = /belanja\s*\s*=\s*\s*\[\s*['"]\s*\s*apel\s*\s*['"]\s*,\s*['"]\s*\s*jeruk\s*\s*['"]\s*,\s*['"]\s*\s*mangga\s*\s*['"]\s*\]/;
-    const hasCorrectList = varRegex.test(code);
-    const appendRegex = /belanja\.append\s*\s*\(\s*\s*['"]\s*\s*pisang\s*\s*['"]\s*\s*\)/;
-    const hasAppend = appendRegex.test(code);
-    const removeByValue = /belanja\.remove\s*\s*\(\s*\s*['"]\s*\s*jeruk\s*\s*['"]\s*\s*\)/.test(code);
-    const removeByIndex = /belanja\.pop\s*\s*\(\s*\s*1\s*\s*\)/.test(code);
-    const hasRemove = removeByValue || removeByIndex;
-    const printRegex = /print\s*\s*\(\s*\s*belanja\s*\s*\)/;
-    const hasPrint = printRegex.test(code);
-    
-    if (!hasCorrectList) {
-      setMessage({ type: 'error', text: "Periksa kembali kode Anda. Pastikan Anda membuat variabel 'belanja' dengan tiga buah: apel, jeruk, mangga." });
-      setIsRunning(false);
-      return;
-    }
-    if (!hasAppend) {
-      setMessage({ type: 'success', text: "Bagus! Variabel 'belanja' sudah benar. Sekarang, tambahkan 'pisang' ke dalam daftar belanja." });
-      setIsRunning(false);
-      return;
-    }
-    if (!hasRemove) {
-      setMessage({ type: 'success', text: "Bagus! 'pisang' sudah ditambahkan. Sekarang, hapus 'jeruk' dari daftar belanja." });
-      setIsRunning(false);
-      return;
-    }
-    if (!hasPrint) {
-      setMessage({ type: 'success', text: "Bagus! Penghapusan 'jeruk' sudah dilakukan. Terakhir, cetak daftar belanja yang sudah diperbarui." });
-      setIsRunning(false);
-      return;
-    }
-    
+    // 1. Eksekusi kode user
+    let executionOutput = "";
     try {
-      const result = await runPythonCode(code);
-      if (result.includes("apel") && result.includes("mangga") && result.includes("pisang") && !result.includes("jeruk")) {
-        setOutput(result + "\n\nSELAMAT! Semua instruksi sudah benar.");
-        setMessage({ type: 'success', text: "Selamat! Anda berhasil menyelesaikan studi kasus." });
-      } else {
-        setOutput(result + "\n\nOutput tidak sesuai. Pastikan list akhir berisi ['apel','mangga','pisang'].");
-        setMessage({ type: 'error', text: "Output akhir tidak sesuai. Periksa kembali urutan operasi Anda." });
+      const result = await runPythonCode(localCode);
+      executionOutput = result;
+      if (result.startsWith("Error:")) {
+        setOutput(result);
+        if (onValidation) onValidation({ isValid: false, isComplete: false });
+        setIsRunning(false);
+        return;
       }
     } catch (err) {
-      setMessage({ type: 'error', text: `Terjadi kesalahan saat menjalankan: ${err.message}` });
-    } finally {
+      setOutput(`Error: ${err.message}`);
+      if (onValidation) onValidation({ isValid: false, isComplete: false });
       setIsRunning(false);
+      return;
     }
-  }, [localCode, pyodideReady, runPythonCode]);
+
+    // 2. Validasi instruksi (hanya baris non-komentar)
+    // Instruksi 1: membuat list belanja = ["apel", "jeruk", "mangga"]
+    const listPattern = /belanja\s*=\s*\[\s*['"]apel['"]\s*,\s*['"]jeruk['"]\s*,\s*['"]mangga['"]\s*\]/;
+    // Instruksi 2: menambah 'pisang' dengan append
+    const appendPattern = /belanja\.append\s*\(\s*['"]pisang['"]\s*\)/;
+    // Instruksi 3: menghapus 'jeruk' (bisa remove atau pop)
+    const removePattern = /belanja\.remove\s*\(\s*['"]jeruk['"]\s*\)/;
+    const popPattern = /belanja\.pop\s*\(\s*1\s*\)/; // indeks jeruk setelah list awal dan append
+    const hasRemoveJeruk = hasNonCommentLine(localCode, removePattern) || hasNonCommentLine(localCode, popPattern);
+    // Instruksi 4: mencetak list belanja
+    const printPattern = /print\s*\(\s*belanja\s*\)/;
+
+    const hasList = hasNonCommentLine(localCode, listPattern);
+    const hasAppend = hasNonCommentLine(localCode, appendPattern);
+    const hasPrint = hasNonCommentLine(localCode, printPattern);
+
+    const isComplete = hasList && hasAppend && hasRemoveJeruk && hasPrint;
+
+    setOutput(executionOutput);
+    setIsRunning(false);
+
+    if (onValidation) {
+      onValidation({ isValid: isComplete, isComplete: isComplete });
+    }
+  }, [localCode, pyodideReady, runPythonCode, onValidation]);
 
   return (
     <div style={styles.codeEditorContainer}>
       <div style={styles.codeEditorHeader}>
         <span style={styles.codeEditorTitle}>{title}</span>
-        <button style={styles.runButton} onClick={validateAndRun} disabled={!pyodideReady || isRunning}>
+        <button style={styles.runButton} onClick={handleRun} disabled={!pyodideReady || isRunning}>
           {isRunning ? "Menjalankan..." : pyodideReady ? "Jalankan" : "Memuat..."}
         </button>
       </div>
-      {message && (
-        <div style={message.type === 'error' ? styles.errorBox : styles.successBox}>
-          {message.text}
-        </div>
-      )}
-      <textarea style={styles.codeInputEditable} value={localCode} onChange={handleChange} placeholder="Tulis kode Python di sini..." spellCheck={false} />
-      <div style={styles.outputHeader}><span style={styles.outputTitle}>Output</span></div>
+      <textarea
+        style={styles.codeInputEditable}
+        value={localCode}
+        onChange={handleChange}
+        placeholder="Tulis kode Python di sini..."
+        spellCheck={false}
+      />
+      <div style={styles.outputHeader}>
+        <span style={styles.outputTitle}>Output</span>
+      </div>
       <div style={styles.codeOutput}>
-        <pre style={styles.outputContent}>{output || "(Klik 'Jalankan' untuk melihat hasil)"}</pre>
+        <pre style={styles.outputContent}>{output}</pre>
       </div>
     </div>
   );
 };
 
-// ================= KOMPONEN DRAG-N-DROP MATCHING (DIPERBAIKI) =================
+// ================= KOMPONEN DRAG-N-DROP MATCHING (SAMA) =================
 const DragDropMatching = ({ items, resetTrigger, onAllCorrectChange }) => {
   const shuffleArray = (arr) => {
     const shuffled = [...arr];
@@ -1183,7 +1207,6 @@ const DragDropMatching = ({ items, resetTrigger, onAllCorrectChange }) => {
   const [correctFuncIds, setCorrectFuncIds] = useState(new Set());
   const [correctDescIds, setCorrectDescIds] = useState(new Set());
 
-  // Fungsi untuk memeriksa jawaban (dipanggil saat klik Periksa)
   const checkAnswers = () => {
     const allMatched = functions.every(f => f.matchedDescId !== null);
     if (!allMatched) {
@@ -1194,7 +1217,6 @@ const DragDropMatching = ({ items, resetTrigger, onAllCorrectChange }) => {
       return;
     }
 
-    // Hitung pasangan yang benar
     const newCorrectFuncIds = new Set();
     const newCorrectDescIds = new Set();
     for (const func of functions) {
@@ -1219,7 +1241,6 @@ const DragDropMatching = ({ items, resetTrigger, onAllCorrectChange }) => {
     }
   };
 
-  // Reset hanya yang salah (setelah diperiksa)
   const resetWrongOnly = () => {
     if (!checked) {
       setFeedbackMsg("⚠️ Silakan lengkapi jawaban terlebih dahulu! ⚠️");
@@ -1254,7 +1275,6 @@ const DragDropMatching = ({ items, resetTrigger, onAllCorrectChange }) => {
     if (onAllCorrectChange) onAllCorrectChange(false);
   };
 
-  // Reset semua (tombol Reset Semua)
   const resetAll = () => {
     setFunctions(initFunctions());
     setDescriptions(initDescriptions());
@@ -1465,6 +1485,10 @@ export default function OperasiManipulasiList() {
   const [bonusGiven, setBonusGiven] = useState(false);
   const userId = localStorage.getItem('userId');
 
+  // State untuk pesan praktik
+  const [praktikMessage, setPraktikMessage] = useState("");
+  const [praktikMessageType, setPraktikMessageType] = useState("");
+
   useEffect(() => {
     const already = localStorage.getItem(BONUS_DONE_KEY);
     if (already === "true") setBonusGiven(true);
@@ -1511,7 +1535,6 @@ export default function OperasiManipulasiList() {
     },
   ];
 
-  // State eksplorasi diinisialisasi dari localStorage
   const [eksplorasiSelected, setEksplorasiSelected] = useState(() => {
     try {
       const saved = localStorage.getItem(EKSPLORASI_ANSWERS_KEY);
@@ -1538,7 +1561,6 @@ export default function OperasiManipulasiList() {
     () => eksplorasiSelected.every(sel => sel !== null)
   );
 
-  // Sinkronisasi: simpan jawaban ke localStorage setiap kali berubah
   useEffect(() => {
     const newFeedback = eksplorasiSelected.map((sel, i) => {
       if (sel === null) return "";
@@ -1838,11 +1860,22 @@ export default function OperasiManipulasiList() {
       await pyodide.runPythonAsync(code);
       const output = await pyodide.runPythonAsync("sys.stdout.getvalue()");
       await pyodide.runPythonAsync("sys.stdout = sys.__stdout__");
-      return output || "(Tidak ada output)";
+      return output || "";
     } catch (error) {
       return `Error: ${error.message}`;
     }
   }, []);
+
+  // Callback untuk validasi praktik
+  const handlePraktikValidation = ({ isValid, isComplete }) => {
+    if (isComplete) {
+      setPraktikMessage("✅ Selamat! Semua instruksi sudah dikerjakan dengan benar.");
+      setPraktikMessageType("success");
+    } else {
+      setPraktikMessage("⚠️ Periksa kembali instruksi!");
+      setPraktikMessageType("warning");
+    }
+  };
 
   const matchingItems = [
     { func: "append()", desc: "Menambah elemen di akhir list" },
@@ -2280,7 +2313,25 @@ export default function OperasiManipulasiList() {
                     <li>Cetak isi list belanja yang sudah diperbarui.</li>
                   </ol>
                   <p style={styles.text}>Buatlah program Python sesuai langkah-langkah di atas!</p>
-                  <CodeEditorEditable title="Ayo Praktik" pyodideReady={pyodideReady} runPythonCode={runPythonCode} />
+                  
+                  {/* Tempat pesan peringatan / sukses di luar editor */}
+                  {praktikMessage && (
+                    <div
+                      style={{
+                        ...styles.praktikMessageContainer,
+                        ...(praktikMessageType === "warning" ? styles.warningMessage : styles.successMessage),
+                      }}
+                    >
+                      {praktikMessage}
+                    </div>
+                  )}
+
+                  <CodeEditorEditable
+                    title="Ayo Praktik"
+                    pyodideReady={pyodideReady}
+                    runPythonCode={runPythonCode}
+                    onValidation={handlePraktikValidation}
+                  />
                 </div>
               </section>
 
