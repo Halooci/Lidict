@@ -121,6 +121,7 @@ export default function KuisList() {
   const [quizStarted, setQuizStarted] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState([]);
+  const answersRef = useRef(answers); // Ref untuk jawaban terbaru
   const [flags, setFlags] = useState([]);
   const [unsures, setUnsures] = useState([]);
   const [submitted, setSubmitted] = useState(false);
@@ -139,6 +140,11 @@ export default function KuisList() {
       setUnsures(Array(questions.length).fill(false));
     }
   }, [questions]);
+
+  // Sinkronkan answersRef setiap kali answers berubah
+  useEffect(() => {
+    answersRef.current = answers;
+  }, [answers]);
 
   const stopTimer = () => {
     if (timerRef.current) {
@@ -206,18 +212,25 @@ export default function KuisList() {
     setShowConfirmModal(false);
     setShowWarningModal(false);
 
+    // Ambil jawaban terkini dari ref (menghindari stale closure)
+    const currentAnswers = answersRef.current;
+
     // Hitung skor: jawaban null dianggap salah
     let score = 0;
     const results = [];
     for (let i = 0; i < questions.length; i++) {
       const q = questions[i];
-      const userAnswer = answers[i];
-      const isCorrect = (userAnswer !== null && userAnswer === q.jawaban_benar);
+      const userAnswer = currentAnswers[i];
+      // Konversi jawaban_benar ke Number agar perbandingan aman
+      const isCorrect = (userAnswer !== null && userAnswer === Number(q.jawaban_benar));
       if (isCorrect) score++;
       results.push({ ...q, userAnswer, isCorrect });
     }
     const finalScore = score;
-    const waktuDigunakan = DURASI_KUIS - (timeLeft < 0 ? 0 : timeLeft);
+
+    // Hitung waktu yang digunakan
+    // Jika auto-submit (waktu habis), waktu digunakan = durasi penuh
+    const waktuDigunakan = auto ? DURASI_KUIS : DURASI_KUIS - (timeLeft < 0 ? 0 : timeLeft);
     setResultsData({ results, finalScore, waktuDigunakan });
 
     if (role === 'mahasiswa') {
