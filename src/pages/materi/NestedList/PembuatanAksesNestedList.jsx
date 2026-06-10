@@ -445,7 +445,7 @@ const styles = {
   },
 };
 
-// ================= KOMPONEN VISUALISASI NESTED LIST INTERAKTIF (BARU) =================
+// ================= KOMPONEN VISUALISASI NESTED LIST INTERAKTIF =================
 const NestedListVisualization = ({ data, title, highlightCell, processExplanation }) => {
   const [currentHighlight, setCurrentHighlight] = useState(null);
   const [explanationText, setExplanationText] = useState("");
@@ -595,7 +595,6 @@ const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, highlightC
   const renderLineExplanations = () => {
     if (!lineExplanations || lineExplanations.length === 0) return null;
     const lines = code.split("\n");
-    // Pastikan jumlah penjelasan sama dengan jumlah baris kode
     const maxLen = Math.max(lines.length, lineExplanations.length);
     const explanations = [];
     for (let i = 0; i < maxLen; i++) {
@@ -605,7 +604,6 @@ const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, highlightC
       <div>
         {lines.map((line, idx) => {
           const explanation = explanations[idx] || "";
-          // Jangan sembunyikan baris kosong, beri penjelasan jika diperlukan
           if (!explanation.trim() && line.trim() === "") return null;
           const lineNumber = idx + 1;
           return (
@@ -669,7 +667,7 @@ const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, highlightC
   );
 };
 
-// ================= PRAKTIK (CODE EDITOR EDITABLE) - SAMA PERSIS KODE AWAL =================
+// ================= PRAKTIK (CODE EDITOR EDITABLE) =================
 const CodeEditorEditable = ({ pyodideReady, runPythonCode }) => {
   const [localCode, setLocalCode] = useState("");
   const [output, setOutput] = useState("");
@@ -800,7 +798,7 @@ const CodeEditorEditable = ({ pyodideReady, runPythonCode }) => {
   );
 };
 
-// ================= SOAL LATIHAN (SAMA PERSIS KODE AWAL, DENGAN TOLERANSI PETIK & SPASI) =================
+// ================= SOAL LATIHAN =================
 const normalizeAnswer = (str) => str.trim().replace(/'/g, '"').replace(/\s+/g, ' ');
 
 const CodeCompletionQuestion = ({ question, codeParts, placeholders, expectedAnswers, index, onCorrectChange }) => {
@@ -957,11 +955,9 @@ const GuessOutputQuestion = ({ question, codeSnippet, expectedOutput, index, onC
   );
 };
 
-// ================= EKSPLORASI (SAMA PERSIS KODE AWAL) =================
-const Eksplorasi = ({ onComplete }) => {
-  const [selected, setSelected] = useState([null, null]);
-  const [feedback, setFeedback] = useState(["", ""]);
-  const [hasAnswered, setHasAnswered] = useState([false, false]);
+// ================= EKSPLORASI (DIMODIFIKASI UNTUK LOCAL STORAGE) =================
+const Eksplorasi = ({ topicName, onComplete }) => {
+  const EKSPLORASI_ANSWERS_KEY = `eksplorasi_${topicName}_answers`;
 
   const questions = [
     {
@@ -976,15 +972,43 @@ const Eksplorasi = ({ onComplete }) => {
     },
   ];
 
-  const handleAnswer = (qIdx, optIdx) => {
-    if (hasAnswered[qIdx]) return;
-    setSelected(prev => { const newSel = [...prev]; newSel[qIdx] = optIdx; return newSel; });
-    const isCorrect = optIdx === questions[qIdx].correct;
-    setFeedback(prev => { const newFb = [...prev]; newFb[qIdx] = isCorrect ? "Benar" : "Salah"; return newFb; });
-    setHasAnswered(prev => { const newAns = [...prev]; newAns[qIdx] = true; return newAns; });
-  };
+  // Inisialisasi dari localStorage (jika ada)
+  const [selected, setSelected] = useState(() => {
+    try {
+      const saved = localStorage.getItem(EKSPLORASI_ANSWERS_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length === questions.length) {
+          return parsed;
+        }
+      }
+    } catch (e) {}
+    return Array(questions.length).fill(null);
+  });
 
-  useEffect(() => { if (hasAnswered.every(v => v === true)) onComplete(); }, [hasAnswered, onComplete]);
+  // Feedback dihitung langsung dari selected
+  const feedback = selected.map((sel, i) => {
+    if (sel === null) return "";
+    return sel === questions[i].correct ? "Benar" : "Salah";
+  });
+
+  // Simpan ke localStorage setiap selected berubah, dan cek selesai
+  useEffect(() => {
+    localStorage.setItem(EKSPLORASI_ANSWERS_KEY, JSON.stringify(selected));
+    const allAnswered = selected.every(s => s !== null);
+    if (allAnswered) {
+      onComplete();
+    }
+  }, [selected, EKSPLORASI_ANSWERS_KEY, onComplete]);
+
+  const handleAnswer = (qIdx, optIdx) => {
+    if (selected[qIdx] !== null) return; // sudah dijawab
+    setSelected(prev => {
+      const newSel = [...prev];
+      newSel[qIdx] = optIdx;
+      return newSel;
+    });
+  };
 
   return (
     <div>
@@ -993,9 +1017,10 @@ const Eksplorasi = ({ onComplete }) => {
         <p style={styles.text}>
           Sebelum belajar lebih dalam, jawab pertanyaan berikut dengan memilih opsi yang tersedia.
           <strong style={{ color: "#0d6efd" }}> Materi akan terbuka setelah kedua pertanyaan dijawab.</strong>
+          {selected.every(s => s !== null) && " (Anda sudah menyelesaikan eksplorasi ini sebelumnya.)"}
         </p>
         {questions.map((q, idx) => {
-          const isAnswered = hasAnswered[idx];
+          const isAnswered = selected[idx] !== null;
           const selectedIdx = selected[idx];
           return (
             <div key={idx} style={{ marginBottom: "30px", borderBottom: "1px solid #e0e0e0", paddingBottom: "20px" }}>
@@ -1023,7 +1048,7 @@ const Eksplorasi = ({ onComplete }) => {
             </div>
           );
         })}
-        {!hasAnswered.every(v => v === true) && <div style={styles.infoMessage}>Jawab kedua pertanyaan di atas untuk membuka materi pembelajaran.</div>}
+        {!selected.every(s => s !== null) && <div style={styles.infoMessage}>Jawab kedua pertanyaan di atas untuk membuka materi pembelajaran.</div>}
       </div>
     </div>
   );
@@ -1119,6 +1144,11 @@ const StrukturInteraktif = () => {
 export default function PembuatanAksesNestedList() {
   const navigate = useNavigate();
 
+  // ---------- KONFIGURASI HALAMAN (TERSTRUKTUR) ----------
+  const TOPIC_NAME = "pembuatan_akses_nested_list";
+  const BONUS_DONE_KEY = `${TOPIC_NAME}_bonus_done`;
+  // --------------------------------------------------------
+
   useEffect(() => {
     const userId = localStorage.getItem('userId');
     const userEmail = localStorage.getItem('userEmail');
@@ -1133,18 +1163,27 @@ export default function PembuatanAksesNestedList() {
   const [bonusGiven, setBonusGiven] = useState(false);
   const userId = localStorage.getItem('userId');
 
-  useEffect(() => { const already = localStorage.getItem("pembuatan_akses_nested_bonus_done"); if (already === "true") setBonusGiven(true); }, []);
+  useEffect(() => {
+    const already = localStorage.getItem(BONUS_DONE_KEY);
+    if (already === "true") setBonusGiven(true);
+  }, [BONUS_DONE_KEY]);
+
   const allCorrect = correctStatus.every(v => v === true);
-  useEffect(() => { if (allCorrect && !bonusGiven && userId) setShowModal(true); }, [allCorrect, bonusGiven, userId]);
+  useEffect(() => {
+    if (allCorrect && !bonusGiven && userId) setShowModal(true);
+  }, [allCorrect, bonusGiven, userId]);
 
   const handleCompleteAndNavigate = async () => {
     try {
       const mahasiswaRef = doc(db, "mahasiswa", userId);
       await updateDoc(mahasiswaRef, { progres_belajar: increment(1) });
-      localStorage.setItem("pembuatan_akses_nested_bonus_done", "true");
+      localStorage.setItem(BONUS_DONE_KEY, "true");
       setShowModal(false);
       navigate("/NestedList/OperasiNestedList");
-    } catch (error) { console.error("Gagal update progres:", error); alert("Terjadi kesalahan. Silakan coba lagi."); }
+    } catch (error) {
+      console.error("Gagal update progres:", error);
+      alert("Terjadi kesalahan. Silakan coba lagi.");
+    }
   };
 
   const handleCorrectChange = (index, isCorrect) => setCorrectStatus(prev => { const newStatus = [...prev]; newStatus[index] = isCorrect; return newStatus; });
@@ -1153,7 +1192,6 @@ export default function PembuatanAksesNestedList() {
   const nestedListData = [[1, 2, 3], [4, 5, 6]];
   const raggedData = [[1, 2], [3, 4, 5], [6]];
 
-  // ================= PERBAIKAN LINE EXPLANATIONS (JELAS DAN LENGKAP) =================
   const contohMembuatNested = `# Membuat nested list 2 baris 3 kolom
 matriks = [[1, 2, 3],
            [4, 5, 6]]
@@ -1267,7 +1305,7 @@ _buffer.getvalue()`);
           </section>
 
           <section style={styles.section}>
-            <Eksplorasi onComplete={handleEksplorasiComplete} />
+            <Eksplorasi topicName={TOPIC_NAME} onComplete={handleEksplorasiComplete} />
           </section>
 
           {isEksplorasiCompleted && (

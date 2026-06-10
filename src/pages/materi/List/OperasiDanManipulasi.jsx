@@ -1442,6 +1442,12 @@ const DragDropMatching = ({ items, resetTrigger, onAllCorrectChange }) => {
 export default function OperasiManipulasiList() {
   const navigate = useNavigate();
 
+  // ─────────── KONFIGURASI HALAMAN ───────────
+  const TOPIC_NAME = "operasi_manipulasi_list";
+  const EKSPLORASI_ANSWERS_KEY = `eksplorasi_${TOPIC_NAME}_answers`;
+  const BONUS_DONE_KEY = `${TOPIC_NAME}_bonus_done`;
+  // ──────────────────────────────────────────
+
   useEffect(() => {
     const userId = localStorage.getItem('userId');
     const userEmail = localStorage.getItem('userEmail');
@@ -1460,9 +1466,9 @@ export default function OperasiManipulasiList() {
   const userId = localStorage.getItem('userId');
 
   useEffect(() => {
-    const already = localStorage.getItem("operasi_manipulasi_bonus_done");
+    const already = localStorage.getItem(BONUS_DONE_KEY);
     if (already === "true") setBonusGiven(true);
-  }, []);
+  }, [BONUS_DONE_KEY]);
 
   useEffect(() => {
     if (allMatchingCorrect && !bonusGiven && userId) {
@@ -1476,7 +1482,7 @@ export default function OperasiManipulasiList() {
       await updateDoc(mahasiswaRef, {
         progres_belajar: increment(1)
       });
-      localStorage.setItem("operasi_manipulasi_bonus_done", "true");
+      localStorage.setItem(BONUS_DONE_KEY, "true");
       setShowModal(false);
       navigate("/List/RangkumanList");
     } catch (error) {
@@ -1486,10 +1492,6 @@ export default function OperasiManipulasiList() {
   };
 
   // EKSPLORASI AWAL
-  const [eksplorasiSelected, setEksplorasiSelected] = useState([null, null]);
-  const [eksplorasiFeedback, setEksplorasiFeedback] = useState(["", ""]);
-  const [isEksplorasiCompleted, setIsEksplorasiCompleted] = useState(false);
-
   const eksplorasiQuestions = [
     { 
       text: "Method yang digunakan untuk menambahkan elemen di akhir list adalah ....", 
@@ -1509,6 +1511,45 @@ export default function OperasiManipulasiList() {
     },
   ];
 
+  // State eksplorasi diinisialisasi dari localStorage
+  const [eksplorasiSelected, setEksplorasiSelected] = useState(() => {
+    try {
+      const saved = localStorage.getItem(EKSPLORASI_ANSWERS_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length === eksplorasiQuestions.length) {
+          return parsed;
+        }
+      }
+    } catch (e) {
+      // fallback
+    }
+    return Array(eksplorasiQuestions.length).fill(null);
+  });
+
+  const [eksplorasiFeedback, setEksplorasiFeedback] = useState(() => {
+    return eksplorasiSelected.map((sel, i) => {
+      if (sel === null) return "";
+      return sel === eksplorasiQuestions[i].correct ? "Benar" : "Salah";
+    });
+  });
+
+  const [isEksplorasiCompleted, setIsEksplorasiCompleted] = useState(
+    () => eksplorasiSelected.every(sel => sel !== null)
+  );
+
+  // Sinkronisasi: simpan jawaban ke localStorage setiap kali berubah
+  useEffect(() => {
+    const newFeedback = eksplorasiSelected.map((sel, i) => {
+      if (sel === null) return "";
+      return sel === eksplorasiQuestions[i].correct ? "Benar" : "Salah";
+    });
+    setEksplorasiFeedback(newFeedback);
+    const allAnswered = eksplorasiSelected.every(sel => sel !== null);
+    setIsEksplorasiCompleted(allAnswered);
+    localStorage.setItem(EKSPLORASI_ANSWERS_KEY, JSON.stringify(eksplorasiSelected));
+  }, [eksplorasiSelected, EKSPLORASI_ANSWERS_KEY]);
+
   const handleEksplorasiSelect = (questionIdx, optionIdx) => {
     if (eksplorasiSelected[questionIdx] !== null) return;
     setEksplorasiSelected(prev => {
@@ -1516,20 +1557,7 @@ export default function OperasiManipulasiList() {
       newSelected[questionIdx] = optionIdx;
       return newSelected;
     });
-    const isCorrect = optionIdx === eksplorasiQuestions[questionIdx].correct;
-    setEksplorasiFeedback(prev => {
-      const newFeedback = [...prev];
-      newFeedback[questionIdx] = isCorrect ? "Benar" : "Salah";
-      return newFeedback;
-    });
   };
-
-  useEffect(() => {
-    const allSelected = eksplorasiSelected.every(selected => selected !== null);
-    if (allSelected && !isEksplorasiCompleted) {
-      setIsEksplorasiCompleted(true);
-    }
-  }, [eksplorasiSelected, isEksplorasiCompleted]);
 
   // DATA VISUALISASI (sama seperti asli)
   const concatBeforeA = [1,2,3];
@@ -1854,6 +1882,7 @@ export default function OperasiManipulasiList() {
               <p style={styles.text}>
                 Sebelum belajar lebih dalam, jawab pertanyaan berikut dengan memilih opsi yang tersedia.
                 <strong style={{ color: "#0d6efd" }}> Materi akan terbuka setelah kedua pertanyaan dijawab.</strong>
+                {isEksplorasiCompleted && " (Anda sudah menyelesaikan eksplorasi ini sebelumnya.)"}
               </p>
               {eksplorasiQuestions.map((q, idx) => {
                 const isAnswered = eksplorasiSelected[idx] !== null;

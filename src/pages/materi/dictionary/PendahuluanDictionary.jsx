@@ -167,6 +167,12 @@ const LatihanSoal = ({ soal, index, selectedAnswer, onSelect, isWrong }) => {
 export default function PendahuluanDictionary() {
   const navigate = useNavigate();
 
+  // ---------- KONFIGURASI HALAMAN (TERSTRUKTUR) ----------
+  const TOPIC_NAME = "pendahuluan_dict";
+  const EKSPLORASI_ANSWERS_KEY = `eksplorasi_${TOPIC_NAME}_answers`;
+  const BONUS_DONE_KEY = `${TOPIC_NAME}_bonus_done`;
+  // --------------------------------------------------------
+
   useEffect(() => {
     const userId = localStorage.getItem('userId');
     const userEmail = localStorage.getItem('userEmail');
@@ -182,16 +188,11 @@ export default function PendahuluanDictionary() {
 
   // Cek apakah bonus sudah pernah diberikan
   useEffect(() => {
-    const already = localStorage.getItem("pendahuluan_dict_bonus_done");
+    const already = localStorage.getItem(BONUS_DONE_KEY);
     if (already === "true") setBonusGiven(true);
-  }, []);
+  }, [BONUS_DONE_KEY]);
 
-  // EKSPLORASI (pretest)
-  const [eksplorasiSelected, setEksplorasiSelected] = useState([null, null, null]);
-  const [eksplorasiFeedback, setEksplorasiFeedback] = useState(["", "", ""]);
-  const [eksplorasiHasAnswered, setEksplorasiHasAnswered] = useState([false, false, false]);
-  const [isEksplorasiCompleted, setIsEksplorasiCompleted] = useState(false);
-
+  // EKSPLORASI (pretest) - dengan localStorage
   const eksplorasiQuestions = [
     {
       text: "Apa yang dimaksud dengan dictionary dalam Python?",
@@ -228,6 +229,33 @@ export default function PendahuluanDictionary() {
     },
   ];
 
+  // State untuk eksplorasi, diinisialisasi dari localStorage
+  const [eksplorasiSelected, setEksplorasiSelected] = useState(() => {
+    try {
+      const saved = localStorage.getItem(EKSPLORASI_ANSWERS_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length === eksplorasiQuestions.length) {
+          return parsed;
+        }
+      }
+    } catch (e) {}
+    return Array(eksplorasiQuestions.length).fill(null);
+  });
+
+  // State turunan (dapat dihitung langsung dari selected)
+  const eksplorasiHasAnswered = eksplorasiSelected.map(sel => sel !== null);
+  const eksplorasiFeedback = eksplorasiSelected.map((sel, i) => {
+    if (sel === null) return "";
+    return sel === eksplorasiQuestions[i].correct ? "Benar" : "Salah";
+  });
+  const isEksplorasiCompleted = eksplorasiHasAnswered.every(v => v === true);
+
+  // Sinkronisasi ke localStorage setiap kali jawaban berubah
+  useEffect(() => {
+    localStorage.setItem(EKSPLORASI_ANSWERS_KEY, JSON.stringify(eksplorasiSelected));
+  }, [eksplorasiSelected, EKSPLORASI_ANSWERS_KEY]);
+
   const handleEksplorasiSelect = (questionIdx, optionIdx) => {
     if (eksplorasiHasAnswered[questionIdx]) return;
     setEksplorasiSelected(prev => {
@@ -235,25 +263,7 @@ export default function PendahuluanDictionary() {
       newSel[questionIdx] = optionIdx;
       return newSel;
     });
-    const isCorrect = optionIdx === eksplorasiQuestions[questionIdx].correct;
-    setEksplorasiFeedback(prev => {
-      const newFb = [...prev];
-      newFb[questionIdx] = isCorrect ? "Benar" : "Salah";
-      return newFb;
-    });
-    setEksplorasiHasAnswered(prev => {
-      const newAns = [...prev];
-      newAns[questionIdx] = true;
-      return newAns;
-    });
   };
-
-  useEffect(() => {
-    const allAnswered = eksplorasiHasAnswered.every(v => v === true);
-    if (allAnswered && !isEksplorasiCompleted) {
-      setIsEksplorasiCompleted(true);
-    }
-  }, [eksplorasiHasAnswered, isEksplorasiCompleted]);
 
   // Data visualisasi contoh dictionary
   const contohDictionary = {
@@ -317,46 +327,37 @@ export default function PendahuluanDictionary() {
 
   // State untuk latihan (baru, tanpa auto-lock)
   const [jawabanLatihan, setJawabanLatihan] = useState(Array(latihanSoal.length).fill(null));
-  const [hasilPeriksa, setHasilPeriksa] = useState(Array(latihanSoal.length).fill(null)); // null: belum diperiksa, true: benar, false: salah
+  const [hasilPeriksa, setHasilPeriksa] = useState(Array(latihanSoal.length).fill(null));
   const [pesanPeriksa, setPesanPeriksa] = useState("");
   const [semuaBenar, setSemuaBenar] = useState(false);
   
-  // Refs untuk scroll ke soal
   const soalRefs = useRef([]);
   useEffect(() => {
     soalRefs.current = soalRefs.current.slice(0, latihanSoal.length);
   }, [latihanSoal.length]);
 
-  // Fungsi untuk memilih jawaban latihan (hanya simpan, tidak langsung periksa)
   const handleSelectLatihan = (index, optionIdx) => {
-    // Update jawaban
     setJawabanLatihan(prev => {
       const newJaw = [...prev];
       newJaw[index] = optionIdx;
       return newJaw;
     });
-    // Reset hasil periksa untuk soal ini agar tanda salah hilang
     setHasilPeriksa(prev => {
       const newHasil = [...prev];
       newHasil[index] = null;
       return newHasil;
     });
-    // Reset semuaBenar karena ada perubahan jawaban
     if (semuaBenar) setSemuaBenar(false);
-    // Hilangkan pesan periksa jika ada
     if (pesanPeriksa) setPesanPeriksa("");
   };
 
-  // Fungsi untuk memeriksa semua jawaban
   const handlePeriksaSemua = () => {
-    // Cek apakah semua soal sudah dijawab
     const semuaTerisi = jawabanLatihan.every(jaw => jaw !== null);
     if (!semuaTerisi) {
       setPesanPeriksa("⚠️ Anda harus menjawab semua soal terlebih dahulu!");
       return;
     }
 
-    // Evaluasi setiap jawaban
     const newHasilPeriksa = [];
     let adaSalah = false;
     let firstWrongIndex = -1;
@@ -373,7 +374,6 @@ export default function PendahuluanDictionary() {
     setHasilPeriksa(newHasilPeriksa);
 
     if (adaSalah) {
-      // Scroll ke soal pertama yang salah
       const element = document.getElementById(`soal-latihan-${firstWrongIndex}`);
       if (element) {
         element.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -381,14 +381,11 @@ export default function PendahuluanDictionary() {
       setPesanPeriksa("❌ Masih ada jawaban yang salah. Perbaiki jawaban yang salah, lalu periksa kembali.");
       setSemuaBenar(false);
     } else {
-      // Semua benar
       setSemuaBenar(true);
       setPesanPeriksa("🎉 Selamat! Semua jawaban Anda benar! 🎉");
-      // Modal akan muncul karena efek di bawah
     }
   };
 
-  // Ketika semua latihan benar dan bonus belum diberikan, tampilkan modal
   useEffect(() => {
     if (semuaBenar && !bonusGiven && userId) {
       setShowModal(true);
@@ -401,7 +398,7 @@ export default function PendahuluanDictionary() {
       await updateDoc(mahasiswaRef, {
         progres_belajar: increment(1)
       });
-      localStorage.setItem("pendahuluan_dict_bonus_done", "true");
+      localStorage.setItem(BONUS_DONE_KEY, "true");
       setShowModal(false);
       navigate("/Dictionary/PembuatanAksesElementDictionary");
     } catch (error) {
@@ -447,6 +444,7 @@ export default function PendahuluanDictionary() {
               <p style={styles.text}>
                 Sebelum mempelajari materi lebih dalam, jawab pertanyaan berikut dengan memilih opsi yang tersedia.
                 <strong style={{ color: "#0d6efd" }}> Materi akan terbuka setelah ketiga pertanyaan dijawab.</strong>
+                {isEksplorasiCompleted && " (Anda sudah menyelesaikan eksplorasi ini sebelumnya.)"}
               </p>
               {eksplorasiQuestions.map((q, idx) => {
                 const isAnswered = eksplorasiHasAnswered[idx];
@@ -545,7 +543,7 @@ export default function PendahuluanDictionary() {
                       index={idx}
                       selectedAnswer={jawabanLatihan[idx]}
                       onSelect={handleSelectLatihan}
-                      isWrong={hasilPeriksa[idx] === false} // tampilkan label salah hanya jika hasil periksa false
+                      isWrong={hasilPeriksa[idx] === false}
                     />
                   ))}
                   <div style={{ marginTop: "20px", textAlign: "center" }}>
@@ -597,7 +595,7 @@ export default function PendahuluanDictionary() {
   );
 }
 
-/* ================== STYLES (diperluas dengan modal) ================== */
+/* ================== STYLES ================== */
 const styles = {
   page: {
     padding: "30px 40px",
@@ -664,7 +662,7 @@ const styles = {
     padding: "15px",
     marginBottom: "20px",
     border: "1px solid #ddd",
-    scrollMarginTop: "80px", // agar scroll tidak tertutup navbar
+    scrollMarginTop: "80px",
   },
   questionText: { fontWeight: "600", marginBottom: "10px", color: "#1f2937" },
   mcOption: {

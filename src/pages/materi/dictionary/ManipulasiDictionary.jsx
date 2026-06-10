@@ -179,9 +179,7 @@ const visStyles = {
 
 // ===================== KOMPONEN PERBANDINGAN SEBELUM DAN SESUDAH =====================
 const DictionaryComparison = ({ beforeData, afterData, beforeTitle, afterTitle, addedKeys = [], removedKeys = [], accessSequenceAfter = [], showClickDetail = true }) => {
-  // Tandai key yang ditambahkan di after
   const afterChangedKeys = addedKeys;
-  // Tandai key yang dihapus di before (akan tampil merah)
   const beforeChangedKeys = removedKeys;
 
   return (
@@ -206,7 +204,6 @@ const DictionaryComparison = ({ beforeData, afterData, beforeTitle, afterTitle, 
           />
         </div>
       </div>
-      {/* Keterangan perubahan yang lebih besar dan jelas */}
       {(removedKeys.length > 0 || addedKeys.length > 0) && (
         <div style={{
           marginTop: "15px",
@@ -320,7 +317,7 @@ const CodeEditor = ({ code, codeKey, pyodideReady, runPythonCode, explanations, 
   );
 };
 
-// ===================== KOMPONEN LATIHAN PRAKTIK (VALIDASI BERTAHAP) =====================
+// ===================== KOMPONEN LATIHAN PRAKTIK =====================
 const CodeEditorEditable = ({ codeKey, title, pyodideReady, runPythonCode, expectedOutput, successMessage }) => {
   const [localCode, setLocalCode] = useState("");
   const [output, setOutput] = useState("");
@@ -442,7 +439,7 @@ const CodeEditorEditable = ({ codeKey, title, pyodideReady, runPythonCode, expec
   );
 };
 
-// ===================== KOMPONEN LATIHAN SOAL (LOCK PER SOAL) DENGAN CALLBACK =====================
+// ===================== KOMPONEN LATIHAN SOAL (LOCK PER SOAL) =====================
 const LatihanSoal = ({ questions, resetTrigger, onAllCorrectChange }) => {
   const [answers, setAnswers] = useState(questions.map(() => null));
   const [feedback, setFeedback] = useState(questions.map(() => ""));
@@ -542,11 +539,35 @@ const LatihanSoal = ({ questions, resetTrigger, onAllCorrectChange }) => {
   );
 };
 
+// ===================== DATA EKSPLORASI (DIPINDAHKAN KE LUAR KOMPONEN) =====================
+const eksplorasiQuestions = [
+  {
+    text: "Metode dictionary yang digunakan untuk menambah atau memperbarui beberapa pasangan key-value sekaligus adalah ....",
+    options: ["append()", "update()", "add()", "insert()", "merge()"],
+    correct: 1,
+  },
+  {
+    text: "Perhatikan dictionary: `stok = {'apel': 10, 'mangga': 5}`. Kode manakah yang akan menghapus key 'mangga' beserta nilainya?",
+    options: ["stok.remove('mangga')", "del stok['mangga']", "stok.delete('mangga')", "stok.pop('mangga')", "stok.popitem('mangga')"],
+    correct: 3,
+  },
+  {
+    text: "Metode dictionary yang menghapus semua item sehingga menghasilkan dictionary kosong adalah ....",
+    options: ["delete()", "removeAll()", "clear()", "empty()", "reset()"],
+    correct: 2,
+  },
+];
+
 // ===================== KOMPONEN UTAMA =====================
 export default function ManipulasiDictionary() {
   const navigate = useNavigate();
 
-  // Auth check
+  // ─────────── KONFIGURASI HALAMAN ───────────
+  const TOPIC_NAME = "manipulasi_dict";
+  const EKSPLORASI_ANSWERS_KEY = `eksplorasi_${TOPIC_NAME}_answers`;
+  const BONUS_DONE_KEY = `${TOPIC_NAME}_bonus_done`;
+  // ──────────────────────────────────────────
+
   useEffect(() => {
     const userId = localStorage.getItem('userId');
     const userEmail = localStorage.getItem('userEmail');
@@ -560,19 +581,16 @@ export default function ManipulasiDictionary() {
   const [resetInteractives, setResetInteractives] = useState(0);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
-  // State untuk bonus progres
   const [allLatihanCorrect, setAllLatihanCorrect] = useState(false);
   const [showModal, setShowModal] = useState(false);
   const [bonusGiven, setBonusGiven] = useState(false);
   const userId = localStorage.getItem('userId');
 
-  // Cek apakah bonus sudah pernah diberikan untuk halaman ini
   useEffect(() => {
-    const already = localStorage.getItem("manipulasi_dict_bonus_done");
+    const already = localStorage.getItem(BONUS_DONE_KEY);
     if (already === "true") setBonusGiven(true);
-  }, []);
+  }, [BONUS_DONE_KEY]);
 
-  // Ketika semua latihan benar dan bonus belum diberikan, tampilkan modal
   useEffect(() => {
     if (allLatihanCorrect && !bonusGiven && userId) {
       setShowModal(true);
@@ -585,7 +603,7 @@ export default function ManipulasiDictionary() {
       await updateDoc(mahasiswaRef, {
         progres_belajar: increment(1)
       });
-      localStorage.setItem("manipulasi_dict_bonus_done", "true");
+      localStorage.setItem(BONUS_DONE_KEY, "true");
       setShowModal(false);
       navigate("/Dictionary/RangkumanDictionary");
     } catch (error) {
@@ -594,29 +612,32 @@ export default function ManipulasiDictionary() {
     }
   };
 
-  // EKSPLORASI
-  const [eksplorasiSelected, setEksplorasiSelected] = useState([null, null, null]);
-  const [eksplorasiFeedback, setEksplorasiFeedback] = useState(["", "", ""]);
-  const [eksplorasiHasAnswered, setEksplorasiHasAnswered] = useState([false, false, false]);
-  const [isEksplorasiCompleted, setIsEksplorasiCompleted] = useState(false);
+  // EKSPLORASI (state dari localStorage)
+  const [eksplorasiSelected, setEksplorasiSelected] = useState(() => {
+    try {
+      const saved = localStorage.getItem(EKSPLORASI_ANSWERS_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length === eksplorasiQuestions.length) {
+          return parsed;
+        }
+      }
+    } catch (e) {}
+    return Array(eksplorasiQuestions.length).fill(null);
+  });
 
-  const eksplorasiQuestions = [
-    {
-      text: "Metode dictionary yang digunakan untuk menambah atau memperbarui beberapa pasangan key-value sekaligus adalah ....",
-      options: ["append()", "update()", "add()", "insert()", "merge()"],
-      correct: 1,
-    },
-    {
-      text: "Perhatikan dictionary: `stok = {'apel': 10, 'mangga': 5}`. Kode manakah yang akan menghapus key 'mangga' beserta nilainya?",
-      options: ["stok.remove('mangga')", "del stok['mangga']", "stok.delete('mangga')", "stok.pop('mangga')", "stok.popitem('mangga')"],
-      correct: 3,
-    },
-    {
-      text: "Metode dictionary yang menghapus semua item sehingga menghasilkan dictionary kosong adalah ....",
-      options: ["delete()", "removeAll()", "clear()", "empty()", "reset()"],
-      correct: 2,
-    },
-  ];
+  // Computed values
+  const eksplorasiHasAnswered = eksplorasiSelected.map(sel => sel !== null);
+  const eksplorasiFeedback = eksplorasiSelected.map((sel, i) => {
+    if (sel === null) return "";
+    return sel === eksplorasiQuestions[i].correct ? "Benar" : "Salah";
+  });
+  const isEksplorasiCompleted = eksplorasiHasAnswered.every(v => v === true);
+
+  // Simpan ke localStorage setiap kali jawaban berubah
+  useEffect(() => {
+    localStorage.setItem(EKSPLORASI_ANSWERS_KEY, JSON.stringify(eksplorasiSelected));
+  }, [eksplorasiSelected, EKSPLORASI_ANSWERS_KEY]);
 
   const handleEksplorasiSelect = (questionIdx, optionIdx) => {
     if (eksplorasiHasAnswered[questionIdx]) return;
@@ -625,25 +646,7 @@ export default function ManipulasiDictionary() {
       newSel[questionIdx] = optionIdx;
       return newSel;
     });
-    const isCorrect = optionIdx === eksplorasiQuestions[questionIdx].correct;
-    setEksplorasiFeedback(prev => {
-      const newFb = [...prev];
-      newFb[questionIdx] = isCorrect ? "Benar" : "Salah";
-      return newFb;
-    });
-    setEksplorasiHasAnswered(prev => {
-      const newAns = [...prev];
-      newAns[questionIdx] = true;
-      return newAns;
-    });
   };
-
-  useEffect(() => {
-    const allAnswered = eksplorasiHasAnswered.every(v => v === true);
-    if (allAnswered && !isEksplorasiCompleted) {
-      setIsEksplorasiCompleted(true);
-    }
-  }, [eksplorasiHasAnswered, isEksplorasiCompleted]);
 
   // Data untuk visualisasi perbandingan
   const dataUpdateBefore = { a: 1, b: 2 };
@@ -839,6 +842,7 @@ _buffer.getvalue()
                   {" "}
                   Materi akan terbuka setelah ketiga pertanyaan dijawab.
                 </strong>
+                {isEksplorasiCompleted && " (Anda sudah menyelesaikan eksplorasi ini sebelumnya.)"}
               </p>
               {eksplorasiQuestions.map((q, idx) => {
                 const isAnswered = eksplorasiHasAnswered[idx];

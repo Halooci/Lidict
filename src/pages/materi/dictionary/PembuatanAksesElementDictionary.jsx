@@ -5,7 +5,7 @@ import SidebarMateri from "../../komponen/SidebarMateri";
 import { db } from "../../../config/firebase";
 import { doc, updateDoc, increment } from "firebase/firestore";
 
-// ===================== KOMPONEN VISUALISASI DICTIONARY (DENGAN KLIK UNTUK DETAIL) =====================
+// ===================== KOMPONEN VISUALISASI DICTIONARY =====================
 const DictionaryVisualization = ({ data, accessSequence = [], title }) => {
   const [highlightedKey, setHighlightedKey] = useState(null);
   const [animationStep, setAnimationStep] = useState(0);
@@ -230,11 +230,11 @@ const CodeEditor = ({ code, codeKey, pyodideReady, runPythonCode, explanations, 
   );
 };
 
-// ===================== KOMPONEN LATIHAN PRAKTIK (VALIDASI BERTAHAP TANPA MEMBERI JAWABAN) =====================
+// ===================== KOMPONEN LATIHAN PRAKTIK =====================
 const CodeEditorEditable = ({ codeKey, title, pyodideReady, runPythonCode, expectedOutput }) => {
   const [localCode, setLocalCode] = useState("");
   const [output, setOutput] = useState("");
-  const [message, setMessage] = useState(null); // { type: 'error' | 'success', text: string }
+  const [message, setMessage] = useState(null);
   const [isRunning, setIsRunning] = useState(false);
 
   const handleChange = useCallback((e) => {
@@ -341,7 +341,7 @@ const CodeEditorEditable = ({ codeKey, title, pyodideReady, runPythonCode, expec
   );
 };
 
-// ===================== KOMPONEN SOAL MELENGKAPI KODE (DENGAN VALIDASI KOTAK KOSONG) =====================
+// ===================== KOMPONEN SOAL MELENGKAPI KODE =====================
 const CodeCompletionQuestion = ({ question, codeParts, placeholders, expectedAnswers, index, onCorrectChange }) => {
   const [answers, setAnswers] = useState(placeholders.map(() => ""));
   const [feedback, setFeedback] = useState("");
@@ -462,6 +462,12 @@ const CodeCompletionQuestion = ({ question, codeParts, placeholders, expectedAns
 export default function PembuatanAksesElementDictionary() {
   const navigate = useNavigate();
 
+  // ─────────── KONFIGURASI HALAMAN ───────────
+  const TOPIC_NAME = "pembuatan_akses_dict";
+  const EKSPLORASI_ANSWERS_KEY = `eksplorasi_${TOPIC_NAME}_answers`;
+  const BONUS_DONE_KEY = `${TOPIC_NAME}_bonus_done`;
+  // ──────────────────────────────────────────
+
   useEffect(() => {
     const userId = localStorage.getItem('userId');
     const userEmail = localStorage.getItem('userEmail');
@@ -474,22 +480,18 @@ export default function PembuatanAksesElementDictionary() {
   const pyodideRef = useRef(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
-  // State untuk bonus progres
   const [exerciseStatus, setExerciseStatus] = useState([false, false, false, false, false]);
   const [showModal, setShowModal] = useState(false);
   const [bonusGiven, setBonusGiven] = useState(false);
   const userId = localStorage.getItem('userId');
 
-  // Cek apakah bonus sudah pernah diberikan
   useEffect(() => {
-    const already = localStorage.getItem("pembuatan_akses_dict_bonus_done");
+    const already = localStorage.getItem(BONUS_DONE_KEY);
     if (already === "true") setBonusGiven(true);
-  }, []);
+  }, [BONUS_DONE_KEY]);
 
-  // Update allExercisesCorrect ketika exerciseStatus berubah
   const allExercisesCorrect = exerciseStatus.every(v => v === true);
 
-  // Ketika semua latihan benar dan bonus belum diberikan, tampilkan modal
   useEffect(() => {
     if (allExercisesCorrect && !bonusGiven && userId) {
       setShowModal(true);
@@ -502,7 +504,7 @@ export default function PembuatanAksesElementDictionary() {
       await updateDoc(mahasiswaRef, {
         progres_belajar: increment(1)
       });
-      localStorage.setItem("pembuatan_akses_dict_bonus_done", "true");
+      localStorage.setItem(BONUS_DONE_KEY, "true");
       setShowModal(false);
       navigate("/Dictionary/ManipulasiDictionary");
     } catch (error) {
@@ -511,7 +513,6 @@ export default function PembuatanAksesElementDictionary() {
     }
   };
 
-  // Callback untuk update status setiap soal
   const updateExerciseStatus = (index, isCorrect) => {
     setExerciseStatus(prev => {
       const newStatus = [...prev];
@@ -520,12 +521,7 @@ export default function PembuatanAksesElementDictionary() {
     });
   };
 
-  // EKSPLORASI
-  const [eksplorasiSelected, setEksplorasiSelected] = useState([null, null, null]);
-  const [eksplorasiFeedback, setEksplorasiFeedback] = useState(["", "", ""]);
-  const [eksplorasiHasAnswered, setEksplorasiHasAnswered] = useState([false, false, false]);
-  const [isEksplorasiCompleted, setIsEksplorasiCompleted] = useState(false);
-
+  // EKSPLORASI (dengan localStorage)
   const eksplorasiQuestions = [
     {
       text: "Berikut ini cara membuat dictionary kosong yang benar di Python adalah ...",
@@ -550,6 +546,33 @@ export default function PembuatanAksesElementDictionary() {
     },
   ];
 
+  // Inisialisasi dari localStorage
+  const [eksplorasiSelected, setEksplorasiSelected] = useState(() => {
+    try {
+      const saved = localStorage.getItem(EKSPLORASI_ANSWERS_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length === eksplorasiQuestions.length) {
+          return parsed;
+        }
+      }
+    } catch (e) {}
+    return Array(eksplorasiQuestions.length).fill(null);
+  });
+
+  // Hitung feedback dan status dari selected
+  const eksplorasiFeedback = eksplorasiSelected.map((sel, i) => {
+    if (sel === null) return "";
+    return sel === eksplorasiQuestions[i].correct ? "Benar" : "Salah";
+  });
+  const eksplorasiHasAnswered = eksplorasiSelected.map(sel => sel !== null);
+  const isEksplorasiCompleted = eksplorasiHasAnswered.every(v => v === true);
+
+  // Simpan ke localStorage saat berubah
+  useEffect(() => {
+    localStorage.setItem(EKSPLORASI_ANSWERS_KEY, JSON.stringify(eksplorasiSelected));
+  }, [eksplorasiSelected, EKSPLORASI_ANSWERS_KEY]);
+
   const handleEksplorasiSelect = (questionIdx, optionIdx) => {
     if (eksplorasiHasAnswered[questionIdx]) return;
     setEksplorasiSelected(prev => {
@@ -557,25 +580,7 @@ export default function PembuatanAksesElementDictionary() {
       newSel[questionIdx] = optionIdx;
       return newSel;
     });
-    const isCorrect = optionIdx === eksplorasiQuestions[questionIdx].correct;
-    setEksplorasiFeedback(prev => {
-      const newFb = [...prev];
-      newFb[questionIdx] = isCorrect ? "Benar" : "Salah";
-      return newFb;
-    });
-    setEksplorasiHasAnswered(prev => {
-      const newAns = [...prev];
-      newAns[questionIdx] = true;
-      return newAns;
-    });
   };
-
-  useEffect(() => {
-    const allAnswered = eksplorasiHasAnswered.every(v => v === true);
-    if (allAnswered && !isEksplorasiCompleted) {
-      setIsEksplorasiCompleted(true);
-    }
-  }, [eksplorasiHasAnswered, isEksplorasiCompleted]);
 
   // Data untuk visualisasi
   const dictMembuat = {
@@ -587,7 +592,7 @@ export default function PembuatanAksesElementDictionary() {
     nama: "Budi Santoso",
     nim: "12345678",
     jurusan: "Informatika",
-    alamat: "Tidak tersedia" // untuk keperluan get default, tapi di visualisasi tetap sama
+    alamat: "Tidak tersedia"
   };
   const accessSequence = ["nama", "nim", "jurusan", "alamat"];
 
@@ -645,7 +650,6 @@ print("Alamat:", mahasiswa.get("alamat", "Tidak tersedia"))`,
     ],
   };
 
-  // Soal latihan (5 soal)
   const soal1CodeParts = [
     "data = {\n    \"nama\": \"Budi\",\n    ",
     ": 20,\n    \"kota\": \"Jakarta\"\n}\nprint(data)"
@@ -683,7 +687,6 @@ print("Alamat:", mahasiswa.get("alamat", "Tidak tersedia"))`,
   const soal5Placeholders = ["...", "..."];
   const soal5Expected = ["\"usia\"", "\"nama\""];
 
-  // Load Pyodide
   useEffect(() => {
     const loadPyodide = async () => {
       if (!window.loadPyodide) {
@@ -765,6 +768,7 @@ _buffer.getvalue()
               <p style={styles.text}>
                 Sebelum mempelajari lebih dalam, jawab pertanyaan berikut dengan memilih opsi yang tersedia.
                 <strong style={{ color: "#0d6efd" }}> Materi akan terbuka setelah ketiga pertanyaan dijawab.</strong>
+                {isEksplorasiCompleted && " (Anda sudah menyelesaikan eksplorasi ini sebelumnya.)"}
               </p>
               {eksplorasiQuestions.map((q, idx) => {
                 const isAnswered = eksplorasiHasAnswered[idx];
@@ -816,7 +820,6 @@ _buffer.getvalue()
             <>
               <section style={styles.section}>
                 <div style={styles.card}>
-                  {/* MEMBUAT DICTIONARY */}
                   <div style={styles.subTitleBlock}>
                     <h3 style={styles.subTitle}>Membuat Dictionary</h3>
                   </div>
@@ -840,7 +843,6 @@ _buffer.getvalue()
                     }}
                   />
                   
-                  {/* MENGAKSES NILAI DICTIONARY */}
                   <div style={styles.subTitleBlock}>
                     <h3 style={styles.subTitle}>Mengakses Nilai Dictionary</h3>
                   </div>
@@ -981,7 +983,7 @@ _buffer.getvalue()
   );
 }
 
-/* ================== STYLE (diperluas dengan modal) ================== */
+/* ================== STYLE ================== */
 const styles = {
   page: {
     padding: "30px 40px",

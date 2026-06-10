@@ -435,7 +435,7 @@ const visStyles = {
   note: { fontSize: "12px", color: "#666", marginTop: "10px", textAlign: "center" },
 };
 
-// ================= CODE EDITOR UNTUK CONTOH KODE PROGRAM (TAMPILAN SEPERTI GAMBAR) =================
+// ================= CODE EDITOR UNTUK CONTOH KODE PROGRAM =================
 const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, pyodideReady, runPythonCode, lineExplanations }) => {
   const [output, setOutput] = useState("");
   const [isRunning, setIsRunning] = useState(false);
@@ -492,7 +492,6 @@ const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, pyodideRea
         <pre style={styles.codePre}>{code}</pre>
       </div>
 
-      {/* Visualisasi Kode Program - selalu ditampilkan, dengan placeholder atau konten */}
       <div style={styles.visualHeader}>Visualisasi</div>
       <div style={styles.visualArea}>
         {showDetail && visualData ? (
@@ -502,7 +501,6 @@ const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, pyodideRea
         )}
       </div>
 
-      {/* Output - selalu ditampilkan, dengan placeholder atau konten */}
       <div style={styles.outputHeader}>
         <span style={styles.outputTitle}>Output</span>
       </div>
@@ -512,7 +510,6 @@ const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, pyodideRea
         </pre>
       </div>
 
-      {/* Penjelasan Kode - hanya ditampilkan setelah dijalankan */}
       {showDetail && lineExplanations && lineExplanations.length > 0 && (
         <>
           <div style={styles.explanationHeader}>
@@ -626,7 +623,7 @@ const CodeEditorEditable = ({ pyodideReady, runPythonCode }) => {
   );
 };
 
-// ================= SOAL LATIHAN (DENGAN TOLERANSI SPASI & PETIK) =================
+// ================= SOAL LATIHAN =================
 const normalizeAnswer = (str) => str.trim().replace(/'/g, '"').replace(/\s+/g, ' ');
 
 const CodeCompletionQuestion = ({ question, codeParts, placeholders, expectedAnswers, onCheck }) => {
@@ -875,11 +872,9 @@ const DragDropCompletionQuestion = ({ question, codeTemplate, placeholders, opti
   );
 };
 
-// ================= EKSPLORASI =================
-const Eksplorasi = ({ onComplete }) => {
-  const [selected, setSelected] = useState([null, null]);
-  const [feedback, setFeedback] = useState(["", ""]);
-  const [hasAnswered, setHasAnswered] = useState([false, false]);
+// ================= EKSPLORASI (DIMODIFIKASI UNTUK LOCAL STORAGE) =================
+const Eksplorasi = ({ topicName, onComplete }) => {
+  const EKSPLORASI_ANSWERS_KEY = `eksplorasi_${topicName}_answers`;
 
   const questions = [
     {
@@ -894,15 +889,43 @@ const Eksplorasi = ({ onComplete }) => {
     }
   ];
 
-  const handleAnswer = (qIdx, optIdx) => {
-    if (hasAnswered[qIdx]) return;
-    setSelected(prev => { const newSel = [...prev]; newSel[qIdx] = optIdx; return newSel; });
-    const isCorrect = (optIdx === questions[qIdx].correct);
-    setFeedback(prev => { const newFb = [...prev]; newFb[qIdx] = isCorrect ? "Benar" : "Salah"; return newFb; });
-    setHasAnswered(prev => { const newAns = [...prev]; newAns[qIdx] = true; return newAns; });
-  };
+  // Inisialisasi dari localStorage (jika ada)
+  const [selected, setSelected] = useState(() => {
+    try {
+      const saved = localStorage.getItem(EKSPLORASI_ANSWERS_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length === questions.length) {
+          return parsed;
+        }
+      }
+    } catch (e) {}
+    return Array(questions.length).fill(null);
+  });
 
-  useEffect(() => { if (hasAnswered.every(v => v === true)) onComplete(); }, [hasAnswered, onComplete]);
+  // Feedback dihitung langsung dari selected
+  const feedback = selected.map((sel, i) => {
+    if (sel === null) return "";
+    return sel === questions[i].correct ? "Benar" : "Salah";
+  });
+
+  // Simpan ke localStorage setiap selected berubah, dan cek selesai
+  useEffect(() => {
+    localStorage.setItem(EKSPLORASI_ANSWERS_KEY, JSON.stringify(selected));
+    const allAnswered = selected.every(s => s !== null);
+    if (allAnswered) {
+      onComplete();
+    }
+  }, [selected, EKSPLORASI_ANSWERS_KEY, onComplete]);
+
+  const handleAnswer = (qIdx, optIdx) => {
+    if (selected[qIdx] !== null) return; // sudah dijawab
+    setSelected(prev => {
+      const newSel = [...prev];
+      newSel[qIdx] = optIdx;
+      return newSel;
+    });
+  };
 
   return (
     <div>
@@ -911,9 +934,10 @@ const Eksplorasi = ({ onComplete }) => {
         <p style={styles.text}>
           Sebelum mempelajari lebih dalam, jawab pertanyaan berikut dengan memilih opsi yang tersedia.
           <strong style={{ color: "#0d6efd" }}> Materi akan terbuka setelah kedua pertanyaan dijawab.</strong>
+          {selected.every(s => s !== null) && " (Anda sudah menyelesaikan eksplorasi ini sebelumnya.)"}
         </p>
         {questions.map((q, idx) => {
-          const isAnswered = hasAnswered[idx];
+          const isAnswered = selected[idx] !== null;
           const selectedIdx = selected[idx];
           return (
             <div key={idx} style={{ marginBottom: "30px", borderBottom: "1px solid #e0e0e0", paddingBottom: "20px" }}>
@@ -948,6 +972,11 @@ const Eksplorasi = ({ onComplete }) => {
 export default function OperasiNestedList() {
   const navigate = useNavigate();
 
+  // ─────────── KONFIGURASI HALAMAN ───────────
+  const TOPIC_NAME = "operasi_nested_list";
+  const BONUS_DONE_KEY = `${TOPIC_NAME}_bonus_done`;
+  // ──────────────────────────────────────────
+
   useEffect(() => {
     const userId = localStorage.getItem('userId');
     const userEmail = localStorage.getItem('userEmail');
@@ -965,9 +994,9 @@ export default function OperasiNestedList() {
   const userId = localStorage.getItem('userId');
 
   useEffect(() => {
-    const already = localStorage.getItem("operasi_nested_bonus_done");
+    const already = localStorage.getItem(BONUS_DONE_KEY);
     if (already === "true") setBonusGiven(true);
-  }, []);
+  }, [BONUS_DONE_KEY]);
 
   useEffect(() => {
     setAllExercisesCorrect(exerciseStatus.every(v => v === true));
@@ -981,7 +1010,7 @@ export default function OperasiNestedList() {
     try {
       const mahasiswaRef = doc(db, "mahasiswa", userId);
       await updateDoc(mahasiswaRef, { progres_belajar: increment(1) });
-      localStorage.setItem("operasi_nested_bonus_done", "true");
+      localStorage.setItem(BONUS_DONE_KEY, "true");
       setShowModal(false);
       navigate("/NestedList/RangkumanNestedList");
     } catch (error) { console.error("Gagal update progres:", error); alert("Terjadi kesalahan. Silakan coba lagi."); }
@@ -1298,7 +1327,7 @@ print("Setelah hapus kolom ke-2:", data)`;
           </section>
 
           <section style={styles.section}>
-            <Eksplorasi onComplete={handleEksplorasiComplete} />
+            <Eksplorasi topicName={TOPIC_NAME} onComplete={handleEksplorasiComplete} />
           </section>
 
           {isEksplorasiCompleted && (
@@ -1325,10 +1354,6 @@ print("Setelah hapus kolom ke-2:", data)`;
                   <h3>5. Panjang Baris Berbeda</h3>
                   <p style={styles.text}>Setiap baris bisa beda panjang.</p>
                   <CodeEditorWithVisual code={codeRagged} title="Contoh Kode Program" visualData={raggedData} visualTitle="Visualisasi Ragged Array" pyodideReady={pyodideReady} runPythonCode={runPythonCode} lineExplanations={lineExplRagged} />
-
-                  {/* <h3>6. Membuat dengan List Comprehension</h3>
-                  <p style={styles.text}>Cara ringkas membuat matriks.</p>
-                  <CodeEditorWithVisual code={codeListComp} title="Contoh Kode Program" visualData={matrixZero} visualTitle="Matriks 3x4 dengan nilai 0" pyodideReady={pyodideReady} runPythonCode={runPythonCode} lineExplanations={lineExplListComp} /> */}
 
                   <h3>6. Menggabungkan Dua Nested List</h3>
                   <p style={styles.text}>Operator +</p>
