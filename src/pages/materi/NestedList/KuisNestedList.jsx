@@ -24,6 +24,9 @@ export default function KuisNestedList() {
   const [kelasId, setKelasId] = useState(null);
   const [kkm, setKkm] = useState(75);
 
+  // DURASI KUIS: 1 MENIT = 60 DETIK (untuk testing)
+  const DURASI_KUIS = 60;
+
   useEffect(() => {
     const userId = localStorage.getItem('userId');
     const userEmail = localStorage.getItem('userEmail');
@@ -124,13 +127,17 @@ export default function KuisNestedList() {
   const [quizStarted, setQuizStarted] = useState(false);
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState([]);
+  const answersRef = useRef(answers); // Ref untuk jawaban terbaru
   const [flags, setFlags] = useState([]);
   const [unsures, setUnsures] = useState([]);
   const [submitted, setSubmitted] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(20 * 60);
+  const [timeLeft, setTimeLeft] = useState(DURASI_KUIS);
   const timerRef = useRef(null);
   const [resultsData, setResultsData] = useState(null);
   const [savingData, setSavingData] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showWarningModal, setShowWarningModal] = useState(false);
+  const isSubmittingRef = useRef(false); // Mencegah multiple submit
 
   // Inisialisasi state jawaban saat soal berubah
   useEffect(() => {
@@ -141,9 +148,17 @@ export default function KuisNestedList() {
     }
   }, [questions]);
 
+  // Sinkronkan answersRef setiap kali answers berubah
+  useEffect(() => {
+    answersRef.current = answers;
+  }, [answers]);
+
   // ---------- TIMER ----------
   const stopTimer = () => {
-    if (timerRef.current) clearInterval(timerRef.current);
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
   };
 
   const startTimer = () => {
@@ -151,8 +166,11 @@ export default function KuisNestedList() {
     timerRef.current = setInterval(() => {
       setTimeLeft(prev => {
         if (prev <= 1) {
-          clearInterval(timerRef.current);
-          if (!submitted && quizStarted) handleSubmit(true);
+          stopTimer();
+          // Auto submit saat waktu habis
+          if (!submitted && quizStarted && !isSubmittingRef.current) {
+            handleSubmit(true);
+          }
           return 0;
         }
         return prev - 1;
@@ -192,23 +210,35 @@ export default function KuisNestedList() {
     setUnsures(newUnsures);
   };
 
+  // Fungsi utama submit (dipanggil baik manual maupun auto)
   const handleSubmit = async (auto = false) => {
-    if (submitted || questions.length === 0) return;
+    if (submitted || questions.length === 0 || isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
+    
     stopTimer();
     setSubmitted(true);
+    setShowConfirmModal(false);
+    setShowWarningModal(false);
 
-    // Hitung skor
+    // Ambil jawaban terkini dari ref (menghindari stale closure)
+    const currentAnswers = answersRef.current;
+
+    // Hitung skor: jawaban null dianggap salah
     let score = 0;
     const results = [];
     for (let i = 0; i < questions.length; i++) {
       const q = questions[i];
-      const userAnswer = answers[i];
-      const isCorrect = (userAnswer === q.jawaban_benar);
+      const userAnswer = currentAnswers[i];
+      // Konversi jawaban_benar ke Number agar perbandingan aman
+      const isCorrect = (userAnswer !== null && userAnswer === Number(q.jawaban_benar));
       if (isCorrect) score++;
       results.push({ ...q, userAnswer, isCorrect });
     }
     const finalScore = score;
-    const waktuDigunakan = (20 * 60) - timeLeft;
+
+    // Hitung waktu yang digunakan
+    // Jika auto-submit (waktu habis), waktu digunakan = durasi penuh
+    const waktuDigunakan = auto ? DURASI_KUIS : DURASI_KUIS - (timeLeft < 0 ? 0 : timeLeft);
     setResultsData({ results, finalScore, waktuDigunakan });
 
     // Hanya mahasiswa yang menyimpan ke database
@@ -247,9 +277,20 @@ export default function KuisNestedList() {
         setSavingData(false);
       }
     }
+    isSubmittingRef.current = false;
+  };
+
+  const handleCollectClick = () => {
+    const allAnswered = answers.every(ans => ans !== null);
+    if (!allAnswered) {
+      setShowWarningModal(true);
+      return;
+    }
+    setShowConfirmModal(true);
   };
 
   const resetQuiz = () => {
+    if (timerRef.current) clearInterval(timerRef.current);
     setQuizStarted(false);
     setCurrentQuestion(0);
     if (questions.length > 0) {
@@ -258,14 +299,15 @@ export default function KuisNestedList() {
       setUnsures(Array(questions.length).fill(false));
     }
     setSubmitted(false);
-    setTimeLeft(20 * 60);
+    setTimeLeft(DURASI_KUIS);
     setResultsData(null);
-    stopTimer();
+    isSubmittingRef.current = false;
   };
 
   const startQuiz = () => {
+    resetQuiz();
     setQuizStarted(true);
-    setTimeLeft(20 * 60);
+    setTimeLeft(DURASI_KUIS);
     setSubmitted(false);
     setCurrentQuestion(0);
     if (questions.length > 0) {
@@ -274,7 +316,6 @@ export default function KuisNestedList() {
       setUnsures(Array(questions.length).fill(false));
     }
     setResultsData(null);
-    stopTimer();
     startTimer();
   };
 
@@ -388,7 +429,7 @@ export default function KuisNestedList() {
               <ul style={styles.instructionList}>
                 <li>Kuis terdiri dari {questions.length} soal pilihan ganda.</li>
                 <li>Setiap soal bernilai {questions[0]?.bobot || 10} poin (total maksimal {questions.length * (questions[0]?.bobot || 10)}).</li>
-                <li>Waktu pengerjaan: 20 menit (timer berjalan setelah mulai).</li>
+                <li>Waktu pengerjaan: {Math.floor(DURASI_KUIS / 60)} menit (timer berjalan setelah mulai).</li>
                 <li>Jika waktu habis, jawaban yang sudah terisi akan tersimpan dan terkirim secara otomatis.</li>
                 <li>Pastikan semua jawaban sudah dipilih sebelum menekan KUMPULKAN JAWABAN.</li>
               </ul>
@@ -584,7 +625,7 @@ export default function KuisNestedList() {
           <div style={styles.submitWrapper}>
             <button
               className="btn-hover-submit"
-              onClick={() => handleSubmit()}
+              onClick={handleCollectClick}
               style={styles.submitButton}
               disabled={savingData}
             >
@@ -626,14 +667,65 @@ export default function KuisNestedList() {
           </div>
         </div>
       </div>
+
+      {/* Modal Konfirmasi Kumpul */}
+      {showConfirmModal && (
+        <div style={styles.modalOverlay}>
+          <div style={styles.modalContainer}>
+            <h3 style={styles.modalTitle}>Konfirmasi Kumpulkan Jawaban</h3>
+            <p style={styles.modalMessage}>
+              Apakah Anda yakin ingin mengumpulkan semua jawaban?<br />
+              Pastikan Anda telah memeriksa kembali jawaban Anda.
+            </p>
+            <div style={styles.modalButtons}>
+              <button
+                style={styles.modalButtonYes}
+                onClick={() => handleSubmit(false)}
+                className="btn-hover-primary"
+              >
+                Ya
+              </button>
+              <button
+                style={styles.modalButtonCheck}
+                onClick={() => setShowConfirmModal(false)}
+                className="btn-hover-nav"
+              >
+                Periksa Jawaban Kembali
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Peringatan Belum Semua Terjawab */}
+      {showWarningModal && (
+        <div style={styles.modalOverlay}>
+          <div style={styles.modalContainerWarning}>
+            <h3 style={styles.modalTitleWarning}>⚠️ Peringatan</h3>
+            <p style={styles.modalMessageWarning}>
+              Anda belum menjawab semua soal.<br />
+              Harap selesaikan semua soal terlebih dahulu sebelum mengumpulkan.
+            </p>
+            <div style={styles.modalButtons}>
+              <button
+                style={styles.modalButtonWarning}
+                onClick={() => setShowWarningModal(false)}
+                className="btn-hover-nav"
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-/* ================== STYLE (padding top diperbaiki) ================== */
+/* ================== STYLE (padding top diperbaiki + modal) ================== */
 const styles = {
   page: {
-    padding: "94px 40px 30px 40px", // sebelumnya "30px 40px"
+    padding: "94px 40px 30px 40px",
     backgroundColor: "#f5f7fa",
     minHeight: "calc(100vh - 64px)",
     fontFamily: "Poppins, sans-serif",
@@ -701,7 +793,7 @@ const styles = {
     minHeight: "100vh",
     backgroundColor: "#f5f7fa",
     fontFamily: "Poppins, sans-serif",
-    padding: "80px 40px 20px 40px", // sebelumnya "20px 40px"
+    padding: "80px 40px 20px 40px",
   },
   quizHeader: {
     display: "flex",
@@ -983,7 +1075,7 @@ const styles = {
     alignItems: "center",
     justifyContent: "center",
     fontFamily: "Poppins, sans-serif",
-    padding: "80px 20px 20px 20px", // sebelumnya "20px"
+    padding: "80px 20px 20px 20px",
   },
   resultCardNew: {
     backgroundColor: "white",
@@ -1121,5 +1213,102 @@ const styles = {
     fontWeight: "bold",
     color: "white",
     cursor: "pointer",
+  },
+  // Modal styles
+  modalOverlay: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 1000,
+    backdropFilter: "blur(3px)",
+  },
+  modalContainer: {
+    backgroundColor: "white",
+    borderRadius: "24px",
+    padding: "32px 28px",
+    maxWidth: "450px",
+    width: "90%",
+    textAlign: "center",
+    boxShadow: "0 20px 35px rgba(0,0,0,0.2)",
+    borderTop: "6px solid #306998",
+  },
+  modalTitle: {
+    fontSize: "24px",
+    fontWeight: "700",
+    color: "#306998",
+    marginBottom: "16px",
+  },
+  modalMessage: {
+    fontSize: "16px",
+    color: "#334155",
+    marginBottom: "28px",
+    lineHeight: 1.5,
+  },
+  modalButtons: {
+    display: "flex",
+    gap: "16px",
+    justifyContent: "center",
+    flexWrap: "wrap",
+  },
+  modalButtonYes: {
+    backgroundColor: "#306998",
+    color: "white",
+    border: "none",
+    padding: "12px 28px",
+    borderRadius: "40px",
+    fontSize: "16px",
+    fontWeight: "bold",
+    cursor: "pointer",
+    minWidth: "140px",
+  },
+  modalButtonCheck: {
+    backgroundColor: "#f1f5f9",
+    color: "#1e293b",
+    border: "1px solid #cbd5e1",
+    padding: "12px 28px",
+    borderRadius: "40px",
+    fontSize: "16px",
+    fontWeight: "500",
+    cursor: "pointer",
+    minWidth: "180px",
+  },
+  modalContainerWarning: {
+    backgroundColor: "white",
+    borderRadius: "24px",
+    padding: "32px 28px",
+    maxWidth: "450px",
+    width: "90%",
+    textAlign: "center",
+    boxShadow: "0 20px 35px rgba(0,0,0,0.2)",
+    borderTop: "6px solid #f59e0b",
+  },
+  modalTitleWarning: {
+    fontSize: "24px",
+    fontWeight: "700",
+    color: "#f59e0b",
+    marginBottom: "16px",
+  },
+  modalMessageWarning: {
+    fontSize: "16px",
+    color: "#334155",
+    marginBottom: "28px",
+    lineHeight: 1.5,
+  },
+  modalButtonWarning: {
+    backgroundColor: "#f59e0b",
+    color: "white",
+    border: "none",
+    padding: "12px 28px",
+    borderRadius: "40px",
+    fontSize: "16px",
+    fontWeight: "bold",
+    cursor: "pointer",
+    minWidth: "100px",
   },
 };

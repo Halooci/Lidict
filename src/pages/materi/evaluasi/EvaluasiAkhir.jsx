@@ -24,6 +24,9 @@ export default function EvaluasiAkhir() {
   const [kelasId, setKelasId] = useState(null);
   const [kkm, setKkm] = useState(70); // default
 
+  // DURASI EVALUASI: 1 MENIT = 60 DETIK (ubah ke 1500 untuk 25 menit)
+  const DURASI_KUIS = 60;
+
   useEffect(() => {
     const userId = localStorage.getItem('userId');
     const userEmail = localStorage.getItem('userEmail');
@@ -121,13 +124,16 @@ export default function EvaluasiAkhir() {
   const [quizStarted, setQuizStarted] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState([]);
+  const answersRef = useRef(answers); // Ref untuk jawaban terbaru
   const [flags, setFlags] = useState([]);
   const [submitted, setSubmitted] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(25 * 60); // 25 menit
+  const [timeLeft, setTimeLeft] = useState(DURASI_KUIS);
   const timerRef = useRef(null);
   const [resultsData, setResultsData] = useState(null);
   const [savingData, setSavingData] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showWarningModal, setShowWarningModal] = useState(false);
+  const isSubmittingRef = useRef(false); // Mencegah multiple submit
 
   // Inisialisasi state jawaban saat soal berubah
   useEffect(() => {
@@ -137,9 +143,17 @@ export default function EvaluasiAkhir() {
     }
   }, [questions]);
 
+  // Sinkronkan answersRef setiap kali answers berubah
+  useEffect(() => {
+    answersRef.current = answers;
+  }, [answers]);
+
   // ---------- TIMER ----------
   const stopTimer = () => {
-    if (timerRef.current) clearInterval(timerRef.current);
+    if (timerRef.current) {
+      clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
   };
 
   const startTimer = () => {
@@ -147,8 +161,11 @@ export default function EvaluasiAkhir() {
     timerRef.current = setInterval(() => {
       setTimeLeft(prev => {
         if (prev <= 1) {
-          clearInterval(timerRef.current);
-          if (!submitted && quizStarted) processSubmit(true);
+          stopTimer();
+          // Auto submit saat waktu habis
+          if (!submitted && quizStarted && !isSubmittingRef.current) {
+            processSubmit(true);
+          }
           return 0;
         }
         return prev - 1;
@@ -182,6 +199,15 @@ export default function EvaluasiAkhir() {
     setFlags(newFlags);
   };
 
+  const handleCollectClick = () => {
+    const allAnswered = answers.every(ans => ans !== null);
+    if (!allAnswered) {
+      setShowWarningModal(true);
+      return;
+    }
+    setShowConfirmModal(true);
+  };
+
   const handleSubmit = (auto = false) => {
     if (!auto) {
       setShowConfirmModal(true);
@@ -191,23 +217,31 @@ export default function EvaluasiAkhir() {
   };
 
   const processSubmit = async (auto = false) => {
-    if (submitted || questions.length === 0) return;
+    if (submitted || questions.length === 0 || isSubmittingRef.current) return;
+    isSubmittingRef.current = true;
+    
     stopTimer();
     setSubmitted(true);
     setShowConfirmModal(false);
+    setShowWarningModal(false);
+
+    // Ambil jawaban terkini dari ref (menghindari stale closure)
+    const currentAnswers = answersRef.current;
 
     let correct = 0;
     const results = [];
     for (let i = 0; i < questions.length; i++) {
       const q = questions[i];
-      const userAnswer = answers[i];
-      const isCorrect = (userAnswer === q.jawaban_benar);
+      const userAnswer = currentAnswers[i];
+      // Konversi jawaban_benar ke Number agar perbandingan aman
+      const isCorrect = (userAnswer !== null && userAnswer === Number(q.jawaban_benar));
       if (isCorrect) correct++;
       results.push({ ...q, userAnswer, isCorrect });
     }
     const wrong = questions.length - correct;
     const totalScore = correct * (questions[0]?.bobot || 5);
-    const waktuDigunakan = (25 * 60) - timeLeft;
+    // Hitung waktu yang digunakan
+    const waktuDigunakan = auto ? DURASI_KUIS : DURASI_KUIS - (timeLeft < 0 ? 0 : timeLeft);
     setResultsData({ results, correct, wrong, totalScore, waktuDigunakan });
 
     // Hanya mahasiswa yang menyimpan
@@ -239,9 +273,11 @@ export default function EvaluasiAkhir() {
         setSavingData(false);
       }
     }
+    isSubmittingRef.current = false;
   };
 
   const resetQuiz = () => {
+    if (timerRef.current) clearInterval(timerRef.current);
     setQuizStarted(false);
     setCurrentIndex(0);
     if (questions.length > 0) {
@@ -249,14 +285,15 @@ export default function EvaluasiAkhir() {
       setFlags(Array(questions.length).fill(false));
     }
     setSubmitted(false);
-    setTimeLeft(25 * 60);
+    setTimeLeft(DURASI_KUIS);
     setResultsData(null);
-    stopTimer();
+    isSubmittingRef.current = false;
   };
 
   const startQuiz = () => {
+    resetQuiz(); // bersihkan state lama
     setQuizStarted(true);
-    setTimeLeft(25 * 60);
+    setTimeLeft(DURASI_KUIS);
     setSubmitted(false);
     setCurrentIndex(0);
     if (questions.length > 0) {
@@ -264,7 +301,6 @@ export default function EvaluasiAkhir() {
       setFlags(Array(questions.length).fill(false));
     }
     setResultsData(null);
-    stopTimer();
     startTimer();
   };
 
@@ -320,7 +356,7 @@ export default function EvaluasiAkhir() {
               <ul style={styles.instructionList}>
                 <li>Evaluasi terdiri dari {totalSoal} soal pilihan ganda.</li>
                 <li>Setiap soal bernilai {bobot} poin (total maksimal {totalSoal * bobot}).</li>
-                <li>Waktu pengerjaan: 25 menit (timer berjalan setelah mulai).</li>
+                <li>Waktu pengerjaan: {Math.floor(DURASI_KUIS / 60)} menit (timer berjalan setelah mulai).</li>
                 <li>Jika waktu habis, jawaban yang sudah terisi akan tersimpan dan terkirim secara otomatis.</li>
                 <li>Gunakan fitur "Tandai Ragu-ragu" untuk soal yang perlu ditinjau ulang.</li>
                 <li>Navigasi soal dapat melalui panel kotak nomor atau tombol Sebelumnya/Selanjutnya.</li>
@@ -457,7 +493,7 @@ export default function EvaluasiAkhir() {
           </div>
 
           <div style={styles.submitWrapper}>
-            <button onClick={() => handleSubmit(false)} style={styles.submitButton} disabled={savingData}>
+            <button onClick={handleCollectClick} style={styles.submitButton} disabled={savingData}>
               {savingData ? "Menyimpan..." : "KUMPULKAN JAWABAN"}
             </button>
           </div>
@@ -483,6 +519,7 @@ export default function EvaluasiAkhir() {
         </div>
       </div>
 
+      {/* Modal Konfirmasi Kumpul */}
       {showConfirmModal && (
         <div style={styles.modalOverlay}>
           <div style={styles.modal}>
@@ -496,11 +533,32 @@ export default function EvaluasiAkhir() {
           </div>
         </div>
       )}
+
+      {/* Modal Peringatan Belum Semua Terjawab */}
+      {showWarningModal && (
+        <div style={styles.modalOverlay}>
+          <div style={styles.modalWarningContainer}>
+            <h3 style={styles.modalWarningTitle}>⚠️ Peringatan</h3>
+            <p style={styles.modalWarningText}>
+              Anda belum menjawab semua soal.<br />
+              Harap selesaikan semua soal terlebih dahulu sebelum mengumpulkan.
+            </p>
+            <div style={styles.modalButtons}>
+              <button
+                style={styles.modalButtonWarning}
+                onClick={() => setShowWarningModal(false)}
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-/* ================== STYLE (padding top diperbaiki) ================== */
+/* ================== STYLE (padding top diperbaiki + modal warning) ================== */
 const styles = {
   page: { padding: "94px 40px 30px 40px", backgroundColor: "#f5f7fa", minHeight: "calc(100vh - 64px)", fontFamily: "Poppins, sans-serif" },
   header: { backgroundColor: "#306998", color: "white", padding: "18px 24px", position: "relative", marginBottom: "30px", borderRadius: "6px" },
@@ -564,11 +622,27 @@ const styles = {
   resultActionsNew: { display: "flex", justifyContent: "center", gap: "15px" },
   retryButtonNew: { backgroundColor: "#f59e0b", border: "none", padding: "12px 28px", borderRadius: "40px", fontSize: "16px", fontWeight: "bold", color: "white", cursor: "pointer" },
   petaKonsepButton: { backgroundColor: "#306998", border: "none", padding: "12px 28px", borderRadius: "40px", fontSize: "16px", fontWeight: "bold", color: "white", cursor: "pointer" },
+  // Modal konfirmasi
   modalOverlay: { position: "fixed", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2000 },
-  modal: { background: "white", borderRadius: "32px", padding: "32px", maxWidth: "400px", width: "90%", textAlign: "center", boxShadow: "0 20px 35px rgba(0,0,0,0.2)", animation: "fadeInUp 0.3s ease" },
+  modal: { background: "white", borderRadius: "32px", padding: "32px", maxWidth: "400px", width: "90%", textAlign: "center", boxShadow: "0 20px 35px rgba(0,0,0,0.2)" },
   modalIcon: { fontSize: "48px", marginBottom: "16px" },
   modalTitle: { fontSize: "24px", fontWeight: "700", color: "#1e3a5f", marginBottom: "12px" },
   modalText: { fontSize: "16px", color: "#334155", lineHeight: "1.5", marginBottom: "24px" },
   modalButtonCancel: { background: "#6c757d", color: "white", border: "none", padding: "10px 24px", borderRadius: "40px", fontSize: "14px", fontWeight: "600", cursor: "pointer" },
   modalButtonConfirm: { background: "linear-gradient(135deg, #3182ce, #2c5282)", color: "white", border: "none", padding: "10px 24px", borderRadius: "40px", fontSize: "14px", fontWeight: "600", cursor: "pointer" },
+  // Modal warning
+  modalWarningContainer: {
+    backgroundColor: "white",
+    borderRadius: "24px",
+    padding: "32px 28px",
+    maxWidth: "450px",
+    width: "90%",
+    textAlign: "center",
+    boxShadow: "0 20px 35px rgba(0,0,0,0.2)",
+    borderTop: "6px solid #f59e0b",
+  },
+  modalWarningTitle: { fontSize: "24px", fontWeight: "700", color: "#f59e0b", marginBottom: "16px" },
+  modalWarningText: { fontSize: "16px", color: "#334155", marginBottom: "28px", lineHeight: 1.5 },
+  modalButtons: { display: "flex", gap: "16px", justifyContent: "center", flexWrap: "wrap" },
+  modalButtonWarning: { backgroundColor: "#f59e0b", color: "white", border: "none", padding: "12px 28px", borderRadius: "40px", fontSize: "16px", fontWeight: "bold", cursor: "pointer", minWidth: "100px" },
 };
