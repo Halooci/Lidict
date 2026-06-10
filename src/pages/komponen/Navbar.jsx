@@ -37,7 +37,6 @@ export default function Navbar() {
         <Link to="/PetaKonsep" className="nav-item">Materi</Link>
         <Link to="/InformasiPage" className="nav-item">Informasi</Link>
         
-        {/* Navigasi Dashboard hanya untuk dosen yang sudah login */}
         {isLoggedIn && userRole === "dosen" && (
           <Link to="/dosen/dashboard" className="nav-item">Dashboard</Link>
         )}
@@ -91,6 +90,7 @@ export default function Navbar() {
           padding-bottom: 4px;
           border-bottom: 2px solid transparent;
           transition: all 0.2s ease;
+          white-space: nowrap;
         }
 
         .nav-item:hover {
@@ -113,23 +113,75 @@ export default function Navbar() {
 
         @media (max-width: 768px) {
           .navbar {
-            padding: 0 16px;
+            padding: 0 20px;
             height: auto;
             min-height: 56px;
             flex-wrap: wrap;
+            justify-content: center;
           }
-          .logo-image { height: 40px; }
-          .right-section { gap: 16px; margin: 8px 0; }
-          .nav-item { font-size: 14px; }
-          .avatar { width: 28px; height: 28px; font-size: 14px; }
+          .left {
+            margin-right: auto;
+          }
+          .right-section {
+            gap: 20px;
+            flex-wrap: wrap;
+            justify-content: flex-end;
+            margin: 8px 0;
+          }
+          .nav-item {
+            font-size: 14px;
+          }
+          .logo-image {
+            height: 40px;
+          }
+          .avatar {
+            width: 30px;
+            height: 30px;
+            font-size: 14px;
+          }
+        }
+
+        @media (max-width: 600px) {
+          .navbar {
+            padding: 0 12px;
+            flex-direction: column;
+            align-items: stretch;
+            text-align: center;
+          }
+          .left {
+            margin: 8px 0;
+            justify-content: center;
+          }
+          .right-section {
+            justify-content: center;
+            gap: 14px;
+            flex-wrap: wrap;
+            margin: 0 0 10px 0;
+          }
+          .nav-item {
+            font-size: 13px;
+            white-space: normal;
+          }
+          .logo-image {
+            height: 36px;
+          }
+          .avatar {
+            width: 28px;
+            height: 28px;
+            font-size: 12px;
+          }
         }
 
         @media (max-width: 480px) {
-          .navbar { padding: 0 12px; }
-          .logo-image { height: 32px; }
-          .right-section { gap: 12px; }
-          .nav-item { font-size: 12px; }
-          .avatar { width: 26px; height: 26px; font-size: 12px; }
+          .right-section {
+            gap: 10px;
+          }
+          .nav-item {
+            font-size: 12px;
+          }
+          .logo-image {
+            height: 32px;
+          }
         }
       `}</style>
     </nav>
