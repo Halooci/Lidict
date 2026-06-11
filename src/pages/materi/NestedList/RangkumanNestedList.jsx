@@ -108,7 +108,7 @@ ragged = [[1, 2], [3, 4, 5], [6]]     # panjang baris berbeda`}</pre>
           {/* RINGKASAN METODE PENTING */}
           <section style={styles.section}>
             <div style={styles.card}>
-              <h2 style={styles.sectionTitle}>📋 Ringkasan Metode dan Operasi</h2>
+              <h2 style={styles.sectionTitle}>Ringkasan Metode dan Operasi</h2>
               <div style={styles.tableWrapper}>
                 <table style={styles.table}>
                   <thead>

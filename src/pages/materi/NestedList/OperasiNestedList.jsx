@@ -320,9 +320,39 @@ const styles = {
     cursor: "pointer",
     transition: "transform 0.2s, box-shadow 0.2s",
   },
+  praktikMessageContainer: {
+    margin: "15px 0 10px 0",
+    padding: "10px 15px",
+    borderRadius: "8px",
+    backgroundColor: "#f8f9fa",
+    borderLeft: "4px solid",
+  },
+  warningMessage: {
+    color: "#856404",
+    borderLeftColor: "#ffc107",
+    backgroundColor: "#fff3cd",
+  },
+  successMessage: {
+    color: "#0f5132",
+    borderLeftColor: "#28a745",
+    backgroundColor: "#d1e7dd",
+  },
+  codeInputEditable: {
+    width: "100%",
+    minHeight: "200px",
+    backgroundColor: "#272822",
+    color: "#f8f8f2",
+    border: "none",
+    padding: "15px",
+    fontFamily: "monospace",
+    fontSize: "14px",
+    resize: "vertical",
+    outline: "none",
+    boxSizing: "border-box",
+  },
 };
 
-// ================= KOMPONEN VISUALISASI NESTED LIST INTERAKTIF =================
+// ================= KOMPONEN VISUALISASI NESTED LIST =================
 const NestedListVisualization = ({ data, title, highlightCell, processExplanation }) => {
   const [currentHighlight, setCurrentHighlight] = useState(null);
   const [explanationText, setExplanationText] = useState("");
@@ -435,7 +465,7 @@ const visStyles = {
   note: { fontSize: "12px", color: "#666", marginTop: "10px", textAlign: "center" },
 };
 
-// ================= CODE EDITOR UNTUK CONTOH KODE PROGRAM =================
+// ================= CODE EDITOR UNTUK CONTOH =================
 const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, pyodideReady, runPythonCode, lineExplanations }) => {
   const [output, setOutput] = useState("");
   const [isRunning, setIsRunning] = useState(false);
@@ -505,9 +535,7 @@ const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, pyodideRea
         <span style={styles.outputTitle}>Output</span>
       </div>
       <div style={styles.codeOutput}>
-        <pre style={styles.outputContent}>
-          {showDetail ? (output || "(Tidak ada output)") : "(Klik tombol di atas untuk menjalankan kode)"}
-        </pre>
+        <pre style={styles.outputContent}>{output}</pre>
       </div>
 
       {showDetail && lineExplanations && lineExplanations.length > 0 && (
@@ -522,92 +550,89 @@ const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, pyodideRea
   );
 };
 
-// ================= PRAKTIK STEP BY STEP =================
-const CodeEditorEditable = ({ pyodideReady, runPythonCode }) => {
+// ================= KOMPONEN PRAKTIK (EDITOR) - DIPERBAIKI DENGAN 4 INSTRUKSI =================
+const CodeEditorEditable = ({ pyodideReady, runPythonCode, onValidation }) => {
   const [localCode, setLocalCode] = useState("");
   const [output, setOutput] = useState("");
-  const [infoMessage, setInfoMessage] = useState("");
-  const [completedSteps, setCompletedSteps] = useState({
-    1: false,
-    2: false,
-    3: false,
-  });
+  const [isRunning, setIsRunning] = useState(false);
 
-  const validateStep = (code) => {
-    const trimmed = code.trim();
-    if (!/\bdata\s*=\s*\[\[.*?\]\s*,\s*\[.*?\]\s*,\s*\[.*?\]\]/.test(trimmed) && !completedSteps[1]) {
-      return { valid: false, step: 1, msg: "📝 Belum membuat nested list 'data' dengan tiga baris ([1,2,3],[4,5,6],[7,8,9])." };
+  const handleChange = useCallback((e) => {
+    setLocalCode(e.target.value);
+    if (onValidation) onValidation({ isValid: false, isComplete: false });
+  }, [onValidation]);
+
+  const hasNonCommentLine = (code, pattern) => {
+    const lines = code.split('\n');
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed === '' || trimmed.startsWith('#')) continue;
+      if (pattern.test(trimmed)) return true;
     }
-    if (!/data\s*\[\s*0\s*\]\s*\[\s*0\s*\]\s*=\s*100/.test(trimmed) && !completedSteps[2]) {
-      return { valid: false, step: 2, msg: "Bagus! Sekarang ubah elemen baris pertama kolom pertama menjadi 100." };
-    }
-    if (!/print\s*\(\s*data\s*\[\s*2\s*\]\s*\[\s*1\s*\]\s*\)/.test(trimmed) && !completedSteps[3]) {
-      return { valid: false, step: 3, msg: "Bagus! Sekarang cetak elemen baris ketiga kolom kedua (nilai 8)." };
-    }
-    return { valid: true };
+    return false;
   };
 
-  const handleRun = async () => {
-    if (!localCode.trim()) {
-      setInfoMessage("⚠️ Silakan isi jawaban Anda terlebih dahulu.");
-      setOutput("");
+  const handleRun = useCallback(async () => {
+    if (!pyodideReady) {
+      setOutput("Pyodide sedang dimuat, harap tunggu...");
       return;
     }
-    const validation = validateStep(localCode);
-    if (!validation.valid) {
-      setInfoMessage(validation.msg);
-      setOutput("");
-      return;
-    }
-    setInfoMessage("");
-    const result = await runPythonCode(localCode);
-    setOutput(result);
-    let newCompleted = { ...completedSteps };
-    let changed = false;
+    setOutput("");
+    setIsRunning(true);
 
-    if (!completedSteps[1] && /\bdata\s*=\s*\[\[.*?\]\s*,\s*\[.*?\]\s*,\s*\[.*?\]\]/.test(localCode)) {
-      newCompleted[1] = true;
-      changed = true;
-      setInfoMessage("✅ Bagus! Nested list 'data' sudah dibuat dengan tiga baris. Lanjut ke instruksi berikutnya.");
+    let executionOutput = "";
+    try {
+      const result = await runPythonCode(localCode);
+      executionOutput = result;
+      if (result.startsWith("Error:")) {
+        setOutput(result);
+        if (onValidation) onValidation({ isValid: false, isComplete: false });
+        setIsRunning(false);
+        return;
+      }
+    } catch (err) {
+      setOutput(`Error: ${err.message}`);
+      if (onValidation) onValidation({ isValid: false, isComplete: false });
+      setIsRunning(false);
+      return;
     }
-    if (!completedSteps[2] && /data\s*\[\s*0\s*\]\s*\[\s*0\s*\]\s*=\s*100/.test(localCode)) {
-      newCompleted[2] = true;
-      changed = true;
-      setInfoMessage("✅ Bagus! Elemen pertama baris pertama sudah diubah menjadi 100. Lanjut ke instruksi berikutnya.");
+
+    // 4 instruksi:
+    // 1. Membuat nested list data = [[1,2,3],[4,5,6],[7,8,9]]
+    const listPattern = /data\s*=\s*\[\s*\[\s*1\s*,\s*2\s*,\s*3\s*\]\s*,\s*\[\s*4\s*,\s*5\s*,\s*6\s*\]\s*,\s*\[\s*7\s*,\s*8\s*,\s*9\s*\]\s*\]/;
+    // 2. Mengubah data[0][0] = 100
+    const changePattern = /data\s*\[\s*0\s*\]\s*\[\s*0\s*\]\s*=\s*100/;
+    // 3. Mencetak data[2][1] (nilai 8)
+    const printPattern = /print\s*\(\s*data\s*\[\s*2\s*\]\s*\[\s*1\s*\]\s*\)/;
+    // 4. Mencetak seluruh isi data
+    const printAllPattern = /print\s*\(\s*data\s*\)/;
+
+    const hasList = hasNonCommentLine(localCode, listPattern);
+    const hasChange = hasNonCommentLine(localCode, changePattern);
+    const hasPrint = hasNonCommentLine(localCode, printPattern);
+    const hasPrintAll = hasNonCommentLine(localCode, printAllPattern);
+
+    const isComplete = hasList && hasChange && hasPrint && hasPrintAll;
+
+    setOutput(executionOutput);
+    setIsRunning(false);
+
+    if (onValidation) {
+      onValidation({ isValid: isComplete, isComplete: isComplete });
     }
-    if (!completedSteps[3] && /print\s*\(\s*data\s*\[\s*2\s*\]\s*\[\s*1\s*\]\s*\)/.test(localCode)) {
-      newCompleted[3] = true;
-      changed = true;
-      setInfoMessage("✅ Bagus! Elemen baris ketiga kolom kedua berhasil dicetak. Semua instruksi selesai! Kode Anda benar.");
-    }
-    if (changed) setCompletedSteps(newCompleted);
-    else if (newCompleted[1] && newCompleted[2] && newCompleted[3]) {
-      setInfoMessage("✅ SELAMAT! Semua instruksi sudah dipenuhi dengan benar.");
-    } else {
-      setInfoMessage("⚠️ Periksa kembali kode Anda. Pastikan semua instruksi diikuti.");
-    }
-  };
+  }, [localCode, pyodideReady, runPythonCode, onValidation]);
 
   return (
     <div style={styles.codeEditorContainer}>
       <div style={styles.codeEditorHeader}>
         <span style={styles.codeEditorTitle}>Ayo Praktik</span>
-        <button style={styles.runButton} onClick={handleRun} disabled={!pyodideReady}>
-          {pyodideReady ? "▶ Jalankan" : "⏳ Memuat..."}
+        <button style={styles.runButton} onClick={handleRun} disabled={!pyodideReady || isRunning}>
+          {isRunning ? "Menjalankan..." : pyodideReady ? "Jalankan" : "Memuat..."}
         </button>
       </div>
-      {infoMessage && (
-        <div style={infoMessage.startsWith("✅") || infoMessage.startsWith("📝") 
-          ? { backgroundColor: "#d4edda", color: "#155724", padding: "12px 15px", fontSize: "14px", borderLeft: "4px solid #28a745" }
-          : { marginTop: "12px", padding: "10px", backgroundColor: "#fff3cd", color: "#856404", borderRadius: "6px", textAlign: "center" }
-        }>
-          {infoMessage}
-        </div>
-      )}
       <textarea
         style={styles.codeInputEditable}
         value={localCode}
-        onChange={(e) => setLocalCode(e.target.value)}
+        onChange={handleChange}
         placeholder="Tulis kode Python Anda di sini..."
         spellCheck={false}
       />
@@ -615,15 +640,13 @@ const CodeEditorEditable = ({ pyodideReady, runPythonCode }) => {
         <span style={styles.outputTitle}>Output</span>
       </div>
       <div style={styles.codeOutput}>
-        <pre style={styles.outputContent}>
-          {output || "(Klik 'Jalankan' untuk melihat hasil)"}
-        </pre>
+        <pre style={styles.outputContent}>{output}</pre>
       </div>
     </div>
   );
 };
 
-// ================= SOAL LATIHAN =================
+// ================= SOAL LATIHAN (sama seperti asli) =================
 const normalizeAnswer = (str) => str.trim().replace(/'/g, '"').replace(/\s+/g, ' ');
 
 const CodeCompletionQuestion = ({ question, codeParts, placeholders, expectedAnswers, onCheck }) => {
@@ -872,7 +895,7 @@ const DragDropCompletionQuestion = ({ question, codeTemplate, placeholders, opti
   );
 };
 
-// ================= EKSPLORASI (DIMODIFIKASI UNTUK LOCAL STORAGE) =================
+// ================= EKSPLORASI =================
 const Eksplorasi = ({ topicName, onComplete }) => {
   const EKSPLORASI_ANSWERS_KEY = `eksplorasi_${topicName}_answers`;
 
@@ -889,7 +912,6 @@ const Eksplorasi = ({ topicName, onComplete }) => {
     }
   ];
 
-  // Inisialisasi dari localStorage (jika ada)
   const [selected, setSelected] = useState(() => {
     try {
       const saved = localStorage.getItem(EKSPLORASI_ANSWERS_KEY);
@@ -903,13 +925,11 @@ const Eksplorasi = ({ topicName, onComplete }) => {
     return Array(questions.length).fill(null);
   });
 
-  // Feedback dihitung langsung dari selected
   const feedback = selected.map((sel, i) => {
     if (sel === null) return "";
     return sel === questions[i].correct ? "Benar" : "Salah";
   });
 
-  // Simpan ke localStorage setiap selected berubah, dan cek selesai
   useEffect(() => {
     localStorage.setItem(EKSPLORASI_ANSWERS_KEY, JSON.stringify(selected));
     const allAnswered = selected.every(s => s !== null);
@@ -919,7 +939,7 @@ const Eksplorasi = ({ topicName, onComplete }) => {
   }, [selected, EKSPLORASI_ANSWERS_KEY, onComplete]);
 
   const handleAnswer = (qIdx, optIdx) => {
-    if (selected[qIdx] !== null) return; // sudah dijawab
+    if (selected[qIdx] !== null) return;
     setSelected(prev => {
       const newSel = [...prev];
       newSel[qIdx] = optIdx;
@@ -972,10 +992,8 @@ const Eksplorasi = ({ topicName, onComplete }) => {
 export default function OperasiNestedList() {
   const navigate = useNavigate();
 
-  // ─────────── KONFIGURASI HALAMAN ───────────
   const TOPIC_NAME = "operasi_nested_list";
   const BONUS_DONE_KEY = `${TOPIC_NAME}_bonus_done`;
-  // ──────────────────────────────────────────
 
   useEffect(() => {
     const userId = localStorage.getItem('userId');
@@ -992,6 +1010,9 @@ export default function OperasiNestedList() {
   const [showModal, setShowModal] = useState(false);
   const [bonusGiven, setBonusGiven] = useState(false);
   const userId = localStorage.getItem('userId');
+
+  const [praktikMessage, setPraktikMessage] = useState("");
+  const [praktikMessageType, setPraktikMessageType] = useState("");
 
   useEffect(() => {
     const already = localStorage.getItem(BONUS_DONE_KEY);
@@ -1020,14 +1041,22 @@ export default function OperasiNestedList() {
     setExerciseStatus(prev => { const newStatus = [...prev]; newStatus[index] = isCorrect; return newStatus; });
   };
 
-  // Data visualisasi untuk contoh kode
+  const handlePraktikValidation = ({ isValid, isComplete }) => {
+    if (isComplete) {
+      setPraktikMessage("✅ Selamat! Semua instruksi sudah dikerjakan dengan benar.");
+      setPraktikMessageType("success");
+    } else {
+      setPraktikMessage("⚠️ Periksa kembali instruksi!");
+      setPraktikMessageType("warning");
+    }
+  };
+
+  // Data untuk contoh kode
   const matrix3x3 = [[1,2,3],[4,5,6],[7,8,9]];
   const matrix2x3 = [[1,2,3],[4,5,6]];
   const raggedData = [[1,2],[3,4,5,6],[7]];
-  const matrixZero = [[0,0,0,0],[0,0,0,0],[0,0,0,0]];
   const gabungan = [[1,2],[3,4],[5,6],[7,8]];
 
-  // Penjelasan per baris
   const lineExplMengakses = [
     "Komentar: Akan mengakses elemen dari nested list.",
     "Membuat nested list data dengan 3 baris 3 kolom.",
@@ -1075,15 +1104,6 @@ export default function OperasiNestedList() {
     "Baris ketiga: [7] (1 kolom).",
     "Mencetak elemen baris indeks 1, kolom indeks 2 → 5.",
     "Mencetak elemen baris indeks 2, kolom indeks 0 → 7."
-  ];
-
-  const lineExplListComp = [
-    "Komentar: Membuat matriks 3x4 bernilai 0 menggunakan list comprehension.",
-    "Jumlah baris = 3.",
-    "Jumlah kolom = 4.",
-    "List comprehension: untuk setiap i (baris) buat list [0]*kolom.",
-    "Mencetak judul.",
-    "Mencetak matriks."
   ];
 
   const lineExplGabung = [
@@ -1134,7 +1154,95 @@ export default function OperasiNestedList() {
     "Mencetak data setelah penghapusan kolom."
   ];
 
-  // Soal latihan
+  const codeMengakses = `# Mengakses elemen nested list
+data = [[1, 2, 3],
+        [4, 5, 6],
+        [7, 8, 9]]
+print("Elemen baris 1 kolom 2:", data[0][1])
+print("Elemen baris 3 kolom 3:", data[2][2])`;
+
+  const codeMengubah = `# Mengubah nilai elemen nested list
+data = [[1, 2, 3],
+        [4, 5, 6],
+        [7, 8, 9]]
+print("Sebelum diubah:", data)
+data[0][0] = 99
+data[1][2] = 88
+data[2][1] = 77
+print("Setelah diubah:", data)`;
+
+  const codeMencari = `# Mencari nilai dalam nested list
+data = [[1, 2, 3],
+        [4, 5, 6],
+        [7, 8, 9]]
+cari = 5
+ditemukan = False
+for i in range(len(data)):
+    for j in range(len(data[i])):
+        if data[i][j] == cari:
+            print(f"Nilai {cari} ditemukan di baris {i}, kolom {j}")
+            ditemukan = True
+if not ditemukan:
+    print(f"Nilai {cari} tidak ditemukan")`;
+
+  const codeIterasi = `# Iterasi seluruh elemen nested list
+data = [[1, 2, 3],
+        [4, 5, 6]]
+for i in range(len(data)):
+    for j in range(len(data[i])):
+        print(f"data[{i}][{j}] = {data[i][j]}")`;
+
+  const codeRagged = `# Nested list dengan panjang baris berbeda.
+data = [[1, 2],
+        [3, 4, 5, 6],
+        [7]]
+print(data[1][2])
+print(data[2][0])`;
+
+  const codeGabung = `# Menggabungkan dua nested list
+a = [[1, 2], [3, 4]]
+b = [[5, 6], [7, 8]]
+hasil = a + b
+print("Hasil penggabungan:", hasil)`;
+
+  const codeTambahBaris = `# Menambah baris (append)
+data = [[1, 2, 3],
+        [4, 5, 6]]
+baris_baru = [7, 8, 9]
+data.append(baris_baru)
+print("Setelah append:", data)`;
+
+  const codeSisipBaris = `# Menyisipkan baris (insert)
+data = [[1, 2, 3],
+        [4, 5, 6]]
+data.insert(1, [10, 11, 12])
+print("Setelah insert:", data)`;
+
+  const codeHapusBaris = `# Menghapus baris (pop, del)
+data = [[1, 2, 3],
+        [4, 5, 6],
+        [7, 8, 9]]
+data.pop()
+print("Setelah pop():", data)
+del data[0]
+print("Setelah del data[0]:", data)`;
+
+  const codeTambahKolom = `# Menambah kolom pada setiap baris
+data = [[1, 2, 3],
+        [4, 5, 6],
+        [7, 8, 9]]
+for baris in data:
+    baris.append(0)
+print("Setiap baris ditambah kolom:", data)`;
+
+  const codeHapusKolom = `# Menghapus kolom (indeks 1) pada setiap baris
+data = [[1, 2, 3],
+        [4, 5, 6],
+        [7, 8, 9]]
+for baris in data:
+    baris.pop(1)
+print("Setelah hapus kolom ke-2:", data)`;
+
   const soal1CodeParts = ["data = [[10, 20, 30], [40, 50, 60]]\ndata[", "][", "] = 99\nprint(data)"];
   const soal1Placeholders = ["indeks baris", "indeks kolom"];
   const soal1Expected = ["0", "1"];
@@ -1187,7 +1295,7 @@ print(data[1][0])`;
   }, []);
 
   const runPythonCode = useCallback(async (code) => {
-    if (!pyodideRef.current) return "⏳ Pyodide sedang dimuat...";
+    if (!pyodideRef.current) return "Pyodide sedang dimuat...";
     try {
       const pyodide = pyodideRef.current;
       const escapedCode = code.replace(/\\/g, '\\\\').replace(/"/g, '\\"').replace(/\n/g, '\\n');
@@ -1206,107 +1314,11 @@ _buffer.getvalue()
       `);
       return result;
     } catch (error) {
-      return `❌ Error: ${error.message}`;
+      return `Error: ${error.message}`;
     }
   }, []);
 
   const handleEksplorasiComplete = () => setIsEksplorasiCompleted(true);
-
-  const codeMengakses = `# Mengakses elemen nested list
-data = [[1, 2, 3],
-        [4, 5, 6],
-        [7, 8, 9]]
-print("Elemen baris 1 kolom 2:", data[0][1])
-print("Elemen baris 3 kolom 3:", data[2][2])`;
-
-  const codeMengubah = `# Mengubah nilai elemen nested list
-data = [[1, 2, 3],
-        [4, 5, 6],
-        [7, 8, 9]]
-print("Sebelum diubah:", data)
-data[0][0] = 99
-data[1][2] = 88
-data[2][1] = 77
-print("Setelah diubah:", data)`;
-
-  const codeMencari = `# Mencari nilai dalam nested list
-data = [[1, 2, 3],
-        [4, 5, 6],
-        [7, 8, 9]]
-cari = 5
-ditemukan = False
-for i in range(len(data)):
-    for j in range(len(data[i])):
-        if data[i][j] == cari:
-            print(f"Nilai {cari} ditemukan di baris {i}, kolom {j}")
-            ditemukan = True
-if not ditemukan:
-    print(f"Nilai {cari} tidak ditemukan")`;
-
-  const codeIterasi = `# Iterasi seluruh elemen nested list
-data = [[1, 2, 3],
-        [4, 5, 6]]
-for i in range(len(data)):
-    for j in range(len(data[i])):
-        print(f"data[{i}][{j}] = {data[i][j]}")`;
-
-  const codeRagged = `# Nested list dengan panjang baris berbeda.
-data = [[1, 2],
-        [3, 4, 5, 6],
-        [7]]
-print(data[1][2])
-print(data[2][0])`;
-
-  const codeListComp = `# Membuat matriks dengan list comprehension
-baris = 3
-kolom = 4
-matriks = [[0 for j in range(kolom)] for i in range(baris)]
-print("Matriks 3x4 dengan nilai 0:")
-print(matriks)`;
-
-  const codeGabung = `# Menggabungkan dua nested list
-a = [[1, 2], [3, 4]]
-b = [[5, 6], [7, 8]]
-hasil = a + b
-print("Hasil penggabungan:", hasil)`;
-
-  const codeTambahBaris = `# Menambah baris (append)
-data = [[1, 2, 3],
-        [4, 5, 6]]
-baris_baru = [7, 8, 9]
-data.append(baris_baru)
-print("Setelah append:", data)`;
-
-  const codeSisipBaris = `# Menyisipkan baris (insert)
-data = [[1, 2, 3],
-        [4, 5, 6]]
-data.insert(1, [10, 11, 12])
-print("Setelah insert:", data)`;
-
-  const codeHapusBaris = `# Menghapus baris (pop, del)
-data = [[1, 2, 3],
-        [4, 5, 6],
-        [7, 8, 9]]
-data.pop()
-print("Setelah pop():", data)
-del data[0]
-print("Setelah del data[0]:", data)`;
-
-  const codeTambahKolom = `# Menambah kolom pada setiap baris
-data = [[1, 2, 3],
-        [4, 5, 6],
-        [7, 8, 9]]
-for baris in data:
-    baris.append(0)
-print("Setiap baris ditambah kolom:", data)`;
-
-  const codeHapusKolom = `# Menghapus kolom (indeks 1) pada setiap baris
-data = [[1, 2, 3],
-        [4, 5, 6],
-        [7, 8, 9]]
-for baris in data:
-    baris.pop(1)
-print("Setelah hapus kolom ke-2:", data)`;
 
   return (
     <>
@@ -1390,9 +1402,26 @@ print("Setelah hapus kolom ke-2:", data)`;
                       <li>Buatlah nested list dengan nama <code>data</code> yang berisi tiga baris: [1,2,3], [4,5,6], [7,8,9].</li>
                       <li>Ubah elemen baris pertama kolom pertama menjadi 100.</li>
                       <li>Tampilkan elemen baris ketiga kolom kedua (nilai 8).</li>
+                      <li>Tampilkan semua isi data.</li>
                     </ul>
                   </div>
-                  <CodeEditorEditable pyodideReady={pyodideReady} runPythonCode={runPythonCode} />
+
+                  {praktikMessage && (
+                    <div
+                      style={{
+                        ...styles.praktikMessageContainer,
+                        ...(praktikMessageType === "warning" ? styles.warningMessage : styles.successMessage),
+                      }}
+                    >
+                      {praktikMessage}
+                    </div>
+                  )}
+
+                  <CodeEditorEditable
+                    pyodideReady={pyodideReady}
+                    runPythonCode={runPythonCode}
+                    onValidation={handlePraktikValidation}
+                  />
                 </div>
               </section>
 
@@ -1435,6 +1464,10 @@ print("Setelah hapus kolom ke-2:", data)`;
         @keyframes fadeInUp {
           from { opacity: 0; transform: translateY(30px); }
           to { opacity: 1; transform: translateY(0); }
+        }
+        textarea::placeholder {
+          color: #888;
+          font-style: italic;
         }
       `}</style>
     </>
