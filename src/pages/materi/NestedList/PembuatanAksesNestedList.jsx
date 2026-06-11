@@ -1491,7 +1491,7 @@ matriks = [[1, 2, 3], [4, 5, 6]]`}</pre>
               Progres belajar Anda bertambah! Materi selanjutnya akan terbuka.
             </p>
             <button style={styles.modalButton} onClick={handleCompleteAndNavigate}>
-              Lanjut ke Operasi Nested List 🚀
+              Lanjut ke materi selanjutnya 
             </button>
           </div>
         </div>

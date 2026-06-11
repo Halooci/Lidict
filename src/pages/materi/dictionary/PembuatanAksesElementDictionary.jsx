@@ -963,7 +963,7 @@ _buffer.getvalue()
               Materi selanjutnya terbuka.
             </p>
             <button style={styles.modalButton} onClick={handleCompleteAndNavigate}>
-              Lanjut ke materi selanjutnya 🚀
+              Lanjut ke materi selanjutnya
             </button>
           </div>
         </div>

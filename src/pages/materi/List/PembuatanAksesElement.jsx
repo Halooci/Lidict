@@ -1535,7 +1535,7 @@ nilai3 = 78
               Materi selanjutnya sudah terbuka.
             </p>
             <button style={styles.modalButton} onClick={handleCompleteAndNavigate}>
-              Materi Selanjutnya
+              Lanjut ke materi selanjutnya
             </button>
           </div>
         </div>

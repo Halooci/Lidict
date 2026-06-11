@@ -2362,7 +2362,7 @@ export default function OperasiManipulasiList() {
               Materi selanjutnya sudah terbuka.
             </p>
             <button style={styles.modalButton} onClick={handleCompleteAndNavigate}>
-              Materi Selanjutnya
+              Lanjut ke materi selanjutnya
             </button>
           </div>
         </div>
