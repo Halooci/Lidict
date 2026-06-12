@@ -25,7 +25,7 @@ export default function EvaluasiAkhir() {
   const [kkm, setKkm] = useState(70); // default
 
   // DURASI EVALUASI: 1 MENIT = 60 DETIK (ubah ke 1500 untuk 25 menit)
-  const DURASI_KUIS = 60;
+  const DURASI_KUIS = 1500;
 
   useEffect(() => {
     const userId = localStorage.getItem('userId');

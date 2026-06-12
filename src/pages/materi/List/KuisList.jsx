@@ -25,7 +25,7 @@ export default function KuisList() {
   const [kkm, setKkm] = useState(75);
 
   // DURASI KUIS: 10 MENIT = 600 DETIK (ubah ke 60 untuk testing 1 menit)
-  const DURASI_KUIS = 60;
+  const DURASI_KUIS = 600;
 
   useEffect(() => {
     const userId = localStorage.getItem('userId');
