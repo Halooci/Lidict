@@ -108,7 +108,6 @@ const styles = `
     padding: 0.5rem 1rem;
     border-radius: 0.375rem;
     cursor: pointer;
-    transition: all 0.2s;
   }
   .kuis-btn.active {
     background: #3b82f6;
@@ -204,10 +203,6 @@ const Soal = () => {
     bobot: 10,
     pembahasan: '',
   });
-
-  // Modal kuis baru
-  const [showCreateKuis, setShowCreateKuis] = useState(false);
-  const [newKuis, setNewKuis] = useState({ judul: '', tipe: 'list', deskripsi: '' });
 
   const userId = localStorage.getItem('userId'); // NIP dosen
 
@@ -353,29 +348,6 @@ const Soal = () => {
     }
   };
 
-  // === Buat kuis baru ===
-  const handleCreateKuis = async (e) => {
-    e.preventDefault();
-    if (!newKuis.judul.trim()) return alert('Judul kuis wajib diisi.');
-    try {
-      // Gunakan ID unik dengan prefix kelas_id dan tipe (atau random)
-      const docRef = await addDoc(collection(db, 'kuis'), {
-        kelas_id: kelasAktif.id,
-        judul: newKuis.judul,
-        tipe: newKuis.tipe,
-        deskripsi: newKuis.deskripsi,
-      });
-      const kuisBaru = { id: docRef.id, ...newKuis, kelas_id: kelasAktif.id };
-      setKuisList(prev => [...prev, kuisBaru]);
-      setKuisAktif(kuisBaru);
-      setShowCreateKuis(false);
-      setNewKuis({ judul: '', tipe: 'list', deskripsi: '' });
-    } catch (err) {
-      console.error(err);
-      alert('Gagal membuat kuis.');
-    }
-  };
-
   // Jika tidak ada userId
   if (!userId) {
     return (
@@ -436,23 +408,24 @@ const Soal = () => {
           {/* Hanya tampilkan jika kelas aktif */}
           {kelasAktif && (
             <>
-              {/* Pilih / buat kuis */}
+              {/* Pilih kuis (tanpa tombol buat kuis) */}
               <div className="card">
                 <div className="card-title">Pilih Kuis</div>
-                <div className="kuis-selector">
-                  {kuisList.map(kuis => (
-                    <button
-                      key={kuis.id}
-                      className={`kuis-btn ${kuisAktif?.id === kuis.id ? 'active' : ''}`}
-                      onClick={() => setKuisAktif(kuis)}
-                    >
-                      {kuis.judul}
-                    </button>
-                  ))}
-                  <button className="btn btn-blue" onClick={() => setShowCreateKuis(true)}>
-                    <PlusCircle size={18} /> Buat Kuis
-                  </button>
-                </div>
+                {kuisList.length === 0 ? (
+                  <p className="empty-text">Belum ada kuis di kelas ini.</p>
+                ) : (
+                  <div className="kuis-selector">
+                    {kuisList.map(kuis => (
+                      <button
+                        key={kuis.id}
+                        className={`kuis-btn ${kuisAktif?.id === kuis.id ? 'active' : ''}`}
+                        onClick={() => setKuisAktif(kuis)}
+                      >
+                        {kuis.judul}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Soal dalam kuis aktif */}
@@ -562,39 +535,6 @@ const Soal = () => {
                   <button type="submit" className="btn btn-blue">
                     <Save size={18} /> Simpan
                   </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
-
-        {/* Modal Buat Kuis Baru */}
-        {showCreateKuis && (
-          <div className="modal-overlay" onClick={() => setShowCreateKuis(false)}>
-            <div className="modal-content" onClick={e => e.stopPropagation()}>
-              <div className="modal-close" onClick={() => setShowCreateKuis(false)}><X size={24} /></div>
-              <h2 style={{ marginBottom: '1.5rem', fontSize: '1.5rem', fontWeight: 700 }}>Buat Kuis Baru</h2>
-              <form onSubmit={handleCreateKuis}>
-                <div className="form-group">
-                  <label>Judul Kuis</label>
-                  <input type="text" placeholder="Misal: Kuis List" value={newKuis.judul} onChange={e => setNewKuis({...newKuis, judul: e.target.value})} required />
-                </div>
-                <div className="form-group">
-                  <label>Tipe Kuis</label>
-                  <select value={newKuis.tipe} onChange={e => setNewKuis({...newKuis, tipe: e.target.value})}>
-                    <option value="list">List</option>
-                    <option value="dictionary">Dictionary</option>
-                    <option value="nested_list">Nested List</option>
-                    <option value="evaluasi">Evaluasi</option>
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label>Deskripsi (opsional)</label>
-                  <textarea rows="2" value={newKuis.deskripsi} onChange={e => setNewKuis({...newKuis, deskripsi: e.target.value})} />
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.5rem' }}>
-                  <button type="button" className="btn btn-outline" onClick={() => setShowCreateKuis(false)}>Batal</button>
-                  <button type="submit" className="btn btn-blue">Buat Kuis</button>
                 </div>
               </form>
             </div>

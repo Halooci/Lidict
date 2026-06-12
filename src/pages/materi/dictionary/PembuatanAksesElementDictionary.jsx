@@ -161,8 +161,8 @@ const visStyles = {
   },
 };
 
-// ===================== KOMPONEN EDITOR READ-ONLY DENGAN VISUALISASI DAN PENJELASAN =====================
-const CodeEditor = ({ code, codeKey, pyodideReady, runPythonCode, explanations, visualizationData }) => {
+// ===================== KOMPONEN EDITOR READ-ONLY =====================
+const CodeEditor = ({ code, pyodideReady, runPythonCode, explanations, visualizationData }) => {
   const [output, setOutput] = useState("");
   const [hasRun, setHasRun] = useState(false);
   const [showVisual, setShowVisual] = useState(false);
@@ -205,7 +205,7 @@ const CodeEditor = ({ code, codeKey, pyodideReady, runPythonCode, explanations, 
         <span style={styles.outputTitle}>Output</span>
       </div>
       <div style={styles.codeOutput}>
-        <pre style={styles.outputContent}>{output || "(Klik 'Jalankan' untuk melihat hasil)"}</pre>
+        <pre style={styles.outputContent}>{output}</pre>
       </div>
       {hasRun && hasExplanations && (
         <div style={styles.explanationsContainer}>
@@ -230,31 +230,33 @@ const CodeEditor = ({ code, codeKey, pyodideReady, runPythonCode, explanations, 
   );
 };
 
-// ===================== KOMPONEN LATIHAN PRAKTIK =====================
-const CodeEditorEditable = ({ codeKey, title, pyodideReady, runPythonCode, expectedOutput }) => {
+// ===================== KOMPONEN PRAKTIK (TIDAK MERESET KODE) =====================
+const CodeEditorEditable = ({ title, pyodideReady, runPythonCode, onValidation }) => {
   const [localCode, setLocalCode] = useState("");
   const [output, setOutput] = useState("");
-  const [message, setMessage] = useState(null);
   const [isRunning, setIsRunning] = useState(false);
+  const [currentMessage, setCurrentMessage] = useState(null);
 
   const handleChange = useCallback((e) => {
     setLocalCode(e.target.value);
-    setMessage(null);
-  }, []);
+    setCurrentMessage(null);
+    if (onValidation) onValidation({ isValid: false, isComplete: false });
+  }, [onValidation]);
 
   const validateAndRun = useCallback(async () => {
     if (!pyodideReady) {
-      setMessage({ type: 'error', text: "Pyodide sedang dimuat, harap tunggu..." });
+      setCurrentMessage({ type: 'error', text: "Pyodide sedang dimuat, harap tunggu..." });
+      if (onValidation) onValidation({ isValid: false, isComplete: false });
       return;
     }
     setOutput("");
-    setMessage(null);
     setIsRunning(true);
 
     const code = localCode;
     
     if (code.trim() === "") {
-      setMessage({ type: 'error', text: "Silakan isi jawaban Anda terlebih dahulu." });
+      setCurrentMessage({ type: 'error', text: "Silakan isi jawaban Anda terlebih dahulu." });
+      if (onValidation) onValidation({ isValid: false, isComplete: false });
       setIsRunning(false);
       return;
     }
@@ -267,28 +269,22 @@ const CodeEditorEditable = ({ codeKey, title, pyodideReady, runPythonCode, expec
     const hasPrintUsia = printUsiaRegex.test(code);
     
     if (!hasCorrectDict) {
-      setMessage({ 
-        type: 'error', 
-        text: "Periksa kembali kode Anda. Pastikan Anda membuat dictionary dengan nama 'data_mahasiswa' yang berisi key 'nama', 'usia', dan 'jurusan'." 
-      });
+      setCurrentMessage({ type: 'error', text: "Periksa kembali kode Anda. Pastikan Anda membuat dictionary dengan nama 'data_mahasiswa' yang berisi key 'nama', 'usia', dan 'jurusan'." });
+      if (onValidation) onValidation({ isValid: false, isComplete: false });
       setIsRunning(false);
       return;
     }
     
     if (!hasPrintNama) {
-      setMessage({ 
-        type: 'success', 
-        text: "Bagus! Dictionary 'data_mahasiswa' sudah benar. Sekarang, cetak nilai dari key 'nama'." 
-      });
+      setCurrentMessage({ type: 'success', text: "Bagus! Dictionary 'data_mahasiswa' sudah benar. Sekarang, cetak nilai dari key 'nama'." });
+      if (onValidation) onValidation({ isValid: false, isComplete: false });
       setIsRunning(false);
       return;
     }
     
     if (!hasPrintUsia) {
-      setMessage({ 
-        type: 'success', 
-        text: "Bagus! Nilai 'nama' sudah dicetak. Lanjut ke instruksi selanjutnya." 
-      });
+      setCurrentMessage({ type: 'success', text: "Bagus! Nilai 'nama' sudah dicetak. Lanjut ke instruksi selanjutnya." });
+      if (onValidation) onValidation({ isValid: false, isComplete: false });
       setIsRunning(false);
       return;
     }
@@ -297,18 +293,19 @@ const CodeEditorEditable = ({ codeKey, title, pyodideReady, runPythonCode, expec
       const result = await runPythonCode(code);
       setOutput(result);
       if (result.includes("Citra") && result.includes("22")) {
-        setOutput(result + "\n\nSELAMAT! Semua instruksi sudah benar.");
-        setMessage({ type: 'success', text: "Semua instruksi selesai! Kode berjalan dengan baik." });
+        setCurrentMessage({ type: 'success', text: "Semua instruksi selesai! Kode berjalan dengan baik." });
+        if (onValidation) onValidation({ isValid: true, isComplete: true });
       } else {
-        setOutput(result + "\n\nOutput tidak sesuai. Pastikan dictionary Anda berisi key 'nama' dengan value 'Citra' dan key 'usia' dengan value 22.");
-        setMessage({ type: 'error', text: "Output akhir tidak sesuai. Periksa kembali isi dictionary Anda." });
+        setCurrentMessage({ type: 'error', text: "Output akhir tidak sesuai. Periksa kembali isi dictionary Anda." });
+        if (onValidation) onValidation({ isValid: false, isComplete: false });
       }
     } catch (err) {
-      setMessage({ type: 'error', text: `Terjadi kesalahan saat menjalankan: ${err.message}` });
+      setCurrentMessage({ type: 'error', text: `Terjadi kesalahan saat menjalankan: ${err.message}` });
+      if (onValidation) onValidation({ isValid: false, isComplete: false });
     } finally {
       setIsRunning(false);
     }
-  }, [localCode, pyodideReady, runPythonCode]);
+  }, [localCode, pyodideReady, runPythonCode, onValidation]);
 
   return (
     <div style={styles.codeEditorContainer}>
@@ -318,25 +315,20 @@ const CodeEditorEditable = ({ codeKey, title, pyodideReady, runPythonCode, expec
           {isRunning ? "Menjalankan..." : pyodideReady ? "Jalankan" : "Memuat..."}
         </button>
       </div>
-      {message && (
-        <div style={message.type === 'error' ? styles.errorBox : styles.successBox}>
-          {message.text}
-        </div>
-      )}
       <textarea
-        style={{ ...styles.codeInputEditable, border: message?.type === 'error' && message.text.includes("Periksa") ? "2px solid #ff4444" : "none" }}
+        style={styles.codeInputEditable}
         value={localCode}
         onChange={handleChange}
-        placeholder="Tulis kode Python kamu di sini..."
+        placeholder="Tulis kode Python Anda di sini..."
         spellCheck={false}
-        autoComplete="off"
       />
       <div style={styles.outputHeader}>
         <span style={styles.outputTitle}>Output</span>
       </div>
       <div style={styles.codeOutput}>
-        <pre style={styles.outputContent}>{output || "(Klik 'Jalankan' untuk melihat hasil)"}</pre>
+        <pre style={styles.outputContent}>{output}</pre>
       </div>
+      {/* Pesan internal tidak ditampilkan di sini, hanya dikirim ke parent */}
     </div>
   );
 };
@@ -462,11 +454,9 @@ const CodeCompletionQuestion = ({ question, codeParts, placeholders, expectedAns
 export default function PembuatanAksesElementDictionary() {
   const navigate = useNavigate();
 
-  // ─────────── KONFIGURASI HALAMAN ───────────
   const TOPIC_NAME = "pembuatan_akses_dict";
   const EKSPLORASI_ANSWERS_KEY = `eksplorasi_${TOPIC_NAME}_answers`;
   const BONUS_DONE_KEY = `${TOPIC_NAME}_bonus_done`;
-  // ──────────────────────────────────────────
 
   useEffect(() => {
     const userId = localStorage.getItem('userId');
@@ -484,6 +474,10 @@ export default function PembuatanAksesElementDictionary() {
   const [showModal, setShowModal] = useState(false);
   const [bonusGiven, setBonusGiven] = useState(false);
   const userId = localStorage.getItem('userId');
+
+  // State untuk pesan praktik (di luar editor)
+  const [praktikMessage, setPraktikMessage] = useState("");
+  const [praktikMessageType, setPraktikMessageType] = useState("");
 
   useEffect(() => {
     const already = localStorage.getItem(BONUS_DONE_KEY);
@@ -546,7 +540,6 @@ export default function PembuatanAksesElementDictionary() {
     },
   ];
 
-  // Inisialisasi dari localStorage
   const [eksplorasiSelected, setEksplorasiSelected] = useState(() => {
     try {
       const saved = localStorage.getItem(EKSPLORASI_ANSWERS_KEY);
@@ -560,7 +553,6 @@ export default function PembuatanAksesElementDictionary() {
     return Array(eksplorasiQuestions.length).fill(null);
   });
 
-  // Hitung feedback dan status dari selected
   const eksplorasiFeedback = eksplorasiSelected.map((sel, i) => {
     if (sel === null) return "";
     return sel === eksplorasiQuestions[i].correct ? "Benar" : "Salah";
@@ -568,7 +560,6 @@ export default function PembuatanAksesElementDictionary() {
   const eksplorasiHasAnswered = eksplorasiSelected.map(sel => sel !== null);
   const isEksplorasiCompleted = eksplorasiHasAnswered.every(v => v === true);
 
-  // Simpan ke localStorage saat berubah
   useEffect(() => {
     localStorage.setItem(EKSPLORASI_ANSWERS_KEY, JSON.stringify(eksplorasiSelected));
   }, [eksplorasiSelected, EKSPLORASI_ANSWERS_KEY]);
@@ -732,6 +723,17 @@ _buffer.getvalue()
     }
   }, []);
 
+  // Callback untuk menerima status validasi dari editor praktik
+  const handlePraktikValidation = ({ isValid, isComplete }) => {
+    if (isComplete) {
+      setPraktikMessage("✅ Selamat! Semua instruksi sudah dikerjakan dengan benar.");
+      setPraktikMessageType("success");
+    } else {
+      setPraktikMessage("⚠️ Periksa kembali instruksi!");
+      setPraktikMessageType("warning");
+    }
+  };
+
   return (
     <>
       <Navbar />
@@ -832,7 +834,6 @@ _buffer.getvalue()
                   </p>
                   <CodeEditor 
                     code={exampleCodes.membuatDict} 
-                    codeKey="membuatDict" 
                     pyodideReady={pyodideReady} 
                     runPythonCode={runPythonCode} 
                     explanations={explanations.membuatDict}
@@ -855,7 +856,6 @@ _buffer.getvalue()
                   </p>
                   <CodeEditor 
                     code={exampleCodes.aksesDict} 
-                    codeKey="aksesDict" 
                     pyodideReady={pyodideReady} 
                     runPythonCode={runPythonCode} 
                     explanations={explanations.aksesDict}
@@ -878,19 +878,38 @@ _buffer.getvalue()
                       Python menyediakan dictionary untuk kebutuhan ini, di mana setiap data
                        memiliki label (key) sehingga memudahkan pencarian.
                     </p>
-                    <p style={{ marginBottom: "5px" }}><strong>Petunjuk:</strong> Ikuti instruksi secara berurutan. Kode akan diperiksa langkah demi langkah. Pastikan Anda mengikuti setiap instruksi.</p>
+                    <p style={{ marginBottom: "5px" }}><strong>Petunjuk:</strong> Ikuti instruksi secara berurutan. Pastikan Anda mengikuti setiap instruksi.</p>
                     <ul style={{ paddingLeft: "20px", marginTop: "10px" }}>
                       <li>Buatlah dictionary dengan nama <code>data_mahasiswa</code> yang berisi key: <code>"nama"</code> dengan value <code>"Citra"</code>, key <code>"usia"</code> dengan value <code>22</code>, dan key <code>"jurusan"</code> dengan value <code>"Sistem Informasi"</code>.</li>
                       <li>Tampilkan nilai dari key <code>"nama"</code>.</li>
                       <li>Tampilkan nilai dari key <code>"usia"</code>.</li>
                     </ul>
                   </div>
+
+                  {/* Tempat pesan peringatan / sukses (di luar editor) */}
+                  {praktikMessage && (
+                    <div
+                      style={{
+                        margin: "15px 0 10px 0",
+                        padding: "10px 15px",
+                        borderRadius: "8px",
+                        backgroundColor: "#f8f9fa",
+                        borderLeft: "4px solid",
+                        ...(praktikMessageType === "warning" 
+                          ? { color: "#856404", borderLeftColor: "#ffc107", backgroundColor: "#fff3cd" }
+                          : { color: "#0f5132", borderLeftColor: "#28a745", backgroundColor: "#d1e7dd" }
+                        )
+                      }}
+                    >
+                      {praktikMessage}
+                    </div>
+                  )}
+
                   <CodeEditorEditable 
-                    codeKey="latihan" 
                     title="Ayo Praktik" 
                     pyodideReady={pyodideReady} 
                     runPythonCode={runPythonCode} 
-                    expectedOutput={["Citra", "22"]} 
+                    onValidation={handlePraktikValidation}
                   />
                 </div>
               </section>
@@ -977,6 +996,10 @@ _buffer.getvalue()
         .modalButton:hover {
           transform: scale(1.02);
           box-shadow: 0 5px 15px rgba(49,130,206,0.3);
+        }
+        textarea::placeholder {
+          color: #888;
+          font-style: italic;
         }
       `}</style>
     </>
@@ -1081,22 +1104,6 @@ const styles = {
     cursor: "pointer",
     fontWeight: "600",
     fontSize: "14px",
-  },
-  errorBox: {
-    backgroundColor: "#ff4444",
-    color: "white",
-    padding: "12px 15px",
-    fontSize: "14px",
-    fontWeight: "500",
-    borderBottom: "2px solid #cc0000",
-  },
-  successBox: {
-    backgroundColor: "#28a745",
-    color: "white",
-    padding: "12px 15px",
-    fontSize: "14px",
-    fontWeight: "500",
-    borderBottom: "2px solid #1e7e34",
   },
   codeInputReadOnly: {
     width: "100%",
@@ -1254,7 +1261,6 @@ const styles = {
     textAlign: "center",
     color: "#084298",
   },
-  // Modal styles
   modalOverlay: {
     position: "fixed",
     top: 0,

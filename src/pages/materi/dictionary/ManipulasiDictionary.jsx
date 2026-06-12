@@ -243,8 +243,8 @@ const DictionaryComparison = ({ beforeData, afterData, beforeTitle, afterTitle, 
   );
 };
 
-// ===================== KOMPONEN EDITOR READ-ONLY DENGAN VISUALISASI PERBANDINGAN =====================
-const CodeEditor = ({ code, codeKey, pyodideReady, runPythonCode, explanations, beforeData, afterData, beforeTitle, afterTitle, addedKeys = [], removedKeys = [], accessSequenceAfter = [] }) => {
+// ===================== KOMPONEN EDITOR READ-ONLY (TIDAK DIUBAH) =====================
+const CodeEditor = ({ code, pyodideReady, runPythonCode, explanations, beforeData, afterData, beforeTitle, afterTitle, addedKeys = [], removedKeys = [], accessSequenceAfter = [] }) => {
   const [output, setOutput] = useState("");
   const [hasRun, setHasRun] = useState(false);
   const [showVisual, setShowVisual] = useState(false);
@@ -292,7 +292,7 @@ const CodeEditor = ({ code, codeKey, pyodideReady, runPythonCode, explanations, 
         <span style={styles.outputTitle}>Output</span>
       </div>
       <div style={styles.codeOutput}>
-        <pre style={styles.outputContent}>{output || "(Klik 'Jalankan' untuk melihat hasil)"}</pre>
+        <pre style={styles.outputContent}>{output}</pre>
       </div>
       {hasRun && hasExplanations && (
         <div style={styles.explanationsContainer}>
@@ -317,96 +317,90 @@ const CodeEditor = ({ code, codeKey, pyodideReady, runPythonCode, explanations, 
   );
 };
 
-// ===================== KOMPONEN LATIHAN PRAKTIK =====================
-const CodeEditorEditable = ({ codeKey, title, pyodideReady, runPythonCode, expectedOutput, successMessage }) => {
+// ===================== KOMPONEN PRAKTIK (DIPERBAIKI) =====================
+const CodeEditorEditable = ({ title, pyodideReady, runPythonCode, onValidation }) => {
   const [localCode, setLocalCode] = useState("");
   const [output, setOutput] = useState("");
-  const [message, setMessage] = useState(null);
   const [isRunning, setIsRunning] = useState(false);
+  const [currentMessage, setCurrentMessage] = useState(null);
 
   const handleChange = useCallback((e) => {
     setLocalCode(e.target.value);
-    setMessage(null);
-  }, []);
+    setCurrentMessage(null);
+    if (onValidation) onValidation({ isValid: false, isComplete: false });
+  }, [onValidation]);
+
+  const hasNonCommentLine = (code, pattern) => {
+    const lines = code.split('\n');
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (trimmed === '' || trimmed.startsWith('#')) continue;
+      if (pattern.test(trimmed)) return true;
+    }
+    return false;
+  };
 
   const validateAndRun = useCallback(async () => {
     if (!pyodideReady) {
-      setMessage({ type: 'error', text: "Pyodide sedang dimuat, harap tunggu..." });
+      setCurrentMessage({ type: 'error', text: "Pyodide sedang dimuat, harap tunggu..." });
+      if (onValidation) onValidation({ isValid: false, isComplete: false });
       return;
     }
     setOutput("");
-    setMessage(null);
+    setCurrentMessage(null);
     setIsRunning(true);
 
     const code = localCode;
     
     if (code.trim() === "") {
-      setMessage({ type: 'error', text: "Silakan isi jawaban Anda terlebih dahulu." });
+      setCurrentMessage({ type: 'error', text: "Silakan isi jawaban Anda terlebih dahulu." });
+      if (onValidation) onValidation({ isValid: false, isComplete: false });
       setIsRunning(false);
       return;
     }
     
-    const varRegex = /inventaris\s*=\s*\{\s*(?:"|')\s*Python\s+Dasar\s*(?:"|')\s*:\s*\d+\s*,\s*(?:"|')\s*Data\s+Science\s*(?:"|')\s*:\s*\d+\s*,\s*(?:"|')\s*Web\s+Programming\s*(?:"|')\s*:\s*\d+\s*\}/is;
-    const hasCorrectDict = varRegex.test(code);
-    const updateRegex = /inventaris\.update\s*\(\s*\{\s*(?:"|')\s*Machine\s+Learning\s*(?:"|')\s*:\s*\d+\s*\}\s*\)/;
-    const hasUpdate = updateRegex.test(code);
-    const popRegex = /inventaris\.pop\s*\(\s*(?:"|')\s*Data\s+Science\s*(?:"|')\s*\)/;
-    const hasPop = popRegex.test(code);
-    const printRegex = /print\s*\(\s*inventaris\s*\)/;
-    const hasPrint = printRegex.test(code);
+    // Regex untuk membuat dictionary inventaris awal
+    const dictPattern = /inventaris\s*=\s*\{\s*(?:"|')Python\s+Dasar(?:"|')\s*:\s*10\s*,\s*(?:"|')Data\s+Science(?:"|')\s*:\s*5\s*,\s*(?:"|')Web\s+Programming(?:"|')\s*:\s*7\s*\}/i;
+    // Regex untuk update('Machine Learning': 3)
+    const updatePattern = /inventaris\.update\s*\(\s*\{\s*(?:"|')Machine\s+Learning(?:"|')\s*:\s*3\s*\}\s*\)/i;
+    // Regex untuk pop('Data Science')
+    const popPattern = /inventaris\.pop\s*\(\s*(?:"|')Data\s+Science(?:"|')\s*\)/i;
+    // Regex untuk print inventaris
+    const printPattern = /print\s*\(\s*inventaris\s*\)/;
     
-    if (!hasCorrectDict) {
-      setMessage({ 
-        type: 'error', 
-        text: "Periksa kembali kode Anda. Pastikan Anda membuat dictionary 'inventaris' dengan stok awal: 'Python Dasar', 'Data Science', 'Web Programming'." 
-      });
-      setIsRunning(false);
-      return;
-    }
+    // Larangan: tidak boleh ada print selain print inventaris (misal print nilai hasil pop, print sebelum update, dll)
+    const allPrintStatements = code.match(/print\s*\([^)]*\)/g) || [];
+    const hasExtraPrint = allPrintStatements.some(stmt => !printPattern.test(stmt));
+    // Larangan: tidak boleh ada perintah pop selain untuk 'Data Science'
+    const otherPop = /inventaris\.pop\s*\(\s*(?:"|')(?!Data\s+Science)([^)]*)\s*\)/i.test(code);
+    // Larangan: tidak boleh ada perintah update selain untuk 'Machine Learning'
+    const otherUpdate = /inventaris\.update\s*\(\s*\{\s*(?:"|')(?!Machine\s+Learning)([^)]*)\s*:\s*\d+\s*\}\s*\)/i.test(code);
     
-    if (!hasUpdate) {
-      setMessage({ 
-        type: 'success', 
-        text: "Bagus! Dictionary 'inventaris' sudah benar. Sekarang, tambahkan buku 'Machine Learning' dengan stok 3 menggunakan update()." 
-      });
-      setIsRunning(false);
-      return;
-    }
+    // Cek keberadaan instruksi yang diperlukan
+    const hasDict = hasNonCommentLine(code, dictPattern);
+    const hasUpdate = hasNonCommentLine(code, updatePattern);
+    const hasPop = hasNonCommentLine(code, popPattern);
+    const hasPrint = hasNonCommentLine(code, printPattern);
     
-    if (!hasPop) {
-      setMessage({ 
-        type: 'success', 
-        text: "Bagus! Buku 'Machine Learning' sudah ditambahkan. Sekarang, hapus buku 'Data Science' dari inventaris menggunakan pop()." 
-      });
-      setIsRunning(false);
-      return;
-    }
+    // Validasi: harus memiliki semua instruksi, dan tidak boleh ada print ekstra, tidak boleh ada pop/update lain
+    const isComplete = hasDict && hasUpdate && hasPop && hasPrint && !hasExtraPrint && !otherPop && !otherUpdate;
     
-    if (!hasPrint) {
-      setMessage({ 
-        type: 'success', 
-        text: "Bagus! Penghapusan 'Data Science' sudah dilakukan. Terakhir, cetak isi inventaris menggunakan print(inventaris)." 
-      });
-      setIsRunning(false);
-      return;
-    }
-    
+    // Eksekusi kode (tetap jalankan walau tidak memenuhi instruksi, untuk menampilkan output)
+    let executionOutput = "";
     try {
       const result = await runPythonCode(code);
-      setOutput(result);
-      if (result.includes("Python Dasar") && result.includes("Web Programming") && result.includes("Machine Learning") && !result.includes("Data Science")) {
-        setOutput(result + "\n\nSELAMAT! Semua instruksi sudah benar.");
-        setMessage({ type: 'success', text: "Semua instruksi selesai! Kode berjalan dengan baik." });
-      } else {
-        setOutput(result + "\n\nOutput tidak sesuai. Pastikan inventaris akhir berisi 'Python Dasar', 'Web Programming', dan 'Machine Learning'.");
-        setMessage({ type: 'error', text: "Output akhir tidak sesuai. Periksa kembali urutan operasi Anda." });
-      }
+      executionOutput = result;
     } catch (err) {
-      setMessage({ type: 'error', text: `Terjadi kesalahan saat menjalankan: ${err.message}` });
-    } finally {
-      setIsRunning(false);
+      executionOutput = `Error: ${err.message}`;
     }
-  }, [localCode, pyodideReady, runPythonCode]);
+    setOutput(executionOutput);
+    setIsRunning(false);
+    
+    // Kirim status validasi ke parent
+    if (onValidation) {
+      onValidation({ isValid: isComplete, isComplete: isComplete });
+    }
+  }, [localCode, pyodideReady, runPythonCode, onValidation]);
 
   return (
     <div style={styles.codeEditorContainer}>
@@ -416,30 +410,24 @@ const CodeEditorEditable = ({ codeKey, title, pyodideReady, runPythonCode, expec
           {isRunning ? "Menjalankan..." : pyodideReady ? "Jalankan" : "Memuat..."}
         </button>
       </div>
-      {message && (
-        <div style={message.type === 'error' ? styles.errorBox : styles.successBox}>
-          {message.text}
-        </div>
-      )}
       <textarea
-        style={{ ...styles.codeInputEditable, border: message?.type === 'error' && message.text.includes("Periksa") ? "2px solid #ff4444" : "none" }}
+        style={styles.codeInputEditable}
         value={localCode}
         onChange={handleChange}
-        placeholder="Tulis kode Python untuk memanipulasi dictionary di sini..."
+        placeholder="Tulis kode Python Anda di sini..."
         spellCheck={false}
-        autoComplete="off"
       />
       <div style={styles.outputHeader}>
         <span style={styles.outputTitle}>Output</span>
       </div>
       <div style={styles.codeOutput}>
-        <pre style={styles.outputContent}>{output || "(Klik 'Jalankan' untuk melihat hasil)"}</pre>
+        <pre style={styles.outputContent}>{output}</pre>
       </div>
     </div>
   );
 };
 
-// ===================== KOMPONEN LATIHAN SOAL (LOCK PER SOAL) =====================
+// ===================== KOMPONEN LATIHAN SOAL (TIDAK DIUBAH) =====================
 const LatihanSoal = ({ questions, resetTrigger, onAllCorrectChange }) => {
   const [answers, setAnswers] = useState(questions.map(() => null));
   const [feedback, setFeedback] = useState(questions.map(() => ""));
@@ -539,7 +527,7 @@ const LatihanSoal = ({ questions, resetTrigger, onAllCorrectChange }) => {
   );
 };
 
-// ===================== DATA EKSPLORASI (DIPINDAHKAN KE LUAR KOMPONEN) =====================
+// ===================== DATA EKSPLORASI =====================
 const eksplorasiQuestions = [
   {
     text: "Metode dictionary yang digunakan untuk menambah atau memperbarui beberapa pasangan key-value sekaligus adalah ....",
@@ -562,11 +550,9 @@ const eksplorasiQuestions = [
 export default function ManipulasiDictionary() {
   const navigate = useNavigate();
 
-  // ─────────── KONFIGURASI HALAMAN ───────────
   const TOPIC_NAME = "manipulasi_dict";
   const EKSPLORASI_ANSWERS_KEY = `eksplorasi_${TOPIC_NAME}_answers`;
   const BONUS_DONE_KEY = `${TOPIC_NAME}_bonus_done`;
-  // ──────────────────────────────────────────
 
   useEffect(() => {
     const userId = localStorage.getItem('userId');
@@ -585,6 +571,10 @@ export default function ManipulasiDictionary() {
   const [showModal, setShowModal] = useState(false);
   const [bonusGiven, setBonusGiven] = useState(false);
   const userId = localStorage.getItem('userId');
+
+  // State untuk pesan praktik (di luar editor)
+  const [praktikMessage, setPraktikMessage] = useState("");
+  const [praktikMessageType, setPraktikMessageType] = useState("");
 
   useEffect(() => {
     const already = localStorage.getItem(BONUS_DONE_KEY);
@@ -626,7 +616,6 @@ export default function ManipulasiDictionary() {
     return Array(eksplorasiQuestions.length).fill(null);
   });
 
-  // Computed values
   const eksplorasiHasAnswered = eksplorasiSelected.map(sel => sel !== null);
   const eksplorasiFeedback = eksplorasiSelected.map((sel, i) => {
     if (sel === null) return "";
@@ -634,7 +623,6 @@ export default function ManipulasiDictionary() {
   });
   const isEksplorasiCompleted = eksplorasiHasAnswered.every(v => v === true);
 
-  // Simpan ke localStorage setiap kali jawaban berubah
   useEffect(() => {
     localStorage.setItem(EKSPLORASI_ANSWERS_KEY, JSON.stringify(eksplorasiSelected));
   }, [eksplorasiSelected, EKSPLORASI_ANSWERS_KEY]);
@@ -646,6 +634,17 @@ export default function ManipulasiDictionary() {
       newSel[questionIdx] = optionIdx;
       return newSel;
     });
+  };
+
+  // Callback untuk validasi praktik
+  const handlePraktikValidation = ({ isValid, isComplete }) => {
+    if (isComplete) {
+      setPraktikMessage("✅ Selamat! Semua instruksi sudah dikerjakan dengan benar.");
+      setPraktikMessageType("success");
+    } else {
+      setPraktikMessage("⚠️ Periksa kembali instruksi!");
+      setPraktikMessageType("warning");
+    }
   };
 
   // Data untuk visualisasi perbandingan
@@ -757,7 +756,6 @@ print("Setelah clear:", data)`,
     }
   ];
 
-  // Load Pyodide
   useEffect(() => {
     const loadPyodide = async () => {
       if (!window.loadPyodide) {
@@ -898,7 +896,6 @@ _buffer.getvalue()
                   <p style={styles.text}>Metode <code>update()</code> digunakan untuk menambah atau memperbarui beberapa pasangan key-value sekaligus.</p>
                   <CodeEditor 
                     code={exampleCodes.update} 
-                    codeKey="update" 
                     pyodideReady={pyodideReady} 
                     runPythonCode={runPythonCode} 
                     explanations={explanations.update}
@@ -915,7 +912,6 @@ _buffer.getvalue()
                   <p style={styles.text}><code>pop(key)</code> menghapus item dengan key tertentu dan mengembalikan nilainya.</p>
                   <CodeEditor 
                     code={exampleCodes.pop} 
-                    codeKey="pop" 
                     pyodideReady={pyodideReady} 
                     runPythonCode={runPythonCode} 
                     explanations={explanations.pop}
@@ -932,7 +928,6 @@ _buffer.getvalue()
                   <p style={styles.text}><code>popitem()</code> menghapus item terakhir (berdasarkan urutan penyisipan) dan mengembalikan tuple (key, value).</p>
                   <CodeEditor 
                     code={exampleCodes.popitem} 
-                    codeKey="popitem" 
                     pyodideReady={pyodideReady} 
                     runPythonCode={runPythonCode} 
                     explanations={explanations.popitem}
@@ -949,7 +944,6 @@ _buffer.getvalue()
                   <p style={styles.text}><code>clear()</code> menghapus semua item dalam dictionary, menghasilkan dictionary kosong.</p>
                   <CodeEditor 
                     code={exampleCodes.clear} 
-                    codeKey="clear" 
                     pyodideReady={pyodideReady} 
                     runPythonCode={runPythonCode} 
                     explanations={explanations.clear}
@@ -973,7 +967,7 @@ _buffer.getvalue()
                       Sebuah toko buku memiliki dictionary <code>inventaris</code> yang menyimpan stok buku dengan format <code>{"{'judul buku': jumlah_stok}"}</code>. 
                       Saat ini inventaris berisi: <code>{"{'Python Dasar': 10, 'Data Science': 5, 'Web Programming': 7}"}</code>.
                     </p>
-                    <p><strong>Petunjuk:</strong> Ikuti instruksi secara berurutan. Kode akan diperiksa langkah demi langkah. Pastikan mengikuti setiap instruksi.</p>
+                    <p><strong>Petunjuk:</strong> Ikuti instruksi secara berurutan. Pastikan Anda mengikuti setiap instruksi.</p>
                     <ol style={{ marginLeft: "20px", lineHeight: "1.8", marginTop: "8px" }}>
                       <li>Buat dictionary <code>inventaris</code> dengan stok awal: 'Python Dasar':10, 'Data Science':5, 'Web Programming':7.</li>
                       <li>Tambah stok buku baru <code>"Machine Learning"</code> sebanyak 3 eksemplar menggunakan metode <code>update()</code>.</li>
@@ -981,13 +975,31 @@ _buffer.getvalue()
                       <li>Tampilkan isi <code>inventaris</code> terakhir menggunakan <code>print()</code>.</li>
                     </ol>
                   </div>
-                  <CodeEditorEditable
-                    codeKey="latihan_inventaris"
-                    title="Ayo Praktik"
-                    pyodideReady={pyodideReady}
-                    runPythonCode={runPythonCode}
-                    expectedOutput="'Python Dasar': 10, 'Web Programming': 7, 'Machine Learning': 3"
-                    successMessage="Selamat! Anda berhasil memanipulasi dictionary inventaris dengan benar."
+
+                  {/* Tempat pesan peringatan / sukses */}
+                  {praktikMessage && (
+                    <div
+                      style={{
+                        margin: "15px 0 10px 0",
+                        padding: "10px 15px",
+                        borderRadius: "8px",
+                        backgroundColor: "#f8f9fa",
+                        borderLeft: "4px solid",
+                        ...(praktikMessageType === "warning" 
+                          ? { color: "#856404", borderLeftColor: "#ffc107", backgroundColor: "#fff3cd" }
+                          : { color: "#0f5132", borderLeftColor: "#28a745", backgroundColor: "#d1e7dd" }
+                        )
+                      }}
+                    >
+                      {praktikMessage}
+                    </div>
+                  )}
+
+                  <CodeEditorEditable 
+                    title="Ayo Praktik" 
+                    pyodideReady={pyodideReady} 
+                    runPythonCode={runPythonCode} 
+                    onValidation={handlePraktikValidation}
                   />
                 </div>
               </section>
@@ -1034,6 +1046,10 @@ _buffer.getvalue()
         .modalButton:hover {
           transform: scale(1.02);
           box-shadow: 0 5px 15px rgba(49,130,206,0.3);
+        }
+        textarea::placeholder {
+          color: #888;
+          font-style: italic;
         }
       `}</style>
     </>
@@ -1129,22 +1145,6 @@ const styles = {
     cursor: "pointer",
     fontWeight: "600",
     fontSize: "14px",
-  },
-  errorBox: {
-    backgroundColor: "#ff4444",
-    color: "white",
-    padding: "12px 15px",
-    fontSize: "14px",
-    fontWeight: "500",
-    borderBottom: "2px solid #cc0000",
-  },
-  successBox: {
-    backgroundColor: "#28a745",
-    color: "white",
-    padding: "12px 15px",
-    fontSize: "14px",
-    fontWeight: "500",
-    borderBottom: "2px solid #1e7e34",
   },
   codeInputReadOnly: {
     width: "100%",
@@ -1287,7 +1287,6 @@ const styles = {
     textAlign: "center",
     fontWeight: "bold"
   },
-  // Modal styles
   modalOverlay: {
     position: "fixed",
     top: 0,
