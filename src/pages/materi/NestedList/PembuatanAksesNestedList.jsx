@@ -1195,15 +1195,14 @@ print("Elemen baris 2 kolom 3:", matriks[1][2])`;
 data = [[1, 2],
         [3, 4, 5],
         [6]]
-print(data[1][2])
-print(data[2][0])`;
+print(data)`;
   const lineExplanationsRagged = [
     "Komentar: Membuat nested list dengan panjang baris berbeda.",
-    "Membuat variabel 'data' - baris pertama [1,2] (indeks 0, panjang 2).",
-    "Baris kedua [3,4,5] (indeks 1, panjang 3).",
-    "Baris ketiga [6] (indeks 2, panjang 1).",
-    "Mencetak elemen baris indeks 1, kolom indeks 2 → 5.",
-    "Mencetak elemen baris indeks 2, kolom indeks 0 → 6."
+    "Membuat variabel 'data' - baris pertama [1,2].",
+    "Baris kedua [3,4,5].",
+    "Baris ketiga [6].",
+    "Mencetak seluruh isi nested list variabel data",
+
   ];
 
   const soal1CodeParts = ["data = [[10,20,30],[40,50,60]]\nprint(data[", "][", "])"];
@@ -1349,10 +1348,7 @@ _buffer.getvalue()`);
                     Cara ini analog dengan koordinat (baris, kolom). Anda juga bisa mengakses seluruh baris dengan satu indeks, misal{" "}
                     <code>matriks[0]</code> akan mengembalikan list <code>[1,2,3]</code>.
                   </p>
-                  <p style={styles.text}>
-                    Pengaksesan elemen sangat penting untuk memproses data tabel, misalnya mencari nilai maksimum pada setiap kolom,
-                    atau menghitung rata-rata.
-                  </p>
+                  
                   <CodeEditorWithVisual
                     code={contohAksesElemen}
                     title="Contoh Kode Program"
