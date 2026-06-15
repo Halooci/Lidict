@@ -1375,18 +1375,18 @@ sys.stdout = StringIO()
                 <div style={styles.card}>
                   <p style={styles.text}>
                     <strong>Slicing</strong> adalah teknik untuk mengambil sebagian elemen dari list. 
-                    Format penulisannya adalah <code>list[awal:akhir]</code>, di mana:
+                    Format penulisannya adalah list[awal:akhir], di mana:
                   </p>
                   <ul style={styles.list}>
-                    <li><code>awal</code> adalah indeks mulai (termasuk).</li>
-                    <li><code>akhir</code> adalah indeks berhenti (tidak termasuk).</li>
-                    <li>Jika <code>awal</code> dikosongkan, berarti mulai dari indeks 0.</li>
-                    <li>Jika <code>akhir</code> dikosongkan, berarti sampai akhir list.</li>
+                    <li>awal adalah indeks mulai (termasuk).</li>
+                    <li>akhir adalah indeks berhenti (tidak termasuk).</li>
+                    <li>Jika awal dikosongkan, berarti mulai dari indeks 0.</li>
+                    <li>Jika akhir dikosongkan, berarti sampai akhir list.</li>
                   </ul>
                   <p style={styles.text}>
-                    Contoh: <code>list[:3]</code> mengambil 3 elemen pertama (indeks 0,1,2).<br />
-                    <code>list[2:]</code> mengambil elemen dari indeks 2 sampai akhir.<br />
-                    <code>list[1:4]</code> mengambil elemen indeks 1,2,3.
+                    Contoh: list[:3] mengambil 3 elemen pertama (indeks 0,1,2).<br />
+                    list[2:] mengambil elemen dari indeks 2 sampai akhir.<br />
+                    list[1:4] mengambil elemen indeks 1,2,3.
                   </p>
                   <CodeEditorWithVisual
                     code={contohSlicing}

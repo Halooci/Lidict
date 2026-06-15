@@ -342,29 +342,29 @@ export default function Apersepsi() {
                 <li>
                   Harus diawali dengan huruf atau garis bawah. Tidak boleh diawali angka.
                   <br />
-                  <code>nama_siswa → <strong style={{color: "#10b981"}}>BENAR</strong></code>
+                  nama_siswa → <strong style={{color: "#10b981"}}>BENAR</strong>
                   <br />
-                  <code>_nilai, angka1 → <strong style={{color: "#10b981"}}>BENAR</strong></code>
+                  _nilai, angka1 → <strong style={{color: "#10b981"}}>BENAR</strong>
                   <br />
-                  <code>1siswa → <strong style={{color: "#ef4444"}}>SALAH</strong></code>
+                  1siswa → <strong style={{color: "#ef4444"}}>SALAH</strong>
                   <br />
-                  <code>2nilai → <strong style={{color: "#ef4444"}}>SALAH</strong></code>
+                  2nilai → <strong style={{color: "#ef4444"}}>SALAH</strong>
                 </li>
                 <li>
                   Tidak boleh ada spasi. Gunakan garis bawah untuk memisahkan kata.
                   <br />
-                  <code>jumlah_mahasiswa → <strong style={{color: "#10b981"}}>BENAR</strong></code>
+                  jumlah_mahasiswa → <strong style={{color: "#10b981"}}>BENAR</strong>
                   <br />
-                  <code>jumlah mahasiswa → <strong style={{color: "#ef4444"}}>SALAH</strong></code>
+                  jumlah mahasiswa → <strong style={{color: "#ef4444"}}>SALAH</strong>
                 </li>
                 <li>
-                  Tidak boleh sama dengan kata kunci (keyword) Python, seperti <code>print, if, for, while, input, return, def, True, False, and, or</code>, dll.
+                  Tidak boleh sama dengan kata kunci (keyword) Python, seperti print, if, for, while, input, return, def, True, False, and, or, dll.
                 </li>
                 <li>
-                  Bersifat case-sensitive, huruf besar dan kecil dibedakan. Jadi <code>Harga</code>, <code>harga</code>, dan <code>HARGA</code> adalah variabel yang berbeda.
+                  Bersifat case-sensitive, huruf besar dan kecil dibedakan. Jadi Harga, harga, dan HARGA adalah variabel yang berbeda.
                 </li>
                 <li>
-                  Buat nama yang deskriptif agar mudah dipahami. Misalnya <code>rata_rata</code> lebih jelas daripada <code>rt</code>.
+                  Buat nama yang deskriptif agar mudah dipahami. Misalnya rata_rata lebih jelas daripada rt.
                 </li>
               </ol>
               <p style={styles.text}>
@@ -372,25 +372,25 @@ export default function Apersepsi() {
               </p>
               <ul style={styles.list}>
                 <li>
-                  <code>integer</code> → bilangan bulat (tanpa koma), seperti <code>10</code>, <code>-5</code>, <code>0</code>.
+                  integer → bilangan bulat (tanpa koma), seperti 10, -5, 0.
                   <br />
                   Contoh:  
                   <strong style={{ color: "#306998" }}> panjang</strong> = <strong style={{ color: "#306998" }}>int(input("Masukkan panjang: "))</strong>
                 </li>
                 <li>
-                  <code>float</code> → bilangan desimal (ada koma), seperti <code>3.14</code>, <code>-0.5</code>, <code>2.0</code>.
+                  float → bilangan desimal (ada koma), seperti 3.14, -0.5, 2.0.
                   <br />
                   Contoh:  
                   <strong style={{ color: "#306998" }}> lebar</strong> = <strong style={{ color: "#306998" }}> float(input("Masukkan lebar: "))</strong>
                 </li>
                 <li>
-                  <code>string</code> → teks, diapit kutip (bisa kutip satu atau kutip dua).
+                  string → teks, diapit kutip (bisa kutip satu atau kutip dua).
                   <br />
                   Contoh:   
                   <strong style={{ color: "#306998" }}> jurusan</strong> = <strong style={{ color: "#306998" }}>"Pendidikan Komputer"</strong>
                 </li>
                 <li>
-                  <code>boolean</code> → nilai kebenaran, hanya <code>True</code> atau <code>False</code>.
+                  boolean → nilai kebenaran, hanya True atau False.
                   <br />
                   Contoh: (konteks apakah siswa masih aktif bersekolah)
                   <br />
