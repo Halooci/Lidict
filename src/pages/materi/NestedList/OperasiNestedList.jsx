@@ -352,22 +352,48 @@ const styles = {
   },
 };
 
-// ================= KOMPONEN VISUALISASI NESTED LIST =================
-const NestedListVisualization = ({ data, title, highlightCell, processExplanation }) => {
+// ================= KOMPONEN VISUALISASI NESTED LIST (TANPA LABEL BARIS) =================
+const NestedListVisualization = ({ data, title, highlightCell = null, processExplanation = "", highlightSequence = [], processExplanations = [] }) => {
   const [currentHighlight, setCurrentHighlight] = useState(null);
   const [explanationText, setExplanationText] = useState("");
   const [hoveredCell, setHoveredCell] = useState(null);
+  const [seqIndex, setSeqIndex] = useState(0);
+  const intervalRef = useRef(null);
 
   useEffect(() => {
-    if (!highlightCell) return;
-    setCurrentHighlight(highlightCell);
-    if (processExplanation) setExplanationText(processExplanation);
-    const timer = setTimeout(() => {
-      setCurrentHighlight(null);
-      setExplanationText("");
-    }, 3000);
-    return () => clearTimeout(timer);
-  }, [highlightCell, processExplanation]);
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    setCurrentHighlight(null);
+    setExplanationText("");
+    setSeqIndex(0);
+
+    if (!highlightSequence || highlightSequence.length === 0) {
+      if (highlightCell) setCurrentHighlight(highlightCell);
+      if (processExplanation) setExplanationText(processExplanation);
+      return;
+    }
+
+    let step = 0;
+    intervalRef.current = setInterval(() => {
+      if (step < highlightSequence.length) {
+        setCurrentHighlight(highlightSequence[step]);
+        if (processExplanations && processExplanations[step]) {
+          setExplanationText(processExplanations[step]);
+        }
+        step++;
+        setSeqIndex(step);
+      } else {
+        clearInterval(intervalRef.current);
+        setTimeout(() => {
+          setCurrentHighlight(null);
+          setExplanationText("");
+        }, 500);
+      }
+    }, 2000);
+
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [highlightSequence, processExplanations, highlightCell, processExplanation]);
 
   const getBgColor = (row, col) => {
     const key = `${row},${col}`;
@@ -392,7 +418,6 @@ const NestedListVisualization = ({ data, title, highlightCell, processExplanatio
         <tbody>
           {displayData.map((row, rowIdx) => (
             <tr key={rowIdx}>
-              <td style={visStyles.rowLabel}>Baris {rowIdx}</td>
               {row.map((value, colIdx) => (
                 <td
                   key={colIdx}
@@ -442,8 +467,7 @@ const visStyles = {
   },
   title: { fontSize: "16px", fontWeight: "bold", marginBottom: "15px", color: "#306998", textAlign: "center" },
   table: { borderCollapse: "collapse", margin: "0 auto" },
-  rowLabel: { fontWeight: "bold", padding: "8px 12px", backgroundColor: "#e9ecef", border: "1px solid #ccc" },
-  cell: { padding: "12px 16px", textAlign: "center", border: "1px solid #ccc", transition: "all 0.3s ease", cursor: "pointer" },
+  cell: { padding: "12px 16px", textAlign: "center", border: "1px solid #ccc", transition: "all 0.3s ease", cursor: "pointer", minWidth: "60px" },
   hoverExplanationBox: {
     backgroundColor: "#fff3cd",
     padding: "12px",
@@ -465,11 +489,38 @@ const visStyles = {
   note: { fontSize: "12px", color: "#666", marginTop: "10px", textAlign: "center" },
 };
 
-// ================= CODE EDITOR UNTUK CONTOH =================
-const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, pyodideReady, runPythonCode, lineExplanations }) => {
+// ================= KOMPONEN PERBANDINGAN DUA NESTED LIST (SEBELUM & SESUDAH) =================
+const ComparisonVisualization = ({ beforeData, afterData, beforeTitle, afterTitle, beforeHighlight = null, afterHighlight = null, beforeSequence = [], afterSequence = [], beforeExplanations = [], afterExplanations = [] }) => {
+  return (
+    <div style={{ display: "flex", gap: "20px", justifyContent: "space-between", flexWrap: "wrap" }}>
+      <div style={{ flex: 1, minWidth: "250px" }}>
+        <NestedListVisualization
+          data={beforeData}
+          title={beforeTitle}
+          highlightSequence={beforeSequence}
+          processExplanations={beforeExplanations}
+          highlightCell={beforeHighlight}
+        />
+      </div>
+      <div style={{ flex: 1, minWidth: "250px" }}>
+        <NestedListVisualization
+          data={afterData}
+          title={afterTitle}
+          highlightSequence={afterSequence}
+          processExplanations={afterExplanations}
+          highlightCell={afterHighlight}
+        />
+      </div>
+    </div>
+  );
+};
+
+// ================= CODE EDITOR DENGAN VISUALISASI PERBANDINGAN =================
+const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, pyodideReady, runPythonCode, lineExplanations, beforeData, afterData, beforeTitle, afterTitle, highlightSequence, processExplanations }) => {
   const [output, setOutput] = useState("");
   const [isRunning, setIsRunning] = useState(false);
   const [showDetail, setShowDetail] = useState(false);
+  const [useComparison, setUseComparison] = useState(false);
 
   const handleRun = useCallback(async () => {
     if (!pyodideReady) {
@@ -483,7 +534,8 @@ const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, pyodideRea
     setOutput(result);
     setIsRunning(false);
     setShowDetail(true);
-  }, [pyodideReady, code, runPythonCode]);
+    setUseComparison(!!(beforeData && afterData));
+  }, [pyodideReady, code, runPythonCode, beforeData, afterData]);
 
   const renderLineExplanations = () => {
     if (!lineExplanations || lineExplanations.length === 0) return null;
@@ -524,11 +576,23 @@ const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, pyodideRea
 
       <div style={styles.visualHeader}>Visualisasi</div>
       <div style={styles.visualArea}>
-        {showDetail && visualData ? (
-          <NestedListVisualization data={visualData} title={visualTitle} />
-        ) : (
-          <div style={styles.visualPlaceholder}>(Klik 'Jalankan' untuk melihat hasil)</div>
+        {showDetail && (
+          useComparison && beforeData && afterData ? (
+            <ComparisonVisualization
+              beforeData={beforeData}
+              afterData={afterData}
+              beforeTitle={beforeTitle || "Sebelum"}
+              afterTitle={afterTitle || "Sesudah"}
+              beforeSequence={highlightSequence && highlightSequence.before ? highlightSequence.before : []}
+              afterSequence={highlightSequence && highlightSequence.after ? highlightSequence.after : []}
+              beforeExplanations={processExplanations && processExplanations.before ? processExplanations.before : []}
+              afterExplanations={processExplanations && processExplanations.after ? processExplanations.after : []}
+            />
+          ) : (
+            <NestedListVisualization data={visualData} title={visualTitle} />
+          )
         )}
+        {!showDetail && <div style={styles.visualPlaceholder}>(Klik 'Jalankan' untuk melihat hasil)</div>}
       </div>
 
       <div style={styles.outputHeader}>
@@ -597,13 +661,9 @@ const CodeEditorEditable = ({ pyodideReady, runPythonCode, onValidation }) => {
     }
 
     // 4 instruksi:
-    // 1. Membuat nested list data = [[1,2,3],[4,5,6],[7,8,9]]
     const listPattern = /data\s*=\s*\[\s*\[\s*1\s*,\s*2\s*,\s*3\s*\]\s*,\s*\[\s*4\s*,\s*5\s*,\s*6\s*\]\s*,\s*\[\s*7\s*,\s*8\s*,\s*9\s*\]\s*\]/;
-    // 2. Mengubah data[0][0] = 100
     const changePattern = /data\s*\[\s*0\s*\]\s*\[\s*0\s*\]\s*=\s*100/;
-    // 3. Menampilkan data[2][1] (nilai 8)
     const printPattern = /print\s*\(\s*data\s*\[\s*2\s*\]\s*\[\s*1\s*\]\s*\)/;
-    // 4. Menampilkan seluruh isi data
     const printAllPattern = /print\s*\(\s*data\s*\)/;
 
     const hasList = hasNonCommentLine(localCode, listPattern);
@@ -1054,18 +1114,60 @@ export default function OperasiNestedList() {
   // Data untuk contoh kode
   const matrix3x3 = [[1,2,3],[4,5,6],[7,8,9]];
   const matrix2x3 = [[1,2,3],[4,5,6]];
-  const raggedData = [[1,2],[3,4,5,6],[7]];
   const gabungan = [[1,2],[3,4],[5,6],[7,8]];
 
-  const lineExplMengakses = [
-    "Komentar: Akan mengakses elemen dari nested list.",
-    "Membuat nested list data dengan 3 baris 3 kolom.",
-    "Baris kedua [4,5,6] (indeks 1).",
-    "Baris ketiga [7,8,9] (indeks 2).",
-    'Menampilkan "Elemen baris 1 kolom 2:" diikuti nilai data[0][1] yaitu 2.',
-    'Menampilkan "Elemen baris 3 kolom 3:" diikuti nilai data[2][2] yaitu 9.'
+  // Data untuk visualisasi perbandingan manipulasi
+  const matrix3x3_before = [[1,2,3],[4,5,6],[7,8,9]];
+  const matrix3x3_after_change = [[99,2,3],[4,5,88],[7,77,9]];
+  const matrix2x3_before_append = [[1,2,3],[4,5,6]];
+  const matrix2x3_after_append = [[1,2,3],[4,5,6],[7,8,9]];
+  const matrix2x3_before_insert = [[1,2,3],[4,5,6]];
+  const matrix2x3_after_insert = [[1,2,3],[10,11,12],[4,5,6]];
+  const matrix3x3_before_pop = [[1,2,3],[4,5,6],[7,8,9]];
+  const matrix3x3_after_pop = [[1,2,3],[4,5,6]];
+  const matrix3x3_before_del = [[1,2,3],[4,5,6],[7,8,9]];
+  const matrix3x3_after_del = [[7,8,9]];
+  const matrix3x3_before_addcol = [[1,2,3],[4,5,6],[7,8,9]];
+  const matrix3x3_after_addcol = [[1,2,3,0],[4,5,6,0],[7,8,9,0]];
+  const matrix3x3_before_delcol = [[1,2,3],[4,5,6],[7,8,9]];
+  const matrix3x3_after_delcol = [[1,3],[4,6],[7,9]];
+
+  // Sequence untuk pencarian (menyorot setiap sel hingga menemukan 5)
+  const searchSequenceBefore = [
+    "0,0", "0,1", "0,2", "1,0", "1,1"
+  ];
+  const searchExplanationsBefore = [
+    "Memeriksa data[0][0] = 1, bukan 5.",
+    "Memeriksa data[0][1] = 2, bukan 5.",
+    "Memeriksa data[0][2] = 3, bukan 5.",
+    "Memeriksa data[1][0] = 4, bukan 5.",
+    "Memeriksa data[1][1] = 5 → ditemukan! Menampilkan pesan."
   ];
 
+  // Sequence untuk iterasi (menyorot setiap sel berurutan)
+  const iterasiSequenceBefore = [
+    "0,0", "0,1", "0,2", "1,0", "1,1", "1,2"
+  ];
+  const iterasiExplanationsBefore = [
+    "data[0][0] = 1",
+    "data[0][1] = 2",
+    "data[0][2] = 3",
+    "data[1][0] = 4",
+    "data[1][1] = 5",
+    "data[1][2] = 6"
+  ];
+
+  // Sequence untuk mengubah nilai
+  const changeSequence = {
+    before: ["0,0", "1,2", "2,1"],
+    after: ["0,0", "1,2", "2,1"]
+  };
+  const changeExplanations = {
+    before: ["Mengubah data[0][0] menjadi 99", "Mengubah data[1][2] menjadi 88", "Mengubah data[2][1] menjadi 77"],
+    after: ["data[0][0] telah menjadi 99", "data[1][2] telah menjadi 88", "data[2][1] telah menjadi 77"]
+  };
+
+  // Line explanations untuk setiap kode contoh (tidak diubah selain pencarian)
   const lineExplMengubah = [
     "Komentar: Mengubah nilai elemen nested list.",
     "Membuat nested list data 3x3.",
@@ -1078,38 +1180,30 @@ export default function OperasiNestedList() {
     "Menampilkan data setelah perubahan."
   ];
 
+  // Perbaiki lineExplMencari agar sesuai dengan 13 baris dan penjelasan yang benar (sesuai gambar 3)
   const lineExplMencari = [
     "Komentar: Mencari nilai dalam nested list.",
     "Membuat data 3x3.",
-    "Baris 2",
-    "Baris 3",
+    "Baris kedua.",
+    "Baris ketiga.",
     "Nilai yang dicari = 5.",
     "Flag ditemukan = False. Awalnya dianggap bahwa nilai belum ditemukan.",
     "Perulangan untuk setiap baris (i).",
     "Perulangan untuk setiap kolom (j).",
     "data[i][j] mengambil nilai pada baris ke-i dan kolom ke-j",
     "Menampilkan pesan bahwa nilai yang dicari telah ditemukan.",
-    "Jika nilai sama dengan cari, menampilkann posisi dan set ditemukan = True.",
-    "Jika tidak ditemukan",
+    "Jika nilai sama dengan cari, menampilkan posisi dan set ditemukan = True.",
+    "Jika tidak ditemukan.",
     "Akan menampilkan pesan tidak ditemukan."
   ];
 
   const lineExplIterasi = [
     "Komentar: Iterasi seluruh elemen nested list.",
-    "Membuat data 2x3",
-    "Baris 2",
+    "Membuat data 2x3.",
+    "Baris 2.",
     "Perulangan untuk setiap baris (i).",
     "Perulangan untuk setiap kolom (j).",
     "Menampilkan nilai setiap elemen dengan indeksnya."
-  ];
-
-  const lineExplRagged = [
-    "Komentar: Nested list dengan panjang baris berbeda.",
-    "Baris pertama: [1,2] (2 kolom).",
-    "Baris kedua: [3,4,5,6] (4 kolom).",
-    "Baris ketiga: [7] (1 kolom).",
-    "Menampilkan elemen baris indeks 1, kolom indeks 2 → 5.",
-    "Menampilkan elemen baris indeks 2, kolom indeks 0 → 7."
   ];
 
   const lineExplGabung = [
@@ -1123,7 +1217,7 @@ export default function OperasiNestedList() {
   const lineExplTambahBaris = [
     "Komentar: Menambah baris baru di akhir nested list.",
     "Membuat data 2 baris.",
-    "Baris 2",
+    "Baris 2.",
     "Membuat baris baru [7,8,9].",
     "Menambahkan baris_baru ke data dengan append().",
     "Menampilkan data setelah append."
@@ -1132,7 +1226,7 @@ export default function OperasiNestedList() {
   const lineExplSisipBaris = [
     "Komentar: Menyisipkan baris pada indeks tertentu.",
     "Membuat data 2 baris.",
-    "Baris 2",
+    "Baris 2.",
     "insert(1, [10,11,12]) menyisipkan baris baru di indeks 1.",
     "Menampilkan data setelah insert."
   ];
@@ -1168,13 +1262,6 @@ export default function OperasiNestedList() {
     "Menampilkan data setelah penghapusan kolom."
   ];
 
-  const codeMengakses = `# Mengakses elemen nested list
-data = [[1, 2, 3],
-        [4, 5, 6],
-        [7, 8, 9]]
-print("Elemen baris 1 kolom 2:", data[0][1])
-print("Elemen baris 3 kolom 3:", data[2][2])`;
-
   const codeMengubah = `# Mengubah nilai elemen nested list
 data = [[1, 2, 3],
         [4, 5, 6],
@@ -1205,13 +1292,6 @@ data = [[1, 2, 3],
 for i in range(len(data)):
     for j in range(len(data[i])):
         print(f"data[{i}][{j}] = {data[i][j]}")`;
-
-  const codeRagged = `# Nested list dengan panjang baris berbeda.
-data = [[1, 2],
-        [3, 4, 5, 6],
-        [7]]
-print(data[1][2])
-print(data[2][0])`;
 
   const codeGabung = `# Menggabungkan dua nested list
 a = [[1, 2], [3, 4]]
@@ -1257,6 +1337,7 @@ for baris in data:
     baris.pop(1)
 print("Setelah hapus kolom ke-2:", data)`;
 
+  // Soal latihan
   const soal1CodeParts = ["data = [[10, 20, 30], [40, 50, 60]]\ndata[", "][", "] = 99\nprint(data)"];
   const soal1Placeholders = ["indeks baris", "indeks kolom"];
   const soal1Expected = ["0", "1"];
@@ -1361,29 +1442,69 @@ _buffer.getvalue()
               <section style={styles.section}>
                 <h2 style={styles.sectionTitle}>Operasi Dasar Nested List</h2>
                 <div style={styles.card}>
-                  <h3>1. Mengakses Elemen</h3>
-                  <p style={styles.text}>Gunakan dua indeks: <code>nama[indeks_baris][indeks_kolom]</code></p>
-                  <CodeEditorWithVisual code={codeMengakses} title="Contoh Kode Program" visualData={matrix3x3} visualTitle="Visualisasi Nested List 'data'" pyodideReady={pyodideReady} runPythonCode={runPythonCode} lineExplanations={lineExplMengakses} />
-
-                  <h3>2. Mengubah Nilai Elemen</h3>
+                  {/* 1. Mengubah Nilai Elemen */}
+                  <h3>1. Mengubah Nilai Elemen</h3>
                   <p style={styles.text}>Akses lalu tetapkan nilai baru.</p>
-                  <CodeEditorWithVisual code={codeMengubah} title="Contoh Kode Program" visualData={matrix3x3} visualTitle="Visualisasi Nested List 'data'" pyodideReady={pyodideReady} runPythonCode={runPythonCode} lineExplanations={lineExplMengubah} />
+                  <CodeEditorWithVisual
+                    code={codeMengubah}
+                    title="Contoh Kode Program"
+                    pyodideReady={pyodideReady}
+                    runPythonCode={runPythonCode}
+                    lineExplanations={lineExplMengubah}
+                    beforeData={matrix3x3_before}
+                    afterData={matrix3x3_after_change}
+                    beforeTitle="Sebelum diubah"
+                    afterTitle="Sesudah diubah"
+                    highlightSequence={changeSequence}
+                    processExplanations={changeExplanations}
+                  />
 
-                  <h3>3. Mencari Nilai</h3>
-                  <p style={styles.text}>Mencari nilai tertentu dalam nested list bisa menggunakan perulangan bersarang.</p>
-                  <CodeEditorWithVisual code={codeMencari} title="Contoh Kode Program" visualData={matrix3x3} visualTitle="Visualisasi Nested List 'data'" pyodideReady={pyodideReady} runPythonCode={runPythonCode} lineExplanations={lineExplMencari} />
+                  {/* 2. Mencari Nilai */}
+                  <h3>2. Mencari Nilai</h3>
+                  <p style={styles.text}>Mencari nilai tertentu dalam nested list menggunakan perulangan bersarang.</p>
+                  <CodeEditorWithVisual
+                    code={codeMencari}
+                    title="Contoh Kode Program"
+                    pyodideReady={pyodideReady}
+                    runPythonCode={runPythonCode}
+                    lineExplanations={lineExplMencari}
+                    beforeData={matrix3x3}
+                    afterData={null}
+                    beforeTitle="Visualisasi Pencarian"
+                    highlightSequence={{ before: searchSequenceBefore, after: [] }}
+                    processExplanations={{ before: searchExplanationsBefore, after: [] }}
+                  />
 
-                  <h3>4. Iterasi Seluruh Elemen</h3>
+                  {/* 3. Iterasi Seluruh Elemen */}
+                  <h3>3. Iterasi Seluruh Elemen</h3>
                   <p style={styles.text}>Melakukan iterasi seluruh elemen nested list bisa menggunakan perulangan bersarang.</p>
-                  <CodeEditorWithVisual code={codeIterasi} title="Contoh Kode Program" visualData={matrix2x3} visualTitle="Visualisasi Nested List 2x3" pyodideReady={pyodideReady} runPythonCode={runPythonCode} lineExplanations={lineExplIterasi} />
+                  <CodeEditorWithVisual
+                    code={codeIterasi}
+                    title="Contoh Kode Program"
+                    pyodideReady={pyodideReady}
+                    runPythonCode={runPythonCode}
+                    lineExplanations={lineExplIterasi}
+                    beforeData={matrix2x3}
+                    afterData={null}
+                    beforeTitle="Visualisasi Iterasi"
+                    highlightSequence={{ before: iterasiSequenceBefore, after: [] }}
+                    processExplanations={{ before: iterasiExplanationsBefore, after: [] }}
+                  />
 
-                  <h3>5. Panjang Baris Berbeda</h3>
-                  <p style={styles.text}>Setiap baris bisa beda panjang.</p>
-                  <CodeEditorWithVisual code={codeRagged} title="Contoh Kode Program" visualData={raggedData} visualTitle="Visualisasi Ragged Array" pyodideReady={pyodideReady} runPythonCode={runPythonCode} lineExplanations={lineExplRagged} />
-
-                  <h3>6. Menggabungkan Banyak Nested List</h3>
-                  <p style={styles.text}>Operator + digunakan untuk menggabungkan dua atau lebih nested list. </p>
-                  <CodeEditorWithVisual code={codeGabung} title="Contoh Kode Program" visualData={gabungan} visualTitle="Hasil Penggabungan a + b" pyodideReady={pyodideReady} runPythonCode={runPythonCode} lineExplanations={lineExplGabung} />
+                  {/* 4. Menggabungkan Banyak Nested List */}
+                  <h3>4. Menggabungkan Banyak Nested List</h3>
+                  <p style={styles.text}>Operator + digunakan untuk menggabungkan dua atau lebih nested list.</p>
+                  <CodeEditorWithVisual
+                    code={codeGabung}
+                    title="Contoh Kode Program"
+                    pyodideReady={pyodideReady}
+                    runPythonCode={runPythonCode}
+                    lineExplanations={lineExplGabung}
+                    beforeData={[[1,2],[3,4]]}
+                    afterData={gabungan}
+                    beforeTitle="List a dan b (terpisah)"
+                    afterTitle="Hasil penggabungan a + b"
+                  />
                 </div>
               </section>
 
@@ -1391,19 +1512,69 @@ _buffer.getvalue()
                 <h2 style={styles.sectionTitle}>Manipulasi Nested List</h2>
                 <div style={styles.card}>
                   <h3>1. Menambah Baris (append)</h3>
-                  <CodeEditorWithVisual code={codeTambahBaris} title="Contoh Kode Program" visualData={matrix2x3} visualTitle="Visualisasi Sebelum Append" pyodideReady={pyodideReady} runPythonCode={runPythonCode} lineExplanations={lineExplTambahBaris} />
+                  <CodeEditorWithVisual
+                    code={codeTambahBaris}
+                    title="Contoh Kode Program"
+                    pyodideReady={pyodideReady}
+                    runPythonCode={runPythonCode}
+                    lineExplanations={lineExplTambahBaris}
+                    beforeData={matrix2x3_before_append}
+                    afterData={matrix2x3_after_append}
+                    beforeTitle="Sebelum append"
+                    afterTitle="Sesudah append"
+                  />
 
                   <h3>2. Menyisipkan Baris (insert)</h3>
-                  <CodeEditorWithVisual code={codeSisipBaris} title="Contoh Kode Program" visualData={matrix2x3} visualTitle="Visualisasi Sebelum Insert" pyodideReady={pyodideReady} runPythonCode={runPythonCode} lineExplanations={lineExplSisipBaris} />
+                  <CodeEditorWithVisual
+                    code={codeSisipBaris}
+                    title="Contoh Kode Program"
+                    pyodideReady={pyodideReady}
+                    runPythonCode={runPythonCode}
+                    lineExplanations={lineExplSisipBaris}
+                    beforeData={matrix2x3_before_insert}
+                    afterData={matrix2x3_after_insert}
+                    beforeTitle="Sebelum insert"
+                    afterTitle="Sesudah insert"
+                  />
 
                   <h3>3. Menghapus Baris (pop, del)</h3>
-                  <CodeEditorWithVisual code={codeHapusBaris} title="Contoh Kode Program" visualData={matrix3x3} visualTitle="Visualisasi Sebelum Penghapusan" pyodideReady={pyodideReady} runPythonCode={runPythonCode} lineExplanations={lineExplHapusBaris} />
+                  <CodeEditorWithVisual
+                    code={codeHapusBaris}
+                    title="Contoh Kode Program"
+                    pyodideReady={pyodideReady}
+                    runPythonCode={runPythonCode}
+                    lineExplanations={lineExplHapusBaris}
+                    beforeData={matrix3x3_before_pop}
+                    afterData={matrix3x3_after_del}
+                    beforeTitle="Sebelum penghapusan"
+                    afterTitle="Sesudah penghapusan"
+                  />
 
                   <h3>4. Menambah Kolom</h3>
-                  <CodeEditorWithVisual code={codeTambahKolom} title="Contoh Kode Program" visualData={matrix3x3} visualTitle="Visualisasi Sebelum Tambah Kolom" pyodideReady={pyodideReady} runPythonCode={runPythonCode} lineExplanations={lineExplTambahKolom} />
+                  <CodeEditorWithVisual
+                    code={codeTambahKolom}
+                    title="Contoh Kode Program"
+                    pyodideReady={pyodideReady}
+                    runPythonCode={runPythonCode}
+                    lineExplanations={lineExplTambahKolom}
+                    beforeData={matrix3x3_before_addcol}
+                    afterData={matrix3x3_after_addcol}
+                    beforeTitle="Sebelum tambah kolom"
+                    afterTitle="Sesudah tambah kolom"
+                  />
 
                   <h3>5. Menghapus Kolom</h3>
-                  <CodeEditorWithVisual code={codeHapusKolom} title="Contoh Kode Program" visualData={matrix3x3} visualTitle="Visualisasi Sebelum Hapus Kolom" pyodideReady={pyodideReady} runPythonCode={runPythonCode} lineExplanations={lineExplHapusKolom} />
+                  <CodeEditorWithVisual
+                    code={codeHapusKolom}
+                    title="Contoh Kode Program"
+                    pyodideReady={pyodideReady}
+                    runPythonCode={runPythonCode}
+                    lineExplanations={lineExplHapusKolom}
+                    beforeData={matrix3x3_before_delcol}
+                    afterData={matrix3x3_after_delcol}
+                    beforeTitle="Sebelum hapus kolom"
+                    afterTitle="Sesudah hapus kolom"
+                  />
                 </div>
               </section>
 
