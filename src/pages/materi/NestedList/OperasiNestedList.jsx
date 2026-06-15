@@ -1411,11 +1411,11 @@ _buffer.getvalue()
                 <h2 style={styles.sectionTitle}>Ayo Praktik!</h2>
                 <div style={styles.card}>
                   <div style={styles.alertBox}>
-                    <strong>📝 Instruksi:</strong>
+                    <strong>Instruksi:</strong>
                     <ul style={{ marginTop: "5px", paddingLeft: "20px" }}>
-                      <li>Buatlah nested list dengan nama <code>data</code> yang berisi tiga baris: [1,2,3], [4,5,6], [7,8,9].</li>
+                      <li>Buatlah nested list dengan nama data yang berisi tiga baris. Baris 1 berisi 1,2,3, baris 2 berisi 4,5,6, baris 3 berisi 7,8,9.</li>
                       <li>Ubah elemen baris pertama kolom pertama menjadi 100.</li>
-                      <li>Tampilkan elemen baris ketiga kolom kedua (nilai 8).</li>
+                      <li>Tampilkan elemen baris ketiga kolom kedua yaitu nilai 8.</li>
                       <li>Tampilkan semua isi data.</li>
                     </ul>
                   </div>
