@@ -462,7 +462,7 @@ const styles = {
   },
 };
 
-// ================= KOMPONEN VISUALISASI NESTED LIST INTERAKTIF =================
+// ================= KOMPONEN VISUALISASI NESTED LIST INTERAKTIF (DIPERBAIKI) =================
 const visStyles = {
   container: {
     backgroundColor: "#f8f9fa",
@@ -496,21 +496,43 @@ const visStyles = {
   note: { fontSize: "12px", color: "#666", marginTop: "10px", textAlign: "center" },
 };
 
-const NestedListVisualization = ({ data, title, highlightCell, processExplanation }) => {
+const NestedListVisualization = ({ data, title, highlightSequence = [], processExplanations = [] }) => {
   const [currentHighlight, setCurrentHighlight] = useState(null);
   const [explanationText, setExplanationText] = useState("");
   const [hoveredCell, setHoveredCell] = useState(null);
+  const [stepIndex, setStepIndex] = useState(0);
+  const intervalRef = useRef(null);
 
   useEffect(() => {
-    if (!highlightCell) return;
-    setCurrentHighlight(highlightCell);
-    if (processExplanation) setExplanationText(processExplanation);
-    const timer = setTimeout(() => {
-      setCurrentHighlight(null);
-      setExplanationText("");
+    if (intervalRef.current) clearInterval(intervalRef.current);
+    setCurrentHighlight(null);
+    setExplanationText("");
+    setStepIndex(0);
+
+    if (!highlightSequence || highlightSequence.length === 0) return;
+
+    let step = 0;
+    intervalRef.current = setInterval(() => {
+      if (step < highlightSequence.length) {
+        setCurrentHighlight(highlightSequence[step]);
+        if (processExplanations && processExplanations[step]) {
+          setExplanationText(processExplanations[step]);
+        }
+        step++;
+        setStepIndex(step);
+      } else {
+        clearInterval(intervalRef.current);
+        setTimeout(() => {
+          setCurrentHighlight(null);
+          setExplanationText("");
+        }, 500);
+      }
     }, 3000);
-    return () => clearTimeout(timer);
-  }, [highlightCell, processExplanation]);
+
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+    };
+  }, [highlightSequence, processExplanations]);
 
   const getBgColor = (row, col) => {
     const key = `${row},${col}`;
@@ -576,12 +598,12 @@ const NestedListVisualization = ({ data, title, highlightCell, processExplanatio
 };
 
 // ================= CODE EDITOR UNTUK CONTOH KODE PROGRAM =================
-const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, highlightCellMapping, pyodideReady, runPythonCode, lineExplanations }) => {
+const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, highlightSequenceMapping, pyodideReady, runPythonCode, lineExplanations }) => {
   const [output, setOutput] = useState("");
   const [isRunning, setIsRunning] = useState(false);
   const [showVisual, setShowVisual] = useState(false);
-  const [highlightCell, setHighlightCell] = useState(null);
-  const [explanationStep, setExplanationStep] = useState("");
+  const [highlightSequence, setHighlightSequence] = useState([]);
+  const [explanationSteps, setExplanationSteps] = useState([]);
   const [showExplanations, setShowExplanations] = useState(false);
 
   const handleRun = useCallback(async () => {
@@ -598,16 +620,16 @@ const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, highlightC
     setShowVisual(true);
     setShowExplanations(true);
 
-    if (highlightCellMapping) {
-      const { cell, explanation } = highlightCellMapping();
-      setHighlightCell(cell);
-      setExplanationStep(explanation);
+    if (highlightSequenceMapping) {
+      const { cells, explanations } = highlightSequenceMapping();
+      setHighlightSequence(cells);
+      setExplanationSteps(explanations);
       setTimeout(() => {
-        setHighlightCell(null);
-        setExplanationStep("");
-      }, 3000);
+        setHighlightSequence([]);
+        setExplanationSteps([]);
+      }, cells.length * 3000 + 500);
     }
-  }, [pyodideReady, code, runPythonCode, highlightCellMapping]);
+  }, [pyodideReady, code, runPythonCode, highlightSequenceMapping]);
 
   const renderLineExplanations = () => {
     if (!lineExplanations || lineExplanations.length === 0) return null;
@@ -655,8 +677,8 @@ const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, highlightC
           <NestedListVisualization
             data={visualData}
             title={visualTitle}
-            highlightCell={highlightCell}
-            processExplanation={explanationStep}
+            highlightSequence={highlightSequence}
+            processExplanations={explanationSteps}
           />
         ) : (
           <div style={styles.visualPlaceholder}>(Klik 'Jalankan' untuk melihat hasil)</div>
@@ -1187,9 +1209,16 @@ print("Elemen baris 2 kolom 3:", matriks[1][2])`;
     "Membuat nested list matriks dengan baris pertama [1,2,3] (indeks 0).",
     "Baris kedua [4,5,6] (indeks 1).",
     'Mencetak "Elemen baris 1 kolom 1:" diikuti nilai matriks[0][0] yaitu 1.',
-    'Mencetak "Elemen baris 2 kolom 3:" diikuti nilai matriks[1][2] yaitu 6.'
+    'Mencetak "Elemen baris 2 kolom 3:" diikuti nilai matriks[1][2] yaitu 9.'
   ];
-  const highlightAksesMapping = () => ({ cell: "0,0", explanation: "Perintah `matriks[0][0]` mengambil elemen pada baris indeks 0, kolom indeks 0 → nilai 1." });
+  
+  const highlightAksesSequence = () => ({
+    cells: ["0,0", "1,2"],
+    explanations: [
+      "Perintah `matriks[0][0]` mengambil elemen baris indeks 0, kolom indeks 0 → nilai 1.",
+      "Perintah `matriks[1][2]` mengambil elemen baris indeks 1, kolom indeks 2 → nilai 9."
+    ]
+  });
 
   const contohRagged = `# Nested list dengan panjang baris berbeda
 data = [[1, 2],
@@ -1202,7 +1231,6 @@ print(data)`;
     "Baris kedua [3,4,5].",
     "Baris ketiga [6].",
     "Mencetak seluruh isi nested list variabel data",
-
   ];
 
   const soal1CodeParts = ["data = [[10,20,30],[40,50,60]]\nprint(data[", "][", "])"];
@@ -1354,7 +1382,7 @@ _buffer.getvalue()`);
                     title="Contoh Kode Program"
                     visualData={nestedListData}
                     visualTitle="Visualisasi Nested List 'matriks'"
-                    highlightCellMapping={highlightAksesMapping}
+                    highlightSequenceMapping={highlightAksesSequence}
                     pyodideReady={pyodideReady}
                     runPythonCode={runPythonCode}
                     lineExplanations={lineExplanationsAkses}
@@ -1387,7 +1415,7 @@ matriks = [[1, 2, 3], [4, 5, 6]]`}</pre>
                 <h2 style={styles.sectionTitle}>Ayo Praktik!</h2>
                 <div style={styles.card}>
                   <div style={styles.infoBox}>
-                    <strong>📝 Studi Kasus: Matriks Sederhana</strong>
+                    <strong>Studi Kasus: Matriks Sederhana</strong>
                     <p>Buatlah program Python yang:</p>
                     <ol style={styles.list}>
                       <li>Membuat nested list bernama matriks dengan isi 3,6,9 dan 12,15,18.</li>
