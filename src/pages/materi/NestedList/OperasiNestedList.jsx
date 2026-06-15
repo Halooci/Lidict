@@ -601,9 +601,9 @@ const CodeEditorEditable = ({ pyodideReady, runPythonCode, onValidation }) => {
     const listPattern = /data\s*=\s*\[\s*\[\s*1\s*,\s*2\s*,\s*3\s*\]\s*,\s*\[\s*4\s*,\s*5\s*,\s*6\s*\]\s*,\s*\[\s*7\s*,\s*8\s*,\s*9\s*\]\s*\]/;
     // 2. Mengubah data[0][0] = 100
     const changePattern = /data\s*\[\s*0\s*\]\s*\[\s*0\s*\]\s*=\s*100/;
-    // 3. Mencetak data[2][1] (nilai 8)
+    // 3. Menampilkan data[2][1] (nilai 8)
     const printPattern = /print\s*\(\s*data\s*\[\s*2\s*\]\s*\[\s*1\s*\]\s*\)/;
-    // 4. Mencetak seluruh isi data
+    // 4. Menampilkan seluruh isi data
     const printAllPattern = /print\s*\(\s*data\s*\)/;
 
     const hasList = hasNonCommentLine(localCode, listPattern);
@@ -1062,8 +1062,8 @@ export default function OperasiNestedList() {
     "Membuat nested list data dengan 3 baris 3 kolom.",
     "Baris kedua [4,5,6] (indeks 1).",
     "Baris ketiga [7,8,9] (indeks 2).",
-    'Mencetak "Elemen baris 1 kolom 2:" diikuti nilai data[0][1] yaitu 2.',
-    'Mencetak "Elemen baris 3 kolom 3:" diikuti nilai data[2][2] yaitu 9.'
+    'Menampilkan "Elemen baris 1 kolom 2:" diikuti nilai data[0][1] yaitu 2.',
+    'Menampilkan "Elemen baris 3 kolom 3:" diikuti nilai data[2][2] yaitu 9.'
   ];
 
   const lineExplMengubah = [
@@ -1071,30 +1071,36 @@ export default function OperasiNestedList() {
     "Membuat nested list data 3x3.",
     "Baris kedua.",
     "Baris ketiga.",
-    "Mencetak data sebelum perubahan.",
+    "Menampilkan data sebelum perubahan.",
     "Mengubah elemen baris 1 kolom 1 menjadi 99.",
     "Mengubah elemen baris 2 kolom 3 menjadi 88.",
     "Mengubah elemen baris 3 kolom 2 menjadi 77.",
-    "Mencetak data setelah perubahan."
+    "Menampilkan data setelah perubahan."
   ];
 
   const lineExplMencari = [
     "Komentar: Mencari nilai dalam nested list.",
     "Membuat data 3x3.",
+    "Baris 2",
+    "Baris 3",
     "Nilai yang dicari = 5.",
-    "Flag ditemukan = False.",
+    "Flag ditemukan = False. Awalnya dianggap bahwa nilai belum ditemukan.",
     "Perulangan untuk setiap baris (i).",
     "Perulangan untuk setiap kolom (j).",
-    "Jika nilai sama dengan cari, cetak posisi dan set ditemukan = True.",
-    "Jika tidak ditemukan, cetak pesan tidak ditemukan."
+    "data[i][j] mengambil nilai pada baris ke-i dan kolom ke-j",
+    "Menampilkan pesan bahwa nilai yang dicari telah ditemukan.",
+    "Jika nilai sama dengan cari, menampilkann posisi dan set ditemukan = True.",
+    "Jika tidak ditemukan",
+    "Akan menampilkan pesan tidak ditemukan."
   ];
 
   const lineExplIterasi = [
     "Komentar: Iterasi seluruh elemen nested list.",
-    "Membuat data 2 baris 3 kolom.",
+    "Membuat data 2x3",
+    "Baris 2",
     "Perulangan untuk setiap baris (i).",
     "Perulangan untuk setiap kolom (j).",
-    "Mencetak nilai setiap elemen dengan indeksnya."
+    "Menampilkan nilai setiap elemen dengan indeksnya."
   ];
 
   const lineExplRagged = [
@@ -1102,56 +1108,64 @@ export default function OperasiNestedList() {
     "Baris pertama: [1,2] (2 kolom).",
     "Baris kedua: [3,4,5,6] (4 kolom).",
     "Baris ketiga: [7] (1 kolom).",
-    "Mencetak elemen baris indeks 1, kolom indeks 2 → 5.",
-    "Mencetak elemen baris indeks 2, kolom indeks 0 → 7."
+    "Menampilkan elemen baris indeks 1, kolom indeks 2 → 5.",
+    "Menampilkan elemen baris indeks 2, kolom indeks 0 → 7."
   ];
 
   const lineExplGabung = [
     "Komentar: Menggabungkan dua nested list dengan operator +.",
     "Membuat nested list a (2x2).",
     "Membuat nested list b (2x2).",
-    "Menggabungkan a dan b menjadi list baru (4 baris, 2 kolom).",
-    "Mencetak hasil."
+    "Menggabungkan a dan b menjadi list baru dengan operasi +.",
+    "Menampilkan hasil."
   ];
 
   const lineExplTambahBaris = [
     "Komentar: Menambah baris baru di akhir nested list.",
     "Membuat data 2 baris.",
+    "Baris 2",
     "Membuat baris baru [7,8,9].",
     "Menambahkan baris_baru ke data dengan append().",
-    "Mencetak data setelah append."
+    "Menampilkan data setelah append."
   ];
 
   const lineExplSisipBaris = [
     "Komentar: Menyisipkan baris pada indeks tertentu.",
     "Membuat data 2 baris.",
+    "Baris 2",
     "insert(1, [10,11,12]) menyisipkan baris baru di indeks 1.",
-    "Mencetak data setelah insert."
+    "Menampilkan data setelah insert."
   ];
 
   const lineExplHapusBaris = [
     "Komentar: Menghapus baris dengan pop() dan del.",
-    "Membuat data 3 baris.",
+    "Membuat data 3 baris. Baris 1",
+    "Baris 2",
+    "Baris 3",
     "pop() menghapus baris terakhir.",
-    "Mencetak data setelah pop.",
+    "Menampilkan data setelah pop.",
     "del data[0] menghapus baris pertama.",
-    "Mencetak data setelah del."
+    "Menampilkan data setelah del."
   ];
 
   const lineExplTambahKolom = [
     "Komentar: Menambah kolom 0 di setiap baris.",
-    "Membuat data 3x3.",
+    "Membuat data 3x3. Baris 1",
+    "Baris 2.",
+    "Baris 3.",
     "Perulangan untuk setiap baris.",
     "Menambahkan nilai 0 di akhir setiap baris.",
-    "Mencetak data yang sudah ditambah kolom."
+    "Menampilkan data yang sudah ditambah kolom."
   ];
 
   const lineExplHapusKolom = [
     "Komentar: Menghapus kolom kedua (indeks 1) dari setiap baris.",
-    "Membuat data 3x3.",
+    "Membuat data 3x3. Baris 1",
+    "Baris 2.",
+    "Baris 3.",
     "Perulangan untuk setiap baris.",
     "pop(1) menghapus elemen indeks 1 (kolom kedua).",
-    "Mencetak data setelah penghapusan kolom."
+    "Menampilkan data setelah penghapusan kolom."
   ];
 
   const codeMengakses = `# Mengakses elemen nested list
@@ -1356,19 +1370,19 @@ _buffer.getvalue()
                   <CodeEditorWithVisual code={codeMengubah} title="Contoh Kode Program" visualData={matrix3x3} visualTitle="Visualisasi Nested List 'data'" pyodideReady={pyodideReady} runPythonCode={runPythonCode} lineExplanations={lineExplMengubah} />
 
                   <h3>3. Mencari Nilai</h3>
-                  <p style={styles.text}>Perulangan bersarang.</p>
+                  <p style={styles.text}>Mencari nilai tertentu dalam nested list bisa menggunakan perulangan bersarang.</p>
                   <CodeEditorWithVisual code={codeMencari} title="Contoh Kode Program" visualData={matrix3x3} visualTitle="Visualisasi Nested List 'data'" pyodideReady={pyodideReady} runPythonCode={runPythonCode} lineExplanations={lineExplMencari} />
 
                   <h3>4. Iterasi Seluruh Elemen</h3>
-                  <p style={styles.text}>Perulangan bersarang.</p>
+                  <p style={styles.text}>Melakukan iterasi seluruh elemen nested list bisa menggunakan perulangan bersarang.</p>
                   <CodeEditorWithVisual code={codeIterasi} title="Contoh Kode Program" visualData={matrix2x3} visualTitle="Visualisasi Nested List 2x3" pyodideReady={pyodideReady} runPythonCode={runPythonCode} lineExplanations={lineExplIterasi} />
 
                   <h3>5. Panjang Baris Berbeda</h3>
                   <p style={styles.text}>Setiap baris bisa beda panjang.</p>
                   <CodeEditorWithVisual code={codeRagged} title="Contoh Kode Program" visualData={raggedData} visualTitle="Visualisasi Ragged Array" pyodideReady={pyodideReady} runPythonCode={runPythonCode} lineExplanations={lineExplRagged} />
 
-                  <h3>6. Menggabungkan Dua Nested List</h3>
-                  <p style={styles.text}>Operator +</p>
+                  <h3>6. Menggabungkan Banyak Nested List</h3>
+                  <p style={styles.text}>Operator + digunakan untuk menggabungkan dua atau lebih nested list. </p>
                   <CodeEditorWithVisual code={codeGabung} title="Contoh Kode Program" visualData={gabungan} visualTitle="Hasil Penggabungan a + b" pyodideReady={pyodideReady} runPythonCode={runPythonCode} lineExplanations={lineExplGabung} />
                 </div>
               </section>

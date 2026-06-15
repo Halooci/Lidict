@@ -1308,7 +1308,7 @@ _buffer.getvalue()`);
                   </p>
                   <p style={styles.text}>
                     Perhatikan penamaan variabel: gunakan nama yang deskriptif, misal <code>nilai_siswa</code>, <code>matriks</code>, atau{" "}
-                    <code>data_penjualan</code>. Dengan memahami cara membuat nested list, Anda dapat menyimpan data terstruktur dengan mudah.
+                    <code>data_penjualan</code>.
                   </p>
                   <CodeEditorWithVisual
                     code={contohMembuatNested}

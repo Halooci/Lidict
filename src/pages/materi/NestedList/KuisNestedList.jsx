@@ -24,7 +24,7 @@ export default function KuisNestedList() {
   const [kelasId, setKelasId] = useState(null);
   const [kkm, setKkm] = useState(75);
 
-  // DURASI KUIS: 1 MENIT = 60 DETIK (untuk testing)
+  // DURASI KUIS
   const DURASI_KUIS = 600;
 
   useEffect(() => {
