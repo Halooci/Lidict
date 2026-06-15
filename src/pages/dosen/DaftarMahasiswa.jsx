@@ -111,7 +111,7 @@ const styles = `
 `;
 
 // Asumsi total progres maksimal = 100 (sesuaikan jika berbeda)
-const MAX_PROGRES = 100;
+const MAX_PROGRES = 14;
 
 const DaftarMahasiswa = () => {
   const [daftarKelas, setDaftarKelas] = useState([]);
