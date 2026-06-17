@@ -419,7 +419,7 @@ export default function EvaluasiAkhir() {
           <div style={styles.resultMessageNew}>
             {isPassed ? (
               <div style={styles.passedBoxNew}>
-                <div style={{ fontSize: '22px', fontWeight: 'bold', marginBottom: '6px' }}>🎉 SELAMAT! 🎉</div>
+                <div style={{ fontSize: '22px', fontWeight: 'bold', marginBottom: '6px' }}> SELAMAT! </div>
                 <div>Dengan menyelesaikan Evaluasi ini, Anda telah menyelesaikan seluruh tahapan pembelajaran List dan Dictionary.</div>
                 <div style={{ marginTop: '8px', fontSize: '15px', opacity: 0.9 }}>.</div>
               </div>
