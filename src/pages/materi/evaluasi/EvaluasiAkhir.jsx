@@ -418,9 +418,15 @@ export default function EvaluasiAkhir() {
           </div>
           <div style={styles.resultMessageNew}>
             {isPassed ? (
-              <div style={styles.passedBoxNew}>SELAMAT! Anda LULUS dengan nilai {totalScore} (KKM {kkm})</div>
+              <div style={styles.passedBoxNew}>
+                <div style={{ fontSize: '22px', fontWeight: 'bold', marginBottom: '6px' }}>🎉 SELAMAT! 🎉</div>
+                <div>Dengan menyelesaikan Evaluasi ini, Anda telah menyelesaikan seluruh tahapan pembelajaran List dan Dictionary.</div>
+                <div style={{ marginTop: '8px', fontSize: '15px', opacity: 0.9 }}>.</div>
+              </div>
             ) : (
-              <div style={styles.failedBoxNew}>MOHON MAAF, Anda TIDAK LULUS (Nilai {totalScore} &lt; KKM {kkm})</div>
+              <div style={styles.failedBoxNew}>
+                <strong>MOHON MAAF,</strong> Anda TIDAK LULUS (Nilai {totalScore} &lt; KKM {kkm})
+              </div>
             )}
             {role === 'dosen' && (
               <div style={{ marginTop: '10px', fontStyle: 'italic', color: '#64748b' }}>
@@ -433,7 +439,7 @@ export default function EvaluasiAkhir() {
               <button style={styles.retryButtonNew} onClick={resetQuiz}>Ulangi Evaluasi</button>
             )}
             {role === 'mahasiswa' && isPassed && (
-              <button style={styles.petaKonsepButton} onClick={() => navigate('/PetaKonsep')}>Kembali ke Peta Konsep</button>
+              <button style={styles.petaKonsepButton} onClick={() => navigate('/')}>Kembali ke Beranda</button>
             )}
             {role === 'dosen' && (
               <button style={styles.retryButtonNew} onClick={resetQuiz}>Ulangi (Preview)</button>
@@ -617,7 +623,7 @@ const styles = {
   statLabelNew: { fontSize: "12px", fontWeight: "500", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.5px" },
   statValueNew: { fontSize: "24px", fontWeight: "700", color: "#0f172a", lineHeight: 1.2 },
   resultMessageNew: { marginBottom: "30px" },
-  passedBoxNew: { backgroundColor: "#e6f7ec", color: "#2e7d32", padding: "14px", borderRadius: "60px", fontWeight: "600", fontSize: "18px", border: "1px solid #a5d6a7" },
+  passedBoxNew: { backgroundColor: "#e6f7ec", color: "#2e7d32", padding: "18px 14px", borderRadius: "20px", border: "1px solid #a5d6a7", lineHeight: 1.6 },
   failedBoxNew: { backgroundColor: "#fee9e6", color: "#c62828", padding: "14px", borderRadius: "60px", fontWeight: "600", fontSize: "18px", border: "1px solid #ffab91" },
   resultActionsNew: { display: "flex", justifyContent: "center", gap: "15px" },
   retryButtonNew: { backgroundColor: "#f59e0b", border: "none", padding: "12px 28px", borderRadius: "40px", fontSize: "16px", fontWeight: "bold", color: "white", cursor: "pointer" },
