@@ -1026,7 +1026,7 @@ const CodeEditorWithVisual = ({
           const lineNumber = idx + 1;
           return (
             <div key={idx} style={styles.explanationLine}>
-              <span style={styles.explanationLineNumber}>Baris {lineNumber}:</span>
+              <span style={styles.explanationLineNumber}>{lineNumber}:</span>
               <code style={styles.explanationCode}>{line}</code>
               <span style={styles.explanationArrow}> → </span>
               <span style={styles.explanationText}>{explanation}</span>
@@ -1067,6 +1067,13 @@ const CodeEditorWithVisual = ({
         />
       </div>
 
+      {/* Output - ditempatkan sebelum Visualisasi */}
+      <div style={styles.outputHeader}><span style={styles.outputTitle}>Output</span></div>
+      <div style={styles.codeOutput}>
+        <pre style={styles.outputContent}>{output || "(Klik 'Jalankan' untuk melihat hasil)"}</pre>
+      </div>
+
+      {/* Visualisasi - ditempatkan setelah Output */}
       <div style={styles.visualHeader}>Visualisasi</div>
       <div style={styles.visualArea}>
         {showVisual ? (
@@ -1087,10 +1094,7 @@ const CodeEditorWithVisual = ({
           <div style={styles.visualPlaceholder}>(Klik 'Jalankan' untuk melihat hasil)</div>
         )}
       </div>
-      <div style={styles.outputHeader}><span style={styles.outputTitle}>Output</span></div>
-      <div style={styles.codeOutput}>
-        <pre style={styles.outputContent}>{output || "(Klik 'Jalankan' untuk melihat hasil)"}</pre>
-      </div>
+
       {showExplanation && codeExplanation && (
         <div>
           <div style={styles.explanationHeader}>

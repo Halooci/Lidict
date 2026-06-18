@@ -251,6 +251,7 @@ const DictionaryComparison = ({ beforeData, afterData, beforeTitle, afterTitle, 
 };
 
 // ===================== KOMPONEN EDITOR READ-ONLY (dengan CodeMirror) =====================
+// DIPERBAIKI: Output di atas Visualisasi, penjelasan tanpa kata "Baris", kode berwarna kuning
 const CodeEditor = ({ code, pyodideReady, runPythonCode, explanations, beforeData, afterData, beforeTitle, afterTitle, addedKeys = [], removedKeys = [], accessSequenceAfter = [] }) => {
   const [output, setOutput] = useState("");
   const [hasRun, setHasRun] = useState(false);
@@ -300,24 +301,36 @@ const CodeEditor = ({ code, pyodideReady, runPythonCode, explanations, beforeDat
           }}
         />
       </div>
-      {showVisual && beforeData && afterData && (
-        <DictionaryComparison
-          beforeData={beforeData}
-          afterData={afterData}
-          beforeTitle={beforeTitle || "Sebelum"}
-          afterTitle={afterTitle || "Sesudah"}
-          addedKeys={addedKeys}
-          removedKeys={removedKeys}
-          accessSequenceAfter={accessSequenceAfter}
-          showClickDetail={true}
-        />
-      )}
+
+      {/* OUTPUT - ditempatkan sebelum Visualisasi */}
       <div style={styles.outputHeader}>
         <span style={styles.outputTitle}>Output</span>
       </div>
       <div style={styles.codeOutput}>
         <pre style={styles.outputContent}>{output}</pre>
       </div>
+
+      {/* VISUALISASI - ditempatkan setelah Output */}
+      {showVisual && beforeData && afterData && (
+        <div>
+          <div style={styles.visualHeader}>
+            <span style={styles.visualTitle}>Visualisasi</span>
+          </div>
+          <div style={styles.visualWrapper}>
+            <DictionaryComparison
+              beforeData={beforeData}
+              afterData={afterData}
+              beforeTitle={beforeTitle || "Sebelum"}
+              afterTitle={afterTitle || "Sesudah"}
+              addedKeys={addedKeys}
+              removedKeys={removedKeys}
+              accessSequenceAfter={accessSequenceAfter}
+              showClickDetail={true}
+            />
+          </div>
+        </div>
+      )}
+
       {hasRun && hasExplanations && (
         <div style={styles.explanationsContainer}>
           <div style={styles.explanationsHeader}>
@@ -328,7 +341,7 @@ const CodeEditor = ({ code, pyodideReady, runPythonCode, explanations, beforeDat
               if (line.trim() === "" && !explanations[idx]) return null;
               return (
                 <div key={idx} style={styles.explanationItem}>
-                  <span style={styles.lineNumber}>Baris {idx+1}:</span>
+                  <span style={styles.lineNumber}>{idx+1}:</span>
                   <code style={styles.lineCode}>{line}</code>
                   <span style={styles.lineExplanation}>→ {explanations[idx]}</span>
                 </div>
@@ -1196,7 +1209,6 @@ const styles = {
     padding: "0",
     borderBottom: "1px solid #333",
   },
-  // Hapus codeInputReadOnly dan codeInputEditable
   outputHeader: {
     backgroundColor: "#306998",
     color: "white",
@@ -1213,6 +1225,18 @@ const styles = {
     whiteSpace: "pre-wrap",
     wordWrap: "break-word",
     lineHeight: "1.5"
+  },
+  // Gaya untuk Visualisasi
+  visualHeader: {
+    backgroundColor: "#306998",
+    color: "white",
+    padding: "10px 15px",
+    borderTop: "2px solid #1e1e1e"
+  },
+  visualTitle: { fontWeight: "600", fontSize: "15px" },
+  visualWrapper: {
+    backgroundColor: "#1e1e1e",
+    padding: "15px",
   },
   explanationsContainer: {
     borderTop: "1px solid #444",
@@ -1243,19 +1267,19 @@ const styles = {
     gap: "8px",
   },
   lineNumber: {
-    color: "#FFD43B",
+    color: "#61afef", // biru terang
     fontWeight: "bold",
-    minWidth: "60px",
+    minWidth: "30px",
   },
   lineCode: {
     backgroundColor: "#3c3c3c",
     padding: "2px 6px",
     borderRadius: "4px",
-    color: "#f8f8f2",
+    color: "#e5c07b", // kuning
     fontFamily: "monospace",
   },
   lineExplanation: {
-    color: "#ccc",
+    color: "#ffffff", // putih
     flex: "1",
   },
   eksplorasiOption: {

@@ -1,7 +1,3 @@
-// ================================================================
-// FILE: PembuatanAksesElement.js (atau sesuai nama file Anda)
-// ================================================================
-
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useNavigate } from 'react-router-dom';
 import Navbar from "../../komponen/Navbar";
@@ -602,7 +598,7 @@ const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, highlightM
           const lineNumber = idx + 1;
           return (
             <div key={idx} style={styles.explanationLine}>
-              <span style={styles.explanationLineNumber}>Baris {lineNumber}:</span>
+              <span style={styles.explanationLineNumber}>{lineNumber}:</span>
               <code style={styles.explanationCode}>{line}</code>
               <span style={styles.explanationArrow}> → </span>
               <span style={styles.explanationText}>{explanation}</span>
@@ -643,6 +639,15 @@ const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, highlightM
         />
       </div>
 
+      {/* Output */}
+      <div style={styles.outputHeader}>
+        <span style={styles.outputTitle}>Output</span>
+      </div>
+      <div style={styles.codeOutput}>
+        <pre style={styles.outputContent}>{output || ""}</pre>
+      </div>
+
+      {/* Visualisasi */}
       <div style={styles.visualHeader}>Visualisasi</div>
       <div style={styles.visualArea}>
         {showVisual && visualData ? (
@@ -658,13 +663,6 @@ const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, highlightM
         ) : (
           <div style={styles.visualPlaceholder}>(Klik 'Jalankan' untuk melihat hasil)</div>
         )}
-      </div>
-
-      <div style={styles.outputHeader}>
-        <span style={styles.outputTitle}>Output</span>
-      </div>
-      <div style={styles.codeOutput}>
-        <pre style={styles.outputContent}>{output || ""}</pre>
       </div>
 
       {showExplanations && lineExplanations && lineExplanations.length > 0 && (
@@ -1449,7 +1447,7 @@ sys.stdout = StringIO()
                 </div>
               </section>
 
-              <section style={styles.section}>
+              {/* <section style={styles.section}>
                 <h2 style={styles.sectionTitle}>Mengapa Perlu List?</h2>
                 <div style={styles.card}>
                   <p style={styles.text}>
@@ -1469,7 +1467,7 @@ nilai3 = 78
                     <strong>Keunggulan List:</strong> Menghemat jumlah variabel dan dapat ditambah, dihapus, atau diubah elemennya.
                   </div>
                 </div>
-              </section>
+              </section> */}
 
               <section style={styles.section}>
                 <h2 style={styles.sectionTitle}>Ayo Praktik!</h2>

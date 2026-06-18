@@ -509,6 +509,7 @@ const ComparisonVisualization = ({ beforeData, afterData, beforeTitle, afterTitl
 };
 
 // ================= CODE EDITOR DENGAN VISUALISASI PERBANDINGAN (dengan CodeMirror) =================
+// DIPERBAIKI: Output dan Visualisasi bertukar tempat. Penjelasan menggunakan angka 1,2,3...
 const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, pyodideReady, runPythonCode, lineExplanations, beforeData, afterData, beforeTitle, afterTitle, highlightSequence, processExplanations }) => {
   const [output, setOutput] = useState("");
   const [isRunning, setIsRunning] = useState(false);
@@ -543,7 +544,7 @@ const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, pyodideRea
           if (!explanation.trim() && line.trim() === "") return null;
           return (
             <div key={idx} style={styles.explanationLine}>
-              <span style={styles.explanationLineNumber}>Baris {idx+1}:</span>
+              <span style={styles.explanationLineNumber}>{idx+1}:</span>
               <code style={styles.explanationCode}>{line || "(baris kosong)"}</code>
               <span style={styles.explanationArrow}> → </span>
               <span style={styles.explanationText}>{explanation}</span>
@@ -584,6 +585,15 @@ const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, pyodideRea
         />
       </div>
 
+      {/* OUTPUT - ditempatkan sebelum Visualisasi */}
+      <div style={styles.outputHeader}>
+        <span style={styles.outputTitle}>Output</span>
+      </div>
+      <div style={styles.codeOutput}>
+        <pre style={styles.outputContent}>{output}</pre>
+      </div>
+
+      {/* VISUALISASI - ditempatkan setelah Output */}
       <div style={styles.visualHeader}>Visualisasi</div>
       <div style={styles.visualArea}>
         {showDetail && (
@@ -603,13 +613,6 @@ const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, pyodideRea
           )
         )}
         {!showDetail && <div style={styles.visualPlaceholder}>(Klik 'Jalankan' untuk melihat hasil)</div>}
-      </div>
-
-      <div style={styles.outputHeader}>
-        <span style={styles.outputTitle}>Output</span>
-      </div>
-      <div style={styles.codeOutput}>
-        <pre style={styles.outputContent}>{output}</pre>
       </div>
 
       {showDetail && lineExplanations && lineExplanations.length > 0 && (

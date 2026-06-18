@@ -118,7 +118,6 @@ const styles = {
     padding: "0",
     borderBottom: "1px solid #333",
   },
-  // Hapus codeInputReadOnly dan codePre karena diganti CodeMirror
   outputHeader: {
     backgroundColor: "#306998",
     color: "white",
@@ -263,7 +262,6 @@ const styles = {
     fontWeight: "500",
     borderBottom: "2px solid #1e7e34",
   },
-  // Tidak perlu codeInputEditable karena diganti CodeMirror
   questionCard: {
     backgroundColor: "#f9f9f9",
     borderRadius: "8px",
@@ -591,6 +589,7 @@ const NestedListVisualization = ({ data, title, highlightSequence = [], processE
 };
 
 // ================= CODE EDITOR UNTUK CONTOH KODE PROGRAM (dengan CodeMirror) =================
+// DIPERBAIKI: Output dan Visualisasi bertukar tempat. Penjelasan menggunakan angka 1,2,3...
 const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, highlightSequenceMapping, pyodideReady, runPythonCode, lineExplanations }) => {
   const [output, setOutput] = useState("");
   const [isRunning, setIsRunning] = useState(false);
@@ -640,7 +639,7 @@ const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, highlightS
           const lineNumber = idx + 1;
           return (
             <div key={idx} style={styles.explanationLine}>
-              <span style={styles.explanationLineNumber}>Baris {lineNumber}:</span>
+              <span style={styles.explanationLineNumber}>{lineNumber}:</span>
               <code style={styles.explanationCode}>{line || "(baris kosong)"}</code>
               <span style={styles.explanationArrow}> → </span>
               <span style={styles.explanationText}>{explanation || "(Penjelasan tersedia setelah menjalankan kode)"}</span>
@@ -681,6 +680,15 @@ const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, highlightS
         />
       </div>
 
+      {/* OUTPUT - ditempatkan sebelum Visualisasi */}
+      <div style={styles.outputHeader}>
+        <span style={styles.outputTitle}>Output</span>
+      </div>
+      <div style={styles.codeOutput}>
+        <pre style={styles.outputContent}>{output}</pre>
+      </div>
+
+      {/* VISUALISASI - ditempatkan setelah Output */}
       <div style={styles.visualHeader}>Visualisasi</div>
       <div style={styles.visualArea}>
         {showVisual && visualData ? (
@@ -693,13 +701,6 @@ const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, highlightS
         ) : (
           <div style={styles.visualPlaceholder}>(Klik 'Jalankan' untuk melihat hasil)</div>
         )}
-      </div>
-
-      <div style={styles.outputHeader}>
-        <span style={styles.outputTitle}>Output</span>
-      </div>
-      <div style={styles.codeOutput}>
-        <pre style={styles.outputContent}>{output}</pre>
       </div>
 
       {showExplanations && lineExplanations && lineExplanations.length > 0 && (
@@ -1418,7 +1419,7 @@ _buffer.getvalue()`);
                 </div>
               </section>
 
-              <section style={styles.section}>
+              {/* <section style={styles.section}>
                 <div style={styles.card}>
                   <h3 style={{ fontSize: "20px", marginBottom: "15px", color: "#306998" }}>Mengapa Perlu Nested List?</h3>
                   <p style={styles.text}>
@@ -1437,7 +1438,7 @@ matriks = [[1, 2, 3], [4, 5, 6]]`}</pre>
                     Dengan nested list, data menjadi terstruktur, mudah diakses dengan perulangan bersarang, dan lebih ringkas.
                   </p>
                 </div>
-              </section>
+              </section> */}
 
               <section style={styles.section}>
                 <h2 style={styles.sectionTitle}>Ayo Praktik!</h2>

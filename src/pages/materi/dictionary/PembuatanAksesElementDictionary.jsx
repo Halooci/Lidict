@@ -169,6 +169,7 @@ const visStyles = {
 };
 
 // ===================== KOMPONEN EDITOR READ-ONLY (dengan CodeMirror) =====================
+// DIPERBAIKI: Output dan Visualisasi bertukar tempat
 const CodeEditor = ({ code, pyodideReady, runPythonCode, explanations, visualizationData }) => {
   const [output, setOutput] = useState("");
   const [hasRun, setHasRun] = useState(false);
@@ -218,19 +219,31 @@ const CodeEditor = ({ code, pyodideReady, runPythonCode, explanations, visualiza
           }}
         />
       </div>
-      {showVisual && visualizationData && (
-        <DictionaryVisualization
-          data={visualizationData.dictionary}
-          accessSequence={visualizationData.accessSequence || []}
-          title={visualizationData.title || "Visualisasi Dictionary"}
-        />
-      )}
+
+      {/* OUTPUT - ditempatkan sebelum Visualisasi */}
       <div style={styles.outputHeader}>
         <span style={styles.outputTitle}>Output</span>
       </div>
       <div style={styles.codeOutput}>
         <pre style={styles.outputContent}>{output}</pre>
       </div>
+
+      {/* VISUALISASI - ditempatkan setelah Output dengan header biru */}
+      <div style={styles.visualHeader}>
+        <span style={styles.visualTitle}>Visualisasi</span>
+      </div>
+      {showVisual && visualizationData ? (
+        <DictionaryVisualization
+          data={visualizationData.dictionary}
+          accessSequence={visualizationData.accessSequence || []}
+          title={visualizationData.title || "Visualisasi Dictionary"}
+        />
+      ) : (
+        <div style={styles.visualPlaceholder}>
+          {!showVisual ? "(Klik 'Jalankan' untuk melihat visualisasi)" : "Data visualisasi tidak tersedia"}
+        </div>
+      )}
+
       {hasRun && hasExplanations && (
         <div style={styles.explanationsContainer}>
           <div style={styles.explanationsHeader}>
@@ -241,7 +254,7 @@ const CodeEditor = ({ code, pyodideReady, runPythonCode, explanations, visualiza
               if (line.trim() === "" && !explanations[idx]) return null;
               return (
                 <div key={idx} style={styles.explanationItem}>
-                  <span style={styles.lineNumber}>Baris {idx+1}:</span>
+                  <span style={styles.lineNumber}>{idx+1}:</span>
                   <code style={styles.lineCode}>{line}</code>
                   <span style={styles.lineExplanation}>→ {explanations[idx]}</span>
                 </div>
@@ -1145,7 +1158,6 @@ const styles = {
     fontWeight: "600",
     fontSize: "14px",
   },
-  // Gaya untuk wrapper CodeMirror
   codeMirrorWrapper: {
     backgroundColor: "#272822",
     padding: "0",
@@ -1155,12 +1167,10 @@ const styles = {
     padding: "0",
     borderBottom: "1px solid #333",
   },
-  // Hapus codeInputReadOnly dan codeInputEditable, karena diganti CodeMirror
   outputHeader: {
     backgroundColor: "#306998",
     color: "white",
     padding: "10px 15px",
-    borderTop: "2px solid #1e1e1e"
   },
   outputTitle: { fontWeight: "600", fontSize: "15px" },
   codeOutput: { backgroundColor: "#1e1e1e", padding: "15px", minHeight: "80px" },
@@ -1172,6 +1182,24 @@ const styles = {
     whiteSpace: "pre-wrap",
     wordWrap: "break-word",
     lineHeight: "1.5"
+  },
+  // Gaya untuk header Visualisasi
+  visualHeader: {
+    backgroundColor: "#306998",
+    color: "white",
+    padding: "10px 15px",
+  },
+  visualTitle: {
+    fontWeight: "600",
+    fontSize: "15px",
+  },
+  visualPlaceholder: {
+    color: "#aaa",
+    fontFamily: "monospace",
+    fontSize: "14px",
+    textAlign: "center",
+    padding: "20px",
+    backgroundColor: "#1e1e1e",
   },
   explanationsContainer: {
     borderTop: "1px solid #444",
@@ -1202,19 +1230,19 @@ const styles = {
     gap: "8px",
   },
   lineNumber: {
-    color: "#FFD43B",
+    color: "#61afef",
     fontWeight: "bold",
-    minWidth: "60px",
+    minWidth: "30px",
   },
   lineCode: {
     backgroundColor: "#3c3c3c",
     padding: "2px 6px",
     borderRadius: "4px",
-    color: "#f8f8f2",
+    color: "#e5c07b",
     fontFamily: "monospace",
   },
   lineExplanation: {
-    color: "#ccc",
+    color: "#ffffff",
     flex: "1",
   },
   questionCard: {
