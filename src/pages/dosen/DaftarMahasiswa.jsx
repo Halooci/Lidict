@@ -9,7 +9,10 @@ import {
 } from 'firebase/firestore';
 import Navbar from '../komponen/Navbar';
 import SidebarDosen from './SidebarDosen';
-import { Users, BookOpen } from 'lucide-react';
+import { Users, BookOpen, FileText, FileSpreadsheet } from 'lucide-react';
+import * as XLSX from 'xlsx';
+import { jsPDF } from 'jspdf';
+import 'jspdf-autotable';
 
 const styles = `
   .mahasiswa-container {
@@ -108,9 +111,44 @@ const styles = `
     padding: 2rem;
     color: #6b7280;
   }
+  .export-buttons {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+  }
+  .btn-export {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 0.375rem;
+    font-weight: 500;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: background 0.2s;
+    color: white;
+  }
+  .btn-export-excel {
+    background: #22c55e;
+  }
+  .btn-export-excel:hover {
+    background: #16a34a;
+  }
+  .btn-export-pdf {
+    background: #ef4444;
+  }
+  .btn-export-pdf:hover {
+    background: #dc2626;
+  }
+  .btn-export:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
 `;
 
-// Asumsi total progres maksimal = 100 (sesuaikan jika berbeda)
+// Asumsi total progres maksimal = 14
 const MAX_PROGRES = 14;
 
 const DaftarMahasiswa = () => {
@@ -177,6 +215,74 @@ const DaftarMahasiswa = () => {
       setMahasiswaList([]);
     }
   }, [kelasAktif]);
+
+  // --- Ekspor ke Excel ---
+  const exportToExcel = () => {
+    if (!kelasAktif || mahasiswaList.length === 0) return;
+
+    const data = mahasiswaList.map((mhs, index) => ({
+      No: index + 1,
+      NIM: mhs.NIM || '-',
+      Nama: mhs.Nama || '-',
+      Email: mhs.Email || '-',
+      'Progres Belajar': `${mhs.progres_belajar ?? 0} / ${MAX_PROGRES}`,
+      'Persentase': `${Math.min(Math.round(((mhs.progres_belajar ?? 0) / MAX_PROGRES) * 100), 100)}%`,
+    }));
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(data);
+    XLSX.utils.book_append_sheet(wb, ws, 'Mahasiswa');
+    
+    // Nama file
+    const fileName = `Daftar_Mahasiswa_${kelasAktif.nama_kelas}_${kelasAktif.tahun_ajaran}_${kelasAktif.semester}.xlsx`;
+    XLSX.writeFile(wb, fileName);
+  };
+
+  // --- Ekspor ke PDF ---
+  const exportToPDF = () => {
+    if (!kelasAktif || mahasiswaList.length === 0) return;
+
+    const doc = new jsPDF('landscape', 'mm', 'a4');
+    const pageWidth = doc.internal.pageSize.getWidth();
+
+    // Judul
+    doc.setFontSize(16);
+    doc.text(`Daftar Mahasiswa - ${kelasAktif.nama_kelas}`, pageWidth / 2, 20, { align: 'center' });
+    doc.setFontSize(11);
+    doc.text(`${kelasAktif.tahun_ajaran} ${kelasAktif.semester}`, pageWidth / 2, 28, { align: 'center' });
+    doc.text(`Total Mahasiswa: ${mahasiswaList.length}`, pageWidth / 2, 35, { align: 'center' });
+
+    // Data tabel
+    const tableData = mahasiswaList.map((mhs, index) => [
+      index + 1,
+      mhs.NIM || '-',
+      mhs.Nama || '-',
+      mhs.Email || '-',
+      `${mhs.progres_belajar ?? 0} / ${MAX_PROGRES}`,
+      `${Math.min(Math.round(((mhs.progres_belajar ?? 0) / MAX_PROGRES) * 100), 100)}%`,
+    ]);
+
+    doc.autoTable({
+      startY: 42,
+      head: [['No', 'NIM', 'Nama', 'Email', 'Progres Belajar', 'Persentase']],
+      body: tableData,
+      theme: 'grid',
+      styles: { fontSize: 9 },
+      headStyles: { fillColor: [59, 130, 246], textColor: [255, 255, 255] },
+      columnStyles: {
+        0: { cellWidth: 12 },
+        1: { cellWidth: 35 },
+        2: { cellWidth: 50 },
+        3: { cellWidth: 60 },
+        4: { cellWidth: 35 },
+        5: { cellWidth: 30 },
+      },
+      margin: { left: 10, right: 10 },
+    });
+
+    const fileName = `Daftar_Mahasiswa_${kelasAktif.nama_kelas}_${kelasAktif.tahun_ajaran}_${kelasAktif.semester}.pdf`;
+    doc.save(fileName);
+  };
 
   if (!userId) {
     return (
@@ -251,8 +357,26 @@ const DaftarMahasiswa = () => {
           {/* Tabel Mahasiswa */}
           {kelasAktif && (
             <div className="card">
-              <div className="title">
-                <Users size={22} /> Daftar Mahasiswa ({mahasiswaList.length})
+              <div className="title" style={{ justifyContent: 'space-between', flexWrap: 'wrap' }}>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <Users size={22} /> Daftar Mahasiswa ({mahasiswaList.length})
+                </span>
+                <div className="export-buttons" style={{ marginBottom: 0 }}>
+                  <button
+                    className="btn-export btn-export-excel"
+                    onClick={exportToExcel}
+                    disabled={mahasiswaList.length === 0}
+                  >
+                    <FileSpreadsheet size={18} /> Excel
+                  </button>
+                  <button
+                    className="btn-export btn-export-pdf"
+                    onClick={exportToPDF}
+                    disabled={mahasiswaList.length === 0}
+                  >
+                    <FileText size={18} /> PDF
+                  </button>
+                </div>
               </div>
               {mahasiswaList.length === 0 ? (
                 <p className="empty">Belum ada mahasiswa yang mendaftar dengan token kelas ini.</p>
