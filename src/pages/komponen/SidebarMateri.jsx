@@ -131,7 +131,7 @@ export default function SidebarMateri() {
             unlocked={isUnlocked(0)}
           />
           <SubItem
-            label="Apersepsi"
+            label="Pengantar"
             to="/Apersepsi"
             currentPath={currentPath}
             requiredLevel={0}

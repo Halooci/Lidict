@@ -6,10 +6,14 @@ import PetaKonsepImage from '../../../assets/PetaKonsepImage.png';
 
 const styles = {
   page: {
-    padding: "30px 40px",
+    padding: "5px 20px", // padding vertikal sangat kecil
     backgroundColor: "#f5f7fa",
-    minHeight: "100vh",
+    height: "100%",
+    overflow: "hidden",
     fontFamily: "Poppins, sans-serif",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "center",
   },
   header: {
     backgroundColor: "#306998",
@@ -33,7 +37,13 @@ const styles = {
     fontSize: "28px",
     fontWeight: "700",
   },
-  section: { marginBottom: "40px" },
+  section: {
+    marginBottom: 0,
+    flex: 1,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+  },
   sectionTitle: {
     fontSize: "22px",
     fontWeight: "700",
@@ -44,17 +54,23 @@ const styles = {
   card: {
     backgroundColor: "white",
     borderRadius: "10px",
-    padding: "25px",
+    padding: "8px 25px", // padding card diperkecil
     boxShadow: "0 5px 15px rgba(0,0,0,0.08)",
+    width: "100%",
+    maxWidth: "1100px", // lebih lebar agar gambar bisa lebih besar
+    margin: "0 auto",
   },
   text: { lineHeight: "1.8", color: "#333", marginBottom: "15px" },
   image: {
     maxWidth: "100%",
+    maxHeight: "calc(100vh - 100px)", // lebih besar, memperhitungkan navbar + padding tipis
+    width: "auto",
     height: "auto",
     display: "block",
     margin: "0 auto",
     borderRadius: "8px",
     boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+    objectFit: "contain",
   },
 };
 
@@ -62,11 +78,9 @@ const PetaKonsep = () => {
   const navigate = useNavigate();
 
   useEffect(() => {
-    // Cek apakah user sudah login (ada data di localStorage)
     const userId = localStorage.getItem('userId');
     const userEmail = localStorage.getItem('userEmail');
     if (!userId || !userEmail) {
-      // Jika belum login, redirect ke halaman login/register
       navigate('/loginregister');
     }
   }, [navigate]);
@@ -75,7 +89,15 @@ const PetaKonsep = () => {
     <>
       <Navbar />
       <SidebarMateri />
-      <div className="main-content" style={{ paddingTop: "64px" }}>
+      <div 
+        className="main-content" 
+        style={{ 
+          paddingTop: "64px", 
+          height: "calc(100vh - 64px)", 
+          overflow: "hidden",
+          boxSizing: "border-box",
+        }}
+      >
         <div style={styles.page}>
           <section style={styles.section}>
             <div style={styles.card}>

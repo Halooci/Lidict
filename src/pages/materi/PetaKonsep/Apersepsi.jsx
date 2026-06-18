@@ -372,25 +372,25 @@ export default function Apersepsi() {
               </p>
               <ul style={styles.list}>
                 <li>
-                  integer → bilangan bulat (tanpa koma), seperti 10, -5, 0.
+                  <strong>integer</strong> → bilangan bulat (tanpa koma), seperti 10, -5, 0.
                   <br />
                   Contoh:  
                   <strong style={{ color: "#306998" }}> panjang</strong> = <strong style={{ color: "#306998" }}>int(input("Masukkan panjang: "))</strong>
                 </li>
                 <li>
-                  float → bilangan desimal (ada koma), seperti 3.14, -0.5, 2.0.
+                  <strong>float</strong> → bilangan desimal (ada koma), seperti 3.14, -0.5, 2.0.
                   <br />
                   Contoh:  
                   <strong style={{ color: "#306998" }}> lebar</strong> = <strong style={{ color: "#306998" }}> float(input("Masukkan lebar: "))</strong>
                 </li>
                 <li>
-                  string → teks, diapit kutip (bisa kutip satu atau kutip dua).
+                  <strong>string</strong> → teks, diapit kutip (bisa kutip satu atau kutip dua).
                   <br />
                   Contoh:   
                   <strong style={{ color: "#306998" }}> jurusan</strong> = <strong style={{ color: "#306998" }}>"Pendidikan Komputer"</strong>
                 </li>
                 <li>
-                  boolean → nilai kebenaran, hanya True atau False.
+                  <strong>boolean</strong> → nilai kebenaran, hanya True atau False.
                   <br />
                   Contoh: (konteks apakah siswa masih aktif bersekolah)
                   <br />
@@ -602,7 +602,7 @@ status_lulus = True                           # boolean`)}
                 Jika ingin menerima angka, konversi dengan <code>int()</code> atau <code>float()</code>.
               </p>
 
-              <p style={styles.text}><strong>Contoh Kode (dengan komentar berwarna):</strong></p>
+              <p style={styles.text}><strong>Contoh Kode Program:</strong></p>
               <pre style={styles.codeBlock}>
                 {formatCodeWithComments(`nama = input("Nama: ")          # membaca input dari user
 print("Halo", nama)             # menampilkan sapaan
