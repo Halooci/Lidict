@@ -205,9 +205,14 @@ const InformasiPage = () => {
                 <span className="info-value">Ihdalhubbi Maulida, S.Kom., M.Kom.</span>
               </div>
               <div className="info-row">
-                <span className="info-label">Program Studi</span>
+                <span className="info-label">Jurusan</span>
                 <span className="info-colon">:</span>
                 <span className="info-value">Pendidikan Komputer</span>
+              </div>
+              <div className="info-row">
+                <span className="info-label">Fakultas</span>
+                <span className="info-colon">:</span>
+                <span className="info-value">Keguruan dan Ilmu Pendidikan (FKIP)</span>
               </div>
               <div className="info-row">
                 <span className="info-label">Intansi</span>
