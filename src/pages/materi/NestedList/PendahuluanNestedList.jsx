@@ -5,6 +5,13 @@ import { useNavigate } from 'react-router-dom';
 import { db } from "../../../config/firebase";
 import { doc, updateDoc, increment } from "firebase/firestore";
 
+// ---------- IMPOR CODEMIRROR ----------
+import CodeMirror from '@uiw/react-codemirror';
+import { python } from '@codemirror/lang-python';
+import { lineNumbers } from '@codemirror/view';
+import { EditorView } from '@codemirror/view';
+// ---------------------------------------
+
 // ===================== KOMPONEN VISUALISASI NESTED LIST (KOTAK + INDEKS + HOVER) =====================
 const VisualisasiNestedListCard = ({ data, title, rowLabels, colLabels }) => {
   const [hoveredCell, setHoveredCell] = useState(null);
@@ -153,15 +160,32 @@ const visStyles = {
   },
 };
 
-// ===================== KOMPONEN UNTUK MENAMPILKAN CONTOH NESTED LIST =====================
+// ===================== KOMPONEN UNTUK MENAMPILKAN CONTOH NESTED LIST (dengan CodeMirror) =====================
 const ContohNestedList = ({ code, visualData, visualTitle, rowLabels, colLabels }) => {
   return (
     <div style={styles.codeEditorContainer}>
       <div style={styles.codeEditorHeader}>
         <span style={styles.codeEditorTitle}>Contoh Kode Program</span>
       </div>
-      <div style={styles.codeInputReadOnly}>
-        <pre style={styles.codePre}>{code}</pre>
+      {/* CodeMirror read-only */}
+      <div style={styles.codeMirrorWrapper}>
+        <CodeMirror
+          value={code}
+          height="auto"
+          theme="dark"
+          extensions={[
+            python(),
+            lineNumbers(),
+            EditorView.editable.of(false),
+          ]}
+          style={{ fontSize: '14px' }}
+          basicSetup={{
+            lineNumbers: true,
+            foldGutter: false,
+            highlightActiveLine: false,
+            indentOnInput: false,
+          }}
+        />
       </div>
       <div style={styles.visualHeader}>Visualisasi</div>
       <div style={styles.visualArea}>
@@ -176,7 +200,7 @@ const ContohNestedList = ({ code, visualData, visualTitle, rowLabels, colLabels 
   );
 };
 
-// ===================== KOMPONEN CODE EDITOR (UNTUK KODE LAIN) =====================
+// ===================== KOMPONEN CODE EDITOR (UNTUK KODE LAIN) DENGAN CODEMIRROR =====================
 const CodeEditor = ({ code, codeKey, pyodideReady, runPythonCode }) => {
   const [output, setOutput] = useState("");
 
@@ -197,8 +221,25 @@ const CodeEditor = ({ code, codeKey, pyodideReady, runPythonCode }) => {
           {pyodideReady ? "▶ Jalankan" : "⏳ Memuat..."}
         </button>
       </div>
-      <div style={styles.codeInputReadOnly}>
-        <pre style={styles.codePre}>{code}</pre>
+      {/* CodeMirror read-only */}
+      <div style={styles.codeMirrorWrapper}>
+        <CodeMirror
+          value={code}
+          height="auto"
+          theme="dark"
+          extensions={[
+            python(),
+            lineNumbers(),
+            EditorView.editable.of(false),
+          ]}
+          style={{ fontSize: '14px' }}
+          basicSetup={{
+            lineNumbers: true,
+            foldGutter: false,
+            highlightActiveLine: false,
+            indentOnInput: false,
+          }}
+        />
       </div>
       <div style={styles.outputHeader}>
         <span style={styles.outputTitle}>Output</span>
@@ -1038,23 +1079,12 @@ const styles = {
     fontWeight: "600",
     fontSize: "14px",
   },
-  codeInputReadOnly: {
-    width: "100%",
-    minHeight: "100px",
+  // Gaya untuk wrapper CodeMirror
+  codeMirrorWrapper: {
     backgroundColor: "#272822",
-    color: "#f8f8f2",
-    border: "none",
-    padding: "15px",
-    fontFamily: "monospace",
-    fontSize: "14px",
-    overflow: "auto",
+    padding: "0",
   },
-  codePre: {
-    margin: 0,
-    whiteSpace: "pre-wrap",
-    wordWrap: "break-word",
-    fontFamily: "monospace",
-  },
+  // Hapus codeInputReadOnly dan codePre karena tidak digunakan lagi
   visualHeader: {
     backgroundColor: "#306998",
     color: "white",

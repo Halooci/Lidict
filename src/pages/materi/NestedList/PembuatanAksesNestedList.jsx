@@ -5,6 +5,13 @@ import SidebarMateri from "../../komponen/SidebarMateri";
 import { db } from "../../../config/firebase";
 import { doc, updateDoc, increment } from "firebase/firestore";
 
+// ---------- IMPOR CODEMIRROR ----------
+import CodeMirror from '@uiw/react-codemirror';
+import { python } from '@codemirror/lang-python';
+import { lineNumbers } from '@codemirror/view';
+import { EditorView } from '@codemirror/view';
+// ---------------------------------------
+
 // ================= STYLE GLOBAL =================
 const styles = {
   page: {
@@ -101,19 +108,17 @@ const styles = {
     fontSize: "14px",
     transition: "all 0.2s",
   },
-  codeInputReadOnly: {
-    width: "100%",
-    minHeight: "120px",
+  // Gaya untuk wrapper CodeMirror
+  codeMirrorWrapper: {
     backgroundColor: "#272822",
-    color: "#f8f8f2",
-    border: "none",
-    padding: "15px",
-    fontFamily: "'Consolas', 'Monaco', 'Courier New', monospace",
-    fontSize: "14px",
-    lineHeight: "1.6",
-    overflow: "auto",
+    padding: "0",
   },
-  codePre: { margin: 0, whiteSpace: "pre-wrap", wordWrap: "break-word" },
+  codeMirrorEditableWrapper: {
+    backgroundColor: "#272822",
+    padding: "0",
+    borderBottom: "1px solid #333",
+  },
+  // Hapus codeInputReadOnly dan codePre karena diganti CodeMirror
   outputHeader: {
     backgroundColor: "#306998",
     color: "white",
@@ -258,19 +263,7 @@ const styles = {
     fontWeight: "500",
     borderBottom: "2px solid #1e7e34",
   },
-  codeInputEditable: {
-    width: "100%",
-    minHeight: "200px",
-    backgroundColor: "#272822",
-    color: "#f8f8f2",
-    border: "none",
-    padding: "15px",
-    fontFamily: "monospace",
-    fontSize: "14px",
-    resize: "vertical",
-    outline: "none",
-    boxSizing: "border-box",
-  },
+  // Tidak perlu codeInputEditable karena diganti CodeMirror
   questionCard: {
     backgroundColor: "#f9f9f9",
     borderRadius: "8px",
@@ -597,7 +590,7 @@ const NestedListVisualization = ({ data, title, highlightSequence = [], processE
   );
 };
 
-// ================= CODE EDITOR UNTUK CONTOH KODE PROGRAM =================
+// ================= CODE EDITOR UNTUK CONTOH KODE PROGRAM (dengan CodeMirror) =================
 const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, highlightSequenceMapping, pyodideReady, runPythonCode, lineExplanations }) => {
   const [output, setOutput] = useState("");
   const [isRunning, setIsRunning] = useState(false);
@@ -667,8 +660,25 @@ const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, highlightS
         </button>
       </div>
 
-      <div style={styles.codeInputReadOnly}>
-        <pre style={styles.codePre}>{code}</pre>
+      {/* CodeMirror read-only */}
+      <div style={styles.codeMirrorWrapper}>
+        <CodeMirror
+          value={code}
+          height="auto"
+          theme="dark"
+          extensions={[
+            python(),
+            lineNumbers(),
+            EditorView.editable.of(false),
+          ]}
+          style={{ fontSize: '14px' }}
+          basicSetup={{
+            lineNumbers: true,
+            foldGutter: false,
+            highlightActiveLine: false,
+            indentOnInput: false,
+          }}
+        />
       </div>
 
       <div style={styles.visualHeader}>Visualisasi</div>
@@ -706,14 +716,14 @@ const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, highlightS
   );
 };
 
-// ================= KOMPONEN PRAKTIK (CODE EDITOR EDITABLE) =================
+// ================= KOMPONEN PRAKTIK (CODE EDITOR EDITABLE) dengan CodeMirror =================
 const CodeEditorEditable = ({ pyodideReady, runPythonCode, onValidation }) => {
   const [localCode, setLocalCode] = useState("");
   const [output, setOutput] = useState("");
   const [isRunning, setIsRunning] = useState(false);
 
-  const handleChange = useCallback((e) => {
-    setLocalCode(e.target.value);
+  const handleChange = useCallback((value) => {
+    setLocalCode(value);
     if (onValidation) onValidation({ isValid: false, isComplete: false });
   }, [onValidation]);
 
@@ -778,13 +788,31 @@ const CodeEditorEditable = ({ pyodideReady, runPythonCode, onValidation }) => {
           {isRunning ? "Menjalankan..." : pyodideReady ? "Jalankan" : "Memuat..."}
         </button>
       </div>
-      <textarea
-        style={styles.codeInputEditable}
-        value={localCode}
-        onChange={handleChange}
-        placeholder="Tulis kode Python Anda di sini..."
-        spellCheck={false}
-      />
+
+      {/* CodeMirror editable */}
+      <div style={styles.codeMirrorEditableWrapper}>
+        <CodeMirror
+          value={localCode}
+          height="auto"
+          theme="dark"
+          extensions={[
+            python(),
+            lineNumbers(),
+            EditorView.editable.of(true),
+          ]}
+          onChange={handleChange}
+          style={{ fontSize: '14px' }}
+          basicSetup={{
+            lineNumbers: true,
+            foldGutter: false,
+            highlightActiveLine: true,
+            indentOnInput: true,
+            tabSize: 4,
+          }}
+          placeholder="Tulis kode Python Anda di sini..."
+        />
+      </div>
+
       <div style={styles.outputHeader}>
         <span style={styles.outputTitle}>Output</span>
       </div>

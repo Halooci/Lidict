@@ -1,9 +1,20 @@
+// ================================================================
+// FILE: PendahuluanList.js (atau sesuai nama file Anda)
+// ================================================================
+
 import { useState, useEffect, useRef, useCallback } from "react";
 import Navbar from "../../komponen/Navbar";
 import SidebarMateri from "../../komponen/SidebarMateri";
 import { useNavigate } from 'react-router-dom';
 import { db } from "../../../config/firebase";
 import { doc, updateDoc, increment } from "firebase/firestore";
+
+// ---------- IMPOR CODEMIRROR ----------
+import CodeMirror from '@uiw/react-codemirror';
+import { python } from '@codemirror/lang-python';
+import { lineNumbers } from '@codemirror/view';
+import { EditorView } from '@codemirror/view';
+// ---------------------------------------
 
 // ================= STYLE GLOBAL =================
 const styles = {
@@ -105,19 +116,11 @@ const styles = {
     fontSize: "14px",
     transition: "all 0.2s",
   },
-  codeInputReadOnly: {
-    width: "100%",
-    minHeight: "120px",
+  // Gaya untuk area CodeMirror (tambahan)
+  codeMirrorWrapper: {
     backgroundColor: "#272822",
-    color: "#f8f8f2",
-    border: "none",
-    padding: "15px",
-    fontFamily: "'Consolas', 'Monaco', 'Courier New', monospace",
-    fontSize: "14px",
-    lineHeight: "1.6",
-    overflow: "auto",
+    padding: "0",
   },
-  codePre: { margin: 0, whiteSpace: "pre-wrap", wordWrap: "break-word" },
   outputHeader: {
     backgroundColor: "#306998",
     color: "white",
@@ -276,7 +279,7 @@ const styles = {
   },
 };
 
-// ================= KOMPONEN CODE EDITOR (READ-ONLY) =================
+// ================= KOMPONEN CODE EDITOR (dengan CodeMirror) =================
 const CodeEditor = ({ code, title, pyodideReady, runPythonCode }) => {
   const [output, setOutput] = useState("");
   const [isRunning, setIsRunning] = useState(false);
@@ -300,9 +303,28 @@ const CodeEditor = ({ code, title, pyodideReady, runPythonCode }) => {
           {isRunning ? "Menjalankan..." : pyodideReady ? "Jalankan" : "Memuat..."}
         </button>
       </div>
-      <div style={styles.codeInputReadOnly}>
-        <pre style={styles.codePre}>{code}</pre>
+
+      {/* CodeMirror – read-only dengan line numbers */}
+      <div style={styles.codeMirrorWrapper}>
+        <CodeMirror
+          value={code}
+          height="auto"
+          theme="dark"
+          extensions={[
+            python(),
+            lineNumbers(),
+            EditorView.editable.of(false), // read-only
+          ]}
+          style={{ fontSize: '14px' }}
+          basicSetup={{
+            lineNumbers: true,
+            foldGutter: false,
+            highlightActiveLine: false,
+            indentOnInput: false,
+          }}
+        />
       </div>
+
       <div style={styles.outputHeader}>
         <span style={styles.outputTitle}>Output</span>
       </div>
@@ -520,7 +542,6 @@ export default function PendahuluanList() {
   const [bonusGiven, setBonusGiven] = useState(false);
 
   // ─────────── KONFIGURASI HALAMAN ───────────
-  // Ubah TOPIC_NAME untuk halaman lain: "nested_list", "dictionary", dll.
   const TOPIC_NAME = "list";
   const EKSPLORASI_ANSWERS_KEY = `eksplorasi_${TOPIC_NAME}_answers`;
   const BONUS_DONE_KEY = `pendahuluan${TOPIC_NAME}_bonus_done`;
@@ -606,7 +627,6 @@ export default function PendahuluanList() {
     setEksplorasiFeedback(newFeedback);
     const allAnswered = eksplorasiSelected.every(sel => sel !== null);
     setIsEksplorasiCompleted(allAnswered);
-    // Simpan jawaban ke localStorage dengan kunci terstruktur
     localStorage.setItem(EKSPLORASI_ANSWERS_KEY, JSON.stringify(eksplorasiSelected));
   }, [eksplorasiSelected, EKSPLORASI_ANSWERS_KEY]);
 
