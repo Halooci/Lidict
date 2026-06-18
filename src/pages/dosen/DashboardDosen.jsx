@@ -1065,7 +1065,7 @@ const DashboardDosen = () => {
             </div>
           </div>
 
-          {/* Kelas Anda */}
+          {/* ===== KELAS ANDA (dengan token di setiap baris, ukuran lebih besar) ===== */}
           <div className="card">
             <div className="card-title"><BookOpen size={22} /> Kelas Anda</div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1rem' }}>
@@ -1082,6 +1082,22 @@ const DashboardDosen = () => {
                         >
                           {kelas.nama_kelas} ({kelas.tahun_ajaran} {kelas.semester})
                         </button>
+                        {/* Token dengan ukuran lebih besar */}
+                        <span
+                          className="token-code"
+                          style={{
+                            fontSize: '1rem',
+                            padding: '0.4rem 0.8rem',
+                            background: '#e5e7eb',
+                            borderRadius: '0.375rem',
+                            letterSpacing: '1px',
+                            fontFamily: 'monospace',
+                            color: '#1f2937',
+                            fontWeight: '600',
+                          }}
+                        >
+                          {kelas.token}
+                        </span>
                         <button className="btn btn-outline" onClick={() => openEditModal(kelas)} title="Edit Kelas">
                           <Edit size={16} />
                         </button>
@@ -1102,15 +1118,12 @@ const DashboardDosen = () => {
                 </button>
               </div>
             </div>
-          </div>
 
-          {kelasAktif && (
-            <>
-              {/* Token & Kelola Dosen */}
-              <div className="card">
-                <div className="card-title"><ClipboardList size={22} /> Token Kelas & Tim Pengajar</div>
-                <div className="token-box">
-                  <div className="token-code">{kelasAktif.token}</div>
+            {/* Blok aksi cepat (Salin Token & Kelola Dosen) untuk kelas aktif */}
+            {kelasAktif && (
+              <div style={{ marginTop: '1rem', borderTop: '1px solid #e5e7eb', paddingTop: '1rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+                  <span style={{ fontWeight: '500', color: '#374151' }}>Aksi untuk kelas aktif:</span>
                   <button className="btn btn-blue" onClick={copyToken}>
                     {copySuccess ? <CheckCircle size={18} /> : <Copy size={18} />}
                     {copySuccess ? 'Tersalin!' : 'Salin Token'}
@@ -1120,10 +1133,14 @@ const DashboardDosen = () => {
                   </button>
                 </div>
                 <p style={{ fontSize: '0.875rem', color: '#6b7280', marginTop: '0.5rem' }}>
-                  Token ini dibagikan ke mahasiswa. Dosen lain bisa bergabung dengan token ini.
+                  Token dibagikan ke mahasiswa. Dosen lain bisa bergabung dengan token ini.
                 </p>
               </div>
+            )}
+          </div>
 
+          {kelasAktif && (
+            <>
               {/* KKM */}
               <div className="card">
                 <div className="card-title">KKM - {kelasAktif.nama_kelas} ({kelasAktif.tahun_ajaran} {kelasAktif.semester})</div>
