@@ -38,7 +38,7 @@ const InformasiPage = () => {
           padding: 2.5rem;
           border-radius: 14px;
           box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-          margin-bottom: 4rem;
+          margin-bottom: 2.5rem;
           text-align: center;
         }
 
@@ -51,6 +51,62 @@ const InformasiPage = () => {
           font-weight: bold;
           font-size: 1.1rem;
           margin: 1.5rem 0;
+        }
+
+        .info-identitas {
+          text-align: left;
+          margin-top: 1.5rem;
+        }
+
+        .info-row {
+          display: flex;
+          align-items: baseline;
+          margin-bottom: 0.4rem;
+        }
+
+        .info-label {
+          width: 190px;
+          font-weight: 600;
+          flex-shrink: 0;
+        }
+
+        .info-colon {
+          margin-right: 10px;
+          font-weight: 600;
+        }
+
+        .info-value {
+          flex: 1;
+        }
+
+        .daftar-pustaka-card {
+          background: rgba(255, 255, 255, 0.95);
+          color: #1f2937;
+          padding: 2rem 2.5rem;
+          border-radius: 14px;
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+          margin-top: 2rem;
+        }
+
+        .daftar-pustaka-card h2 {
+          font-size: 1.8rem;
+          margin-bottom: 1.5rem;
+          color: #1f2937;
+          border-left: 6px solid #FFD43B;
+          padding-left: 12px;
+        }
+
+        .daftar-pustaka-list {
+          list-style: none;
+          padding: 0;
+          margin: 0;
+        }
+
+        .daftar-pustaka-list li {
+          margin-bottom: 0.8rem;
+          padding-left: 2.5rem;
+          text-indent: -2.5rem;
+          line-height: 1.6;
         }
 
         .info-section {
@@ -119,16 +175,67 @@ const InformasiPage = () => {
             </p>
 
             <p className="info-judul">
-              “Implementasi Web Interaktif Sebagai Media Pembelajaran Materi List dan Dictionary
-              pada Mata Kuliah Struktur Data dengan Python”
+              “Implementasi Web Interaktif Sebagai Media Pembelajaran Materi <i>List</i> dan <i>Dictionary</i> pada Mata Kuliah Struktur Data dengan Python”
             </p>
 
-            <p><b>Pengembang:</b> Rosian Margareth Princes Dalughu</p>
-            <p><b>Dosen Pembimbing I:</b> Dr. R. Ati Sukmawati, M.Kom.</p>
-            <p><b>Dosen Pembimbing II:</b> Ihdalhubbi Maulida, S.Kom., M.Kom.</p>
-            <p><b>Program Studi:</b> Pendidikan Komputer</p>
+            <div className="info-identitas">
+              <div className="info-row">
+                <span className="info-label">Pengembang</span>
+                <span className="info-colon">:</span>
+                <span className="info-value">Rosian Margareth Princes Dalughu</span>
+              </div>
+              <div className="info-row">
+                <span className="info-label">Email</span>
+                <span className="info-colon">:</span>
+                <span className="info-value">rosianmargareth@gmail.com</span>
+              </div>
+              <div className="info-row">
+                <span className="info-label">Nomor Handphone</span>
+                <span className="info-colon">:</span>
+                <span className="info-value">081256981058</span>
+              </div>
+              <div className="info-row">
+                <span className="info-label">Dosen Pembimbing I</span>
+                <span className="info-colon">:</span>
+                <span className="info-value">Dr. R. Ati Sukmawati, M.Kom.</span>
+              </div>
+              <div className="info-row">
+                <span className="info-label">Dosen Pembimbing II</span>
+                <span className="info-colon">:</span>
+                <span className="info-value">Ihdalhubbi Maulida, S.Kom., M.Kom.</span>
+              </div>
+              <div className="info-row">
+                <span className="info-label">Program Studi</span>
+                <span className="info-colon">:</span>
+                <span className="info-value">Pendidikan Komputer</span>
+              </div>
+              <div className="info-row">
+                <span className="info-label">Intansi</span>
+                <span className="info-colon">:</span>
+                <span className="info-value">Universitas Lambung Mangkurat</span>
+              </div>
+              <div className="info-row">
+                <span className="info-label">Tahun</span>
+                <span className="info-colon">:</span>
+                <span className="info-value">2026</span>
+              </div>
+            </div>
           </div>
 
+          {/* Daftar Pustaka */}
+          <div className="daftar-pustaka-card">
+            <h2>Daftar Pustaka</h2>
+            <ul className="daftar-pustaka-list">
+              <li>Baka, B. (2017). Python data structures and algorithms: Improve the performance and speed of your applications. Packt Publishing.</li>
+              <li>Necaise, R. D. (2011). Data structures and algorithms using Python. John Wiley &amp; Sons.</li>
+              <li>Purba, H. S., Sukmawati, R. A., &amp; Adini, M. H. (2021). Pemrograman dasar menggunakan Python. Deepublish.</li>
+              <li>Saputra, H., Arman, S. A., Fairuzabadi, M., Anshori, F. A., Impron, A., Winardi, S., Lumba, E., Syah, F., Saputra, N., Kadang, M. O., &amp; Hastomo, W. (2025). Struktur data dan algoritma dalam Python: Panduan praktis. Yash Media.</li>
+              <li>Septian, R. F. (2013). Belajar pemrograman Python dasar. POSS – UPI.</li>
+              <li>Sheehy, D. R. (2022). A first course on data structures in Python.</li>
+            </ul>
+          </div>
+
+          {/* Bagian berikut tetap seperti semula (tidak diubah) */}
           {/* <section className="info-section">
             <h2>Peta Konsep</h2>
             <div className="concept-map">
