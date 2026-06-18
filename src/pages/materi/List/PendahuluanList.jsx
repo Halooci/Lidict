@@ -5,6 +5,13 @@ import { useNavigate } from 'react-router-dom';
 import { db } from "../../../config/firebase";
 import { doc, updateDoc, increment } from "firebase/firestore";
 
+// ---------- IMPOR CODEMIRROR ----------
+import CodeMirror from '@uiw/react-codemirror';
+import { python } from '@codemirror/lang-python';
+import { lineNumbers } from '@codemirror/view';
+import { EditorView } from '@codemirror/view';
+// ---------------------------------------
+
 // ================= STYLE GLOBAL =================
 const styles = {
   page: {
@@ -105,19 +112,12 @@ const styles = {
     fontSize: "14px",
     transition: "all 0.2s",
   },
-  codeInputReadOnly: {
-    width: "100%",
-    minHeight: "120px",
+  // Gaya untuk wrapper CodeMirror
+  codeMirrorWrapper: {
     backgroundColor: "#272822",
-    color: "#f8f8f2",
-    border: "none",
-    padding: "15px",
-    fontFamily: "'Consolas', 'Monaco', 'Courier New', monospace",
-    fontSize: "14px",
-    lineHeight: "1.6",
-    overflow: "auto",
+    padding: "0",
   },
-  codePre: { margin: 0, whiteSpace: "pre-wrap", wordWrap: "break-word" },
+  // Hapus codeInputReadOnly dan codePre
   outputHeader: {
     backgroundColor: "#306998",
     color: "white",
@@ -276,7 +276,7 @@ const styles = {
   },
 };
 
-// ================= KOMPONEN CODE EDITOR (READ-ONLY) =================
+// ================= KOMPONEN CODE EDITOR (READ-ONLY) DENGAN CODEMIRROR =================
 const CodeEditor = ({ code, title, pyodideReady, runPythonCode }) => {
   const [output, setOutput] = useState("");
   const [isRunning, setIsRunning] = useState(false);
@@ -300,8 +300,25 @@ const CodeEditor = ({ code, title, pyodideReady, runPythonCode }) => {
           {isRunning ? "Menjalankan..." : pyodideReady ? "Jalankan" : "Memuat..."}
         </button>
       </div>
-      <div style={styles.codeInputReadOnly}>
-        <pre style={styles.codePre}>{code}</pre>
+      {/* CodeMirror read-only */}
+      <div style={styles.codeMirrorWrapper}>
+        <CodeMirror
+          value={code}
+          height="auto"
+          theme="dark"
+          extensions={[
+            python(),
+            lineNumbers(),
+            EditorView.editable.of(false),
+          ]}
+          style={{ fontSize: '14px' }}
+          basicSetup={{
+            lineNumbers: true,
+            foldGutter: false,
+            highlightActiveLine: false,
+            indentOnInput: false,
+          }}
+        />
       </div>
       <div style={styles.outputHeader}>
         <span style={styles.outputTitle}>Output</span>
@@ -309,6 +326,31 @@ const CodeEditor = ({ code, title, pyodideReady, runPythonCode }) => {
       <div style={styles.codeOutput}>
         <pre style={styles.outputContent}>{output || "(Klik 'Jalankan' untuk melihat hasil)"}</pre>
       </div>
+    </div>
+  );
+};
+
+// ================= KOMPONEN UNTUK BLOK KODE STATIS (TIDAK BISA DIJALANKAN) =================
+const StaticCodeBlock = ({ code }) => {
+  return (
+    <div style={styles.codeMirrorWrapper}>
+      <CodeMirror
+        value={code}
+        height="auto"
+        theme="dark"
+        extensions={[
+          python(),
+          lineNumbers(),
+          EditorView.editable.of(false),
+        ]}
+        style={{ fontSize: '14px' }}
+        basicSetup={{
+          lineNumbers: true,
+          foldGutter: false,
+          highlightActiveLine: false,
+          indentOnInput: false,
+        }}
+      />
     </div>
   );
 };
@@ -660,6 +702,13 @@ print(buah[1])   # elemen kedua
 print(buah[-1])  # elemen terakhir`,
   };
 
+  // Kode untuk blok statis (highlightBox)
+  const staticCode = `# Tanpa list (tidak efisien)
+nilai1 = 85
+nilai2 = 90
+nilai3 = 78
+# ... sulit diolah`;
+
   // Load Pyodide
   useEffect(() => {
     const loadPyodide = async () => {
@@ -827,11 +876,7 @@ sys.stdout = StringIO()
                   </p>
                   
                   <div style={styles.highlightBox}>
-                    <pre style={styles.code}>{`# Tanpa list (tidak efisien)
-nilai1 = 85
-nilai2 = 90
-nilai3 = 78
-# ... sulit diolah`}</pre>
+                    <StaticCodeBlock code={staticCode} />
                   </div>
                   <p style={styles.text}>
                     Dengan list, data menjadi terstruktur, mudah diakses, ringkas, menghemat jumlah variabel, dan dengan mudah dimanipulasi dengan cara mengakses langsung elemen atau nilai yang ingin dimanipulasi.
