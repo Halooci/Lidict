@@ -373,16 +373,16 @@ const LatihanList = ({ onAllCorrectChange }) => {
     },
     {
       id: 1,
-      question: "Cara membuat list kosong dalam Python yaitu ....",
+      question: "Yang dimaksud dengan 'list' dalam pemrograman Python adalah ....",
       options: [
-        "list = ()",
-        "list = {}",
-        "list = []",
-        "list = \"\"",
-        "list = set()"
+        "Tipe data untuk menyimpan satu angka saja",
+        "Fungsi untuk mencetak teks ke layar",
+        "Struktur data untuk menyimpan banyak nilai dalam satu variabel",
+        "Perintah untuk mengulang program",
+        "Tipe data khusus untuk bilangan desimal"
       ],
       answer: 2,
-      explanation: "List kosong dibuat dengan sepasang kurung siku tanpa isi: `[]`."
+      explanation: "List Struktur data untuk menyimpan banyak nilai dalam satu variabel`."
     },
     {
       id: 2,

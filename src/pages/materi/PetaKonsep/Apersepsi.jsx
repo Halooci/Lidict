@@ -415,7 +415,7 @@ export default function Apersepsi() {
                   <br />
                   nama_siswa → <strong style={{color: "#10b981"}}>BENAR</strong>
                   <br />
-                  _nilai, angka1 → <strong style={{color: "#10b981"}}>BENAR</strong>
+                  _nilai → <strong style={{color: "#10b981"}}>BENAR</strong>
                   <br />
                   1siswa → <strong style={{color: "#ef4444"}}>SALAH</strong>
                   <br />
@@ -431,14 +431,15 @@ export default function Apersepsi() {
                 <li>
                   Tidak boleh sama dengan kata kunci (keyword) Python, seperti print, if, for, while, input, return, def, True, False, and, or, dll.
                   <br />
-                  if = 5, print = "halo", def = 10 → <strong style={{color: "#ef4444"}}>SALAH</strong>
+                  print = "halo" → <strong style={{color: "#ef4444"}}>SALAH</strong>
+                  
                   <br />
-                  print_data, if_statement → <strong style={{color: "#10b981"}}>BENAR</strong>
+                  if_statement → <strong style={{color: "#10b981"}}>BENAR</strong>
                 </li>
                 <li>
-                  Bersifat case-sensitive, huruf besar dan kecil dibedakan. Jadi Harga, harga, dan HARGA adalah variabel yang berbeda.
+                  Bersifat case-sensitive, huruf besar dan kecil dibedakan. Contoh Harga, harga, dan HARGA adalah variabel yang berbeda. Begitupun nama, Nama, NAMA adalah tiga variabel berbeda.
                   <br />
-                  nama, Nama, NAMA → <strong>tiga variabel berbeda.</strong>
+                  
                 </li>
                 <li>
                   Buat nama yang deskriptif agar mudah dipahami. Misalnya rata_rata lebih jelas daripada rt dan total_nilai lebih baik daripada tn
