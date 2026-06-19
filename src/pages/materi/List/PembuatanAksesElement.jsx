@@ -1275,7 +1275,7 @@ sys.stdout = StringIO()
             <div style={styles.card}>
               <ol style={styles.list}>
                 <li>Mahasiswa mampu membuat list dalam Python.</li>
-                <li>Mahasiswa mampu mengambil elemen list menggunakan indeks positif, negatif, dan slicing.</li>
+                <li>Mahasiswa mampu mengambil elemen list menggunakan indeks positif dan negatif.</li>
               </ol>
             </div>
           </section>
