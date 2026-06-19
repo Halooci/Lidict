@@ -22,10 +22,19 @@ export default function EvaluasiAkhir() {
   const [role, setRole] = useState(null);
   const [tokenKelas, setTokenKelas] = useState(null);
   const [kelasId, setKelasId] = useState(null);
-  const [kkm, setKkm] = useState(70); // default
+  const [kkm, setKkm] = useState(70);
 
   // DURASI EVALUASI (1500 untuk 25 menit)
   const DURASI_KUIS = 1500;
+
+  // Responsive state
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     const userId = localStorage.getItem('userId');
@@ -124,8 +133,8 @@ export default function EvaluasiAkhir() {
   const [quizStarted, setQuizStarted] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState([]);
-  const answersRef = useRef(answers); // Ref untuk jawaban terbaru
-  const [flags, setFlags] = useState([]);
+  const answersRef = useRef(answers);
+  const [unsures, setUnsures] = useState([]);
   const [submitted, setSubmitted] = useState(false);
   const [timeLeft, setTimeLeft] = useState(DURASI_KUIS);
   const timerRef = useRef(null);
@@ -133,17 +142,17 @@ export default function EvaluasiAkhir() {
   const [savingData, setSavingData] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showWarningModal, setShowWarningModal] = useState(false);
-  const isSubmittingRef = useRef(false); // Mencegah multiple submit
+  const [showUnsureWarningModal, setShowUnsureWarningModal] = useState(false);
+  const isSubmittingRef = useRef(false);
 
   // Inisialisasi state jawaban saat soal berubah
   useEffect(() => {
     if (questions.length > 0) {
       setAnswers(Array(questions.length).fill(null));
-      setFlags(Array(questions.length).fill(false));
+      setUnsures(Array(questions.length).fill(false));
     }
   }, [questions]);
 
-  // Sinkronkan answersRef setiap kali answers berubah
   useEffect(() => {
     answersRef.current = answers;
   }, [answers]);
@@ -162,7 +171,6 @@ export default function EvaluasiAkhir() {
       setTimeLeft(prev => {
         if (prev <= 1) {
           stopTimer();
-          // Auto submit saat waktu habis
           if (!submitted && quizStarted && !isSubmittingRef.current) {
             processSubmit(true);
           }
@@ -193,13 +201,19 @@ export default function EvaluasiAkhir() {
     setAnswers(newAnswers);
   };
 
-  const toggleFlag = () => {
-    const newFlags = [...flags];
-    newFlags[currentIndex] = !newFlags[currentIndex];
-    setFlags(newFlags);
+  const toggleUnsure = () => {
+    const newUnsures = [...unsures];
+    newUnsures[currentIndex] = !newUnsures[currentIndex];
+    setUnsures(newUnsures);
   };
 
   const handleCollectClick = () => {
+    const hasUnsure = unsures.some(u => u === true);
+    if (hasUnsure) {
+      setShowUnsureWarningModal(true);
+      return;
+    }
+
     const allAnswered = answers.every(ans => ans !== null);
     if (!allAnswered) {
       setShowWarningModal(true);
@@ -208,24 +222,16 @@ export default function EvaluasiAkhir() {
     setShowConfirmModal(true);
   };
 
-  const handleSubmit = (auto = false) => {
-    if (!auto) {
-      setShowConfirmModal(true);
-      return;
-    }
-    processSubmit(true);
-  };
-
   const processSubmit = async (auto = false) => {
     if (submitted || questions.length === 0 || isSubmittingRef.current) return;
     isSubmittingRef.current = true;
-    
+
     stopTimer();
     setSubmitted(true);
     setShowConfirmModal(false);
     setShowWarningModal(false);
+    setShowUnsureWarningModal(false);
 
-    // Ambil jawaban terkini dari ref (menghindari stale closure)
     const currentAnswers = answersRef.current;
 
     let correct = 0;
@@ -233,18 +239,15 @@ export default function EvaluasiAkhir() {
     for (let i = 0; i < questions.length; i++) {
       const q = questions[i];
       const userAnswer = currentAnswers[i];
-      // Konversi jawaban_benar ke Number agar perbandingan aman
       const isCorrect = (userAnswer !== null && userAnswer === Number(q.jawaban_benar));
       if (isCorrect) correct++;
       results.push({ ...q, userAnswer, isCorrect });
     }
     const wrong = questions.length - correct;
     const totalScore = correct * (questions[0]?.bobot || 5);
-    // Hitung waktu yang digunakan
     const waktuDigunakan = auto ? DURASI_KUIS : DURASI_KUIS - (timeLeft < 0 ? 0 : timeLeft);
     setResultsData({ results, correct, wrong, totalScore, waktuDigunakan });
 
-    // Hanya mahasiswa yang menyimpan
     if (role === 'mahasiswa') {
       setSavingData(true);
       try {
@@ -282,7 +285,7 @@ export default function EvaluasiAkhir() {
     setCurrentIndex(0);
     if (questions.length > 0) {
       setAnswers(Array(questions.length).fill(null));
-      setFlags(Array(questions.length).fill(false));
+      setUnsures(Array(questions.length).fill(false));
     }
     setSubmitted(false);
     setTimeLeft(DURASI_KUIS);
@@ -291,18 +294,34 @@ export default function EvaluasiAkhir() {
   };
 
   const startQuiz = () => {
-    resetQuiz(); // bersihkan state lama
+    resetQuiz();
     setQuizStarted(true);
     setTimeLeft(DURASI_KUIS);
     setSubmitted(false);
     setCurrentIndex(0);
     if (questions.length > 0) {
       setAnswers(Array(questions.length).fill(null));
-      setFlags(Array(questions.length).fill(false));
+      setUnsures(Array(questions.length).fill(false));
     }
     setResultsData(null);
     startTimer();
   };
+
+  // CSS hover global
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.textContent = `
+      .btn-hover-primary:hover { background-color: #FFD43B !important; color: #306998 !important; transform: translateY(-2px); transition: all 0.2s ease; }
+      .btn-hover-unsure:hover { background-color: #FFD43B !important; color: #306998 !important; transform: translateY(-2px); }
+      .btn-hover-nav:hover { background-color: #FFD43B !important; color: #306998 !important; transform: translateY(-2px); }
+      .btn-hover-submit:hover { background-color: #FFD43B !important; color: #306998 !important; transform: translateY(-2px); }
+      .btn-hover-retry:hover { background-color: #e67e22 !important; transform: translateY(-2px); }
+      .btn-hover-next:hover { background-color: #1e4a76 !important; transform: translateY(-2px); }
+      .nav-box-hover:hover { transform: scale(1.05); box-shadow: 0 2px 8px rgba(0,0,0,0.2); transition: all 0.15s ease; }
+    `;
+    document.head.appendChild(style);
+    return () => document.head.removeChild(style);
+  }, []);
 
   // ---------- RENDER ----------
   if (loadingSoal) {
@@ -338,6 +357,7 @@ export default function EvaluasiAkhir() {
     );
   }
 
+  // Halaman petunjuk
   if (!quizStarted && !submitted) {
     const totalSoal = questions.length;
     const bobot = questions[0]?.bobot || 5;
@@ -356,14 +376,13 @@ export default function EvaluasiAkhir() {
               <ul style={styles.instructionList}>
                 <li>Evaluasi terdiri dari {totalSoal} soal pilihan ganda.</li>
                 <li>Setiap soal bernilai {bobot} poin (total maksimal {totalSoal * bobot}).</li>
-                <li>Waktu pengerjaan: {Math.floor(DURASI_KUIS / 60)} menit (timer berjalan setelah mulai).</li>
-                <li>Jika waktu habis, jawaban yang sudah terisi akan tersimpan dan terkirim secara otomatis.</li>
-                <li>Gunakan fitur "Tandai Ragu-ragu" untuk soal yang perlu ditinjau ulang.</li>
-                <li>Navigasi soal dapat melalui panel kotak nomor atau tombol Sebelumnya/Selanjutnya.</li>
+                <li>Waktu pengerjaan: 25 menit (timer berjalan setelah tombol mulai evaluasi diklik).</li>
                 <li>Pastikan semua jawaban sudah dipilih sebelum menekan KUMPULKAN JAWABAN.</li>
-                {role === 'mahasiswa' && <li>Nilai minimal kelulusan (KKM) adalah {kkm}.</li>}
+                <li>Pastikan tombol ragu-ragu nonaktif disemua soal sebelum mengumpulkan jawaban.</li>
+                <li>Jika waktu habis, jawaban yang sudah terisi akan tersimpan dan terkirim secara otomatis.</li>
+                <li>KKM: 70. Jika nilai yang didapat tidak mencapai KKM, maka harus mengerjakan ulang evaluasi atau mengulang materi lagi.</li>
               </ul>
-              <button style={styles.startButton} onClick={startQuiz}>MULAI EVALUASI</button>
+              <button className="btn-hover-primary" style={styles.startButton} onClick={startQuiz}>MULAI EVALUASI</button>
             </div>
           </div>
         </div>
@@ -371,13 +390,15 @@ export default function EvaluasiAkhir() {
     );
   }
 
+  // Halaman hasil
   if (submitted && resultsData) {
     const { correct, wrong, totalScore, waktuDigunakan } = resultsData;
     const minutesUsed = Math.floor(waktuDigunakan / 60);
     const secondsUsed = waktuDigunakan % 60;
-    const skorMaks = questions.length * (questions[0]?.bobot || 5);
+    const totalSoal = questions.length;
+    const skorMaks = totalSoal * (questions[0]?.bobot || 5);
     const isPassed = totalScore >= kkm;
-    const percentage = Math.round((correct / questions.length) * 100);
+    const percentage = Math.round((correct / totalSoal) * 100);
 
     return (
       <div style={styles.fullscreenResult}>
@@ -388,45 +409,63 @@ export default function EvaluasiAkhir() {
           </div>
           <div style={styles.scoreDisplay}>
             <span style={styles.scoreNumberNew}>{totalScore}</span>
-            <span style={styles.scoreTotalNew}>/{skorMaks}</span>
           </div>
           <div style={styles.progressContainer}>
             <div style={styles.progressBar}>
-              <div style={{
-                width: `${percentage}%`,
-                height: "100%",
-                backgroundColor: isPassed ? "#306998" : "#f59e0b",
-                borderRadius: "30px",
-                transition: "width 0.5s"
-              }}></div>
+              <div
+                style={{
+                  width: `${percentage}%`,
+                  height: "100%",
+                  backgroundColor: isPassed ? "#306998" : "#f59e0b",
+                  borderRadius: "30px",
+                  transition: "width 0.5s",
+                }}
+              ></div>
             </div>
             <div style={styles.progressLabel}>{percentage}%</div>
           </div>
           <div style={styles.statsGridNew}>
             <div style={styles.statItemNew}>
               <div style={styles.statIcon}>✓</div>
-              <div><div style={styles.statLabelNew}>Benar</div><div style={styles.statValueNew}>{correct}</div></div>
+              <div>
+                <div style={styles.statLabelNew}>Benar</div>
+                <div style={styles.statValueNew}>{correct}</div>
+              </div>
             </div>
             <div style={styles.statItemNew}>
               <div style={styles.statIcon}>✗</div>
-              <div><div style={styles.statLabelNew}>Salah</div><div style={styles.statValueNew}>{wrong}</div></div>
+              <div>
+                <div style={styles.statLabelNew}>Salah</div>
+                <div style={styles.statValueNew}>{wrong}</div>
+              </div>
             </div>
             <div style={styles.statItemNew}>
               <div style={styles.statIcon}>⏱</div>
-              <div><div style={styles.statLabelNew}>Waktu</div><div style={styles.statValueNew}>{minutesUsed}m {secondsUsed}s</div></div>
+              <div>
+                <div style={styles.statLabelNew}>Waktu</div>
+                <div style={styles.statValueNew}>{minutesUsed}m {secondsUsed}s</div>
+              </div>
             </div>
           </div>
           <div style={styles.resultMessageNew}>
-            {isPassed ? (
-              <div style={styles.passedBoxNew}>
-                <div style={{ fontSize: '22px', fontWeight: 'bold', marginBottom: '6px' }}> SELAMAT! </div>
-                <div>Dengan menyelesaikan Evaluasi ini, Anda telah menyelesaikan seluruh tahapan pembelajaran List dan Dictionary.</div>
-                <div style={{ marginTop: '8px', fontSize: '15px', opacity: 0.9 }}>.</div>
-              </div>
+            {role === 'mahasiswa' ? (
+              isPassed ? (
+                <div style={styles.passedBoxNew}>
+                  <div style={{ fontSize: '22px', fontWeight: 'bold', marginBottom: '6px' }}>SELAMAT!</div>
+                  <div>Status: LULUS (Nilai {totalScore} ≥ KKM {kkm})</div>
+                  <div style={{ marginTop: '8px', fontSize: '15px', opacity: 0.9 }}>
+                    Materi berikutnya sudah terbuka, silahkan akses.
+                  </div>
+                </div>
+              ) : (
+                <div style={styles.failedBoxNew}>
+                  <div style={{ fontWeight: 'bold', fontSize: '18px' }}>Status: TIDAK LULUS</div>
+                  <div style={{ marginTop: '6px' }}>Nilai {totalScore} &lt; KKM {kkm}</div>
+                  <div style={{ marginTop: '8px', fontSize: '15px' }}>Silahkan ulangi pengerjaan evaluasi atau kembali ke materi.</div>
+                </div>
+              )
             ) : (
-              <div style={styles.failedBoxNew}>
-                <strong>MOHON MAAF,</strong> Anda TIDAK LULUS (Nilai {totalScore} &lt; KKM {kkm})
-              </div>
+              <div style={{ fontSize: '16px', color: '#306998' }}>Nilai akhir: {totalScore}</div>
             )}
             {role === 'dosen' && (
               <div style={{ marginTop: '10px', fontStyle: 'italic', color: '#64748b' }}>
@@ -436,13 +475,16 @@ export default function EvaluasiAkhir() {
           </div>
           <div style={styles.resultActionsNew}>
             {role === 'mahasiswa' && !isPassed && (
-              <button style={styles.retryButtonNew} onClick={resetQuiz}>Ulangi Evaluasi</button>
+              <>
+                <button className="btn-hover-retry" style={styles.retryButtonNew} onClick={resetQuiz} disabled={savingData}>Ulangi Evaluasi</button>
+                <button className="btn-hover-next" style={styles.backMaterialButtonNew} onClick={() => window.location.href = '/'}>Kembali ke Beranda</button>
+              </>
             )}
             {role === 'mahasiswa' && isPassed && (
-              <button style={styles.petaKonsepButton} onClick={() => navigate('/')}>Kembali ke Beranda</button>
+              <button className="btn-hover-next" style={styles.petaKonsepButton} onClick={() => navigate('/')}>Kembali ke Beranda</button>
             )}
             {role === 'dosen' && (
-              <button style={styles.retryButtonNew} onClick={resetQuiz}>Ulangi (Preview)</button>
+              <button className="btn-hover-retry" style={styles.retryButtonNew} onClick={resetQuiz} disabled={savingData}>Ulangi (Preview)</button>
             )}
           </div>
         </div>
@@ -452,9 +494,196 @@ export default function EvaluasiAkhir() {
 
   // Halaman kuis
   const q = questions[currentIndex];
-  const selectedAnswer = answers[currentIndex];
-  const isFlagged = flags[currentIndex];
+  const isUnsure = unsures[currentIndex];
+  // Daftar indeks soal yang perlu diperbaiki: nomor 1,4,6,11,18,20 -> indeks 0,3,5,10,17,19
+  const smallQuestionIndices = [0, 3, 5, 10, 17, 19];
+  const isSmallQuestion = smallQuestionIndices.includes(currentIndex);
 
+  // Mobile layout
+  if (isMobile) {
+    return (
+      <div style={stylesMobile.fullscreenQuiz}>
+        <div style={stylesMobile.quizHeader}>
+          <div style={stylesMobile.quizTitle}>EVALUASI</div>
+          <div style={stylesMobile.timerBox}>
+            <span style={stylesMobile.timerIcon}>⏱</span>
+            <span style={timeLeft < 60 ? stylesMobile.timerDanger : stylesMobile.timerText}>
+              {formatTime(timeLeft)}
+            </span>
+          </div>
+        </div>
+
+        <div style={stylesMobile.content}>
+          <div style={stylesMobile.navGridContainer}>
+            <div style={stylesMobile.navLabel}>Navigasi Soal</div>
+            <div style={stylesMobile.navGrid}>
+              {questions.map((_, idx) => {
+                let boxStyle = stylesMobile.navBox;
+                if (idx === currentIndex) {
+                  boxStyle = { ...stylesMobile.navBox, ...stylesMobile.navBoxActive };
+                } else if (unsures[idx]) {
+                  boxStyle = { ...stylesMobile.navBox, ...stylesMobile.navBoxUnsure };
+                } else if (answers[idx] !== null) {
+                  boxStyle = { ...stylesMobile.navBox, ...stylesMobile.navBoxAnswered };
+                }
+                return (
+                  <div
+                    key={idx}
+                    className="nav-box-hover"
+                    style={boxStyle}
+                    onClick={() => setCurrentIndex(idx)}
+                  >
+                    {idx + 1}
+                  </div>
+                );
+              })}
+            </div>
+            <div style={stylesMobile.legend}>
+              <span><span style={stylesMobile.legendAnswered}></span> Terjawab</span>
+              <span><span style={stylesMobile.legendUnsure}></span> Ragu</span>
+              <span><span style={stylesMobile.legendActive}></span> Aktif</span>
+              <span><span style={stylesMobile.legendUnanswered}></span> Kosong</span>
+            </div>
+            <div style={stylesMobile.submitWrapper}>
+              <button
+                className="btn-hover-submit"
+                onClick={handleCollectClick}
+                style={stylesMobile.submitButton}
+                disabled={savingData}
+              >
+                {savingData ? "Menyimpan..." : "KUMPULKAN JAWABAN"}
+              </button>
+            </div>
+          </div>
+
+          <div style={stylesMobile.questionCard}>
+            <div style={stylesMobile.questionHeader}>
+              <h3 style={stylesMobile.questionNumber}>Soal {currentIndex + 1} dari {questions.length}</h3>
+              <div style={stylesMobile.actionButtons}>
+                <button
+                  className="btn-hover-unsure"
+                  style={isUnsure ? stylesMobile.unsureButtonActive : stylesMobile.unsureButton}
+                  onClick={toggleUnsure}
+                >
+                  Ragu-ragu
+                </button>
+              </div>
+            </div>
+            <p style={isSmallQuestion ? { ...stylesMobile.questionText, fontSize: '14px' } : stylesMobile.questionText}>
+              {q.pertanyaan}
+            </p>
+
+            <div style={isSmallQuestion ? stylesMobile.optionsContainerNoScroll : stylesMobile.optionsContainer}>
+              {q.pilihan.map((opt, idx) => (
+                <label key={idx} style={isSmallQuestion ? stylesMobile.optionLabelNoScroll : stylesMobile.optionLabel}>
+                  <input
+                    type="radio"
+                    name="question"
+                    value={idx}
+                    checked={answers[currentIndex] === idx}
+                    onChange={() => handleAnswer(idx)}
+                  />
+                  <span style={stylesMobile.optionLetter}>{String.fromCharCode(65 + idx)}.</span> {opt}
+                </label>
+              ))}
+            </div>
+
+            <div style={stylesMobile.navButtons}>
+              <button
+                className="btn-hover-nav"
+                onClick={() => setCurrentIndex(prev => Math.max(0, prev - 1))}
+                disabled={currentIndex === 0}
+                style={currentIndex === 0 ? stylesMobile.navButtonDisabled : stylesMobile.navButton}
+              >
+                Sebelumnya
+              </button>
+              <button
+                className="btn-hover-nav"
+                onClick={() => setCurrentIndex(prev => Math.min(questions.length - 1, prev + 1))}
+                disabled={currentIndex === questions.length - 1}
+                style={currentIndex === questions.length - 1 ? stylesMobile.navButtonDisabled : stylesMobile.navButton}
+              >
+                Selanjutnya
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Modal */}
+        {showConfirmModal && (
+          <div style={stylesMobile.modalOverlay}>
+            <div style={stylesMobile.modalContainer}>
+              <h3 style={stylesMobile.modalTitle}>Konfirmasi Kumpulkan Jawaban</h3>
+              <p style={stylesMobile.modalMessage}>
+                Apakah Anda yakin ingin mengumpulkan semua jawaban?<br />
+                Pastikan Anda telah memeriksa kembali jawaban Anda.
+              </p>
+              <div style={stylesMobile.modalButtons}>
+                <button
+                  style={stylesMobile.modalButtonYes}
+                  onClick={() => processSubmit(false)}
+                  className="btn-hover-primary"
+                >
+                  Ya
+                </button>
+                <button
+                  style={stylesMobile.modalButtonCheck}
+                  onClick={() => setShowConfirmModal(false)}
+                  className="btn-hover-nav"
+                >
+                  Periksa Jawaban Kembali
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showWarningModal && (
+          <div style={stylesMobile.modalOverlay}>
+            <div style={stylesMobile.modalContainerWarning}>
+              <h3 style={stylesMobile.modalTitleWarning}>Peringatan</h3>
+              <p style={stylesMobile.modalMessageWarning}>
+                Anda belum menjawab semua soal.<br />
+                Harap selesaikan semua soal terlebih dahulu sebelum mengumpulkan.
+              </p>
+              <div style={stylesMobile.modalButtons}>
+                <button
+                  style={stylesMobile.modalButtonWarning}
+                  onClick={() => setShowWarningModal(false)}
+                  className="btn-hover-nav"
+                >
+                  OK
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showUnsureWarningModal && (
+          <div style={stylesMobile.modalOverlay}>
+            <div style={stylesMobile.modalContainerWarning}>
+              <h3 style={stylesMobile.modalTitleWarning}>Ragu-ragu Aktif</h3>
+              <p style={stylesMobile.modalMessageWarning}>
+                Masih ada soal yang ditandai Ragu-ragu.<br />
+                Harap nonaktifkan tombol ragu-ragu pada semua soal sebelum mengumpulkan jawaban.
+              </p>
+              <div style={stylesMobile.modalButtons}>
+                <button
+                  style={stylesMobile.modalButtonWarning}
+                  onClick={() => setShowUnsureWarningModal(false)}
+                  className="btn-hover-nav"
+                >
+                  OK
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // Desktop layout
   return (
     <div style={styles.fullscreenQuiz}>
       <div style={styles.quizHeader}>
@@ -471,22 +700,29 @@ export default function EvaluasiAkhir() {
         <div style={styles.questionCard}>
           <div style={styles.questionHeader}>
             <h3 style={styles.questionNumber}>Soal {currentIndex + 1} dari {questions.length}</h3>
-            <button style={isFlagged ? styles.flagButtonActive : styles.flagButton} onClick={toggleFlag}>
-              {isFlagged ? "🏁 Hapus Ragu" : "❓ Tandai Ragu-ragu"}
-            </button>
+            <div style={styles.actionButtons}>
+              <button
+                className="btn-hover-unsure"
+                style={isUnsure ? styles.unsureButtonActive : styles.unsureButton}
+                onClick={toggleUnsure}
+              >
+                Ragu-ragu
+              </button>
+            </div>
           </div>
-          <p style={styles.questionText}>{q.pertanyaan}</p>
+          <p style={isSmallQuestion ? { ...styles.questionText, fontSize: '14px' } : styles.questionText}>
+            {q.pertanyaan}
+          </p>
 
-          <div style={styles.optionsContainer}>
+          <div style={isSmallQuestion ? styles.optionsContainerNoScroll : styles.optionsContainer}>
             {q.pilihan.map((opt, idx) => (
-              <label key={idx} style={styles.optionLabel}>
+              <label key={idx} style={isSmallQuestion ? styles.optionLabelNoScroll : styles.optionLabel}>
                 <input
                   type="radio"
                   name="question"
                   value={idx}
-                  checked={selectedAnswer === idx}
+                  checked={answers[currentIndex] === idx}
                   onChange={() => handleAnswer(idx)}
-                  disabled={submitted}
                 />
                 <span style={styles.optionLetter}>{String.fromCharCode(65 + idx)}.</span> {opt}
               </label>
@@ -494,13 +730,21 @@ export default function EvaluasiAkhir() {
           </div>
 
           <div style={styles.navButtons}>
-            <button onClick={() => setCurrentIndex(prev => Math.max(0, prev - 1))} disabled={currentIndex === 0} style={styles.navButton}>Sebelumnya</button>
-            <button onClick={() => setCurrentIndex(prev => Math.min(questions.length - 1, prev + 1))} disabled={currentIndex === questions.length - 1} style={styles.navButton}>Selanjutnya</button>
-          </div>
-
-          <div style={styles.submitWrapper}>
-            <button onClick={handleCollectClick} style={styles.submitButton} disabled={savingData}>
-              {savingData ? "Menyimpan..." : "KUMPULKAN JAWABAN"}
+            <button
+              className="btn-hover-nav"
+              onClick={() => setCurrentIndex(prev => Math.max(0, prev - 1))}
+              disabled={currentIndex === 0}
+              style={currentIndex === 0 ? styles.navButtonDisabled : styles.navButton}
+            >
+              Sebelumnya
+            </button>
+            <button
+              className="btn-hover-nav"
+              onClick={() => setCurrentIndex(prev => Math.min(questions.length - 1, prev + 1))}
+              disabled={currentIndex === questions.length - 1}
+              style={currentIndex === questions.length - 1 ? styles.navButtonDisabled : styles.navButton}
+            >
+              Selanjutnya
             </button>
           </div>
         </div>
@@ -510,42 +754,78 @@ export default function EvaluasiAkhir() {
           <div style={styles.navGrid}>
             {questions.map((_, idx) => {
               let boxStyle = styles.navBox;
-              if (idx === currentIndex) boxStyle = { ...styles.navBox, ...styles.navBoxActive };
-              else if (flags[idx]) boxStyle = { ...styles.navBox, ...styles.navBoxFlagged };
-              else if (answers[idx] !== null) boxStyle = { ...styles.navBox, ...styles.navBoxAnswered };
-              return <div key={idx} style={boxStyle} onClick={() => setCurrentIndex(idx)}>{idx + 1}</div>;
+              if (idx === currentIndex) {
+                boxStyle = { ...styles.navBox, ...styles.navBoxActive };
+              } else if (unsures[idx]) {
+                boxStyle = { ...styles.navBox, ...styles.navBoxUnsure };
+              } else if (answers[idx] !== null) {
+                boxStyle = { ...styles.navBox, ...styles.navBoxAnswered };
+              }
+              return (
+                <div
+                  key={idx}
+                  className="nav-box-hover"
+                  style={boxStyle}
+                  onClick={() => setCurrentIndex(idx)}
+                >
+                  {idx + 1}
+                </div>
+              );
             })}
           </div>
           <div style={styles.legend}>
             <span><span style={styles.legendAnswered}></span> Terjawab</span>
-            <span><span style={styles.legendFlagged}></span> Ragu-ragu</span>
+            <span><span style={styles.legendUnsure}></span> Ragu</span>
             <span><span style={styles.legendActive}></span> Aktif</span>
             <span><span style={styles.legendUnanswered}></span> Kosong</span>
+          </div>
+          <div style={styles.submitWrapper}>
+            <button
+              className="btn-hover-submit"
+              onClick={handleCollectClick}
+              style={styles.submitButton}
+              disabled={savingData}
+            >
+              {savingData ? "Menyimpan..." : "KUMPULKAN JAWABAN"}
+            </button>
           </div>
         </div>
       </div>
 
-      {/* Modal Konfirmasi Kumpul */}
+      {/* Modal desktop */}
       {showConfirmModal && (
         <div style={styles.modalOverlay}>
-          <div style={styles.modal}>
-            <div style={styles.modalIcon}>⚠️</div>
-            <h2 style={styles.modalTitle}>Konfirmasi</h2>
-            <p style={styles.modalText}>Apakah Anda yakin ingin mengumpulkan jawaban?</p>
-            <div style={{ display: "flex", gap: "16px", justifyContent: "center", marginTop: "20px" }}>
-              <button style={styles.modalButtonCancel} onClick={() => setShowConfirmModal(false)}>Batal</button>
-              <button style={styles.modalButtonConfirm} onClick={() => processSubmit(false)}>Ya, Kumpulkan</button>
+          <div style={styles.modalContainer}>
+            <h3 style={styles.modalTitle}>Konfirmasi Kumpulkan Jawaban</h3>
+            <p style={styles.modalMessage}>
+              Apakah Anda yakin ingin mengumpulkan semua jawaban?<br />
+              Pastikan Anda telah memeriksa kembali jawaban Anda.
+            </p>
+            <div style={styles.modalButtons}>
+              <button
+                style={styles.modalButtonYes}
+                onClick={() => processSubmit(false)}
+                className="btn-hover-primary"
+              >
+                Ya
+              </button>
+              <button
+                style={styles.modalButtonCheck}
+                onClick={() => setShowConfirmModal(false)}
+                className="btn-hover-nav"
+              >
+                Periksa Jawaban Kembali
+              </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Modal Peringatan Belum Semua Terjawab */}
       {showWarningModal && (
         <div style={styles.modalOverlay}>
-          <div style={styles.modalWarningContainer}>
-            <h3 style={styles.modalWarningTitle}>⚠️ Peringatan</h3>
-            <p style={styles.modalWarningText}>
+          <div style={styles.modalContainerWarning}>
+            <h3 style={styles.modalTitleWarning}>Peringatan</h3>
+            <p style={styles.modalMessageWarning}>
               Anda belum menjawab semua soal.<br />
               Harap selesaikan semua soal terlebih dahulu sebelum mengumpulkan.
             </p>
@@ -553,6 +833,28 @@ export default function EvaluasiAkhir() {
               <button
                 style={styles.modalButtonWarning}
                 onClick={() => setShowWarningModal(false)}
+                className="btn-hover-nav"
+              >
+                OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showUnsureWarningModal && (
+        <div style={styles.modalOverlay}>
+          <div style={styles.modalContainerWarning}>
+            <h3 style={styles.modalTitleWarning}>Ragu-ragu Aktif</h3>
+            <p style={styles.modalMessageWarning}>
+              Masih ada soal yang ditandai Ragu-ragu.<br />
+              Harap nonaktifkan tombol ragu-ragu pada semua soal sebelum mengumpulkan jawaban.
+            </p>
+            <div style={styles.modalButtons}>
+              <button
+                style={styles.modalButtonWarning}
+                onClick={() => setShowUnsureWarningModal(false)}
+                className="btn-hover-nav"
               >
                 OK
               </button>
@@ -564,91 +866,985 @@ export default function EvaluasiAkhir() {
   );
 }
 
-/* ================== STYLE (padding top diperbaiki + modal warning) ================== */
+/* ==================== STYLE DESKTOP ==================== */
 const styles = {
-  page: { padding: "94px 40px 30px 40px", backgroundColor: "#f5f7fa", minHeight: "calc(100vh - 64px)", fontFamily: "Poppins, sans-serif" },
-  header: { backgroundColor: "#306998", color: "white", padding: "18px 24px", position: "relative", marginBottom: "30px", borderRadius: "6px" },
-  headerAccent: { position: "absolute", left: 0, top: 0, bottom: 0, width: "8px", backgroundColor: "#FFD43B", borderRadius: "6px 0 0 6px" },
-  headerTitle: { margin: 0, textAlign: "center", fontSize: "28px", fontWeight: "700" },
-  cardInstruction: { backgroundColor: "white", borderRadius: "16px", padding: "32px", boxShadow: "0 10px 25px rgba(0,0,0,0.05)", maxWidth: "800px", margin: "0 auto" },
-  instructionTitle: { fontSize: "24px", fontWeight: "600", color: "#306998", marginBottom: "20px", borderLeft: "5px solid #FFD43B", paddingLeft: "16px" },
-  instructionList: { lineHeight: "1.9", fontSize: "16px", color: "#2d3748", marginBottom: "32px", paddingLeft: "24px" },
-  startButton: { backgroundColor: "#306998", color: "white", border: "none", padding: "14px 28px", fontSize: "18px", fontWeight: "600", borderRadius: "40px", cursor: "pointer", width: "100%", boxShadow: "0 4px 10px rgba(48,105,152,0.3)" },
-  fullscreenQuiz: { minHeight: "100vh", backgroundColor: "#f5f7fa", fontFamily: "Poppins, sans-serif", padding: "80px 40px 20px 40px" },
-  quizHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", backgroundColor: "#306998", borderRadius: "20px", padding: "16px 32px", marginBottom: "30px", color: "white", boxShadow: "0 6px 14px rgba(0,0,0,0.1)" },
-  quizTitle: { fontSize: "28px", fontWeight: "bold", letterSpacing: "1px" },
-  timerBox: { display: "flex", alignItems: "center", gap: "12px", backgroundColor: "rgba(0,0,0,0.2)", padding: "8px 20px", borderRadius: "60px" },
-  timerIcon: { fontSize: "24px" },
-  timerText: { fontSize: "28px", fontWeight: "700", fontFamily: "monospace" },
-  timerDanger: { fontSize: "28px", fontWeight: "700", fontFamily: "monospace", color: "#FFD43B" },
-  twoColumnLayout: { display: "grid", gridTemplateColumns: "1fr 320px", gap: "30px" },
-  questionCard: { backgroundColor: "white", borderRadius: "28px", padding: "32px", boxShadow: "0 12px 30px rgba(0,0,0,0.08)" },
-  questionHeader: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px", flexWrap: "wrap" },
-  questionNumber: { fontSize: "20px", fontWeight: "700", color: "#306998", margin: 0 },
-  flagButton: { backgroundColor: "#f1f5f9", border: "none", padding: "8px 18px", borderRadius: "40px", fontSize: "14px", fontWeight: "500", cursor: "pointer", color: "#334155" },
-  flagButtonActive: { backgroundColor: "#fef3c7", border: "1px solid #f59e0b", padding: "8px 18px", borderRadius: "40px", fontSize: "14px", fontWeight: "500", cursor: "pointer", color: "#b45309" },
-  questionText: { fontSize: "18px", lineHeight: "1.5", marginBottom: "28px", color: "#0f172a", fontWeight: "500", whiteSpace: "pre-line" },
-  optionsContainer: { display: "flex", flexDirection: "column", gap: "16px", marginBottom: "36px" },
-  optionLabel: { display: "flex", alignItems: "center", gap: "12px", fontSize: "16px", padding: "10px 16px", borderRadius: "16px", backgroundColor: "#f8fafc", cursor: "pointer", border: "1px solid #e2e8f0" },
-  optionLetter: { fontWeight: "bold", color: "#306998", width: "28px" },
-  navButtons: { display: "flex", justifyContent: "space-between", gap: "20px", marginTop: "10px" },
-  navButton: { backgroundColor: "#e2e8f0", border: "none", padding: "10px 20px", borderRadius: "40px", fontWeight: "600", cursor: "pointer", fontSize: "15px", flex: 1, maxWidth: "160px" },
-  submitWrapper: { marginTop: "32px", textAlign: "center" },
-  submitButton: { backgroundColor: "#306998", color: "white", border: "none", padding: "14px 28px", borderRadius: "40px", fontSize: "18px", fontWeight: "bold", cursor: "pointer", width: "100%", maxWidth: "300px" },
-  navGridContainer: { backgroundColor: "white", borderRadius: "20px", padding: "20px", boxShadow: "0 4px 12px rgba(0,0,0,0.05)", height: "fit-content" },
-  navLabel: { fontSize: "18px", fontWeight: "600", marginBottom: "15px", color: "#2c3e50" },
-  navGrid: { display: "flex", flexWrap: "wrap", gap: "12px", marginBottom: "20px" },
-  navBox: { width: "52px", height: "52px", display: "flex", alignItems: "center", justifyContent: "center", borderRadius: "12px", fontWeight: "bold", fontSize: "18px", cursor: "pointer", backgroundColor: "#e2e8f0", color: "#1e293b" },
-  navBoxActive: { backgroundColor: "#306998", color: "white", boxShadow: "0 0 0 3px #FFD43B" },
-  navBoxFlagged: { backgroundColor: "#f59e0b", color: "white" },
-  navBoxAnswered: { backgroundColor: "#10b981", color: "white" },
-  legend: { display: "flex", gap: "24px", fontSize: "14px", color: "#475569", flexWrap: "wrap" },
-  legendAnswered: { display: "inline-block", width: "16px", height: "16px", backgroundColor: "#10b981", borderRadius: "4px", marginRight: "6px", verticalAlign: "middle" },
-  legendFlagged: { display: "inline-block", width: "16px", height: "16px", backgroundColor: "#f59e0b", borderRadius: "4px", marginRight: "6px", verticalAlign: "middle" },
-  legendActive: { display: "inline-block", width: "16px", height: "16px", backgroundColor: "#306998", borderRadius: "4px", marginRight: "6px", verticalAlign: "middle", boxShadow: "0 0 0 1px #FFD43B" },
-  legendUnanswered: { display: "inline-block", width: "16px", height: "16px", backgroundColor: "#e2e8f0", borderRadius: "4px", marginRight: "6px", verticalAlign: "middle" },
-  fullscreenResult: { minHeight: "100vh", backgroundColor: "#f5f7fa", display: "flex", alignItems: "center", justifyContent: "center", fontFamily: "Poppins, sans-serif", padding: "80px 20px 20px 20px" },
-  resultCardNew: { backgroundColor: "white", borderRadius: "32px", padding: "40px 30px", maxWidth: "600px", width: "100%", textAlign: "center", boxShadow: "0 20px 35px -10px rgba(0,0,0,0.1)", borderTop: "6px solid #306998" },
-  resultHeaderNew: { marginBottom: "20px" },
-  headerAccentResultNew: { width: "60px", height: "4px", backgroundColor: "#FFD43B", margin: "12px auto 0", borderRadius: "2px" },
-  scoreDisplay: { marginBottom: "30px" },
-  scoreNumberNew: { fontSize: "72px", fontWeight: "800", color: "#306998", lineHeight: 1 },
-  scoreTotalNew: { fontSize: "28px", fontWeight: "500", color: "#64748b" },
-  progressContainer: { marginBottom: "35px" },
-  progressBar: { backgroundColor: "#e2e8f0", borderRadius: "30px", height: "12px", overflow: "hidden", marginBottom: "8px" },
-  progressLabel: { fontSize: "14px", fontWeight: "600", color: "#306998", textAlign: "right" },
-  statsGridNew: { display: "flex", justifyContent: "space-between", gap: "15px", marginBottom: "30px", flexWrap: "wrap" },
-  statItemNew: { flex: 1, display: "flex", alignItems: "center", gap: "12px", backgroundColor: "#f8fafc", padding: "12px 16px", borderRadius: "20px", border: "1px solid #e2e8f0", textAlign: "left" },
-  statIcon: { fontSize: "28px", fontWeight: "bold", color: "#306998", width: "40px", textAlign: "center" },
-  statLabelNew: { fontSize: "12px", fontWeight: "500", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.5px" },
-  statValueNew: { fontSize: "24px", fontWeight: "700", color: "#0f172a", lineHeight: 1.2 },
-  resultMessageNew: { marginBottom: "30px" },
-  passedBoxNew: { backgroundColor: "#e6f7ec", color: "#2e7d32", padding: "18px 14px", borderRadius: "20px", border: "1px solid #a5d6a7", lineHeight: 1.6 },
-  failedBoxNew: { backgroundColor: "#fee9e6", color: "#c62828", padding: "14px", borderRadius: "60px", fontWeight: "600", fontSize: "18px", border: "1px solid #ffab91" },
-  resultActionsNew: { display: "flex", justifyContent: "center", gap: "15px" },
-  retryButtonNew: { backgroundColor: "#f59e0b", border: "none", padding: "12px 28px", borderRadius: "40px", fontSize: "16px", fontWeight: "bold", color: "white", cursor: "pointer" },
-  petaKonsepButton: { backgroundColor: "#306998", border: "none", padding: "12px 28px", borderRadius: "40px", fontSize: "16px", fontWeight: "bold", color: "white", cursor: "pointer" },
-  // Modal konfirmasi
-  modalOverlay: { position: "fixed", top: 0, left: 0, right: 0, bottom: 0, backgroundColor: "rgba(0,0,0,0.5)", backdropFilter: "blur(4px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 2000 },
-  modal: { background: "white", borderRadius: "32px", padding: "32px", maxWidth: "400px", width: "90%", textAlign: "center", boxShadow: "0 20px 35px rgba(0,0,0,0.2)" },
-  modalIcon: { fontSize: "48px", marginBottom: "16px" },
-  modalTitle: { fontSize: "24px", fontWeight: "700", color: "#1e3a5f", marginBottom: "12px" },
-  modalText: { fontSize: "16px", color: "#334155", lineHeight: "1.5", marginBottom: "24px" },
-  modalButtonCancel: { background: "#6c757d", color: "white", border: "none", padding: "10px 24px", borderRadius: "40px", fontSize: "14px", fontWeight: "600", cursor: "pointer" },
-  modalButtonConfirm: { background: "linear-gradient(135deg, #3182ce, #2c5282)", color: "white", border: "none", padding: "10px 24px", borderRadius: "40px", fontSize: "14px", fontWeight: "600", cursor: "pointer" },
-  // Modal warning
-  modalWarningContainer: {
+  page: {
+    padding: "68px 40px 30px 40px",
+    backgroundColor: "#f5f7fa",
+    minHeight: "calc(100vh - 64px)",
+    fontFamily: "Poppins, sans-serif",
+  },
+  header: {
+    backgroundColor: "#306998",
+    color: "white",
+    padding: "16px 24px",
+    position: "relative",
+    marginBottom: "24px",
+    borderRadius: "6px",
+  },
+  headerAccent: {
+    position: "absolute",
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: "8px",
+    backgroundColor: "#FFD43B",
+    borderRadius: "6px 0 0 6px",
+  },
+  headerTitle: {
+    margin: 0,
+    textAlign: "center",
+    fontSize: "26px",
+    fontWeight: "700",
+  },
+  cardInstruction: {
     backgroundColor: "white",
-    borderRadius: "24px",
-    padding: "32px 28px",
-    maxWidth: "450px",
+    borderRadius: "16px",
+    padding: "28px 32px",
+    boxShadow: "0 10px 25px rgba(0,0,0,0.05)",
+    maxWidth: "800px",
+    margin: "0 auto",
+  },
+  instructionTitle: {
+    fontSize: "22px",
+    fontWeight: "600",
+    color: "#306998",
+    marginBottom: "16px",
+    borderLeft: "5px solid #FFD43B",
+    paddingLeft: "16px",
+  },
+  instructionList: {
+    lineHeight: "1.9",
+    fontSize: "16px",
+    color: "#2d3748",
+    marginBottom: "28px",
+    paddingLeft: "24px",
+  },
+  startButton: {
+    backgroundColor: "#306998",
+    color: "white",
+    border: "none",
+    padding: "14px 28px",
+    fontSize: "18px",
+    fontWeight: "600",
+    borderRadius: "40px",
+    cursor: "pointer",
+    width: "100%",
+    transition: "0.2s",
+    boxShadow: "0 4px 10px rgba(48,105,152,0.3)",
+  },
+
+  fullscreenQuiz: {
+    height: "calc(100vh - 64px)",
+    display: "flex",
+    flexDirection: "column",
+    backgroundColor: "#f5f7fa",
+    fontFamily: "Poppins, sans-serif",
+    padding: "10px 40px 14px 40px",
+    overflow: "hidden",
+  },
+  quizHeader: {
+    flexShrink: 0,
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: "#306998",
+    borderRadius: "16px",
+    padding: "10px 28px",
+    marginBottom: "16px",
+    color: "white",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+  },
+  quizTitle: {
+    fontSize: "24px",
+    fontWeight: "bold",
+    letterSpacing: "0.5px",
+  },
+  timerBox: {
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+    backgroundColor: "rgba(0,0,0,0.2)",
+    padding: "4px 16px",
+    borderRadius: "60px",
+  },
+  timerIcon: { fontSize: "20px" },
+  timerText: { fontSize: "24px", fontWeight: "700", fontFamily: "monospace" },
+  timerDanger: {
+    fontSize: "24px",
+    fontWeight: "700",
+    fontFamily: "monospace",
+    color: "#FFD43B",
+  },
+  twoColumnLayout: {
+    flex: 1,
+    display: "grid",
+    gridTemplateColumns: "1fr 280px",
+    gap: "20px",
+    minHeight: 0,
+    overflow: "hidden",
+  },
+  questionCard: {
+    backgroundColor: "white",
+    borderRadius: "18px",
+    padding: "18px 22px",
+    boxShadow: "0 8px 24px rgba(0,0,0,0.06)",
+    display: "flex",
+    flexDirection: "column",
+    overflow: "hidden",
+  },
+  questionHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: "8px",
+    flexWrap: "wrap",
+  },
+  questionNumber: {
+    fontSize: "17px",
+    fontWeight: "700",
+    color: "#306998",
+    margin: 0,
+  },
+  actionButtons: { display: "flex", gap: "8px" },
+  unsureButton: {
+    backgroundColor: "#f1f5f9",
+    border: "none",
+    padding: "4px 14px",
+    borderRadius: "40px",
+    fontSize: "13px",
+    fontWeight: "500",
+    cursor: "pointer",
+    color: "#334155",
+  },
+  unsureButtonActive: {
+    backgroundColor: "#FFD43B",
+    border: "none",
+    padding: "4px 14px",
+    borderRadius: "40px",
+    fontSize: "13px",
+    fontWeight: "500",
+    cursor: "pointer",
+    color: "#306998",
+    border: "1px solid #eab308",
+  },
+  questionText: {
+    fontSize: "16px",
+    lineHeight: "1.5",
+    marginBottom: "12px",
+    color: "#0f172a",
+    fontWeight: "500",
+    whiteSpace: "pre-line",
+    flexShrink: 0,
+  },
+  // Opsi normal (tanpa scroll, tidak diubah)
+  optionsContainer: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "7px",
+    marginBottom: "14px",
+    overflowY: "auto",
+    flex: "1 1 auto",
+    paddingRight: "4px",
+  },
+  optionLabel: {
+    display: "flex",
+    alignItems: "center",
+    gap: "10px",
+    fontSize: "15px",
+    padding: "7px 14px",
+    borderRadius: "12px",
+    backgroundColor: "#f8fafc",
+    cursor: "pointer",
+    border: "1px solid #e2e8f0",
+  },
+  // Opsi untuk soal yang bermasalah (tanpa scroll, padding lebih kecil)
+  optionsContainerNoScroll: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "4px",
+    marginBottom: "12px",
+    overflow: "visible",
+    flex: "0 1 auto",
+    paddingRight: "0px",
+  },
+  optionLabelNoScroll: {
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+    fontSize: "15px",
+    padding: "4px 10px",
+    borderRadius: "10px",
+    backgroundColor: "#f8fafc",
+    cursor: "pointer",
+    border: "1px solid #e2e8f0",
+  },
+  optionLetter: {
+    fontWeight: "bold",
+    color: "#306998",
+    width: "24px",
+    fontSize: "14px",
+  },
+  navButtons: {
+    display: "flex",
+    justifyContent: "space-between",
+    gap: "12px",
+    marginTop: "4px",
+    flexShrink: 0,
+  },
+  navButton: {
+    backgroundColor: "#e2e8f0",
+    border: "none",
+    padding: "7px 16px",
+    borderRadius: "40px",
+    fontWeight: "600",
+    cursor: "pointer",
+    fontSize: "14px",
+    flex: 1,
+    maxWidth: "120px",
+  },
+  navButtonDisabled: {
+    backgroundColor: "#cbd5e1",
+    border: "none",
+    padding: "7px 16px",
+    borderRadius: "40px",
+    fontWeight: "600",
+    fontSize: "14px",
+    flex: 1,
+    maxWidth: "120px",
+    cursor: "not-allowed",
+    color: "#64748b",
+  },
+
+  navGridContainer: {
+    backgroundColor: "white",
+    borderRadius: "16px",
+    padding: "14px",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
+    display: "flex",
+    flexDirection: "column",
+    overflow: "hidden",
+  },
+  navLabel: {
+    fontSize: "15px",
+    fontWeight: "600",
+    marginBottom: "10px",
+    color: "#2c3e50",
+  },
+  navGrid: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: "6px",
+    marginBottom: "12px",
+  },
+  navBox: {
+    width: "40px",
+    height: "40px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: "10px",
+    fontWeight: "bold",
+    fontSize: "15px",
+    cursor: "pointer",
+    backgroundColor: "#e2e8f0",
+    color: "#1e293b",
+  },
+  navBoxActive: {
+    backgroundColor: "#306998",
+    color: "white",
+    boxShadow: "0 0 0 2px #FFD43B",
+  },
+  navBoxUnsure: {
+    backgroundColor: "#FFD43B",
+    color: "#306998",
+  },
+  navBoxAnswered: {
+    backgroundColor: "#10b981",
+    color: "white",
+  },
+  legend: {
+    display: "flex",
+    gap: "12px",
+    fontSize: "12px",
+    color: "#475569",
+    flexWrap: "wrap",
+    marginBottom: "6px",
+  },
+  legendAnswered: {
+    display: "inline-block",
+    width: "12px",
+    height: "12px",
+    backgroundColor: "#10b981",
+    borderRadius: "3px",
+    marginRight: "4px",
+    verticalAlign: "middle",
+  },
+  legendUnsure: {
+    display: "inline-block",
+    width: "12px",
+    height: "12px",
+    backgroundColor: "#FFD43B",
+    borderRadius: "3px",
+    marginRight: "4px",
+    verticalAlign: "middle",
+  },
+  legendActive: {
+    display: "inline-block",
+    width: "12px",
+    height: "12px",
+    backgroundColor: "#306998",
+    borderRadius: "3px",
+    marginRight: "4px",
+    verticalAlign: "middle",
+    boxShadow: "0 0 0 1px #FFD43B",
+  },
+  legendUnanswered: {
+    display: "inline-block",
+    width: "12px",
+    height: "12px",
+    backgroundColor: "#e2e8f0",
+    borderRadius: "3px",
+    marginRight: "4px",
+    verticalAlign: "middle",
+  },
+  submitWrapper: {
+    textAlign: "center",
+    paddingTop: "6px",
+  },
+  submitButton: {
+    backgroundColor: "#306998",
+    color: "white",
+    border: "none",
+    padding: "9px 18px",
+    borderRadius: "40px",
+    fontSize: "15px",
+    fontWeight: "bold",
+    cursor: "pointer",
+    width: "100%",
+  },
+
+  fullscreenResult: {
+    minHeight: "100vh",
+    backgroundColor: "#f5f7fa",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    fontFamily: "Poppins, sans-serif",
+    padding: "68px 20px 20px 20px",
+  },
+  resultCardNew: {
+    backgroundColor: "white",
+    borderRadius: "28px",
+    padding: "30px 28px",
+    maxWidth: "480px",
+    width: "100%",
+    textAlign: "center",
+    boxShadow: "0 20px 35px -10px rgba(0,0,0,0.1)",
+    borderTop: "6px solid #306998",
+  },
+  resultHeaderNew: { marginBottom: "16px" },
+  headerAccentResultNew: {
+    width: "50px",
+    height: "4px",
+    backgroundColor: "#FFD43B",
+    margin: "8px auto 0",
+    borderRadius: "2px",
+  },
+  scoreDisplay: { marginBottom: "18px" },
+  scoreNumberNew: {
+    fontSize: "60px",
+    fontWeight: "800",
+    color: "#306998",
+    lineHeight: 1,
+  },
+  progressContainer: { marginBottom: "24px" },
+  progressBar: {
+    backgroundColor: "#e2e8f0",
+    borderRadius: "30px",
+    height: "8px",
+    overflow: "hidden",
+    marginBottom: "4px",
+  },
+  progressLabel: {
+    fontSize: "12px",
+    fontWeight: "600",
+    color: "#306998",
+    textAlign: "right",
+  },
+  statsGridNew: {
+    display: "flex",
+    justifyContent: "space-between",
+    gap: "8px",
+    marginBottom: "20px",
+    flexWrap: "wrap",
+  },
+  statItemNew: {
+    flex: 1,
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+    backgroundColor: "#f8fafc",
+    padding: "8px 12px",
+    borderRadius: "14px",
+    border: "1px solid #e2e8f0",
+    textAlign: "left",
+  },
+  statIcon: {
+    fontSize: "22px",
+    fontWeight: "bold",
+    color: "#306998",
+    width: "28px",
+    textAlign: "center",
+  },
+  statLabelNew: {
+    fontSize: "10px",
+    fontWeight: "500",
+    color: "#64748b",
+    textTransform: "uppercase",
+    letterSpacing: "0.5px",
+  },
+  statValueNew: {
+    fontSize: "18px",
+    fontWeight: "700",
+    color: "#0f172a",
+    lineHeight: 1.2,
+  },
+  resultMessageNew: { marginBottom: "20px" },
+  passedBoxNew: {
+    backgroundColor: "#e6f7ec",
+    color: "#2e7d32",
+    padding: "14px",
+    borderRadius: "20px",
+    border: "1px solid #a5d6a7",
+    lineHeight: 1.6,
+  },
+  failedBoxNew: {
+    backgroundColor: "#fee9e6",
+    color: "#c62828",
+    padding: "14px",
+    borderRadius: "20px",
+    border: "1px solid #ffab91",
+    lineHeight: 1.6,
+  },
+  resultActionsNew: {
+    display: "flex",
+    justifyContent: "center",
+    gap: "14px",
+    flexWrap: "wrap",
+  },
+  retryButtonNew: {
+    backgroundColor: "#f59e0b",
+    border: "none",
+    padding: "8px 20px",
+    borderRadius: "40px",
+    fontSize: "14px",
+    fontWeight: "bold",
+    color: "white",
+    cursor: "pointer",
+  },
+  backMaterialButtonNew: {
+    backgroundColor: "#6c757d",
+    border: "none",
+    padding: "8px 20px",
+    borderRadius: "40px",
+    fontSize: "14px",
+    fontWeight: "bold",
+    color: "white",
+    cursor: "pointer",
+  },
+  petaKonsepButton: {
+    backgroundColor: "#306998",
+    border: "none",
+    padding: "8px 20px",
+    borderRadius: "40px",
+    fontSize: "14px",
+    fontWeight: "bold",
+    color: "white",
+    cursor: "pointer",
+  },
+
+  modalOverlay: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 1000,
+    backdropFilter: "blur(3px)",
+  },
+  modalContainer: {
+    backgroundColor: "white",
+    borderRadius: "20px",
+    padding: "24px 20px",
+    maxWidth: "400px",
+    width: "90%",
+    textAlign: "center",
+    boxShadow: "0 20px 35px rgba(0,0,0,0.2)",
+    borderTop: "6px solid #306998",
+  },
+  modalTitle: {
+    fontSize: "20px",
+    fontWeight: "700",
+    color: "#306998",
+    marginBottom: "12px",
+  },
+  modalMessage: {
+    fontSize: "14px",
+    color: "#334155",
+    marginBottom: "20px",
+    lineHeight: 1.5,
+  },
+  modalButtons: {
+    display: "flex",
+    gap: "12px",
+    justifyContent: "center",
+    flexWrap: "wrap",
+  },
+  modalButtonYes: {
+    backgroundColor: "#306998",
+    color: "white",
+    border: "none",
+    padding: "8px 20px",
+    borderRadius: "40px",
+    fontSize: "14px",
+    fontWeight: "bold",
+    cursor: "pointer",
+    minWidth: "100px",
+  },
+  modalButtonCheck: {
+    backgroundColor: "#f1f5f9",
+    color: "#1e293b",
+    border: "1px solid #cbd5e1",
+    padding: "8px 20px",
+    borderRadius: "40px",
+    fontSize: "14px",
+    fontWeight: "500",
+    cursor: "pointer",
+    minWidth: "140px",
+  },
+  modalContainerWarning: {
+    backgroundColor: "white",
+    borderRadius: "20px",
+    padding: "24px 20px",
+    maxWidth: "400px",
     width: "90%",
     textAlign: "center",
     boxShadow: "0 20px 35px rgba(0,0,0,0.2)",
     borderTop: "6px solid #f59e0b",
   },
-  modalWarningTitle: { fontSize: "24px", fontWeight: "700", color: "#f59e0b", marginBottom: "16px" },
-  modalWarningText: { fontSize: "16px", color: "#334155", marginBottom: "28px", lineHeight: 1.5 },
-  modalButtons: { display: "flex", gap: "16px", justifyContent: "center", flexWrap: "wrap" },
-  modalButtonWarning: { backgroundColor: "#f59e0b", color: "white", border: "none", padding: "12px 28px", borderRadius: "40px", fontSize: "16px", fontWeight: "bold", cursor: "pointer", minWidth: "100px" },
+  modalTitleWarning: {
+    fontSize: "20px",
+    fontWeight: "700",
+    color: "#f59e0b",
+    marginBottom: "12px",
+  },
+  modalMessageWarning: {
+    fontSize: "14px",
+    color: "#334155",
+    marginBottom: "20px",
+    lineHeight: 1.5,
+  },
+  modalButtonWarning: {
+    backgroundColor: "#f59e0b",
+    color: "white",
+    border: "none",
+    padding: "8px 20px",
+    borderRadius: "40px",
+    fontSize: "14px",
+    fontWeight: "bold",
+    cursor: "pointer",
+    minWidth: "80px",
+  },
+};
+
+/* ==================== STYLE MOBILE ==================== */
+const stylesMobile = {
+  fullscreenQuiz: {
+    minHeight: "calc(100vh - 64px)",
+    display: "flex",
+    flexDirection: "column",
+    backgroundColor: "#f5f7fa",
+    fontFamily: "Poppins, sans-serif",
+    padding: "8px 12px 12px 12px",
+    overflow: "auto",
+  },
+  quizHeader: {
+    flexShrink: 0,
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    backgroundColor: "#306998",
+    borderRadius: "12px",
+    padding: "8px 16px",
+    marginBottom: "12px",
+    color: "white",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+  },
+  quizTitle: {
+    fontSize: "18px",
+    fontWeight: "bold",
+  },
+  timerBox: {
+    display: "flex",
+    alignItems: "center",
+    gap: "6px",
+    backgroundColor: "rgba(0,0,0,0.2)",
+    padding: "4px 12px",
+    borderRadius: "60px",
+  },
+  timerIcon: { fontSize: "16px" },
+  timerText: { fontSize: "18px", fontWeight: "700", fontFamily: "monospace" },
+  timerDanger: {
+    fontSize: "18px",
+    fontWeight: "700",
+    fontFamily: "monospace",
+    color: "#FFD43B",
+  },
+  content: {
+    flex: 1,
+    display: "flex",
+    flexDirection: "column",
+    gap: "12px",
+    overflow: "auto",
+    paddingBottom: "6px",
+  },
+  navGridContainer: {
+    backgroundColor: "white",
+    borderRadius: "14px",
+    padding: "12px",
+    boxShadow: "0 4px 12px rgba(0,0,0,0.05)",
+    flexShrink: 0,
+  },
+  navLabel: {
+    fontSize: "14px",
+    fontWeight: "600",
+    marginBottom: "8px",
+    color: "#2c3e50",
+  },
+  navGrid: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: "6px",
+    marginBottom: "10px",
+  },
+  navBox: {
+    width: "36px",
+    height: "36px",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: "8px",
+    fontWeight: "bold",
+    fontSize: "14px",
+    cursor: "pointer",
+    backgroundColor: "#e2e8f0",
+    color: "#1e293b",
+  },
+  navBoxActive: {
+    backgroundColor: "#306998",
+    color: "white",
+    boxShadow: "0 0 0 2px #FFD43B",
+  },
+  navBoxUnsure: {
+    backgroundColor: "#FFD43B",
+    color: "#306998",
+  },
+  navBoxAnswered: {
+    backgroundColor: "#10b981",
+    color: "white",
+  },
+  legend: {
+    display: "flex",
+    gap: "10px",
+    fontSize: "11px",
+    color: "#475569",
+    flexWrap: "wrap",
+    marginBottom: "6px",
+  },
+  legendAnswered: {
+    display: "inline-block",
+    width: "10px",
+    height: "10px",
+    backgroundColor: "#10b981",
+    borderRadius: "3px",
+    marginRight: "3px",
+    verticalAlign: "middle",
+  },
+  legendUnsure: {
+    display: "inline-block",
+    width: "10px",
+    height: "10px",
+    backgroundColor: "#FFD43B",
+    borderRadius: "3px",
+    marginRight: "3px",
+    verticalAlign: "middle",
+  },
+  legendActive: {
+    display: "inline-block",
+    width: "10px",
+    height: "10px",
+    backgroundColor: "#306998",
+    borderRadius: "3px",
+    marginRight: "3px",
+    verticalAlign: "middle",
+    boxShadow: "0 0 0 1px #FFD43B",
+  },
+  legendUnanswered: {
+    display: "inline-block",
+    width: "10px",
+    height: "10px",
+    backgroundColor: "#e2e8f0",
+    borderRadius: "3px",
+    marginRight: "3px",
+    verticalAlign: "middle",
+  },
+  submitWrapper: {
+    textAlign: "center",
+    paddingTop: "6px",
+  },
+  submitButton: {
+    backgroundColor: "#306998",
+    color: "white",
+    border: "none",
+    padding: "10px 16px",
+    borderRadius: "40px",
+    fontSize: "15px",
+    fontWeight: "bold",
+    cursor: "pointer",
+    width: "100%",
+  },
+  questionCard: {
+    backgroundColor: "white",
+    borderRadius: "16px",
+    padding: "14px 16px",
+    boxShadow: "0 8px 24px rgba(0,0,0,0.06)",
+    display: "flex",
+    flexDirection: "column",
+    flex: 1,
+    overflow: "hidden",
+  },
+  questionHeader: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: "6px",
+    flexWrap: "wrap",
+  },
+  questionNumber: {
+    fontSize: "15px",
+    fontWeight: "700",
+    color: "#306998",
+    margin: 0,
+  },
+  actionButtons: { display: "flex", gap: "6px" },
+  unsureButton: {
+    backgroundColor: "#f1f5f9",
+    border: "none",
+    padding: "3px 12px",
+    borderRadius: "40px",
+    fontSize: "12px",
+    fontWeight: "500",
+    cursor: "pointer",
+    color: "#334155",
+  },
+  unsureButtonActive: {
+    backgroundColor: "#FFD43B",
+    border: "none",
+    padding: "3px 12px",
+    borderRadius: "40px",
+    fontSize: "12px",
+    fontWeight: "500",
+    cursor: "pointer",
+    color: "#306998",
+    border: "1px solid #eab308",
+  },
+  questionText: {
+    fontSize: "15px",
+    lineHeight: "1.4",
+    marginBottom: "10px",
+    color: "#0f172a",
+    fontWeight: "500",
+    whiteSpace: "pre-line",
+    flexShrink: 0,
+  },
+  // Opsi normal mobile
+  optionsContainer: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "6px",
+    marginBottom: "12px",
+    overflowY: "auto",
+    flex: "1 1 auto",
+    paddingRight: "2px",
+  },
+  optionLabel: {
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+    fontSize: "14px",
+    padding: "6px 10px",
+    borderRadius: "10px",
+    backgroundColor: "#f8fafc",
+    cursor: "pointer",
+    border: "1px solid #e2e8f0",
+  },
+  // Opsi tanpa scroll untuk soal bermasalah (mobile)
+  optionsContainerNoScroll: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "4px",
+    marginBottom: "10px",
+    overflow: "visible",
+    flex: "0 1 auto",
+    paddingRight: "0px",
+  },
+  optionLabelNoScroll: {
+    display: "flex",
+    alignItems: "center",
+    gap: "6px",
+    fontSize: "14px",
+    padding: "4px 8px",
+    borderRadius: "8px",
+    backgroundColor: "#f8fafc",
+    cursor: "pointer",
+    border: "1px solid #e2e8f0",
+  },
+  optionLetter: {
+    fontWeight: "bold",
+    color: "#306998",
+    width: "20px",
+    fontSize: "13px",
+  },
+  navButtons: {
+    display: "flex",
+    justifyContent: "space-between",
+    gap: "10px",
+    marginTop: "4px",
+    flexShrink: 0,
+  },
+  navButton: {
+    backgroundColor: "#e2e8f0",
+    border: "none",
+    padding: "6px 14px",
+    borderRadius: "40px",
+    fontWeight: "600",
+    cursor: "pointer",
+    fontSize: "13px",
+    flex: 1,
+    maxWidth: "100px",
+  },
+  navButtonDisabled: {
+    backgroundColor: "#cbd5e1",
+    border: "none",
+    padding: "6px 14px",
+    borderRadius: "40px",
+    fontWeight: "600",
+    fontSize: "13px",
+    flex: 1,
+    maxWidth: "100px",
+    cursor: "not-allowed",
+    color: "#64748b",
+  },
+
+  modalOverlay: {
+    position: "fixed",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: "rgba(0,0,0,0.6)",
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    zIndex: 1000,
+    backdropFilter: "blur(3px)",
+  },
+  modalContainer: {
+    backgroundColor: "white",
+    borderRadius: "18px",
+    padding: "20px 18px",
+    maxWidth: "360px",
+    width: "90%",
+    textAlign: "center",
+    boxShadow: "0 20px 35px rgba(0,0,0,0.2)",
+    borderTop: "6px solid #306998",
+  },
+  modalTitle: {
+    fontSize: "18px",
+    fontWeight: "700",
+    color: "#306998",
+    marginBottom: "10px",
+  },
+  modalMessage: {
+    fontSize: "14px",
+    color: "#334155",
+    marginBottom: "18px",
+    lineHeight: 1.5,
+  },
+  modalButtons: {
+    display: "flex",
+    gap: "10px",
+    justifyContent: "center",
+    flexWrap: "wrap",
+  },
+  modalButtonYes: {
+    backgroundColor: "#306998",
+    color: "white",
+    border: "none",
+    padding: "7px 16px",
+    borderRadius: "40px",
+    fontSize: "14px",
+    fontWeight: "bold",
+    cursor: "pointer",
+    minWidth: "80px",
+  },
+  modalButtonCheck: {
+    backgroundColor: "#f1f5f9",
+    color: "#1e293b",
+    border: "1px solid #cbd5e1",
+    padding: "7px 16px",
+    borderRadius: "40px",
+    fontSize: "14px",
+    fontWeight: "500",
+    cursor: "pointer",
+    minWidth: "120px",
+  },
+  modalContainerWarning: {
+    backgroundColor: "white",
+    borderRadius: "18px",
+    padding: "20px 18px",
+    maxWidth: "360px",
+    width: "90%",
+    textAlign: "center",
+    boxShadow: "0 20px 35px rgba(0,0,0,0.2)",
+    borderTop: "6px solid #f59e0b",
+  },
+  modalTitleWarning: {
+    fontSize: "18px",
+    fontWeight: "700",
+    color: "#f59e0b",
+    marginBottom: "10px",
+  },
+  modalMessageWarning: {
+    fontSize: "14px",
+    color: "#334155",
+    marginBottom: "18px",
+    lineHeight: 1.5,
+  },
+  modalButtonWarning: {
+    backgroundColor: "#f59e0b",
+    color: "white",
+    border: "none",
+    padding: "7px 16px",
+    borderRadius: "40px",
+    fontSize: "14px",
+    fontWeight: "bold",
+    cursor: "pointer",
+    minWidth: "70px",
+  },
 };

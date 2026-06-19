@@ -22,7 +22,7 @@ export default function KuisDictionary() {
   const [role, setRole] = useState(null);
   const [tokenKelas, setTokenKelas] = useState(null);
   const [kelasId, setKelasId] = useState(null);
-  const [kkm, setKkm] = useState(70);
+  const [kkm, setKkm] = useState(75);
 
   // DURASI KUIS (10 menit)
   const DURASI_KUIS = 600;
@@ -80,7 +80,7 @@ export default function KuisDictionary() {
         const kelasSnap = await getDoc(doc(db, 'kelas', kelasId));
         if (kelasSnap.exists()) {
           const data = kelasSnap.data();
-          setKkm(data.kkm_kuis_dictionary ?? 70);
+          setKkm(data.kkm_kuis_dictionary ?? 75);
         }
       } catch (err) {
         console.error(err);
@@ -386,10 +386,12 @@ export default function KuisDictionary() {
                 <li>Kuis terdiri dari {questions.length} soal pilihan ganda.</li>
                 <li>Setiap soal bernilai 10 poin (total maksimal 100).</li>
                 <li>Waktu pengerjaan: 10 menit (timer berjalan setelah tombol mulai kuis diklik).</li>
-                <li>Pastikan semua jawaban sudah dipilih sebelum menekan KUMPULKAN JAWABAN.</li>
+                <li>Gunakan fitur "Ragu-ragu" untuk soal yang perlu ditinjau ulang.</li>
                 <li>Pastikan tombol ragu-ragu nonaktif disemua soal sebelum mengumpulkan jawaban.</li>
+                <li>Navigasi soal dapat melalui panel kotak nomor atau tombol Sebelumnya/Selanjutnya.</li>
+                <li>Pastikan semua soal sudah terjawab sebelum menekan KUMPULKAN JAWABAN.</li>
                 <li>Jika waktu habis, jawaban yang sudah terisi akan tersimpan dan terkirim secara otomatis.</li>
-                <li>KKM: 70. Jika nilai yang didapat tidak mencapai KKM, maka harus mengerjakan ulang kuis atau mengulang materi lagi.</li>
+                <li>KKM: 75. Jika nilai yang didapat tidak mencapai KKM, maka harus mengerjakan ulang kuis atau mengulang materi lagi.</li>
               </ul>
               <button className="btn-hover-primary" style={styles.startButton} onClick={startQuiz}>MULAI KUIS</button>
             </div>
