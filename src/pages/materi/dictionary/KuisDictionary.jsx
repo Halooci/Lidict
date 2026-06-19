@@ -401,7 +401,7 @@ export default function KuisDictionary() {
     );
   }
 
-  // Halaman Hasil
+  // Halaman Hasil - PROGRESS BAR DIHAPUS
   if (submitted && resultsData) {
     const { finalScore, waktuDigunakan } = resultsData;
     const minutesUsed = Math.floor(waktuDigunakan / 60);
@@ -409,7 +409,6 @@ export default function KuisDictionary() {
     const totalSoal = questions.length;
     const skorAkhir = finalScore * 10;
     const isPassed = skorAkhir >= kkm;
-    const percentage = Math.round((finalScore / totalSoal) * 100);
 
     return (
       <div style={styles.fullscreenResult}>
@@ -420,20 +419,6 @@ export default function KuisDictionary() {
           </div>
           <div style={styles.scoreDisplay}>
             <span style={styles.scoreNumberNew}>{skorAkhir}</span>
-          </div>
-          <div style={styles.progressContainer}>
-            <div style={styles.progressBar}>
-              <div
-                style={{
-                  width: `${percentage}%`,
-                  height: "100%",
-                  backgroundColor: isPassed ? "#306998" : "#f59e0b",
-                  borderRadius: "30px",
-                  transition: "width 0.5s",
-                }}
-              ></div>
-            </div>
-            <div style={styles.progressLabel}>{percentage}%</div>
           </div>
           <div style={styles.statsGridNew}>
             <div style={styles.statItemNew}>
@@ -691,7 +676,7 @@ export default function KuisDictionary() {
     );
   }
 
-  // Desktop layout - perbaiki agar opsi tidak scroll dan memanfaatkan ruang
+  // Desktop layout
   return (
     <div style={styles.fullscreenQuiz}>
       <div style={styles.quizHeader}>
@@ -720,7 +705,6 @@ export default function KuisDictionary() {
           </div>
           <p style={styles.questionText}>{q.pertanyaan}</p>
 
-          {/* Opsi dengan gap lebih kecil agar tidak scroll */}
           <div style={styles.optionsContainer}>
             {q.pilihan.map((opt, idx) => (
               <label key={idx} style={styles.optionLabel}>
@@ -786,7 +770,6 @@ export default function KuisDictionary() {
             <span><span style={styles.legendActive}></span> Aktif</span>
             <span><span style={styles.legendUnanswered}></span> Kosong</span>
           </div>
-          {/* Tombol kumpul ditempatkan langsung di bawah legend */}
           <div style={styles.submitWrapper}>
             <button
               className="btn-hover-submit"
@@ -995,7 +978,7 @@ const styles = {
   questionCard: {
     backgroundColor: "white",
     borderRadius: "18px",
-    padding: "16px 20px",
+    padding: "18px 22px",
     boxShadow: "0 8px 24px rgba(0,0,0,0.06)",
     display: "flex",
     flexDirection: "column",
@@ -1005,7 +988,7 @@ const styles = {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: "6px",
+    marginBottom: "8px",
     flexWrap: "wrap",
   },
   questionNumber: {
@@ -1039,7 +1022,7 @@ const styles = {
   questionText: {
     fontSize: "16px",
     lineHeight: "1.5",
-    marginBottom: "10px",
+    marginBottom: "12px",
     color: "#0f172a",
     fontWeight: "500",
     whiteSpace: "pre-line",
@@ -1048,30 +1031,28 @@ const styles = {
   optionsContainer: {
     display: "flex",
     flexDirection: "column",
-    gap: "5px",
-    marginBottom: "10px",
+    gap: "7px",
+    marginBottom: "14px",
     overflowY: "auto",
     flex: "1 1 auto",
     paddingRight: "4px",
-    maxHeight: "100%",
   },
   optionLabel: {
     display: "flex",
     alignItems: "center",
-    gap: "8px",
-    fontSize: "14px",
-    padding: "5px 12px",
-    borderRadius: "10px",
+    gap: "10px",
+    fontSize: "15px",
+    padding: "7px 14px",
+    borderRadius: "12px",
     backgroundColor: "#f8fafc",
     cursor: "pointer",
     border: "1px solid #e2e8f0",
-    flexShrink: 0,
   },
   optionLetter: {
     fontWeight: "bold",
     color: "#306998",
-    width: "22px",
-    fontSize: "13px",
+    width: "24px",
+    fontSize: "14px",
   },
   navButtons: {
     display: "flex",
@@ -1123,7 +1104,7 @@ const styles = {
     display: "flex",
     flexWrap: "wrap",
     gap: "6px",
-    marginBottom: "10px",
+    marginBottom: "12px",
   },
   navBox: {
     width: "40px",
@@ -1197,10 +1178,8 @@ const styles = {
     verticalAlign: "middle",
   },
   submitWrapper: {
-    marginTop: "0",
     textAlign: "center",
     paddingTop: "6px",
-    flexShrink: 0,
   },
   submitButton: {
     backgroundColor: "#306998",
@@ -1247,20 +1226,6 @@ const styles = {
     fontWeight: "800",
     color: "#306998",
     lineHeight: 1,
-  },
-  progressContainer: { marginBottom: "24px" },
-  progressBar: {
-    backgroundColor: "#e2e8f0",
-    borderRadius: "30px",
-    height: "8px",
-    overflow: "hidden",
-    marginBottom: "4px",
-  },
-  progressLabel: {
-    fontSize: "12px",
-    fontWeight: "600",
-    color: "#306998",
-    textAlign: "right",
   },
   statsGridNew: {
     display: "flex",
@@ -1651,7 +1616,7 @@ const stylesMobile = {
   optionsContainer: {
     display: "flex",
     flexDirection: "column",
-    gap: "5px",
+    gap: "6px",
     marginBottom: "12px",
     overflowY: "auto",
     flex: "1 1 auto",
@@ -1662,7 +1627,7 @@ const stylesMobile = {
     alignItems: "center",
     gap: "8px",
     fontSize: "14px",
-    padding: "5px 10px",
+    padding: "6px 10px",
     borderRadius: "10px",
     backgroundColor: "#f8fafc",
     cursor: "pointer",

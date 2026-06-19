@@ -396,7 +396,7 @@ export default function KuisList() {
     );
   }
 
-  // Halaman hasil
+  // Halaman hasil (progress bar sudah dihapus)
   if (submitted && resultsData) {
     const { finalScore, waktuDigunakan } = resultsData;
     const minutesUsed = Math.floor(waktuDigunakan / 60);
@@ -404,7 +404,6 @@ export default function KuisList() {
     const totalSoal = questions.length;
     const skorAkhir = finalScore * 10;
     const isPassed = skorAkhir >= kkm;
-    const percentage = Math.round((finalScore / totalSoal) * 100);
 
     return (
       <div style={styles.fullscreenResult}>
@@ -415,20 +414,6 @@ export default function KuisList() {
           </div>
           <div style={styles.scoreDisplay}>
             <span style={styles.scoreNumberNew}>{skorAkhir}</span>
-          </div>
-          <div style={styles.progressContainer}>
-            <div style={styles.progressBar}>
-              <div
-                style={{
-                  width: `${percentage}%`,
-                  height: "100%",
-                  backgroundColor: isPassed ? "#306998" : "#f59e0b",
-                  borderRadius: "30px",
-                  transition: "width 0.5s",
-                }}
-              ></div>
-            </div>
-            <div style={styles.progressLabel}>{percentage}%</div>
           </div>
           <div style={styles.statsGridNew}>
             <div style={styles.statItemNew}>
@@ -457,11 +442,11 @@ export default function KuisList() {
             {role === 'mahasiswa' ? (
               isPassed ? (
                 <div style={styles.passedBoxNew}>
-                  Status: LULUS (Nilai {skorAkhir} ≥ KKM {kkm})
+                  Status: LULUS
                 </div>
               ) : (
                 <div style={styles.failedBoxNew}>
-                  Status: TIDAK LULUS (Nilai {skorAkhir} &lt; KKM {kkm})
+                  Status: TIDAK LULUS
                 </div>
               )
             ) : (
@@ -1257,20 +1242,6 @@ const styles = {
     fontWeight: "800",
     color: "#306998",
     lineHeight: 1,
-  },
-  progressContainer: { marginBottom: "24px" },
-  progressBar: {
-    backgroundColor: "#e2e8f0",
-    borderRadius: "30px",
-    height: "8px",
-    overflow: "hidden",
-    marginBottom: "4px",
-  },
-  progressLabel: {
-    fontSize: "12px",
-    fontWeight: "600",
-    color: "#306998",
-    textAlign: "right",
   },
   statsGridNew: {
     display: "flex",

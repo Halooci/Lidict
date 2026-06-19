@@ -452,7 +452,7 @@ export default function EvaluasiAkhir() {
               isPassed ? (
                 <div style={styles.passedBoxNew}>
                   <div style={{ fontSize: '22px', fontWeight: 'bold', marginBottom: '6px' }}>SELAMAT!</div>
-                  <div>Status: LULUS (Nilai {totalScore} ≥ KKM {kkm})</div>
+                  <div>Status: LULUS</div>
                   <div style={{ marginTop: '8px', fontSize: '15px', opacity: 0.9 }}>
                     Materi berikutnya sudah terbuka, silahkan akses.
                   </div>
@@ -460,7 +460,7 @@ export default function EvaluasiAkhir() {
               ) : (
                 <div style={styles.failedBoxNew}>
                   <div style={{ fontWeight: 'bold', fontSize: '18px' }}>Status: TIDAK LULUS</div>
-                  <div style={{ marginTop: '6px' }}>Nilai {totalScore} &lt; KKM {kkm}</div>
+                  {/* <div style={{ marginTop: '6px' }}>Nilai {totalScore} &lt; KKM {kkm}</div> */}
                   <div style={{ marginTop: '8px', fontSize: '15px' }}>Silahkan ulangi pengerjaan evaluasi atau kembali ke materi.</div>
                 </div>
               )

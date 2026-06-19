@@ -8,15 +8,15 @@ export default function Landing() {
       {/* HERO */}
       <section style={styles.hero}>
         <h1 style={styles.title}>
-          ListDictionaryLearn: Media Pembelajaran Interaktif
+          <i>ListDictionaryLearn</i>: Media Pembelajaran Interaktif
         </h1>
 
         <h1 style={styles.title}>
-          List & Dictionary
+          <i>List & Dictionary</i>
         </h1>
 
         <p style={styles.subtitle}>
-          Media pembelajaran yang dibuat untuk membantu mahasiswa memahami List dan Dictionary dalam Struktur Data.
+          Media pembelajaran yang dibuat untuk membantu mahasiswa memahami <i>List</i> dan <i>Dictionary</i> dalam Struktur Data.
         </p>
 
         <div style={styles.buttonGroup}>
