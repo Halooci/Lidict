@@ -12,6 +12,7 @@ export default function Apersepsi() {
   const [isProcessing, setIsProcessing] = useState(false);
 
   // ==================== MATERI 1: VARIABEL & TIPE DATA ====================
+  // Drag & Drop
   const [dragDropAnswers, setDragDropAnswers] = useState({
     "3.14": null,
     "True": null,
@@ -25,6 +26,7 @@ export default function Apersepsi() {
     "42": false,
   });
   const [dragDropAllDone, setDragDropAllDone] = useState(false);
+  const [dragDropFeedback, setDragDropFeedback] = useState("");
   const dragItems = ["integer", "float", "string", "boolean"];
   const targets = ["3.14", "True", "'Python'", "42"];
   const correctMatches = {
@@ -51,6 +53,7 @@ export default function Apersepsi() {
     const draggedItem = e.dataTransfer.getData("text/plain");
     const newAnswers = { ...dragDropAnswers, [targetKey]: draggedItem };
     setDragDropAnswers(newAnswers);
+    // Update status
     const newStatus = { ...dragDropStatus };
     let allCorrect = true;
     for (const [target, expected] of Object.entries(correctMatches)) {
@@ -60,11 +63,46 @@ export default function Apersepsi() {
     }
     setDragDropStatus(newStatus);
     setDragDropAllDone(allCorrect);
+    setDragDropFeedback("");
   };
 
-  // Aktivitas 1.2 - diubah menjadi tanya jawab (input teks)
-  const [varTanyaJawabAnswer, setVarTanyaJawabAnswer] = useState("");
-  const [varTanyaJawabFeedback, setVarTanyaJawabFeedback] = useState("");
+  const checkDragDrop = () => {
+    const newStatus = { ...dragDropStatus };
+    let allCorrect = true;
+    for (const [target, expected] of Object.entries(correctMatches)) {
+      const isCorrect = dragDropAnswers[target] === expected;
+      newStatus[target] = isCorrect;
+      if (!isCorrect) allCorrect = false;
+    }
+    setDragDropStatus(newStatus);
+    setDragDropAllDone(allCorrect);
+    if (allCorrect) {
+      setDragDropFeedback("✨ Semua cocok! Bagus.");
+    } else {
+      setDragDropFeedback("❌ Masih ada yang salah. Periksa kembali pasangan tipe data.");
+    }
+  };
+
+  const resetDragDrop = () => {
+    setDragDropAnswers({
+      "3.14": null,
+      "True": null,
+      "'Python'": null,
+      "42": null,
+    });
+    setDragDropStatus({
+      "3.14": false,
+      "True": false,
+      "'Python'": false,
+      "42": false,
+    });
+    setDragDropAllDone(false);
+    setDragDropFeedback("");
+  };
+
+  // Aktivitas 1.2 - Pilihan Ganda Aturan Penulisan Variabel
+  const [varPilihanSelected, setVarPilihanSelected] = useState(null);
+  const [varPilihanFeedback, setVarPilihanFeedback] = useState("");
   const varPilihanOptions = [
     "1nama = 'Andi'",
     "nama = 'Andi'",
@@ -73,27 +111,28 @@ export default function Apersepsi() {
     "nama siswa = 'Andi'"
   ];
   const varPilihanCorrect = 1; // indeks ke-1 (B)
-  const checkVarTanyaJawab = () => {
-    const jawaban = varTanyaJawabAnswer.trim().toUpperCase();
-    let isCorrect = false;
-    let pesan = "";
-    if (jawaban === "B" || jawaban === "NAMA = 'ANDI'" || jawaban === "nama = 'Andi'") {
-      isCorrect = true;
-      pesan = "✓ Benar! 'nama = \"Andi\"' adalah penulisan variabel yang benar. Variabel harus diawali huruf atau underscore, tidak boleh diawali angka, tidak boleh ada spasi, dan tidak boleh menggunakan kata kunci Python.";
-    } else if (jawaban === "A") {
-      pesan = "✗ Salah. Variabel tidak boleh diawali angka.";
-    } else if (jawaban === "C") {
-      pesan = "✗ Salah. Tanda hubung (-) tidak diperbolehkan dalam nama variabel. Gunakan garis bawah (_).";
-    } else if (jawaban === "D") {
-      pesan = "✗ Salah. 'def' adalah kata kunci (keyword) Python, tidak bisa dijadikan nama variabel.";
-    } else if (jawaban === "E") {
-      pesan = "✗ Salah. Nama variabel tidak boleh mengandung spasi.";
-    } else {
-      pesan = "✗ Jawaban tidak dikenali. Ketik huruf A, B, C, D, atau E sesuai pilihan.";
+  const checkVarPilihan = () => {
+    if (varPilihanSelected === null) {
+      setVarPilihanFeedback("❌ Silakan pilih salah satu opsi terlebih dahulu.");
+      return;
     }
-    setVarTanyaJawabFeedback(isCorrect ? pesan : pesan);
+    if (varPilihanSelected === varPilihanCorrect) {
+      setVarPilihanFeedback("✓ Benar! 'nama = \"Andi\"' adalah penulisan variabel yang benar. Variabel harus diawali huruf atau underscore, tidak boleh diawali angka, tidak boleh ada spasi, dan tidak boleh menggunakan kata kunci Python.");
+    } else {
+      let pesan = "";
+      if (varPilihanSelected === 0) pesan = "✗ Salah. Variabel tidak boleh diawali angka.";
+      else if (varPilihanSelected === 2) pesan = "✗ Salah. Tanda hubung (-) tidak diperbolehkan dalam nama variabel. Gunakan garis bawah (_).";
+      else if (varPilihanSelected === 3) pesan = "✗ Salah. 'def' adalah kata kunci (keyword) Python, tidak bisa dijadikan nama variabel.";
+      else if (varPilihanSelected === 4) pesan = "✗ Salah. Nama variabel tidak boleh mengandung spasi.";
+      setVarPilihanFeedback(pesan);
+    }
+  };
+  const resetVarPilihan = () => {
+    setVarPilihanSelected(null);
+    setVarPilihanFeedback("");
   };
 
+  // Aktivitas 1.3 - Tipe Data dari Nilai
   const [tipeNilaiAnswer, setTipeNilaiAnswer] = useState("");
   const [tipeNilaiFeedback, setTipeNilaiFeedback] = useState("");
   const checkTipeNilai = () => {
@@ -104,32 +143,50 @@ export default function Apersepsi() {
       setTipeNilaiFeedback("✗ Salah. Coba lagi. Tipe data dari 5 adalah integer (int).");
     }
   };
+  const resetTipeNilai = () => {
+    setTipeNilaiAnswer("");
+    setTipeNilaiFeedback("");
+  };
 
   // ==================== MATERI 2: OPERATOR ====================
   const [operatorAnswer, setOperatorAnswer] = useState(null);
   const [operatorFeedback, setOperatorFeedback] = useState("");
   const operatorOptions = ["3.75", "3", "4", "1", "Error"];
   const operatorCorrect = 1;
-  const handleOperator = (idx) => {
-    setOperatorAnswer(idx);
-    setOperatorFeedback(
-      idx === operatorCorrect
-        ? "✓ Benar! // adalah pembagian bulat, 15 // 4 = 3."
-        : "✗ Salah. Ingat: // floor division membulatkan ke bawah."
-    );
+  const checkOperator = () => {
+    if (operatorAnswer === null) {
+      setOperatorFeedback("❌ Silakan pilih salah satu opsi.");
+      return;
+    }
+    if (operatorAnswer === operatorCorrect) {
+      setOperatorFeedback("✓ Benar! // adalah pembagian bulat, 15 // 4 = 3.");
+    } else {
+      setOperatorFeedback("✗ Salah. Ingat: // floor division membulatkan ke bawah.");
+    }
+  };
+  const resetOperator = () => {
+    setOperatorAnswer(null);
+    setOperatorFeedback("");
   };
 
   const [modulusAnswer, setModulusAnswer] = useState(null);
   const [modulusFeedback, setModulusFeedback] = useState("");
   const modulusOptions = ["3", "1", "0", "3.33", "Error"];
   const modulusCorrect = 1;
-  const handleModulus = (idx) => {
-    setModulusAnswer(idx);
-    setModulusFeedback(
-      idx === modulusCorrect
-        ? "✓ Benar! 7 % 3 = 1 (sisa bagi)."
-        : "✗ Salah. Operator % menghasilkan sisa pembagian."
-    );
+  const checkModulus = () => {
+    if (modulusAnswer === null) {
+      setModulusFeedback("❌ Silakan pilih salah satu opsi.");
+      return;
+    }
+    if (modulusAnswer === modulusCorrect) {
+      setModulusFeedback("✓ Benar! 7 % 3 = 1 (sisa bagi).");
+    } else {
+      setModulusFeedback("✗ Salah. Operator % menghasilkan sisa pembagian.");
+    }
+  };
+  const resetModulus = () => {
+    setModulusAnswer(null);
+    setModulusFeedback("");
   };
 
   const [pangkatAnswer, setPangkatAnswer] = useState("");
@@ -141,6 +198,10 @@ export default function Apersepsi() {
     } else {
       setPangkatFeedback("✗ Salah. Ingat: ** adalah operator pangkat. 3 pangkat 3 = 27.");
     }
+  };
+  const resetPangkat = () => {
+    setPangkatAnswer("");
+    setPangkatFeedback("");
   };
 
   // ==================== MATERI 3: INPUT / OUTPUT ====================
@@ -154,18 +215,29 @@ export default function Apersepsi() {
       setIoFeedback("✗ Salah. Gunakan fungsi int() untuk konversi ke integer.");
     }
   };
+  const resetIO = () => {
+    setIoAnswer("");
+    setIoFeedback("");
+  };
 
   const [outputAnswer, setOutputAnswer] = useState(null);
   const [outputFeedback, setOutputFeedback] = useState("");
   const outputOptions = ["input()", "print()", "output()", "display()", "write()"];
   const outputCorrect = 1;
-  const handleOutput = (idx) => {
-    setOutputAnswer(idx);
-    setOutputFeedback(
-      idx === outputCorrect
-        ? "✓ Benar! print() digunakan untuk mencetak output."
-        : "✗ Salah. Fungsi yang benar adalah print()."
-    );
+  const checkOutput = () => {
+    if (outputAnswer === null) {
+      setOutputFeedback("❌ Silakan pilih salah satu opsi.");
+      return;
+    }
+    if (outputAnswer === outputCorrect) {
+      setOutputFeedback("✓ Benar! print() digunakan untuk mencetak output.");
+    } else {
+      setOutputFeedback("✗ Salah. Fungsi yang benar adalah print().");
+    }
+  };
+  const resetOutput = () => {
+    setOutputAnswer(null);
+    setOutputFeedback("");
   };
 
   const [printVarAnswer, setPrintVarAnswer] = useState("");
@@ -178,6 +250,10 @@ export default function Apersepsi() {
       setPrintVarFeedback("✗ Coba lagi. Variabel yang menyimpan input nama adalah 'nama'.");
     }
   };
+  const resetPrintVar = () => {
+    setPrintVarAnswer("");
+    setPrintVarFeedback("");
+  };
 
   // Ambil userId dari localStorage
   useEffect(() => {
@@ -189,7 +265,6 @@ export default function Apersepsi() {
     setUserId(uid);
   }, [navigate]);
 
-  // Cek apakah sudah pernah memberikan bonus (untuk mencegah double)
   const [bonusGiven, setBonusGiven] = useState(false);
   useEffect(() => {
     const already = localStorage.getItem("apersepsi_bonus_done");
@@ -199,7 +274,7 @@ export default function Apersepsi() {
   // Fungsi untuk mengecek apakah semua aktivitas sudah dijawab dengan benar
   const isAllActivitiesCorrect = () => {
     if (!dragDropAllDone) return false;
-    if (!varTanyaJawabFeedback.startsWith("✓")) return false;
+    if (!varPilihanFeedback.startsWith("✓")) return false;
     if (!tipeNilaiFeedback.startsWith("✓")) return false;
     if (operatorAnswer !== operatorCorrect) return false;
     if (modulusAnswer !== modulusCorrect) return false;
@@ -210,7 +285,6 @@ export default function Apersepsi() {
     return true;
   };
 
-  // Effect untuk memunculkan modal ketika semua aktivitas benar dan bonus belum diberikan
   useEffect(() => {
     if (!userId) return;
     if (bonusGiven) return;
@@ -220,7 +294,7 @@ export default function Apersepsi() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     dragDropAllDone,
-    varTanyaJawabFeedback,
+    varPilihanFeedback,
     tipeNilaiFeedback,
     operatorAnswer,
     modulusAnswer,
@@ -234,24 +308,18 @@ export default function Apersepsi() {
     isProcessing,
   ]);
 
-  // Fungsi untuk menangani konfirmasi dari modal
   const handleCompleteAndContinue = async () => {
     if (isProcessing) return;
     setIsProcessing(true);
 
     try {
-      // Update progres belajar di Firestore
       const mahasiswaRef = doc(db, "mahasiswa", userId);
       await updateDoc(mahasiswaRef, {
         progres_belajar: increment(1)
       });
-
-      // Tandai bonus sudah diberikan di localStorage
       localStorage.setItem("apersepsi_bonus_done", "true");
       setBonusGiven(true);
       setShowCompletionModal(false);
-
-      // Navigasi ke halaman list pendahuluan
       navigate("/list/pendahuluanlist");
     } catch (error) {
       console.error("Gagal update progres:", error);
@@ -261,9 +329,7 @@ export default function Apersepsi() {
     }
   };
 
-  // Fungsi untuk mewarnai komentar dalam kode (contoh kode)
   const formatCodeWithComments = (code) => {
-    // Memisahkan baris, lalu untuk setiap baris cari pola komentar #
     const lines = code.split('\n');
     return lines.map((line, i) => {
       const commentIndex = line.indexOf('#');
@@ -281,7 +347,6 @@ export default function Apersepsi() {
     });
   };
 
-  // Animasi fade-in
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -303,7 +368,7 @@ export default function Apersepsi() {
         <div className="apersepsi-page" style={styles.page}>
           <div style={styles.header}>
             <div style={styles.headerAccent}></div>
-            <h1 style={styles.headerTitle}>APERSEPSI</h1>
+            <h1 style={styles.headerTitle}>PENGANTAR</h1>
           </div>
 
           {/* PEMANTIK VISUAL */}
@@ -315,11 +380,11 @@ export default function Apersepsi() {
               <div style={styles.heroRight}>
                 <h3 style={styles.heroTitle}>Seperti perjalanan, kita butuh tas yang tepat untuk menyimpan barang-barang</h3>
                 <p style={styles.heroText}>
-                  Menyimpan banyak data tanpa struktur akan berantakan. List, Nested List, dan Dictionary adalah "kompartemen" Python 
+                  Menyimpan banyak data tanpa struktur akan berantakan. List, Nested List, dan Dictionary adalah <strong>struktur</strong> Python 
                   yang akan mengatur data Anda. Tapi sebelumnya, mari mengingat kembali dasar-dasarnya.
                 </p>
                 <div style={styles.heroBadge}>
-                  <span>Variabel</span> <span>|  Tipe Data    |</span> <span>Operator</span> <span>|   Input/Output</span>
+                  <span><strong>Variabel</strong></span> <span>|  <strong>Tipe Data</strong>    |</span> <span><strong>Operator</strong></span> <span>|   <strong>Input/Output</strong></span>
                 </div>
               </div>
             </div>
@@ -330,15 +395,21 @@ export default function Apersepsi() {
             <div style={styles.materialCard} className="fade-in">
               <div style={styles.materialHeader}>
                 <div style={styles.materialIcon}>1</div>
-                <div style={styles.materialTitle}>Variabel dan Tipe Data</div>
+                <div style={styles.materialTitle}><strong>Variabel</strong> dan <strong>Tipe Data</strong></div>
               </div>
               <p style={styles.text}>
-                Variabel adalah wadah untuk menyimpan data. Sederhananya, variabel seperti sebuah kotak kecil yang diberi label nama. 
-                Kotak ini bisa diisi dengan berbagai macam nilai, seperti angka, huruf, atau nilai kebenaran. Isi kotak (nilai variabel) 
-                dapat berubah sewaktu-waktu selama program berjalan. Penulisan variable di Python memiliki beberapa aturan sebagai berikut:
+                <strong>Variabel</strong> adalah wadah untuk menyimpan data. Sederhananya, <strong>variabel</strong> seperti sebuah kotak kecil yang diberi label nama. 
+                Kotak ini bisa diisi dengan berbagai macam nilai, seperti angka, huruf, atau nilai kebenaran. Isi kotak (nilai <strong>variabel</strong>) 
+                dapat berubah sewaktu-waktu selama program berjalan. Penulisan <strong>variabel</strong> di Python memiliki beberapa aturan sebagai berikut:
               </p>
               <ol style={styles.listOrdered}>
-                <li>Hanya boleh mengandung huruf (a-z, A-Z), angka (0-9), dan garis bawah (_).</li>
+                <li>
+                  Hanya boleh mengandung huruf (a-z, A-Z), angka (0-9), dan garis bawah (_).
+                  <br />
+                   nama, _data, nilai_akhir, data2 → <strong style={{color: "#10b981"}}>BENAR</strong>
+                  <br />
+                  nama@siswa, angka#1 → <strong style={{color: "#ef4444"}}>SALAH</strong>
+                </li>
                 <li>
                   Harus diawali dengan huruf atau garis bawah. Tidak boleh diawali angka.
                   <br />
@@ -359,16 +430,24 @@ export default function Apersepsi() {
                 </li>
                 <li>
                   Tidak boleh sama dengan kata kunci (keyword) Python, seperti print, if, for, while, input, return, def, True, False, and, or, dll.
+                  <br />
+                  if = 5, print = "halo", def = 10 → <strong style={{color: "#ef4444"}}>SALAH</strong>
+                  <br />
+                  print_data, if_statement → <strong style={{color: "#10b981"}}>BENAR</strong>
                 </li>
                 <li>
                   Bersifat case-sensitive, huruf besar dan kecil dibedakan. Jadi Harga, harga, dan HARGA adalah variabel yang berbeda.
+                  <br />
+                  nama, Nama, NAMA → <strong>tiga variabel berbeda.</strong>
                 </li>
                 <li>
-                  Buat nama yang deskriptif agar mudah dipahami. Misalnya rata_rata lebih jelas daripada rt.
+                  Buat nama yang deskriptif agar mudah dipahami. Misalnya rata_rata lebih jelas daripada rt dan total_nilai lebih baik daripada tn
+                  <br />
+                  
                 </li>
               </ol>
               <p style={styles.text}>
-                <strong>Tipe data dasar di Python:</strong>
+                Tipe data dasar di Python:
               </p>
               <ul style={styles.list}>
                 <li>
@@ -390,7 +469,7 @@ export default function Apersepsi() {
                   <strong style={{ color: "#306998" }}> jurusan</strong> = <strong style={{ color: "#306998" }}>"Pendidikan Komputer"</strong>
                 </li>
                 <li>
-                  <strong>boolean</strong> → nilai kebenaran, hanya True atau False.
+                  <strong>boolean</strong> → nilai kebenaran, hanya <code>True</code> atau <code>False</code>.
                   <br />
                   Contoh: (konteks apakah siswa masih aktif bersekolah)
                   <br />
@@ -400,8 +479,7 @@ export default function Apersepsi() {
                 </li>
               </ul>
 
-              {/* Contoh kode dengan komentar berwarna */}
-              <p style={styles.text}><strong>Contoh Kode:</strong></p>
+              <p style={styles.text}>Contoh Kode:</p>
               <pre style={styles.codeBlock}>
                 {formatCodeWithComments(`panjang = int(input("Masukkan panjang: "))  # input panjang dalam cm
 lebar = float(input("Masukkan lebar: "))      # input lebar dalam cm
@@ -409,87 +487,101 @@ jurusan = "Pendidikan Komputer"               # data string
 status_lulus = True                           # boolean`)}
               </pre>
 
+              {/* AKTIVITAS 1 - GABUNGAN */}
               <div style={styles.activityWrapper}>
-                <div style={styles.activityTitle}>Aktivitas 1.1 - Cocokkan Tipe Data</div>
-                <p style={styles.instruction}>Seret kotak tipe data (integer, float, string, boolean) ke nilai yang sesuai.</p>
-                <div style={styles.dragContainer}>
-                  <div style={styles.dragItems}>
-                    {dragItems.map((item) => (
-                      <div
-                        key={item}
-                        draggable
-                        onDragStart={(e) => handleDragStart(e, item)}
-                        onDragEnd={handleDragEnd}
-                        style={styles.dragItem}
-                      >
-                        {item}
-                      </div>
-                    ))}
+                <div style={styles.activityTitle}>Aktivitas</div>
+                <p style={styles.instruction}>Kerjakan semua soal di bawah ini. Setiap soal memiliki tombol Periksa dan Reset.</p>
+
+                {/* Soal 1.1 - Drag & Drop */}
+                <div style={styles.subActivity}>
+                  {/* <p style={styles.subLabel}>Soal 1: Cocokkan Tipe Data</p> */}
+                  <p style={styles.instruction}>Seret kotak tipe data (integer, float, string, boolean) ke nilai yang sesuai dibawah ini.</p>
+                  <div style={styles.dragContainer}>
+                    <div style={styles.dragItems}>
+                      {dragItems.map((item) => (
+                        <div
+                          key={item}
+                          draggable
+                          onDragStart={(e) => handleDragStart(e, item)}
+                          onDragEnd={handleDragEnd}
+                          style={styles.dragItem}
+                        >
+                          {item}
+                        </div>
+                      ))}
+                    </div>
+                    <div style={styles.dropZones}>
+                      {targets.map((target) => (
+                        <div
+                          key={target}
+                          onDragOver={handleDragOver}
+                          onDrop={(e) => handleDrop(e, target)}
+                          style={{
+                            ...styles.dropZone,
+                            backgroundColor: dragDropStatus[target] ? "#d1fae5" : "#f8fafc",
+                            borderColor: dragDropStatus[target] ? "#10b981" : "#306998",
+                          }}
+                        >
+                          <span style={styles.targetValue}>{target}</span>
+                          <span style={styles.dropAnswer}>
+                            {dragDropAnswers[target] ? ` → ${dragDropAnswers[target]}` : " (kosong)"}
+                            {dragDropStatus[target] && " ✓"}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                  <div style={styles.dropZones}>
-                    {targets.map((target) => (
+                  <div style={styles.buttonGroup}>
+                    <button style={styles.checkButton} onClick={checkDragDrop}>Periksa Jawaban</button>
+                    <button style={styles.resetButton} onClick={resetDragDrop}>Reset</button>
+                  </div>
+                  {dragDropFeedback && <div style={styles.feedback}>{dragDropFeedback}</div>}
+                </div>
+
+                {/* Soal 1.2 - Pilihan Ganda */}
+                <div style={styles.subActivity}>
+                  {/* <p style={styles.subLabel}>Soal 2: Aturan Penulisan Variabel</p> */}
+                  <p style={styles.instruction}>Pilihlah penulisan variabel yang benar di Python:</p>
+                  <div style={styles.options}>
+                    {varPilihanOptions.map((opt, idx) => (
                       <div
-                        key={target}
-                        onDragOver={handleDragOver}
-                        onDrop={(e) => handleDrop(e, target)}
+                        key={idx}
+                        onClick={() => setVarPilihanSelected(idx)}
                         style={{
-                          ...styles.dropZone,
-                          backgroundColor: dragDropStatus[target] ? "#d1fae5" : "#f8fafc",
-                          borderColor: dragDropStatus[target] ? "#10b981" : "#306998",
+                          ...styles.option,
+                          backgroundColor: varPilihanSelected === idx ? "#2fa69a" : "#fff",
+                          color: varPilihanSelected === idx ? "white" : "#1f2937",
                         }}
                       >
-                        <span style={styles.targetValue}>{target}</span>
-                        <span style={styles.dropAnswer}>
-                          {dragDropAnswers[target] ? ` → ${dragDropAnswers[target]}` : " (kosong)"}
-                          {dragDropStatus[target] && " ✓"}
-                        </span>
+                        <strong>{String.fromCharCode(65 + idx)}.</strong> {opt}
                       </div>
                     ))}
                   </div>
+                  <div style={styles.buttonGroup}>
+                    <button style={styles.checkButton} onClick={checkVarPilihan}>Periksa Jawaban</button>
+                    <button style={styles.resetButton} onClick={resetVarPilihan}>Reset</button>
+                  </div>
+                  {varPilihanFeedback && <div style={styles.feedback}>{varPilihanFeedback}</div>}
                 </div>
-                {dragDropAllDone && <div style={styles.successMsg}>✨ Semua cocok! Bagus.</div>}
-              </div>
 
-              {/* Aktivitas 1.2 - Tanya jawab penulisan variabel */}
-              <div style={styles.activityWrapper}>
-                <div style={styles.activityTitle}>Aktivitas 1.2 - Aturan Penulisan Variabel (Tanya Jawab)</div>
-                <p style={styles.instruction}>
-                  Pilihlah penulisan variabel yang benar di Python:<br />
-                  A. 1nama = 'Andi'<br />
-                  B. nama = 'Andi'<br />
-                  C. nama-siswa = 'Andi'<br />
-                  D. def = 10<br />
-                  E. nama siswa = 'Andi'<br />
-                  <strong>Jawab dengan mengetik huruf (A, B, C, D, atau E) atau tuliskan nama variabel yang benar:</strong>
-                </p>
-                <div style={styles.inputGroup}>
-                  <input
-                    type="text"
-                    placeholder="Contoh: B atau nama = 'Andi'"
-                    value={varTanyaJawabAnswer}
-                    onChange={(e) => setVarTanyaJawabAnswer(e.target.value)}
-                    style={styles.inputText}
-                  />
-                  <button style={styles.checkButton} onClick={checkVarTanyaJawab}>Periksa Jawaban</button>
+                {/* Soal 1.3 - Input Tipe Data */}
+                <div style={styles.subActivity}>
+                  {/* <p style={styles.subLabel}>Soal 3: Tipe Data dari Nilai</p> */}
+                  <p style={styles.instruction}>(Tulis jawaban dalam huruf kecil contoh : string/integer/float/boolean)</p>
+                  <p style={styles.instruction}>Tipe data dari nilai 5 adalah ....</p>
+                  <div style={styles.inputGroup}>
+                    <input
+                      type="text"
+                      placeholder=""
+                      value={tipeNilaiAnswer}
+                      onChange={(e) => setTipeNilaiAnswer(e.target.value)}
+                      style={styles.inputText}
+                    />
+                    <button style={styles.checkButton} onClick={checkTipeNilai}>Periksa Jawaban</button>
+                    <button style={styles.resetButton} onClick={resetTipeNilai}>Reset</button>
+                  </div>
+                  {tipeNilaiFeedback && <div style={styles.feedback}>{tipeNilaiFeedback}</div>}
                 </div>
-                {varTanyaJawabFeedback && <div style={styles.feedback}>{varTanyaJawabFeedback}</div>}
-              </div>
-
-              <div style={styles.activityWrapper}>
-                <div style={styles.activityTitle}>Aktivitas 1.3 - Tipe Data dari Nilai</div>
-                <p style={styles.instruction}>(Tulis jawaban dalam huruf kecil contoh : string/integer/float/boolean)</p>
-                <p style={styles.instruction}>Tipe data dari nilai 5 adalah ....</p>
-                <div style={styles.inputGroup}>
-                  <input
-                    type="text"
-                    placeholder=""
-                    value={tipeNilaiAnswer}
-                    onChange={(e) => setTipeNilaiAnswer(e.target.value)}
-                    style={styles.inputText}
-                  />
-                  <button style={styles.checkButton} onClick={checkTipeNilai}>Periksa Jawaban</button>
-                </div>
-                {tipeNilaiFeedback && <div style={styles.feedback}>{tipeNilaiFeedback}</div>}
               </div>
             </div>
           </section>
@@ -499,19 +591,19 @@ status_lulus = True                           # boolean`)}
             <div style={styles.materialCard} className="fade-in">
               <div style={styles.materialHeader}>
                 <div style={styles.materialIcon}>2</div>
-                <div style={styles.materialTitle}>Operator Aritmatika</div>
+                <div style={styles.materialTitle}><strong>Operator Aritmatika</strong></div>
               </div>
               <p style={styles.text}>
-                Operator aritmatika digunakan untuk melakukan operasi matematika pada angka. Berikut tabel operator yang umum digunakan:
+                <strong>Operator aritmatika</strong> digunakan untuk melakukan operasi matematika pada angka. Berikut tabel operator yang umum digunakan:
               </p>
               <div style={styles.tableWrapper}>
                 <table style={styles.table}>
                   <thead>
                     <tr style={styles.tableHeaderRow}>
-                      <th style={styles.tableHeader}>Operator</th>
-                      <th style={styles.tableHeader}>Nama</th>
-                      <th style={styles.tableHeader}>Contoh</th>
-                      <th style={styles.tableHeader}>Hasil</th>
+                      <th style={styles.tableHeader}><strong>Operator</strong></th>
+                      <th style={styles.tableHeader}><strong>Nama</strong></th>
+                      <th style={styles.tableHeader}><strong>Contoh</strong></th>
+                      <th style={styles.tableHeader}><strong>Hasil</strong></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -526,63 +618,81 @@ status_lulus = True                           # boolean`)}
                 </table>
               </div>
 
+              {/* AKTIVITAS 2 - GABUNGAN */}
               <div style={styles.activityWrapper}>
-                <div style={styles.activityTitle}>Aktivitas 2.1 - Pembagian Bulat</div>
-                <p style={styles.instruction}>Hasil dari 15 // 4 adalah ….</p>
-                <div style={styles.options}>
-                  {operatorOptions.map((opt, idx) => (
-                    <div
-                      key={idx}
-                      onClick={() => handleOperator(idx)}
-                      style={{
-                        ...styles.option,
-                        backgroundColor: operatorAnswer === idx ? "#2fa69a" : "#fff",
-                        color: operatorAnswer === idx ? "white" : "#1f2937",
-                      }}
-                    >
-                      <strong>{String.fromCharCode(65 + idx)}.</strong> {opt}
-                    </div>
-                  ))}
-                </div>
-                {operatorFeedback && <div style={styles.feedback}>{operatorFeedback}</div>}
-              </div>
+                <div style={styles.activityTitle}>Aktivitas</div>
+                <p style={styles.instruction}>Kerjakan semua soal di bawah ini. Setiap soal memiliki tombol Periksa dan Reset.</p>
 
-              <div style={styles.activityWrapper}>
-                <div style={styles.activityTitle}>Aktivitas 2.2 - Sisa Bagi (Modulus)</div>
-                <p style={styles.instruction}>Hasil dari 7 % 3 adalah ….</p>
-                <div style={styles.options}>
-                  {modulusOptions.map((opt, idx) => (
-                    <div
-                      key={idx}
-                      onClick={() => handleModulus(idx)}
-                      style={{
-                        ...styles.option,
-                        backgroundColor: modulusAnswer === idx ? "#2fa69a" : "#fff",
-                        color: modulusAnswer === idx ? "white" : "#1f2937",
-                      }}
-                    >
-                      <strong>{String.fromCharCode(65 + idx)}.</strong> {opt}
-                    </div>
-                  ))}
+                {/* Soal 2.1 - Pembagian Bulat */}
+                <div style={styles.subActivity}>
+                  {/* <p style={styles.subLabel}>Soal 1: Pembagian Bulat</p> */}
+                  <p style={styles.instruction}>Hasil dari 15 // 4 adalah ….</p>
+                  <div style={styles.options}>
+                    {operatorOptions.map((opt, idx) => (
+                      <div
+                        key={idx}
+                        onClick={() => setOperatorAnswer(idx)}
+                        style={{
+                          ...styles.option,
+                          backgroundColor: operatorAnswer === idx ? "#2fa69a" : "#fff",
+                          color: operatorAnswer === idx ? "white" : "#1f2937",
+                        }}
+                      >
+                        <strong>{String.fromCharCode(65 + idx)}.</strong> {opt}
+                      </div>
+                    ))}
+                  </div>
+                  <div style={styles.buttonGroup}>
+                    <button style={styles.checkButton} onClick={checkOperator}>Periksa Jawaban</button>
+                    <button style={styles.resetButton} onClick={resetOperator}>Reset</button>
+                  </div>
+                  {operatorFeedback && <div style={styles.feedback}>{operatorFeedback}</div>}
                 </div>
-                {modulusFeedback && <div style={styles.feedback}>{modulusFeedback}</div>}
-              </div>
 
-              <div style={styles.activityWrapper}>
-                <div style={styles.activityTitle}>Aktivitas 2.3 - Operator Pangkat</div>
-                <p style={styles.instruction}>(Tulis jawabannya dengan angka)</p>
-                <p style={styles.instruction}>Hasil dari 3 ** 3 adalah ….</p>
-                <div style={styles.inputGroup}>
-                  <input
-                    type="text"
-                    placeholder=""
-                    value={pangkatAnswer}
-                    onChange={(e) => setPangkatAnswer(e.target.value)}
-                    style={styles.inputText}
-                  />
-                  <button style={styles.checkButton} onClick={checkPangkat}>Periksa Jawaban</button>
+                {/* Soal 2.2 - Modulus */}
+                <div style={styles.subActivity}>
+                  {/* <p style={styles.subLabel}>Soal 2: Sisa Bagi (Modulus)</p> */}
+                  <p style={styles.instruction}>Hasil dari 7 % 3 adalah ….</p>
+                  <div style={styles.options}>
+                    {modulusOptions.map((opt, idx) => (
+                      <div
+                        key={idx}
+                        onClick={() => setModulusAnswer(idx)}
+                        style={{
+                          ...styles.option,
+                          backgroundColor: modulusAnswer === idx ? "#2fa69a" : "#fff",
+                          color: modulusAnswer === idx ? "white" : "#1f2937",
+                        }}
+                      >
+                        <strong>{String.fromCharCode(65 + idx)}.</strong> {opt}
+                      </div>
+                    ))}
+                  </div>
+                  <div style={styles.buttonGroup}>
+                    <button style={styles.checkButton} onClick={checkModulus}>Periksa Jawaban</button>
+                    <button style={styles.resetButton} onClick={resetModulus}>Reset</button>
+                  </div>
+                  {modulusFeedback && <div style={styles.feedback}>{modulusFeedback}</div>}
                 </div>
-                {pangkatFeedback && <div style={styles.feedback}>{pangkatFeedback}</div>}
+
+                {/* Soal 2.3 - Pangkat */}
+                <div style={styles.subActivity}>
+                  {/* <p style={styles.subLabel}>Soal 3: Operator Pangkat</p> */}
+                  <p style={styles.instruction}>(Tulis jawabannya dengan angka)</p>
+                  <p style={styles.instruction}>Hasil dari 3 ** 3 adalah ….</p>
+                  <div style={styles.inputGroup}>
+                    <input
+                      type="text"
+                      placeholder=""
+                      value={pangkatAnswer}
+                      onChange={(e) => setPangkatAnswer(e.target.value)}
+                      style={styles.inputText}
+                    />
+                    <button style={styles.checkButton} onClick={checkPangkat}>Periksa Jawaban</button>
+                    <button style={styles.resetButton} onClick={resetPangkat}>Reset</button>
+                  </div>
+                  {pangkatFeedback && <div style={styles.feedback}>{pangkatFeedback}</div>}
+                </div>
               </div>
             </div>
           </section>
@@ -592,7 +702,7 @@ status_lulus = True                           # boolean`)}
             <div style={styles.materialCard} className="fade-in">
               <div style={styles.materialHeader}>
                 <div style={styles.materialIcon}>3</div>
-                <div style={styles.materialTitle}>Input dan Output</div>
+                <div style={styles.materialTitle}><strong>Input</strong> dan <strong>Output</strong></div>
               </div>
               <p style={styles.text}>
                 <strong>Output:</strong> Fungsi <code>print()</code> digunakan untuk menampilkan teks atau nilai ke layar. Contoh: <code>print("Hello World!")</code>
@@ -602,66 +712,81 @@ status_lulus = True                           # boolean`)}
                 Jika ingin menerima angka, konversi dengan <code>int()</code> atau <code>float()</code>.
               </p>
 
-              <p style={styles.text}><strong>Contoh Kode Program:</strong></p>
+              <p style={styles.text}>Contoh Kode Program:</p>
               <pre style={styles.codeBlock}>
                 {formatCodeWithComments(`nama = input("Nama: ")          # membaca input dari user
 print("Halo", nama)             # menampilkan sapaan
 umur = int(input("Umur: "))     # konversi ke integer`)}
               </pre>
 
+              {/* AKTIVITAS 3 - GABUNGAN */}
               <div style={styles.activityWrapper}>
-                <div style={styles.activityTitle}>Aktivitas 3.1 - Konversi ke Integer</div>
-                <p style={styles.instruction}>Lengkapi kode agar variabel nim bertipe integer:<br /> <code>nim = ______(input("NIM: "))</code></p>
-                <div style={styles.inputGroup}>
-                  <input
-                    type="text"
-                    placeholder=""
-                    value={ioAnswer}
-                    onChange={(e) => setIoAnswer(e.target.value)}
-                    style={styles.inputText}
-                  />
-                  <button style={styles.checkButton} onClick={checkIO}>Periksa Jawaban</button>
-                </div>
-                {ioFeedback && <div style={styles.feedback}>{ioFeedback}</div>}
-              </div>
+                <div style={styles.activityTitle}>Aktivitas</div>
+                <p style={styles.instruction}>Kerjakan semua soal di bawah ini. Setiap soal memiliki tombol Periksa dan Reset.</p>
 
-              <div style={styles.activityWrapper}>
-                <div style={styles.activityTitle}>Aktivitas 3.2 - Fungsi Output</div>
-                <p style={styles.instruction}>Fungsi yang benar untuk menampilkan teks ke layar adalah ....</p>
-                <div style={styles.options}>
-                  {outputOptions.map((opt, idx) => (
-                    <div
-                      key={idx}
-                      onClick={() => handleOutput(idx)}
-                      style={{
-                        ...styles.option,
-                        backgroundColor: outputAnswer === idx ? "#2fa69a" : "#fff",
-                        color: outputAnswer === idx ? "white" : "#1f2937",
-                      }}
-                    >
-                      <strong>{String.fromCharCode(65 + idx)}.</strong> {opt}
-                    </div>
-                  ))}
+                {/* Soal 3.1 - Konversi ke Integer */}
+                <div style={styles.subActivity}>
+                  {/* <p style={styles.subLabel}>Soal 1: Konversi ke Integer</p> */}
+                  <p style={styles.instruction}>Lengkapi kode agar variabel nim bertipe integer:<br /> <code>nim = ______(input("NIM: "))</code></p>
+                  <div style={styles.inputGroup}>
+                    <input
+                      type="text"
+                      placeholder=""
+                      value={ioAnswer}
+                      onChange={(e) => setIoAnswer(e.target.value)}
+                      style={styles.inputText}
+                    />
+                    <button style={styles.checkButton} onClick={checkIO}>Periksa Jawaban</button>
+                    <button style={styles.resetButton} onClick={resetIO}>Reset</button>
+                  </div>
+                  {ioFeedback && <div style={styles.feedback}>{ioFeedback}</div>}
                 </div>
-                {outputFeedback && <div style={styles.feedback}>{outputFeedback}</div>}
-              </div>
 
-              <div style={styles.activityWrapper}>
-                <div style={styles.activityTitle}>Aktivitas 3.3 - Mencetak Variabel</div>
-                <p style={styles.instruction}>Semisal user menginput namanya Andi, lengkapi agar program mencetak "Halo Andi". Tulis variabel yang tepat.</p>
-                <pre style={styles.codeBlockSmall}>{`nama = input("Nama: ")
+                {/* Soal 3.2 - Fungsi Output */}
+                <div style={styles.subActivity}>
+                  {/* <p style={styles.subLabel}>Soal 2: Fungsi Output</p> */}
+                  <p style={styles.instruction}>Fungsi yang benar untuk menampilkan teks ke layar adalah ....</p>
+                  <div style={styles.options}>
+                    {outputOptions.map((opt, idx) => (
+                      <div
+                        key={idx}
+                        onClick={() => setOutputAnswer(idx)}
+                        style={{
+                          ...styles.option,
+                          backgroundColor: outputAnswer === idx ? "#2fa69a" : "#fff",
+                          color: outputAnswer === idx ? "white" : "#1f2937",
+                        }}
+                      >
+                        <strong>{String.fromCharCode(65 + idx)}.</strong> {opt}
+                      </div>
+                    ))}
+                  </div>
+                  <div style={styles.buttonGroup}>
+                    <button style={styles.checkButton} onClick={checkOutput}>Periksa Jawaban</button>
+                    <button style={styles.resetButton} onClick={resetOutput}>Reset</button>
+                  </div>
+                  {outputFeedback && <div style={styles.feedback}>{outputFeedback}</div>}
+                </div>
+
+                {/* Soal 3.3 - Mencetak Variabel */}
+                <div style={styles.subActivity}>
+                  {/* <p style={styles.subLabel}>Soal 3: Mencetak Variabel</p> */}
+                  <p style={styles.instruction}>Semisal user menginput namanya Andi, lengkapi agar program mencetak "Halo Andi". Tulis variabel yang tepat.</p>
+                  <pre style={styles.codeBlockSmall}>{`nama = input("Nama: ")
 print("Halo", ______)`}</pre>
-                <div style={styles.inputGroup}>
-                  <input
-                    type="text"
-                    placeholder=""
-                    value={printVarAnswer}
-                    onChange={(e) => setPrintVarAnswer(e.target.value)}
-                    style={styles.inputText}
-                  />
-                  <button style={styles.checkButton} onClick={checkPrintVar}>Periksa Jawaban</button>
+                  <div style={styles.inputGroup}>
+                    <input
+                      type="text"
+                      placeholder=""
+                      value={printVarAnswer}
+                      onChange={(e) => setPrintVarAnswer(e.target.value)}
+                      style={styles.inputText}
+                    />
+                    <button style={styles.checkButton} onClick={checkPrintVar}>Periksa Jawaban</button>
+                    <button style={styles.resetButton} onClick={resetPrintVar}>Reset</button>
+                  </div>
+                  {printVarFeedback && <div style={styles.feedback}>{printVarFeedback}</div>}
                 </div>
-                {printVarFeedback && <div style={styles.feedback}>{printVarFeedback}</div>}
               </div>
             </div>
           </section>
@@ -811,6 +936,8 @@ const styles = {
   activityWrapper: { marginTop: "28px", padding: "16px", backgroundColor: "#fefce8", borderRadius: "20px", borderLeft: "6px solid #FFD43B", boxShadow: "0 2px 8px rgba(0,0,0,0.03)" },
   activityTitle: { fontWeight: "700", fontSize: "18px", marginBottom: "8px", color: "#1e293b" },
   instruction: { fontSize: "14px", color: "#475569", marginBottom: "16px", fontStyle: "italic", fontWeight: "500" },
+  subActivity: { marginTop: "20px", paddingTop: "16px", borderTop: "1px dashed #e2e8f0" },
+  subLabel: { fontWeight: "600", fontSize: "15px", color: "#1e293b", marginBottom: "8px" },
   dragContainer: { display: "flex", flexDirection: "column", gap: "20px" },
   dragItems: { display: "flex", flexWrap: "wrap", gap: "12px", justifyContent: "center" },
   dragItem: {
@@ -843,6 +970,8 @@ const styles = {
   inputGroup: { display: "flex", gap: "12px", alignItems: "center", flexWrap: "wrap" },
   inputText: { flex: "1", padding: "12px 16px", borderRadius: "20px", border: "1px solid #cbd5e1", fontSize: "16px", fontFamily: "monospace" },
   checkButton: { background: "#306998", color: "white", border: "none", padding: "10px 24px", borderRadius: "40px", cursor: "pointer", fontWeight: "600", transition: "0.2s" },
+  resetButton: { background: "#ef4444", color: "white", border: "none", padding: "10px 24px", borderRadius: "40px", cursor: "pointer", fontWeight: "600", transition: "0.2s" },
+  buttonGroup: { display: "flex", gap: "12px", marginTop: "12px", flexWrap: "wrap" },
   feedback: { marginTop: "12px", padding: "10px 16px", borderRadius: "16px", background: "#f1f5f9", borderLeft: "5px solid #306998", fontWeight: "500", color: "#1e293b" },
   successMsg: { marginTop: "12px", padding: "10px", background: "#d1fae5", borderRadius: "16px", color: "#065f46", textAlign: "center", fontWeight: "500" },
 };
