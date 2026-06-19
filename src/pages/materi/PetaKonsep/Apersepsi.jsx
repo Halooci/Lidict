@@ -469,7 +469,7 @@ export default function Apersepsi() {
                   <strong style={{ color: "#306998" }}> jurusan</strong> = <strong style={{ color: "#306998" }}>"Pendidikan Komputer"</strong>
                 </li>
                 <li>
-                  <strong>boolean</strong> → nilai kebenaran, hanya <code>True</code> atau <code>False</code>.
+                  <strong>boolean</strong> → nilai kebenaran, hanya True atau False.
                   <br />
                   Contoh: (konteks apakah siswa masih aktif bersekolah)
                   <br />
