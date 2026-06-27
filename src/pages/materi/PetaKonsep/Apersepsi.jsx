@@ -381,11 +381,8 @@ export default function Apersepsi() {
                 <h3 style={styles.heroTitle}>Seperti perjalanan, kita butuh tas yang tepat untuk menyimpan barang-barang</h3>
                 <p style={styles.heroText}>
                   Menyimpan banyak data tanpa struktur akan berantakan. List, Nested List, dan Dictionary adalah <strong>struktur</strong> Python 
-                  yang akan mengatur data Anda. Tapi sebelumnya, mari mengingat kembali dasar-dasarnya.
+                  yang akan mengatur data Anda. Tapi sebelumnya, mari mengingat kembali dasar-dasarnya. Simak materi berikut.
                 </p>
-                <div style={styles.heroBadge}>
-                  <span><strong>Variabel</strong></span> <span>|  <strong>Tipe Data</strong>    |</span> <span><strong>Operator</strong></span> <span>|   <strong>Input/Output</strong></span>
-                </div>
               </div>
             </div>
           </section>
@@ -456,18 +453,24 @@ export default function Apersepsi() {
                   <br />
                   Contoh:  
                   <strong style={{ color: "#306998" }}> panjang</strong> = <strong style={{ color: "#306998" }}>int(input("Masukkan panjang: "))</strong>
+                  <br />
+                  <strong style={{ color: "#306998" }}> umur</strong> = <strong style={{ color: "#306998" }}>25</strong>
                 </li>
                 <li>
                   <strong>float</strong> → bilangan desimal (ada koma), seperti 3.14, -0.5, 2.0.
                   <br />
                   Contoh:  
                   <strong style={{ color: "#306998" }}> lebar</strong> = <strong style={{ color: "#306998" }}> float(input("Masukkan lebar: "))</strong>
+                  <br />
+                  <strong style={{ color: "#306998" }}> pi</strong> = <strong style={{ color: "#306998" }}>3.14</strong>
                 </li>
                 <li>
                   <strong>string</strong> → teks, diapit kutip (bisa kutip satu atau kutip dua).
                   <br />
                   Contoh:   
                   <strong style={{ color: "#306998" }}> jurusan</strong> = <strong style={{ color: "#306998" }}>"Pendidikan Komputer"</strong>
+                  <br />
+                  <strong style={{ color: "#306998" }}> nama</strong> = <strong style={{ color: "#306998" }}>"Andi"</strong>
                 </li>
                 <li>
                   <strong>boolean</strong> → nilai kebenaran, hanya True atau False.
@@ -491,12 +494,11 @@ status_lulus = True                           # boolean`)}
               {/* AKTIVITAS 1 - GABUNGAN */}
               <div style={styles.activityWrapper}>
                 <div style={styles.activityTitle}>Aktivitas</div>
-                <p style={styles.instruction}>Kerjakan semua soal di bawah ini. Setiap soal memiliki tombol Periksa dan Reset.</p>
+                <p style={styles.instruction}>Petunjuk: Kerjakan semua soal di bawah ini. Setiap soal memiliki tombol Periksa dan Reset.</p>
 
                 {/* Soal 1.1 - Drag & Drop */}
                 <div style={styles.subActivity}>
-                  {/* <p style={styles.subLabel}>Soal 1: Cocokkan Tipe Data</p> */}
-                  <p style={styles.instruction}>Seret kotak tipe data (integer, float, string, boolean) ke nilai yang sesuai dibawah ini.</p>
+                  <p style={styles.instruction}>Petunjuk: Seret kotak tipe data (integer, float, string, boolean) ke nilai yang sesuai dibawah ini.</p>
                   <div style={styles.dragContainer}>
                     <div style={styles.dragItems}>
                       {dragItems.map((item) => (
@@ -541,8 +543,7 @@ status_lulus = True                           # boolean`)}
 
                 {/* Soal 1.2 - Pilihan Ganda */}
                 <div style={styles.subActivity}>
-                  {/* <p style={styles.subLabel}>Soal 2: Aturan Penulisan Variabel</p> */}
-                  <p style={styles.instruction}>Pilihlah penulisan variabel yang benar di Python:</p>
+                  <p style={styles.instruction}>Petunjuk: Pilihlah penulisan variabel yang benar di Python:</p>
                   <div style={styles.options}>
                     {varPilihanOptions.map((opt, idx) => (
                       <div
@@ -567,9 +568,7 @@ status_lulus = True                           # boolean`)}
 
                 {/* Soal 1.3 - Input Tipe Data */}
                 <div style={styles.subActivity}>
-                  {/* <p style={styles.subLabel}>Soal 3: Tipe Data dari Nilai</p> */}
-                  <p style={styles.instruction}>(Tulis jawaban dalam huruf kecil contoh : string/integer/float/boolean)</p>
-                  <p style={styles.instruction}>Tipe data dari nilai 5 adalah ....</p>
+                  <p style={styles.instruction}>Petunjuk: Tulis jawaban dalam huruf kecil (contoh: string/integer/float/boolean). Tipe data dari nilai 5 adalah ....</p>
                   <div style={styles.inputGroup}>
                     <input
                       type="text"
@@ -622,12 +621,11 @@ status_lulus = True                           # boolean`)}
               {/* AKTIVITAS 2 - GABUNGAN */}
               <div style={styles.activityWrapper}>
                 <div style={styles.activityTitle}>Aktivitas</div>
-                <p style={styles.instruction}>Kerjakan semua soal di bawah ini. Setiap soal memiliki tombol Periksa dan Reset.</p>
+                <p style={styles.instruction}>Petunjuk: Kerjakan semua soal di bawah ini. Setiap soal memiliki tombol Periksa dan Reset.</p>
 
                 {/* Soal 2.1 - Pembagian Bulat */}
                 <div style={styles.subActivity}>
-                  {/* <p style={styles.subLabel}>Soal 1: Pembagian Bulat</p> */}
-                  <p style={styles.instruction}>Hasil dari 15 // 4 adalah ….</p>
+                  <p style={styles.instruction}>Petunjuk: Hasil dari 15 // 4 adalah ….</p>
                   <div style={styles.options}>
                     {operatorOptions.map((opt, idx) => (
                       <div
@@ -652,8 +650,7 @@ status_lulus = True                           # boolean`)}
 
                 {/* Soal 2.2 - Modulus */}
                 <div style={styles.subActivity}>
-                  {/* <p style={styles.subLabel}>Soal 2: Sisa Bagi (Modulus)</p> */}
-                  <p style={styles.instruction}>Hasil dari 7 % 3 adalah ….</p>
+                  <p style={styles.instruction}>Petunjuk: Hasil dari 7 % 3 adalah ….</p>
                   <div style={styles.options}>
                     {modulusOptions.map((opt, idx) => (
                       <div
@@ -678,9 +675,7 @@ status_lulus = True                           # boolean`)}
 
                 {/* Soal 2.3 - Pangkat */}
                 <div style={styles.subActivity}>
-                  {/* <p style={styles.subLabel}>Soal 3: Operator Pangkat</p> */}
-                  <p style={styles.instruction}>(Tulis jawabannya dengan angka)</p>
-                  <p style={styles.instruction}>Hasil dari 3 ** 3 adalah ….</p>
+                  <p style={styles.instruction}>Petunjuk: Tulis jawabannya dengan angka. Hasil dari 3 ** 3 adalah ….</p>
                   <div style={styles.inputGroup}>
                     <input
                       type="text"
@@ -723,12 +718,11 @@ umur = int(input("Umur: "))     # konversi ke integer`)}
               {/* AKTIVITAS 3 - GABUNGAN */}
               <div style={styles.activityWrapper}>
                 <div style={styles.activityTitle}>Aktivitas</div>
-                <p style={styles.instruction}>Kerjakan semua soal di bawah ini. Setiap soal memiliki tombol Periksa dan Reset.</p>
+                <p style={styles.instruction}>Petunjuk: Kerjakan semua soal di bawah ini. Setiap soal memiliki tombol Periksa dan Reset.</p>
 
                 {/* Soal 3.1 - Konversi ke Integer */}
                 <div style={styles.subActivity}>
-                  {/* <p style={styles.subLabel}>Soal 1: Konversi ke Integer</p> */}
-                  <p style={styles.instruction}>Lengkapi kode agar variabel nim bertipe integer:<br /> <code>nim = ______(input("NIM: "))</code></p>
+                  <p style={styles.instruction}>Petunjuk: Lengkapi kode agar variabel nim bertipe integer:<br /> <code>nim = ______(input("NIM: "))</code></p>
                   <div style={styles.inputGroup}>
                     <input
                       type="text"
@@ -745,8 +739,7 @@ umur = int(input("Umur: "))     # konversi ke integer`)}
 
                 {/* Soal 3.2 - Fungsi Output */}
                 <div style={styles.subActivity}>
-                  {/* <p style={styles.subLabel}>Soal 2: Fungsi Output</p> */}
-                  <p style={styles.instruction}>Fungsi yang benar untuk menampilkan teks ke layar adalah ....</p>
+                  <p style={styles.instruction}>Petunjuk: Fungsi yang benar untuk menampilkan teks ke layar adalah ....</p>
                   <div style={styles.options}>
                     {outputOptions.map((opt, idx) => (
                       <div
@@ -771,8 +764,7 @@ umur = int(input("Umur: "))     # konversi ke integer`)}
 
                 {/* Soal 3.3 - Mencetak Variabel */}
                 <div style={styles.subActivity}>
-                  {/* <p style={styles.subLabel}>Soal 3: Mencetak Variabel</p> */}
-                  <p style={styles.instruction}>Semisal user menginput namanya Andi, lengkapi agar program mencetak "Halo Andi". Tulis variabel yang tepat.</p>
+                  <p style={styles.instruction}>Petunjuk: Semisal user menginput namanya Andi, lengkapi agar program mencetak "Halo Andi". Tulis variabel yang tepat.</p>
                   <pre style={styles.codeBlockSmall}>{`nama = input("Nama: ")
 print("Halo", ______)`}</pre>
                   <div style={styles.inputGroup}>
@@ -936,7 +928,13 @@ const styles = {
   tableCell: { padding: "12px 16px", fontSize: "14px", color: "#1e293b" },
   activityWrapper: { marginTop: "28px", padding: "16px", backgroundColor: "#fefce8", borderRadius: "20px", borderLeft: "6px solid #FFD43B", boxShadow: "0 2px 8px rgba(0,0,0,0.03)" },
   activityTitle: { fontWeight: "700", fontSize: "18px", marginBottom: "8px", color: "#1e293b" },
-  instruction: { fontSize: "14px", color: "#475569", marginBottom: "16px", fontStyle: "italic", fontWeight: "500" },
+  instruction: { 
+    fontSize: "18px", 
+    color: "#0f172a", 
+    marginBottom: "16px", 
+    fontWeight: "600",
+    fontStyle: "italic",
+  },
   subActivity: { marginTop: "20px", paddingTop: "16px", borderTop: "1px dashed #e2e8f0" },
   subLabel: { fontWeight: "600", fontSize: "15px", color: "#1e293b", marginBottom: "8px" },
   dragContainer: { display: "flex", flexDirection: "column", gap: "20px" },
@@ -952,6 +950,7 @@ const styles = {
     boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
     transition: "opacity 0.2s",
     display: "inline-block",
+    fontSize: "17px",
   },
   dropZones: { display: "flex", flexDirection: "column", gap: "12px" },
   dropZone: {
@@ -964,12 +963,21 @@ const styles = {
     borderWidth: "2px",
     borderStyle: "solid",
   },
-  targetValue: { fontWeight: "bold", fontFamily: "monospace", fontSize: "16px" },
-  dropAnswer: { color: "#306998", fontStyle: "italic" },
+  targetValue: { fontWeight: "bold", fontFamily: "monospace", fontSize: "17px" },
+  dropAnswer: { color: "#306998", fontStyle: "italic", fontSize: "17px" },
   options: { display: "flex", flexDirection: "column", gap: "12px" },
-  option: { padding: "12px 20px", borderRadius: "20px", cursor: "pointer", border: "1px solid #e2e8f0", background: "#fff", fontWeight: "500", transition: "all 0.2s" },
+  option: { 
+    padding: "12px 20px", 
+    borderRadius: "20px", 
+    cursor: "pointer", 
+    border: "1px solid #e2e8f0", 
+    background: "#fff", 
+    fontWeight: "500", 
+    transition: "all 0.2s",
+    fontSize: "17px",
+  },
   inputGroup: { display: "flex", gap: "12px", alignItems: "center", flexWrap: "wrap" },
-  inputText: { flex: "1", padding: "12px 16px", borderRadius: "20px", border: "1px solid #cbd5e1", fontSize: "16px", fontFamily: "monospace" },
+  inputText: { flex: "1", padding: "12px 16px", borderRadius: "20px", border: "1px solid #cbd5e1", fontSize: "18px", fontFamily: "monospace" },
   checkButton: { background: "#306998", color: "white", border: "none", padding: "10px 24px", borderRadius: "40px", cursor: "pointer", fontWeight: "600", transition: "0.2s" },
   resetButton: { background: "#ef4444", color: "white", border: "none", padding: "10px 24px", borderRadius: "40px", cursor: "pointer", fontWeight: "600", transition: "0.2s" },
   buttonGroup: { display: "flex", gap: "12px", marginTop: "12px", flexWrap: "wrap" },

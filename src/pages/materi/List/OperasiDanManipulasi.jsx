@@ -1958,8 +1958,10 @@ export default function OperasiManipulasiList() {
             <h2 style={styles.sectionTitle}>Eksplorasi Awal</h2>
             <div style={styles.card}>
               <p style={styles.text}>
-                Sebelum belajar lebih dalam, jawab pertanyaan berikut dengan memilih opsi yang tersedia.
-                <strong style={{ color: "#0d6efd" }}> Materi akan terbuka setelah kedua pertanyaan dijawab.</strong>
+                Sebelum mempelajari lebih dalam, jawab pertanyaan berikut dengan memilih opsi yang tersedia. 
+                Eksplorasi awal ini bertujuan untuk mengukur pemahaman awal Anda terhadap materi yang akan dipelajari.
+                Maka dari itu, <strong>jawaban</strong> Anda <strong>tidak harus benar</strong>, jawab sesuai pemahaman Anda. 
+                <strong> Materi akan terbuka setelah kedua pertanyaan dijawab.</strong>
                 {isEksplorasiCompleted && " (Anda sudah menyelesaikan eksplorasi ini sebelumnya.)"}
               </p>
               {eksplorasiQuestions.map((q, idx) => {
