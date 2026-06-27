@@ -151,6 +151,7 @@ const visStyles = {
     fontSize: "14px",
     color: "#856404",
     borderLeft: "4px solid #ffc107",
+    textAlign: "justify",
   },
   note: {
     fontSize: "12px",
@@ -425,7 +426,7 @@ const Eksplorasi = ({ topicName, onComplete }) => {
           const selectedIdx = selected[idx];
           return (
             <div key={idx} style={{ marginBottom: "30px", borderBottom: "1px solid #e0e0e0", paddingBottom: "20px" }}>
-              <p style={{ fontWeight: "600", marginBottom: "12px" }}>{idx + 1}. {q.text}</p>
+              <p style={{ fontWeight: "600", marginBottom: "12px", textAlign: "justify" }}>{idx + 1}. {q.text}</p>
               <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                 {q.options.map((opt, optIdx) => {
                   let optionStyle = styles.eksplorasiOption;
@@ -856,7 +857,7 @@ _buffer.getvalue()
                   <h3 style={styles.subTitle}>Contoh Penggunaan dalam Kehidupan Nyata</h3>
 
                   <h4 style={{ marginTop: "20px", marginBottom: "10px", color: "#306998" }}>1. Data Nilai Siswa</h4>
-                  <p>Baris mewakili siswa, kolom mewakili mata pelajaran.</p>
+                  <p style={{ textAlign: "justify" }}>Baris mewakili siswa, kolom mewakili mata pelajaran.</p>
                   <ContohNestedList 
                     code={kodeNilai} 
                     visualData={contohDataNilai} 
@@ -866,7 +867,7 @@ _buffer.getvalue()
                   />
 
                   <h4 style={{ marginTop: "20px", marginBottom: "10px", color: "#306998" }}>2. Papan Permainan (Tic-Tac-Toe)</h4>
-                  <p>Game seperti Tic-Tac-Toe dapat direpresentasikan dengan nested list 3x3.</p>
+                  <p style={{ textAlign: "justify" }}>Game seperti Tic-Tac-Toe dapat direpresentasikan dengan nested list 3x3.</p>
                   <ContohNestedList 
                     code={kodePapan} 
                     visualData={contohDataPapan} 
@@ -876,7 +877,7 @@ _buffer.getvalue()
                   />
 
                   <h4 style={{ marginTop: "20px", marginBottom: "10px", color: "#306998" }}>3. Citra Digital</h4>
-                  <p>Gambar hitam-putih dapat direpresentasikan sebagai nested list di mana setiap elemen adalah nilai pikselnya.</p>
+                  <p style={{ textAlign: "justify" }}>Gambar hitam-putih dapat direpresentasikan sebagai nested list di mana setiap elemen adalah nilai pikselnya.</p>
                   <ContohNestedList 
                     code={kodeCitra} 
                     visualData={contohDataCitra} 
@@ -886,7 +887,7 @@ _buffer.getvalue()
                   />
 
                   <h4 style={{ marginTop: "20px", marginBottom: "10px", color: "#306998" }}>4. Koordinat</h4>
-                  <p>Menyimpan titik-titik koordinat (x, y) dalam bentuk list of lists.</p>
+                  <p style={{ textAlign: "justify" }}>Menyimpan titik-titik koordinat (x, y) dalam bentuk list of lists.</p>
                   <ContohNestedList 
                     code={kodeKoordinat} 
                     visualData={contohDataKoordinat} 
@@ -988,8 +989,18 @@ const styles = {
     padding: "25px",
     boxShadow: "0 5px 15px rgba(0,0,0,0.08)",
   },
-  list: { paddingLeft: "20px", lineHeight: "1.8" },
-  text: { lineHeight: "1.8", color: "#333", marginBottom: "15px", fontSize: "15px" },
+  list: {
+    paddingLeft: "20px",
+    lineHeight: "1.8",
+    textAlign: "justify",
+  },
+  text: {
+    lineHeight: "1.8",
+    color: "#333",
+    marginBottom: "15px",
+    fontSize: "15px",
+    textAlign: "justify",
+  },
   subTitle: {
     marginTop: "24px",
     marginBottom: "14px",
@@ -1081,12 +1092,10 @@ const styles = {
     fontWeight: "600",
     fontSize: "14px",
   },
-  // Gaya untuk wrapper CodeMirror
   codeMirrorWrapper: {
     backgroundColor: "#272822",
     padding: "0",
   },
-  // Hapus codeInputReadOnly dan codePre karena tidak digunakan lagi
   visualHeader: {
     backgroundColor: "#306998",
     color: "white",
@@ -1127,6 +1136,7 @@ const styles = {
     fontWeight: "600",
     marginBottom: "12px",
     fontSize: "15px",
+    textAlign: "justify",
   },
   quizOption: {
     padding: "12px",
@@ -1230,12 +1240,14 @@ const styles = {
     marginTop: "10px",
     color: "#dc3545",
     marginBottom: "10px",
+    textAlign: "justify",
   },
   perbandinganSuccess: {
     fontSize: "14px",
     marginTop: "10px",
     color: "#28a745",
     marginBottom: "10px",
+    textAlign: "justify",
   },
   perbandinganNote: {
     fontSize: "14px",
@@ -1243,12 +1255,14 @@ const styles = {
     color: "#666",
     whiteSpace: "pre-line",
     marginBottom: "10px",
+    textAlign: "justify",
   },
   perbandinganItalic: {
     fontSize: "14px",
     marginTop: "10px",
     fontStyle: "italic",
     marginBottom: "10px",
+    textAlign: "justify",
   },
   modalOverlay: {
     position: "fixed",
@@ -1275,7 +1289,13 @@ const styles = {
   },
   modalIcon: { fontSize: "64px", marginBottom: "16px" },
   modalTitle: { fontSize: "28px", fontWeight: "700", color: "#1e3a5f", marginBottom: "12px" },
-  modalText: { fontSize: "16px", color: "#334155", lineHeight: "1.5", marginBottom: "24px" },
+  modalText: {
+    fontSize: "16px",
+    color: "#334155",
+    lineHeight: "1.5",
+    marginBottom: "24px",
+    textAlign: "justify",
+  },
   modalButton: {
     background: "linear-gradient(135deg, #3182ce, #2c5282)",
     color: "white",

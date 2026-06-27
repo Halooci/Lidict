@@ -189,8 +189,18 @@ const styles = {
     padding: "25px",
     boxShadow: "0 5px 15px rgba(0,0,0,0.08)",
   },
-  list: { paddingLeft: "20px", lineHeight: "1.8", marginBottom: "15px" },
-  text: { lineHeight: "1.8", color: "#333", marginBottom: "15px" },
+  list: { 
+    paddingLeft: "20px", 
+    lineHeight: "1.8", 
+    marginBottom: "15px",
+    textAlign: "justify" 
+  },
+  text: { 
+    lineHeight: "1.8", 
+    color: "#333", 
+    marginBottom: "15px",
+    textAlign: "justify" 
+  },
   subTitle: { marginTop: "20px", marginBottom: "10px", color: "#306998", fontSize: "1.2rem", fontWeight: "600" },
   code: {
     backgroundColor: "#272822",

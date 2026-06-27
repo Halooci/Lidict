@@ -53,7 +53,12 @@ const styles = {
     padding: "25px",
     boxShadow: "0 5px 15px rgba(0,0,0,0.08)",
   },
-  text: { lineHeight: "1.8", color: "#333", marginBottom: "15px" },
+  text: { 
+    lineHeight: "1.8", 
+    color: "#333", 
+    marginBottom: "15px",
+    textAlign: "justify" 
+  },
   alertBox: {
     backgroundColor: "#fff3cd",
     border: "1px solid #ffc107",
@@ -226,7 +231,11 @@ const styles = {
     marginBottom: "20px",
     border: "1px solid #ddd",
   },
-  questionText: { fontWeight: "500", marginBottom: "10px" },
+  questionText: { 
+    fontWeight: "500", 
+    marginBottom: "10px",
+    textAlign: "justify" 
+  },
   codeTemplateInline: {
     backgroundColor: "#272822",
     color: "#f8f8f2",
@@ -314,7 +323,13 @@ const styles = {
   },
   modalIcon: { fontSize: "64px", marginBottom: "16px" },
   modalTitle: { fontSize: "28px", fontWeight: "700", color: "#1e3a5f", marginBottom: "12px" },
-  modalText: { fontSize: "16px", color: "#334155", lineHeight: "1.5", marginBottom: "24px" },
+  modalText: { 
+    fontSize: "16px", 
+    color: "#334155", 
+    lineHeight: "1.5", 
+    marginBottom: "24px",
+    textAlign: "justify" 
+  },
   modalButton: {
     background: "linear-gradient(135deg, #3182ce, #2c5282)",
     color: "white",
@@ -1054,7 +1069,7 @@ const Eksplorasi = ({ topicName, onComplete }) => {
           const selectedIdx = selected[idx];
           return (
             <div key={idx} style={{ marginBottom: "30px", borderBottom: "1px solid #e0e0e0", paddingBottom: "20px" }}>
-              <p style={{ fontWeight: "600", marginBottom: "12px" }}>{idx+1}. {q.text}</p>
+              <p style={{ fontWeight: "600", marginBottom: "12px", textAlign: "justify" }}>{idx+1}. {q.text}</p>
               <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                 {q.options.map((opt, optIdx) => {
                   let optionStyle = styles.eksplorasiOption;
@@ -1616,7 +1631,7 @@ _buffer.getvalue()
                 <div style={styles.card}>
                   <div style={styles.alertBox}>
                     <strong>Instruksi:</strong>
-                    <ul style={{ marginTop: "5px", paddingLeft: "20px" }}>
+                    <ul style={{ marginTop: "5px", paddingLeft: "20px", textAlign: "justify" }}>
                       <li>Buatlah nested list dengan nama data yang berisi tiga baris. Baris 1 berisi 1,2,3, baris 2 berisi 4,5,6, baris 3 berisi 7,8,9.</li>
                       <li>Ubah elemen baris pertama kolom pertama menjadi 100.</li>
                       <li>Tampilkan elemen baris ketiga kolom kedua yaitu nilai 8.</li>

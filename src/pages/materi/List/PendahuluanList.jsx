@@ -58,7 +58,12 @@ const styles = {
     boxShadow: "0 5px 15px rgba(0,0,0,0.08)",
   },
   list: { paddingLeft: "20px", lineHeight: "1.8" },
-  text: { lineHeight: "1.8", color: "#333", marginBottom: "15px" },
+  text: {
+    lineHeight: "1.8",
+    color: "#333",
+    marginBottom: "15px",
+    textAlign: "justify", // Tambahan untuk rata kiri-kanan
+  },
   code: {
     backgroundColor: "#272822",
     color: "#f8f8f2",
@@ -766,9 +771,9 @@ sys.stdout = StringIO()
             <h2 style={styles.sectionTitle}>Tujuan Pembelajaran</h2>
             <div style={styles.card}>
               <ol style={styles.list}>
-                <li>Mahasiswa mampu menjelaskan pengertian list sebagai struktur data untuk menyimpan kumpulan data dalam Python.</li>
-                <li>Mahasiswa mampu mengidentifikasi fungsi dan keunggulan list dibandingkan variabel tunggal.</li>
-                <li>Mahasiswa memahami konsep dasar list (indeks, mutable, tipe data campuran).</li>
+                <li style={{ textAlign: "justify" }}>Mahasiswa mampu menjelaskan pengertian list sebagai struktur data untuk menyimpan kumpulan data dalam Python.</li>
+                <li style={{ textAlign: "justify" }}>Mahasiswa mampu mengidentifikasi fungsi dan keunggulan list dibandingkan variabel tunggal.</li>
+                <li style={{ textAlign: "justify" }}>Mahasiswa memahami konsep dasar list (indeks, mutable, tipe data campuran).</li>
               </ol>
             </div>
           </section>
@@ -893,9 +898,9 @@ sys.stdout = StringIO()
                     Beberapa konsep penting yang harus dipahami tentang list:
                   </p>
                   <ul style={styles.list}>
-                    <li><strong>Indeks:</strong> Setiap elemen memiliki posisi numerik mulai dari 0. Indeks negatif untuk akses dari akhir (-1 = elemen terakhir).</li>
-                    <li><strong>Mutable:</strong> Elemen list dapat diubah, ditambah, atau dihapus setelah list dibuat.</li>
-                    <li><strong>Tipe data campuran:</strong> Satu list bisa berisi angka, string, boolean, bahkan list lain.</li>
+                    <li style={{ textAlign: "justify" }}><strong>Indeks:</strong> Setiap elemen memiliki posisi numerik mulai dari 0. Indeks negatif untuk akses dari akhir (-1 = elemen terakhir).</li>
+                    <li style={{ textAlign: "justify" }}><strong>Mutable:</strong> Elemen list dapat diubah, ditambah, atau dihapus setelah list dibuat.</li>
+                    <li style={{ textAlign: "justify" }}><strong>Tipe data campuran:</strong> Satu list bisa berisi angka, string, boolean, bahkan list lain.</li>
                   </ul>
                   <CodeEditor 
                     code={exampleCodes.aksesElemen} 

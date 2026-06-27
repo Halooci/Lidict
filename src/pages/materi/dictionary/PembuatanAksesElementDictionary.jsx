@@ -832,7 +832,7 @@ _buffer.getvalue()
                 const selectedIdx = eksplorasiSelected[idx];
                 return (
                   <div key={idx} style={{ marginBottom: "30px", borderBottom: "1px solid #e0e0e0", paddingBottom: "20px" }}>
-                    <p style={{ fontWeight: "600", marginBottom: "12px" }}>{idx + 1}. {q.text}</p>
+                    <p style={{ fontWeight: "600", marginBottom: "12px", textAlign: "justify" }}>{idx + 1}. {q.text}</p>
                     <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                       {q.options.map((opt, optIdx) => {
                         let optionStyle = { ...styles.eksplorasiOption, cursor: "pointer" };
@@ -928,13 +928,13 @@ _buffer.getvalue()
                 <div style={styles.card}>
                   <div style={styles.alertBox}>
                     <strong>Studi Kasus: Data Mahasiswa</strong>
-                    <p style={{ marginTop: "10px", marginBottom: "10px" }}>
+                    <p style={{ marginTop: "10px", marginBottom: "10px", textAlign: "justify" }}>
                       Seorang dosen ingin menyimpan data mahasiswa secara terstruktur menggunakan Python. 
                       Python menyediakan dictionary untuk kebutuhan ini, di mana setiap data
                        memiliki label (key) sehingga memudahkan pencarian.
                     </p>
-                    <p style={{ marginBottom: "5px" }}><strong>Petunjuk:</strong> Ikuti instruksi secara berurutan. Pastikan Anda mengikuti setiap instruksi.</p>
-                    <ul style={{ paddingLeft: "20px", marginTop: "10px" }}>
+                    <p style={{ marginBottom: "5px", textAlign: "justify" }}><strong>Petunjuk:</strong> Ikuti instruksi secara berurutan. Pastikan Anda mengikuti setiap instruksi.</p>
+                    <ul style={{ paddingLeft: "20px", marginTop: "10px", textAlign: "justify" }}>
                       <li>Buatlah dictionary dengan nama <code>data_mahasiswa</code> yang berisi key: <code>"nama"</code> dengan value <code>"Citra"</code>, key <code>"usia"</code> dengan value <code>22</code>, dan key <code>"jurusan"</code> dengan value <code>"Sistem Informasi"</code>.</li>
                       <li>Tampilkan nilai dari key <code>"nama"</code>.</li>
                       <li>Tampilkan nilai dari key <code>"usia"</code>.</li>
@@ -1110,8 +1110,17 @@ const styles = {
     padding: "25px",
     boxShadow: "0 5px 15px rgba(0,0,0,0.08)",
   },
-  list: { paddingLeft: "20px", lineHeight: "1.8" },
-  text: { lineHeight: "1.8", color: "#333", marginBottom: "15px" },
+  list: { 
+    paddingLeft: "20px", 
+    lineHeight: "1.8",
+    textAlign: "justify" 
+  },
+  text: { 
+    lineHeight: "1.8", 
+    color: "#333", 
+    marginBottom: "15px",
+    textAlign: "justify" 
+  },
   subTitleBlock: {
     marginTop: "20px",
     marginBottom: "10px",
@@ -1254,7 +1263,11 @@ const styles = {
     marginBottom: "20px",
     border: "1px solid #ddd"
   },
-  questionText: { fontWeight: "500", marginBottom: "10px" },
+  questionText: { 
+    fontWeight: "500", 
+    marginBottom: "10px",
+    textAlign: "justify" 
+  },
   codeTemplateInline: {
     backgroundColor: "#272822",
     color: "#f8f8f2",
@@ -1341,7 +1354,13 @@ const styles = {
   },
   modalIcon: { fontSize: "64px", marginBottom: "16px" },
   modalTitle: { fontSize: "28px", fontWeight: "700", color: "#1e3a5f", marginBottom: "12px" },
-  modalText: { fontSize: "16px", color: "#334155", lineHeight: "1.5", marginBottom: "24px" },
+  modalText: { 
+    fontSize: "16px", 
+    color: "#334155", 
+    lineHeight: "1.5", 
+    marginBottom: "24px",
+    textAlign: "justify" 
+  },
   modalButton: {
     background: "linear-gradient(135deg, #3182ce, #2c5282)",
     color: "white",

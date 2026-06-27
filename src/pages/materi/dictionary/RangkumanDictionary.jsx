@@ -309,10 +309,12 @@ const styles = {
   list: {
     paddingLeft: "20px",
     lineHeight: "1.8",
+    textAlign: "justify",
   },
   text: {
     lineHeight: "1.8",
     color: "#333",
+    textAlign: "justify",
   },
   code: {
     backgroundColor: "#272822",

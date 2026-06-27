@@ -68,11 +68,13 @@ const styles = {
   list: {
     paddingLeft: "20px",
     lineHeight: "1.8",
+    textAlign: "justify", // Tambahan untuk rata kiri-kanan
   },
   text: {
     lineHeight: "1.8",
     color: "#333",
     marginBottom: "15px",
+    textAlign: "justify", // Tambahan untuk rata kiri-kanan
   },
   codeEditorContainer: {
     border: "2px solid #306998",
@@ -2021,7 +2023,7 @@ export default function OperasiManipulasiList() {
                 <h2 style={styles.sectionTitle}>Operasi Dasar List</h2>
                 <div style={styles.card}>
                   <h3>1. Concatenation (+) – Menggabungkan List</h3>
-                  <p>Operasi <code>+</code> menggabungkan dua list menjadi satu list baru. Semua elemen list kiri diikuti semua elemen list kanan.</p>
+                  <p style={styles.text}>Operasi + menggabungkan dua list menjadi satu list baru. Semua elemen list kiri diikuti semua elemen list kanan.</p>
                   <CodeEditorWithVisual
                     code={codeExamples.concat}
                     title="Contoh Kode Program"
@@ -2048,7 +2050,7 @@ export default function OperasiManipulasiList() {
                   />
 
                   <h3>2. Repetition (*) – Mengulang List</h3>
-                  <p>Operator <code>*</code> mengulang isi list sebanyak n kali, menghasilkan list baru dengan elemen berulang.</p>
+                  <p style={styles.text}>Operator * mengulang isi list sebanyak n kali, menghasilkan list baru dengan elemen berulang.</p>
                   <CodeEditorWithVisual
                     code={codeExamples.repeat}
                     title="Contoh Kode Program"
@@ -2066,7 +2068,7 @@ export default function OperasiManipulasiList() {
                   />
 
                   <h3>3. Pencarian (in) – Mengecek Keberadaan Elemen</h3>
-                  <p>Operator <code>in</code> mengembalikan <code>True</code> jika nilai ditemukan dalam list, <code>False</code> jika tidak.</p>
+                  <p style={styles.text}>Operator <strong>in</strong> mengembalikan <strong>True</strong> jika nilai ditemukan dalam list, <strong>False</strong> jika tidak.</p>
                   <CodeEditorWithVisual
                     code={codeExamples.search}
                     title="Contoh Kode Program"
@@ -2090,7 +2092,7 @@ export default function OperasiManipulasiList() {
                   />
 
                   <h3>4. Pengurutan (sort()) – Mengurutkan List</h3>
-                  <p>Method <code>sort()</code> mengurutkan list secara ascending (kecil ke besar) secara permanen. Prosesnya membandingkan dan menukar elemen hingga terurut.</p>
+                  <p style={styles.text}>Method <strong>sort()</strong> mengurutkan list secara ascending (kecil ke besar) secara permanen. Prosesnya membandingkan dan menukar elemen hingga terurut.</p>
                   <CodeEditorWithVisual
                     code={codeExamples.sort}
                     title="Contoh Kode Program"
@@ -2108,7 +2110,7 @@ export default function OperasiManipulasiList() {
                   />
 
                   <h3>5. Pembalikan (reverse()) – Membalik Urutan List</h3>
-                  <p>Method <code>reverse()</code> membalik urutan elemen dalam list secara permanen.</p>
+                  <p style={styles.text}>Method <strong>reverse()</strong> membalik urutan elemen dalam list secara permanen.</p>
                   <CodeEditorWithVisual
                     code={codeExamples.reverse}
                     title="Contoh Kode Program"
@@ -2131,7 +2133,7 @@ export default function OperasiManipulasiList() {
                 <h2 style={styles.sectionTitle}>Manipulasi List</h2>
                 <div style={styles.card}>
                   <h3>append() – Menambah Elemen di Akhir</h3>
-                  <p>Method <code>append()</code> menambahkan satu elemen baru di akhir list.</p>
+                  <p style={styles.text}>Method <strong>append()</strong> menambahkan satu elemen baru di akhir list.</p>
                   <CodeEditorWithVisual
                     code={codeExamples.append}
                     title="Contoh Kode Program"
@@ -2150,7 +2152,7 @@ export default function OperasiManipulasiList() {
                   />
 
                   <h3>insert() – Menyisipkan Elemen di Posisi Tertentu</h3>
-                  <p><code>insert(posisi, elemen)</code> menyisipkan elemen pada indeks yang ditentukan, lalu elemen lain akan bergeser ke kanan.</p>
+                  <p style={styles.text}><strong>insert(posisi, elemen)</strong> menyisipkan elemen pada indeks yang ditentukan, lalu elemen lain akan bergeser ke kanan.</p>
                   <CodeEditorWithVisual
                     code={codeExamples.insert}
                     title="Contoh Kode Program"
@@ -2169,7 +2171,7 @@ export default function OperasiManipulasiList() {
                   />
 
                   <h3>extend() – Menambah Banyak Elemen Sekaligus</h3>
-                  <p><code>extend([elemen1, elemen2, ...])</code> menambahkan semua elemen dari list lain ke akhir list.</p>
+                  <p style={styles.text}><strong>extend([elemen1, elemen2, ...])</strong> menambahkan semua elemen dari list lain ke akhir list.</p>
                   <CodeEditorWithVisual
                     code={codeExamples.extend}
                     title="Contoh Kode Program"
@@ -2188,7 +2190,7 @@ export default function OperasiManipulasiList() {
                   />
 
                   <h3>remove() – Menghapus Elemen Berdasarkan Nilai</h3>
-                  <p><code>remove(nilai)</code> menghapus elemen pertama yang nilainya cocok dengan nilai yang diberikan.</p>
+                  <p style={styles.text}><strong>remove(nilai)</strong> menghapus elemen pertama yang nilainya cocok dengan nilai yang diberikan.</p>
                   <CodeEditorWithVisual
                     code={codeExamples.remove}
                     title="Contoh Kode Program"
@@ -2207,7 +2209,7 @@ export default function OperasiManipulasiList() {
                   />
 
                   <h3>pop() – Menghapus Elemen Berdasarkan Indeks</h3>
-                  <p><code>pop(indeks)</code> menghapus elemen pada indeks tertentu. Jika indeks tidak diberikan, maka akan otomatis menghapus elemen terakhir.</p>
+                  <p style={styles.text}><strong>pop(indeks)</strong> menghapus elemen pada indeks tertentu. Jika indeks tidak diberikan, maka akan otomatis menghapus elemen terakhir.</p>
                   <CodeEditorWithVisual
                     code={codeExamples.pop}
                     title="Contoh Kode Program"
@@ -2226,7 +2228,7 @@ export default function OperasiManipulasiList() {
                   />
 
                   <h3>Mengubah Elemen dengan Indeks</h3>
-                  <p>Kita bisa mengubah nilai elemen dengan mengakses indeksnya: <code>list[indeks] = nilai_baru</code>.</p>
+                  <p style={styles.text}>Kita bisa mengubah nilai elemen dengan mengakses indeksnya: <strong>list[indeks] = nilai_baru</strong>.</p>
                   <CodeEditorWithVisual
                     code={codeExamples.change}
                     title="Contoh Kode Program"
@@ -2245,7 +2247,7 @@ export default function OperasiManipulasiList() {
                   />
 
                   <h3>del – Menghapus dengan Slicing</h3>
-                  <p><code>del</code> dapat digunakan untuk menghapus elemen berdasarkan indeks atau slice, misalnya <code>del list[1:3]</code>.</p>
+                  <p style={styles.text}><strong>del</strong> dapat digunakan untuk menghapus elemen berdasarkan indeks atau slice, misalnya <strong>del list[1:3]</strong>.</p>
                   <CodeEditorWithVisual
                     code={codeExamples.del_example}
                     title="Contoh Kode Program"
@@ -2264,7 +2266,7 @@ export default function OperasiManipulasiList() {
                   />
 
                   <h3>clear() – Menghapus Semua Elemen</h3>
-                  <p><code>clear()</code> mengosongkan list (menghapus semua elemen).</p>
+                  <p style={styles.text}><strong>clear()</strong> mengosongkan list (menghapus semua elemen).</p>
                   <CodeEditorWithVisual
                     code={codeExamples.clear}
                     title="Contoh Kode Program"
@@ -2283,7 +2285,7 @@ export default function OperasiManipulasiList() {
                   />
 
                   <h3>count() – Menghitung Kemunculan Nilai</h3>
-                  <p><code>count(nilai)</code> mengembalikan jumlah kemunculan nilai dalam list.</p>
+                  <p style={styles.text}><strong>count(nilai)</strong> mengembalikan jumlah kemunculan nilai dalam list.</p>
                   <CodeEditorWithVisual
                     code={codeExamples.count}
                     title="Contoh Kode Program"
@@ -2302,7 +2304,7 @@ export default function OperasiManipulasiList() {
                   />
 
                   <h3>index() – Mencari Indeks Pertama</h3>
-                  <p><code>index(nilai)</code> mengembalikan indeks pertama di mana nilai ditemukan.</p>
+                  <p style={styles.text}><strong>index(nilai)</strong> mengembalikan indeks pertama di mana nilai ditemukan.</p>
                   <CodeEditorWithVisual
                     code={codeExamples.index}
                     title="Contoh Kode Program"
@@ -2321,7 +2323,7 @@ export default function OperasiManipulasiList() {
                   />
 
                   <h3>len() – Panjang List</h3>
-                  <p>Fungsi <code>len()</code> mengembalikan jumlah elemen dalam list.</p>
+                  <p style={styles.text}>Fungsi <strong>len()</strong> mengembalikan jumlah elemen dalam list.</p>
                   <CodeEditorWithVisual
                     code={codeExamples.length}
                     title="Contoh Kode Program"
@@ -2385,7 +2387,10 @@ export default function OperasiManipulasiList() {
               <section style={styles.section}>
                 <h2 style={styles.sectionTitle}>Latihan</h2>
                 <div style={styles.card}>
-                  <p>Seret method list ke kegunaan yang sesuai. Klik "Periksa Jawaban" setelah semua pasangan sudah lengkapi.</p>
+                  <p style={styles.text}>Seret method list ke kegunaan yang sesuai. 
+                    Pastikan semua jawaban sudah terisi sebelum menekan tombol "Periksa Jawaban". 
+                    Jika masih ada jawaban yang salah, silahkan klik tombol "Reset Jawaban Salah" 
+                    untuk kembali mencocokan method dengan kegunaan sampai semua jawaban benar.</p>
                   <DragDropMatching 
                     items={matchingItems} 
                     resetTrigger={resetMatching} 

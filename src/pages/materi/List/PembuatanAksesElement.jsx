@@ -63,8 +63,17 @@ const styles = {
     padding: "25px",
     boxShadow: "0 5px 15px rgba(0,0,0,0.08)",
   },
-  list: { paddingLeft: "20px", lineHeight: "1.8" },
-  text: { lineHeight: "1.8", color: "#333", marginBottom: "15px" },
+  list: { 
+    paddingLeft: "20px", 
+    lineHeight: "1.8",
+    textAlign: "justify", // Tambahan untuk rata kiri-kanan
+  },
+  text: { 
+    lineHeight: "1.8", 
+    color: "#333", 
+    marginBottom: "15px",
+    textAlign: "justify", // Tambahan untuk rata kiri-kanan
+  },
   code: {
     backgroundColor: "#272822",
     color: "#f8f8f2",

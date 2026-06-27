@@ -899,7 +899,7 @@ _buffer.getvalue()
                 const selectedIdx = eksplorasiSelected[idx];
                 return (
                   <div key={idx} style={{ marginBottom: "30px", borderBottom: "1px solid #e0e0e0", paddingBottom: "20px" }}>
-                    <p style={{ fontWeight: "600", marginBottom: "12px" }}>{idx + 1}. {q.text}</p>
+                    <p style={{ fontWeight: "600", marginBottom: "12px", textAlign: "justify" }}>{idx + 1}. {q.text}</p>
                     <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                       {q.options.map((opt, optIdx) => {
                         let optionStyle = { ...styles.eksplorasiOption, cursor: "pointer" };
@@ -1015,12 +1015,12 @@ _buffer.getvalue()
                 <div style={styles.card}>
                   <div style={styles.alertBox}>
                     <strong>Cerita Kasus: Inventaris Toko Buku</strong>
-                    <p style={{ marginTop: "8px" }}>
+                    <p style={{ marginTop: "8px", textAlign: "justify" }}>
                       Sebuah toko buku memiliki dictionary <code>inventaris</code> yang menyimpan stok buku dengan format <code>{"{'judul buku': jumlah_stok}"}</code>. 
                       Saat ini inventaris berisi: <code>{"{'Python Dasar': 10, 'Data Science': 5, 'Web Programming': 7}"}</code>.
                     </p>
-                    <p><strong>Petunjuk:</strong> Ikuti instruksi secara berurutan. Pastikan Anda mengikuti setiap instruksi.</p>
-                    <ol style={{ marginLeft: "20px", lineHeight: "1.8", marginTop: "8px" }}>
+                    <p style={{ textAlign: "justify" }}><strong>Petunjuk:</strong> Ikuti instruksi secara berurutan. Pastikan Anda mengikuti setiap instruksi.</p>
+                    <ol style={{ marginLeft: "20px", lineHeight: "1.8", marginTop: "8px", textAlign: "justify" }}>
                       <li>Buat dictionary <code>inventaris</code> dengan stok awal: 'Python Dasar':10, 'Data Science':5, 'Web Programming':7.</li>
                       <li>Tambah stok buku baru <code>"Machine Learning"</code> sebanyak 3 eksemplar menggunakan metode <code>update()</code>.</li>
                       <li>Buku <code>"Data Science"</code> habis terjual, hapus buku tersebut dari inventaris menggunakan <code>pop()</code>.</li>
@@ -1160,8 +1160,13 @@ const styles = {
   listAngka: {
     paddingLeft: "20px",
     lineHeight: "1.8",
+    textAlign: "justify",
   },
-  text: { lineHeight: "1.8", color: "#333" },
+  text: { 
+    lineHeight: "1.8", 
+    color: "#333",
+    textAlign: "justify",
+  },
   subTitle: { marginTop: "20px", marginBottom: "10px", color: "#306998", fontSize: "1.2rem", fontWeight: "600" },
   alertBox: {
     backgroundColor: "#fff3cd",
@@ -1307,7 +1312,8 @@ const styles = {
   latihanQuestionText: {
     fontWeight: "600",
     marginBottom: "12px",
-    whiteSpace: "pre-line"
+    whiteSpace: "pre-line",
+    textAlign: "justify",
   },
   latihanOptions: {
     display: "flex",
@@ -1360,7 +1366,13 @@ const styles = {
   },
   modalIcon: { fontSize: "64px", marginBottom: "16px" },
   modalTitle: { fontSize: "28px", fontWeight: "700", color: "#1e3a5f", marginBottom: "12px" },
-  modalText: { fontSize: "16px", color: "#334155", lineHeight: "1.5", marginBottom: "24px" },
+  modalText: { 
+    fontSize: "16px", 
+    color: "#334155", 
+    lineHeight: "1.5", 
+    marginBottom: "24px",
+    textAlign: "justify" 
+  },
   modalButton: {
     background: "linear-gradient(135deg, #3182ce, #2c5282)",
     color: "white",

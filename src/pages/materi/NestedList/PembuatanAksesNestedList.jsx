@@ -53,8 +53,17 @@ const styles = {
     padding: "25px",
     boxShadow: "0 5px 15px rgba(0,0,0,0.08)",
   },
-  list: { paddingLeft: "20px", lineHeight: "1.8" },
-  text: { lineHeight: "1.8", color: "#333", marginBottom: "15px" },
+  list: { 
+    paddingLeft: "20px", 
+    lineHeight: "1.8",
+    textAlign: "justify" 
+  },
+  text: { 
+    lineHeight: "1.8", 
+    color: "#333", 
+    marginBottom: "15px",
+    textAlign: "justify" 
+  },
   code: {
     backgroundColor: "#272822",
     color: "#f8f8f2",
@@ -269,7 +278,11 @@ const styles = {
     marginBottom: "20px",
     border: "1px solid #ddd",
   },
-  questionText: { fontWeight: "500", marginBottom: "10px" },
+  questionText: { 
+    fontWeight: "500", 
+    marginBottom: "10px",
+    textAlign: "justify" 
+  },
   codeTemplate: {
     backgroundColor: "#272822",
     color: "#f8f8f2",
@@ -422,7 +435,13 @@ const styles = {
   },
   modalIcon: { fontSize: "64px", marginBottom: "16px" },
   modalTitle: { fontSize: "28px", fontWeight: "700", color: "#1e3a5f", marginBottom: "12px" },
-  modalText: { fontSize: "16px", color: "#334155", lineHeight: "1.5", marginBottom: "24px" },
+  modalText: { 
+    fontSize: "16px", 
+    color: "#334155", 
+    lineHeight: "1.5", 
+    marginBottom: "24px",
+    textAlign: "justify" 
+  },
   modalButton: {
     background: "linear-gradient(135deg, #3182ce, #2c5282)",
     color: "white",
@@ -1049,7 +1068,7 @@ const Eksplorasi = ({ topicName, onComplete }) => {
           const selectedIdx = selected[idx];
           return (
             <div key={idx} style={{ marginBottom: "30px", borderBottom: "1px solid #e0e0e0", paddingBottom: "20px" }}>
-              <p style={{ fontWeight: "600", marginBottom: "12px" }}>{idx + 1}. {q.text}</p>
+              <p style={{ fontWeight: "600", marginBottom: "12px", textAlign: "justify" }}>{idx + 1}. {q.text}</p>
               <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                 {q.options.map((opt, optIdx) => {
                   let optionStyle = {};
@@ -1447,7 +1466,7 @@ matriks = [[1, 2, 3], [4, 5, 6]]`}</pre>
                 <div style={styles.card}>
                   <div style={styles.infoBox}>
                     <strong>Studi Kasus: Matriks Sederhana</strong>
-                    <p>Buatlah program Python yang:</p>
+                    <p style={{ textAlign: "justify" }}>Buatlah program Python yang:</p>
                     <ol style={styles.list}>
                       <li>Membuat nested list bernama matriks dengan isi 3,6,9 dan 12,15,18.</li>
                       <li>Menampilkan elemen <strong>3</strong> (baris 1 kolom 1).</li>

@@ -453,7 +453,7 @@ export default function PendahuluanDictionary() {
                 const selectedIdx = eksplorasiSelected[idx];
                 return (
                   <div key={idx} style={{ marginBottom: "30px", borderBottom: "1px solid #e0e0e0", paddingBottom: "20px" }}>
-                    <p style={{ fontWeight: "600", marginBottom: "12px" }}>{idx + 1}. {q.text}</p>
+                    <p style={{ fontWeight: "600", marginBottom: "12px", textAlign: "justify" }}>{idx + 1}. {q.text}</p>
                     <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                       {q.options.map((opt, optIdx) => {
                         let optionStyle = { ...styles.eksplorasiOption, cursor: "pointer" };
@@ -646,8 +646,18 @@ const styles = {
     padding: "25px",
     boxShadow: "0 5px 15px rgba(0,0,0,0.08)",
   },
-  list: { paddingLeft: "20px", lineHeight: "1.8", color: "#333" },
-  text: { lineHeight: "1.8", color: "#333", marginBottom: "15px" },
+  list: { 
+    paddingLeft: "20px", 
+    lineHeight: "1.8", 
+    color: "#333",
+    textAlign: "justify" 
+  },
+  text: { 
+    lineHeight: "1.8", 
+    color: "#333", 
+    marginBottom: "15px",
+    textAlign: "justify" 
+  },
   subTitle: { marginTop: "20px", marginBottom: "10px", color: "#306998", fontSize: "18px", fontWeight: "600" },
   infoNote: {
     backgroundColor: "#e7f3ff",
@@ -657,6 +667,7 @@ const styles = {
     marginTop: "15px",
     fontSize: "14px",
     color: "#004085",
+    textAlign: "justify",
   },
   questionCard: {
     backgroundColor: "#f9f9f9",
@@ -666,7 +677,12 @@ const styles = {
     border: "1px solid #ddd",
     scrollMarginTop: "80px",
   },
-  questionText: { fontWeight: "600", marginBottom: "10px", color: "#1f2937" },
+  questionText: { 
+    fontWeight: "600", 
+    marginBottom: "10px", 
+    color: "#1f2937",
+    textAlign: "justify" 
+  },
   mcOption: {
     padding: "10px 15px",
     borderRadius: "8px",
@@ -753,7 +769,13 @@ const styles = {
   },
   modalIcon: { fontSize: "64px", marginBottom: "16px" },
   modalTitle: { fontSize: "28px", fontWeight: "700", color: "#1e3a5f", marginBottom: "12px" },
-  modalText: { fontSize: "16px", color: "#334155", lineHeight: "1.5", marginBottom: "24px" },
+  modalText: { 
+    fontSize: "16px", 
+    color: "#334155", 
+    lineHeight: "1.5", 
+    marginBottom: "24px",
+    textAlign: "justify" 
+  },
   modalButton: {
     background: "linear-gradient(135deg, #3182ce, #2c5282)",
     color: "white",
