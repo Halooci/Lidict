@@ -27,6 +27,7 @@ export default function Apersepsi() {
   });
   const [dragDropAllDone, setDragDropAllDone] = useState(false);
   const [dragDropFeedback, setDragDropFeedback] = useState("");
+  const [dragDropAttempt, setDragDropAttempt] = useState(0); // baru
   const dragItems = ["integer", "float", "string", "boolean"];
   const targets = ["3.14", "True", "'Python'", "42"];
   const correctMatches = {
@@ -50,54 +51,79 @@ export default function Apersepsi() {
   };
   const handleDrop = (e, targetKey) => {
     e.preventDefault();
+    // Jika target sudah benar, kunci (tidak bisa diubah)
+    if (dragDropStatus[targetKey]) return;
+
     const draggedItem = e.dataTransfer.getData("text/plain");
     const newAnswers = { ...dragDropAnswers, [targetKey]: draggedItem };
     setDragDropAnswers(newAnswers);
-    // Update status
-    const newStatus = { ...dragDropStatus };
-    let allCorrect = true;
-    for (const [target, expected] of Object.entries(correctMatches)) {
-      const isCorrect = newAnswers[target] === expected;
-      newStatus[target] = isCorrect;
-      if (!isCorrect) allCorrect = false;
-    }
+
+    // Set status target menjadi false (belum dicek)
+    const newStatus = { ...dragDropStatus, [targetKey]: false };
     setDragDropStatus(newStatus);
-    setDragDropAllDone(allCorrect);
+    setDragDropAllDone(false);
     setDragDropFeedback("");
   };
 
   const checkDragDrop = () => {
     const newStatus = { ...dragDropStatus };
     let allCorrect = true;
+    let correctList = [];
+    let wrongList = [];
+
     for (const [target, expected] of Object.entries(correctMatches)) {
-      const isCorrect = dragDropAnswers[target] === expected;
+      const userAnswer = dragDropAnswers[target];
+      const isCorrect = userAnswer === expected;
       newStatus[target] = isCorrect;
       if (!isCorrect) allCorrect = false;
+
+      if (isCorrect) {
+        correctList.push(`${target} → ${expected}`);
+      } else {
+        const userAns = userAnswer || "kosong";
+        wrongList.push(`${target} → ${userAns} (seharusnya ${expected})`);
+      }
     }
+
     setDragDropStatus(newStatus);
     setDragDropAllDone(allCorrect);
+
     if (allCorrect) {
       setDragDropFeedback("✨ Semua cocok! Bagus.");
+      setDragDropAttempt(0);
     } else {
-      setDragDropFeedback("❌ Masih ada yang salah. Periksa kembali pasangan tipe data.");
+      const newAttempt = dragDropAttempt + 1;
+      setDragDropAttempt(newAttempt);
+      if (newAttempt >= 3) {
+        let msg = "❌ Masih ada yang salah. Detail kesalahan:\n";
+        msg += wrongList.join(", ");
+        setDragDropFeedback(msg);
+      } else {
+        setDragDropFeedback("❌ Beberapa jawaban masih salah. Coba periksa kembali.");
+      }
     }
   };
 
   const resetDragDrop = () => {
-    setDragDropAnswers({
-      "3.14": null,
-      "True": null,
-      "'Python'": null,
-      "42": null,
-    });
-    setDragDropStatus({
-      "3.14": false,
-      "True": false,
-      "'Python'": false,
-      "42": false,
-    });
+    // Hanya reset jawaban yang statusnya false (salah)
+    const newAnswers = { ...dragDropAnswers };
+    const newStatus = { ...dragDropStatus };
+    let hasWrong = false;
+
+    for (const target of targets) {
+      if (!dragDropStatus[target]) {
+        newAnswers[target] = null;
+        newStatus[target] = false;
+        hasWrong = true;
+      }
+      // jika benar, biarkan apa adanya
+    }
+
+    setDragDropAnswers(newAnswers);
+    setDragDropStatus(newStatus);
     setDragDropAllDone(false);
-    setDragDropFeedback("");
+    setDragDropAttempt(0);
+    setDragDropFeedback(hasWrong ? "Jawaban yang salah telah direset. Silakan perbaiki." : "Semua jawaban sudah benar, tidak ada yang direset.");
   };
 
   // Aktivitas 1.2 - Pilihan Ganda Aturan Penulisan Variabel
@@ -429,19 +455,16 @@ export default function Apersepsi() {
                   Tidak boleh sama dengan kata kunci (keyword) Python, seperti print, if, for, while, input, return, def, True, False, and, or, dll.
                   <br />
                   print = "halo" → <strong style={{color: "#ef4444"}}>SALAH</strong>
-                  
                   <br />
                   if_statement → <strong style={{color: "#10b981"}}>BENAR</strong>
                 </li>
                 <li>
                   Bersifat case-sensitive, huruf besar dan kecil dibedakan. Contoh Harga, harga, dan HARGA adalah variabel yang berbeda. Begitupun nama, Nama, NAMA adalah tiga variabel berbeda.
                   <br />
-                  
                 </li>
                 <li>
                   Buat nama yang deskriptif agar mudah dipahami. Misalnya rata_rata lebih jelas daripada rt dan total_nilai lebih baik daripada tn
                   <br />
-                  
                 </li>
               </ol>
               <p style={styles.text}>
@@ -523,6 +546,7 @@ status_lulus = True                           # boolean`)}
                             ...styles.dropZone,
                             backgroundColor: dragDropStatus[target] ? "#d1fae5" : "#f8fafc",
                             borderColor: dragDropStatus[target] ? "#10b981" : "#306998",
+                            opacity: dragDropStatus[target] ? 0.8 : 1,
                           }}
                         >
                           <span style={styles.targetValue}>{target}</span>
@@ -538,7 +562,7 @@ status_lulus = True                           # boolean`)}
                     <button style={styles.checkButton} onClick={checkDragDrop}>Periksa Jawaban</button>
                     <button style={styles.resetButton} onClick={resetDragDrop}>Reset</button>
                   </div>
-                  {dragDropFeedback && <div style={styles.feedback}>{dragDropFeedback}</div>}
+                  {dragDropFeedback && <div style={{ ...styles.feedback, whiteSpace: "pre-line" }}>{dragDropFeedback}</div>}
                 </div>
 
                 {/* Soal 1.2 - Pilihan Ganda */}
@@ -607,13 +631,13 @@ status_lulus = True                           # boolean`)}
                     </tr>
                   </thead>
                   <tbody>
-                    <tr style={styles.tableRow}><td style={styles.tableCell}><code>+</code></td><td style={styles.tableCell}>Penjumlahan</td><td style={styles.tableCell}><code>10 + 5</code></td><td style={styles.tableCell}>15</td></tr>
-                    <tr style={styles.tableRow}><td style={styles.tableCell}><code>-</code></td><td style={styles.tableCell}>Pengurangan</td><td style={styles.tableCell}><code>10 - 5</code></td><td style={styles.tableCell}>5</td></tr>
-                    <tr style={styles.tableRow}><td style={styles.tableCell}><code>*</code></td><td style={styles.tableCell}>Perkalian</td><td style={styles.tableCell}><code>10 * 5</code></td><td style={styles.tableCell}>50</td></tr>
-                    <tr style={styles.tableRow}><td style={styles.tableCell}><code>/</code></td><td style={styles.tableCell}>Pembagian float</td><td style={styles.tableCell}><code>10 / 3</code></td><td style={styles.tableCell}>3.333...</td></tr>
-                    <tr style={styles.tableRow}><td style={styles.tableCell}><code>//</code></td><td style={styles.tableCell}>Pembagian bulat</td><td style={styles.tableCell}><code>10 // 3</code></td><td style={styles.tableCell}>3</td></tr>
-                    <tr style={styles.tableRow}><td style={styles.tableCell}><code>%</code></td><td style={styles.tableCell}>Sisa bagi (modulus)</td><td style={styles.tableCell}><code>10 % 3</code></td><td style={styles.tableCell}>1</td></tr>
-                    <tr style={styles.tableRow}><td style={styles.tableCell}><code>**</code></td><td style={styles.tableCell}>Pangkat</td><td style={styles.tableCell}><code>2 ** 3</code></td><td style={styles.tableCell}>8</td></tr>
+                    <tr style={styles.tableRow}><td style={styles.tableCell}><span style={styles.codeInline}>+</span></td><td style={styles.tableCell}>Penjumlahan</td><td style={styles.tableCell}><span style={styles.codeInline}>10 + 5</span></td><td style={styles.tableCell}>15</td></tr>
+                    <tr style={styles.tableRow}><td style={styles.tableCell}><span style={styles.codeInline}>-</span></td><td style={styles.tableCell}>Pengurangan</td><td style={styles.tableCell}><span style={styles.codeInline}>10 - 5</span></td><td style={styles.tableCell}>5</td></tr>
+                    <tr style={styles.tableRow}><td style={styles.tableCell}><span style={styles.codeInline}>*</span></td><td style={styles.tableCell}>Perkalian</td><td style={styles.tableCell}><span style={styles.codeInline}>10 * 5</span></td><td style={styles.tableCell}>50</td></tr>
+                    <tr style={styles.tableRow}><td style={styles.tableCell}><span style={styles.codeInline}>/</span></td><td style={styles.tableCell}>Pembagian float</td><td style={styles.tableCell}><span style={styles.codeInline}>10 / 3</span></td><td style={styles.tableCell}>3.333...</td></tr>
+                    <tr style={styles.tableRow}><td style={styles.tableCell}><span style={styles.codeInline}>//</span></td><td style={styles.tableCell}>Pembagian bulat</td><td style={styles.tableCell}><span style={styles.codeInline}>10 // 3</span></td><td style={styles.tableCell}>3</td></tr>
+                    <tr style={styles.tableRow}><td style={styles.tableCell}><span style={styles.codeInline}>%</span></td><td style={styles.tableCell}>Sisa bagi (modulus)</td><td style={styles.tableCell}><span style={styles.codeInline}>10 % 3</span></td><td style={styles.tableCell}>1</td></tr>
+                    <tr style={styles.tableRow}><td style={styles.tableCell}><span style={styles.codeInline}>**</span></td><td style={styles.tableCell}>Pangkat</td><td style={styles.tableCell}><span style={styles.codeInline}>2 ** 3</span></td><td style={styles.tableCell}>8</td></tr>
                   </tbody>
                 </table>
               </div>
@@ -701,11 +725,11 @@ status_lulus = True                           # boolean`)}
                 <div style={styles.materialTitle}><strong>Input</strong> dan <strong>Output</strong></div>
               </div>
               <p style={styles.text}>
-                <strong>Output:</strong> Fungsi <code>print()</code> digunakan untuk menampilkan teks atau nilai ke layar. Contoh: <code>print("Hello World!")</code>
+                <strong>Output:</strong> Fungsi <span style={styles.codeInline}>print()</span> digunakan untuk menampilkan teks atau nilai ke layar. Contoh: <span style={styles.codeInline}>print("Hello World!")</span>
               </p>
               <p style={styles.text}>
-                <strong>Input:</strong> Fungsi <code>input()</code> digunakan untuk membaca masukan dari pengguna. Hasilnya selalu berupa <strong>string</strong>. 
-                Jika ingin menerima angka, konversi dengan <code>int()</code> atau <code>float()</code>.
+                <strong>Input:</strong> Fungsi <span style={styles.codeInline}>input()</span> digunakan untuk membaca masukan dari pengguna. Hasilnya selalu berupa <strong>string</strong>. 
+                Jika ingin menerima angka, konversi dengan <span style={styles.codeInline}>int()</span> atau <span style={styles.codeInline}>float()</span>.
               </p>
 
               <p style={styles.text}>Contoh Kode Program:</p>
@@ -722,7 +746,7 @@ umur = int(input("Umur: "))     # konversi ke integer`)}
 
                 {/* Soal 3.1 - Konversi ke Integer */}
                 <div style={styles.subActivity}>
-                  <p style={styles.instruction}>Petunjuk: Lengkapi kode agar variabel nim bertipe integer:<br /> <code>nim = ______(input("NIM: "))</code></p>
+                  <p style={styles.instruction}>Petunjuk: Lengkapi kode agar variabel nim bertipe integer:<br /> <span style={styles.codeInline}>nim = ______(input("NIM: "))</span></p>
                   <div style={styles.inputGroup}>
                     <input
                       type="text"
@@ -881,7 +905,7 @@ const styles = {
   heroIcon: { fontSize: "64px" },
   heroRight: { flex: "1" },
   heroTitle: { fontSize: "28px", fontWeight: "700", color: "#1e293b", marginBottom: "16px" },
-  heroText: { fontSize: "18px", lineHeight: "1.5", color: "#334155", marginBottom: "20px" },
+  heroText: { fontSize: "18px", lineHeight: "1.5", color: "#334155", marginBottom: "20px", textAlign: "justify" },
   heroBadge: { display: "flex", gap: "12px", flexWrap: "wrap", fontSize: "14px", marginTop: "12px" },
   materialCard: {
     background: "white",
@@ -905,7 +929,7 @@ const styles = {
     color: "#306998",
   },
   materialTitle: { fontSize: "24px", fontWeight: "700", color: "#0f172a" },
-  text: { fontSize: "16px", lineHeight: "1.6", color: "#1e293b", marginBottom: "16px" },
+  text: { fontSize: "16px", lineHeight: "1.6", color: "#1e293b", marginBottom: "16px", textAlign: "justify" },
   list: { marginLeft: "24px", marginBottom: "16px", lineHeight: "1.6", color: "#1e293b" },
   listOrdered: { marginLeft: "24px", marginBottom: "16px", lineHeight: "1.8", color: "#1e293b" },
   codeBlock: { 
@@ -920,6 +944,7 @@ const styles = {
     whiteSpace: "pre-wrap",
   },
   codeBlockSmall: { background: "#0f172a", color: "#e2e8f0", padding: "12px", borderRadius: "16px", fontFamily: "monospace", fontSize: "13px", margin: "12px 0" },
+  codeInline: { fontFamily: "monospace", backgroundColor: "#f1f5f9", padding: "1px 4px", borderRadius: "4px", fontSize: "0.95em" },
   tableWrapper: { overflowX: "auto", margin: "20px 0", borderRadius: "16px", border: "1px solid #e2e8f0" },
   table: { width: "100%", borderCollapse: "collapse", backgroundColor: "#fff" },
   tableHeaderRow: { backgroundColor: "#306998", color: "white" },
@@ -929,10 +954,10 @@ const styles = {
   activityWrapper: { marginTop: "28px", padding: "16px", backgroundColor: "#fefce8", borderRadius: "20px", borderLeft: "6px solid #FFD43B", boxShadow: "0 2px 8px rgba(0,0,0,0.03)" },
   activityTitle: { fontWeight: "700", fontSize: "18px", marginBottom: "8px", color: "#1e293b" },
   instruction: { 
-    fontSize: "18px", 
-    color: "#0f172a", 
+    fontSize: "16px", 
+    color: "#1e293b", 
     marginBottom: "16px", 
-    fontWeight: "600",
+    fontWeight: "400",
     fontStyle: "italic",
   },
   subActivity: { marginTop: "20px", paddingTop: "16px", borderTop: "1px dashed #e2e8f0" },
@@ -950,7 +975,7 @@ const styles = {
     boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
     transition: "opacity 0.2s",
     display: "inline-block",
-    fontSize: "17px",
+    fontSize: "16px",
   },
   dropZones: { display: "flex", flexDirection: "column", gap: "12px" },
   dropZone: {
@@ -963,8 +988,8 @@ const styles = {
     borderWidth: "2px",
     borderStyle: "solid",
   },
-  targetValue: { fontWeight: "bold", fontFamily: "monospace", fontSize: "17px" },
-  dropAnswer: { color: "#306998", fontStyle: "italic", fontSize: "17px" },
+  targetValue: { fontWeight: "bold", fontFamily: "monospace", fontSize: "16px" },
+  dropAnswer: { color: "#306998", fontStyle: "italic", fontSize: "16px" },
   options: { display: "flex", flexDirection: "column", gap: "12px" },
   option: { 
     padding: "12px 20px", 
@@ -972,14 +997,14 @@ const styles = {
     cursor: "pointer", 
     border: "1px solid #e2e8f0", 
     background: "#fff", 
-    fontWeight: "500", 
+    fontWeight: "400", 
     transition: "all 0.2s",
-    fontSize: "17px",
+    fontSize: "16px",
   },
   inputGroup: { display: "flex", gap: "12px", alignItems: "center", flexWrap: "wrap" },
-  inputText: { flex: "1", padding: "12px 16px", borderRadius: "20px", border: "1px solid #cbd5e1", fontSize: "18px", fontFamily: "monospace" },
-  checkButton: { background: "#306998", color: "white", border: "none", padding: "10px 24px", borderRadius: "40px", cursor: "pointer", fontWeight: "600", transition: "0.2s" },
-  resetButton: { background: "#ef4444", color: "white", border: "none", padding: "10px 24px", borderRadius: "40px", cursor: "pointer", fontWeight: "600", transition: "0.2s" },
+  inputText: { flex: "1", padding: "12px 16px", borderRadius: "20px", border: "1px solid #cbd5e1", fontSize: "16px", fontFamily: "monospace" },
+  checkButton: { background: "#306998", color: "white", border: "none", padding: "10px 24px", borderRadius: "40px", cursor: "pointer", fontWeight: "600", transition: "0.2s", fontSize: "16px" },
+  resetButton: { background: "#ef4444", color: "white", border: "none", padding: "10px 24px", borderRadius: "40px", cursor: "pointer", fontWeight: "600", transition: "0.2s", fontSize: "16px" },
   buttonGroup: { display: "flex", gap: "12px", marginTop: "12px", flexWrap: "wrap" },
   feedback: { marginTop: "12px", padding: "10px 16px", borderRadius: "16px", background: "#f1f5f9", borderLeft: "5px solid #306998", fontWeight: "500", color: "#1e293b" },
   successMsg: { marginTop: "12px", padding: "10px", background: "#d1fae5", borderRadius: "16px", color: "#065f46", textAlign: "center", fontWeight: "500" },
