@@ -3,7 +3,6 @@ import Navbar from "../../komponen/Navbar";
 import SidebarMateri from "../../komponen/SidebarMateri";
 import { useNavigate } from 'react-router-dom';
 
-
 export default function RangkumanDictionary() {
   const navigate = useNavigate();
 
@@ -15,7 +14,6 @@ export default function RangkumanDictionary() {
     }
   }, [navigate]);
 
-  
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   return (
@@ -33,220 +31,77 @@ export default function RangkumanDictionary() {
         }}
       >
         <div style={styles.page}>
-          {/* HEADER */}
           <div style={styles.header}>
             <div style={styles.headerAccent}></div>
             <h1 style={styles.headerTitle}>RANGKUMAN DICTIONARY</h1>
           </div>
 
-          {/* 1. PENGERTIAN DAN KARAKTERISTIK */}
           <section style={styles.section}>
             <div style={styles.card}>
-              <h2 style={styles.sectionTitle}>Pengertian Dictionary</h2>
               <p style={styles.text}>
-                Dictionary adalah struktur data di Python yang menyimpan koleksi pasangan key-value (kunci-nilai). 
-                Setiap key bersifat unik dan digunakan untuk mengakses nilai yang terkait. 
-                Dictionary bersifat mutable (dapat diubah), dinamis, dan sangat efisien untuk pencarian data.
+                <strong>Dictionary</strong> adalah struktur data Python yang menyimpan pasangan <strong>key-value</strong> (kunci-nilai). 
+                Key bersifat unik dan immutable, value dapat berupa tipe data apa pun. Dictionary bersifat mutable, dinamis, dan sangat efisien untuk pencarian data.
               </p>
-            </div>
-          </section>
 
-          <section style={styles.section}>
-            <div style={styles.card}>
-              <h2 style={styles.sectionTitle}>Karakteristik Dictionary</h2>
-              <ul style={styles.list}>
-                <li><strong>Key unik</strong> → Tidak boleh ada dua key yang sama; jika key yang sama digunakan lagi, nilai sebelumnya akan tertimpa.</li>
-                <li><strong>Key harus immutable (tidak bisa diubah)</strong> → Key hanya boleh berupa tipe data seperti string, integer, tuple. List <strong>tidak bisa</strong> dijadikan key karena bersifat mutable.</li>
-                <li><strong>Value dapat berupa apa saja</strong> → Bisa list, dictionary lain, fungsi, dll. (boleh mutable).</li>
-                <li><strong>Dictionary itu sendiri mutable</strong> → Dapat ditambah, diubah, dihapus; ukuran otomatis menyesuaikan.</li>
-              </ul>
-            </div>
-          </section>
+              <div style={styles.gridContainer}>
+                <div style={styles.gridColumnLeft}>
+                  <h3 style={styles.subTitle}>Karakteristik</h3>
+                  <ul style={styles.list}>
+                    <li><strong>Key unik</strong> – tidak boleh duplikat; jika sama, nilai tertimpa.</li>
+                    <li><strong>Key immutable</strong> – hanya boleh string, integer, tuple (list tidak boleh).</li>
+                    <li><strong>Value bebas</strong> – bisa list, dictionary lain, fungsi, dll.</li>
+                    <li><strong>Mutable</strong> – dapat ditambah, diubah, dihapus; ukuran otomatis menyesuaikan.</li>
+                  </ul>
 
-          {/* 2. MEMBUAT DICTIONARY */}
-          <section style={styles.section}>
-            <div style={styles.card}>
-              <h2 style={styles.sectionTitle}>Membuat Dictionary</h2>
-              <pre style={styles.code}>
-{`# 1. Menggunakan kurung kurawal {}
-mahasiswa = {"nama": "Budi", "umur": 20}
+                  <h3 style={styles.subTitle}>Membuat Dictionary</h3>
+                  <ul style={styles.list}>
+                    <li>Kurung kurawal: mahasiswa = {"{"}"nama": "Budi", "umur": 20{"}"}</li>
+                    <li>Fungsi dict(): data = dict(nama="Ani", kota="Jakarta")</li>
+                    <li>Dictionary comprehension: kuadrat = {"{x: x**2 for x in range(1, 6)}"}</li>
+                  </ul>
 
-# 2. Menggunakan fungsi dict()
-data = dict(nama="Ani", kota="Jakarta")
+                  <h3 style={styles.subTitle}>Mengakses Nilai</h3>
+                  <ul style={styles.list}>
+                    <li>Kurung siku [] – print(mahasiswa["nama"]) → error jika key tidak ada.</li>
+                    <li>Metode get() – print(mahasiswa.get("alamat", "Tidak tersedia")) → aman, bisa beri default.</li>
+                  </ul>
+                </div>
 
-# 3. Dictionary comprehension
-kuadrat = {x: x**2 for x in range(1, 6)}`}
-              </pre>
-            </div>
-          </section>
+                <div style={styles.gridColumnRight}>
+                  <h3 style={styles.subTitle}>Manipulasi Dictionary</h3>
+                  <ul style={styles.list}>
+                    <li><strong>Tambah/Ubah</strong> – dict["key"] = value</li>
+                    <li><strong>Update banyak</strong> – dict.update({"{"}"a":1, "b":2{"}"})</li>
+                    <li><strong>Hapus dengan pop()</strong> – value = dict.pop("key")</li>
+                    <li><strong>Hapus item terakhir</strong> – item = dict.popitem()</li>
+                    <li><strong>Hapus semua</strong> – dict.clear()</li>
+                  </ul>
 
-          {/* 3. MENGAKSES NILAI DICTIONARY */}
-          <section style={styles.section}>
-            <div style={styles.card}>
-              <h2 style={styles.sectionTitle}>Mengakses Nilai Dictionary</h2>
-              <pre style={styles.code}>
-{`# Cara 1: Menggunakan kurung siku [] (error jika key tidak ada)
-print(mahasiswa["nama"])   # Output: Budi
+                  <h3 style={styles.subTitle}>Perbandingan Dictionary vs List</h3>
+                  <ul style={styles.list}>
+                    <li><strong>Akses:</strong> List pakai indeks angka, Dictionary pakai key.</li>
+                    <li><strong>Urutan:</strong> List terurut pasti, Dictionary urutan sesuai penyisipan.</li>
+                    <li><strong>Kunci:</strong> List hanya indeks angka, Dictionary key harus unik dan immutable.</li>
+                  </ul>
 
-# Cara 2: Menggunakan metode get() (aman, bisa beri nilai default)
-print(mahasiswa.get("alamat", "Tidak tersedia"))   # Output: Tidak tersedia`}
-              </pre>
-            </div>
-          </section>
+                  <h3 style={styles.subTitle}>Metode Penting</h3>
+                  <ul style={styles.list}>
+                    <li>clear() – hapus semua item</li>
+                    <li>get(key, default) – ambil nilai atau default</li>
+                    <li>items() – view pasangan (key, value)</li>
+                    <li>keys() – view semua key</li>
+                    <li>pop(key, default) – hapus key, kembalikan value</li>
+                    <li>popitem() – hapus dan kembalikan item terakhir</li>
+                  </ul>
 
-          {/* 4. MANIPULASI DICTIONARY */}
-          <section style={styles.section}>
-            <div style={styles.card}>
-              <h2 style={styles.sectionTitle}>Manipulasi Dictionary</h2>
-              <div style={styles.tableWrapper}>
-                <table style={styles.table}>
-                  <thead>
-                    <tr style={styles.tableHeader}>
-                      <th style={styles.tableCell}>Operasi</th>
-                      <th style={styles.tableCell}>Contoh Kode</th>
-                      <th style={styles.tableCell}>Penjelasan</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td style={styles.tableCell}>Tambah/Ubah item</td>
-                      <td style={styles.tableCell}><code>dict["key"] = value</code></td>
-                      <td style={styles.tableCell}>Menambah pasangan baru jika key belum ada, atau mengubah nilai jika key sudah ada.</td>
-                    </tr>
-                    <tr>
-                      <td style={styles.tableCell}>Update banyak item</td>
-                      <td style={styles.tableCell}><code>dict.update({'{'} "a":1, "b":2 {'}'})</code></td>
-                      <td style={styles.tableCell}>Menambah/memperbarui beberapa key sekaligus.</td>
-                    </tr>
-                    <tr>
-                      <td style={styles.tableCell}>Hapus dengan pop()</td>
-                      <td style={styles.tableCell}><code>value = dict.pop("key")</code></td>
-                      <td style={styles.tableCell}>Menghapus key tertentu dan mengembalikan nilainya. Jika key tidak ada, bisa diberi default.</td>
-                    </tr>
-                    <tr>
-                      <td style={styles.tableCell}>Hapus item terakhir</td>
-                      <td style={styles.tableCell}><code>item = dict.popitem()</code></td>
-                      <td style={styles.tableCell}>Menghapus item terakhir (sesuai urutan penyisipan).</td>
-                    </tr>
-                    <tr>
-                      <td style={styles.tableCell}>Hapus semua item</td>
-                      <td style={styles.tableCell}><code>dict.clear()</code></td>
-                      <td style={styles.tableCell}>Mengosongkan dictionary.</td>
-                    </tr>
-                    {/* <tr>
-                      <td style={styles.tableCell}>Salin dictionary</td>
-                      <td style={styles.tableCell}><code>baru = dict.copy()</code></td>
-                      <td style={styles.tableCell}>Membuat salinan dangkal (shallow copy).</td>
-                    </tr> */}
-                  </tbody>
-                </table>
+                  <h3 style={styles.subTitle}>Tips Penting</h3>
+                  <ul style={styles.list}>
+                    <li>Gunakan get() daripada [] jika key mungkin tidak ada, untuk hindari KeyError.</li>
+                    <li>Gunakan in untuk cek keberadaan key: if "nama" in mahasiswa:</li>
+                    <li>Gabung dictionary: {"{**dict1, **dict2}"} atau dict1.update(dict2).</li>
+                  </ul>
+                </div>
               </div>
-            </div>
-          </section>
-
-          {/* 5. METODE PENTING LAINNYA */}
-          {/* <section style={styles.section}>
-            <div style={styles.card}>
-              <h2 style={styles.sectionTitle}>Metode Penting Dictionary</h2>
-              <ul style={styles.list}>
-                <li><code>keys()</code> → Mengembalikan objek view berisi semua key.</li>
-                <li><code>values()</code> → Mengembalikan objek view berisi semua value.</li>
-                <li><code>items()</code> → Mengembalikan objek view berisi pasangan (key, value).</li>
-                <li><code>get(key, default)</code> → Mengambil nilai, aman jika key tidak ada.</li>
-                <li><code>setdefault(key, default)</code> → Mengambil nilai; jika key tidak ada, buat key dengan nilai default.</li>
-                <li><code>fromkeys(iterable, value)</code> → Membuat dictionary baru dari iterable dengan nilai yang sama.</li>
-              </ul>
-            </div>
-          </section> */}
-
-          {/* 6. PERBANDINGAN DICTIONARY vs LIST (sesuai gambar) */}
-          <section style={styles.section}>
-            <div style={styles.card}>
-              <h2 style={styles.sectionTitle}>Perbandingan Dictionary vs List</h2>
-              <div style={styles.tableWrapper}>
-                <table style={styles.table}>
-                  <thead>
-                    <tr style={styles.tableHeader}>
-                      <th style={styles.tableCell}>Aspek</th>
-                      <th style={styles.tableCell}>List</th>
-                      <th style={styles.tableCell}>Dictionary</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td style={styles.tableCell}>Cara mengakses data</td>
-                      <td style={styles.tableCell}>Menggunakan nomor urut (indeks): <code>data[0]</code>, <code>data[1]</code>, dst.</td>
-                      <td style={styles.tableCell}>Menggunakan kunci (key) yang kita tentukan sendiri: <code>data["nama"]</code>, <code>data["umur"]</code>.</td>
-                    </tr>
-                    <tr>
-                      <td style={styles.tableCell}>Urutan data</td>
-                      <td style={styles.tableCell}>Urutan pasti sesuai indeks. Bisa dipotong (slice).</td>
-                      <td style={styles.tableCell}>Urutan diingat sesuai urutan saat kita memasukkan (tidak bisa dipotong seperti list).</td>
-                    </tr>
-                    <tr>
-                      <td style={styles.tableCell}>Batasan "kunci"</td>
-                      <td style={styles.tableCell}>Tidak ada konsep kunci, hanya indeks angka.</td>
-                      <td style={styles.tableCell}>Key harus unik dan tidak boleh berubah (immutable). Contoh yang boleh: string, integer. Yang tidak boleh: list (karena bisa berubah).</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </section>
-
-          {/* 7. CONTOH PENGGUNAAN DALAM KEHIDUPAN NYATA */}
-          <section style={styles.section}>
-            <div style={styles.card}>
-              <h2 style={styles.sectionTitle}>Contoh Penggunaan Nyata</h2>
-              <ul style={styles.list}>
-                <li><strong>Data mahasiswa</strong> → NIM sebagai key, data diri sebagai value.</li>
-                <li><strong>Frekuensi kata</strong> → Kata sebagai key, jumlah kemunculan sebagai value.</li>
-                {/* <li><strong>Konfigurasi aplikasi</strong> → Parameter sebagai key, nilai sebagai value (mirip JSON).</li> */}
-                <li><strong>Cache/memoization</strong> → Menyimpan hasil komputasi untuk input tertentu.</li>
-                <li><strong>Graf/network</strong> → Node sebagai key, daftar tetangga sebagai value.</li>
-              </ul>
-            </div>
-          </section>
-
-          {/* 8. RINGKASAN SEMUA METODE (TABEL LENGKAP) */}
-          <section style={styles.section}>
-            <div style={styles.card}>
-              <h2 style={styles.sectionTitle}>Ringkasan Semua Metode Dictionary</h2>
-              <div style={styles.tableWrapper}>
-                <table style={styles.table}>
-                  <thead>
-                    <tr style={styles.tableHeader}>
-                      <th style={styles.tableCell}>Metode</th>
-                      <th style={styles.tableCell}>Deskripsi</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr><td style={styles.tableCell}><code>clear()</code></td><td style={styles.tableCell}>Menghapus semua item.</td></tr>
-                    {/* <tr><td style={styles.tableCell}><code>copy()</code></td><td style={styles.tableCell}>Mengembalikan salinan dictionary (shallow copy).</td></tr> */}
-                    {/* <tr><td style={styles.tableCell}><code>fromkeys(seq, v)</code></td><td style={styles.tableCell}>Membuat dictionary baru dengan key dari seq dan nilai v (default None).</td></tr> */}
-                    <tr><td style={styles.tableCell}><code>get(key, default)</code></td><td style={styles.tableCell}>Mengembalikan nilai key, atau default jika key tidak ada.</td></tr>
-                    <tr><td style={styles.tableCell}><code>items()</code></td><td style={styles.tableCell}>Mengembalikan view of (key, value).</td></tr>
-                    <tr><td style={styles.tableCell}><code>keys()</code></td><td style={styles.tableCell}>Mengembalikan view of keys.</td></tr>
-                    <tr><td style={styles.tableCell}><code>pop(key, default)</code></td><td style={styles.tableCell}>Hapus key dan kembalikan value, atau default jika key tidak ada.</td></tr>
-                    <tr><td style={styles.tableCell}><code>popitem()</code></td><td style={styles.tableCell}>Hapus dan kembalikan (key, value) terakhir (sesuai urutan).</td></tr>
-                    {/* <tr><td style={styles.tableCell}><code>setdefault(key, default)</code></td><td style={styles.tableCell}>Kembalikan nilai key; jika key tidak ada, buat key dengan default.</td></tr> */}
-                    {/* <tr><td style={styles.tableCell}><code>update(dict2)</code></td><td style={styles.tableCell}>Update dictionary dengan pasangan dari dict2 (atau iterable).</td></tr> */}
-                    {/* <tr><td style={styles.tableCell}><code>values()</code></td><td style={styles.tableCell}>Mengembalikan view of values.</td></tr> */}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </section>
-
-          {/* 9. TIPS PENTING */}
-          <section style={styles.section}>
-            <div style={styles.card}>
-              <h2 style={styles.sectionTitle}>💡 Tips Penting</h2>
-              <ul style={styles.list}>
-                <li>Gunakan <code>.get()</code> daripada <code>[]</code> jika key mungkin tidak ada, untuk menghindari <code>KeyError</code>.</li>
-                <li>Gunakan <code>in</code> untuk mengecek keberadaan key: <code>if "nama" in mahasiswa:</code></li>
-                <li>Untuk menggabungkan dua dictionary, gunakan <code>{'{**dict1, **dict2}'}</code> atau <code>dict1.update(dict2)</code>.</li>
-              </ul>
             </div>
           </section>
         </div>
@@ -255,7 +110,6 @@ print(mahasiswa.get("alamat", "Tidak tersedia"))   # Output: Tidak tersedia`}
   );
 }
 
-/* ================== STYLE ================== */
 const styles = {
   page: {
     padding: "30px 40px",
@@ -293,57 +147,42 @@ const styles = {
   section: {
     marginBottom: "40px",
   },
-  sectionTitle: {
-    fontSize: "22px",
-    fontWeight: "700",
-    marginBottom: "15px",
-    borderLeft: "5px solid #306998",
-    paddingLeft: "12px",
-  },
   card: {
     backgroundColor: "white",
     borderRadius: "10px",
     padding: "25px",
     boxShadow: "0 5px 15px rgba(0,0,0,0.08)",
   },
+  gridContainer: {
+    display: "grid",
+    gridTemplateColumns: "1fr 1fr",
+    gap: "30px",
+    marginTop: "15px",
+  },
+  gridColumnLeft: {
+    paddingRight: "15px",
+    borderRight: "2px solid #dee2e6",
+  },
+  gridColumnRight: {
+    paddingLeft: "15px",
+  },
   list: {
     paddingLeft: "20px",
     lineHeight: "1.8",
     textAlign: "justify",
+    marginBottom: "15px",
   },
   text: {
     lineHeight: "1.8",
     color: "#333",
     textAlign: "justify",
+    marginBottom: "15px",
   },
-  code: {
-    backgroundColor: "#272822",
-    color: "#f8f8f2",
-    padding: "15px",
-    borderRadius: "8px",
-    fontSize: "14px",
-    overflowX: "auto",
-    fontFamily: "monospace",
+  subTitle: {
     marginTop: "10px",
     marginBottom: "10px",
-  },
-  tableWrapper: {
-    overflowX: "auto",
-  },
-  table: {
-    width: "100%",
-    borderCollapse: "collapse",
-    lineHeight: "1.6",
-    marginTop: "10px",
-  },
-  tableHeader: {
-    backgroundColor: "#306998",
-    color: "white",
-  },
-  tableCell: {
-    padding: "10px",
-    border: "1px solid #ddd",
-    textAlign: "left",
-    verticalAlign: "top",
+    color: "#306998",
+    fontSize: "1.2rem",
+    fontWeight: "600",
   },
 };
