@@ -10,7 +10,7 @@ export default function Apersepsi() {
   const [userId, setUserId] = useState(null);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
-  const [userProgress, setUserProgress] = useState(null); // tambahan state untuk menyimpan progres
+  const [userProgress, setUserProgress] = useState(null);
 
   // ==================== MATERI 1: VARIABEL & TIPE DATA ====================
   // Drag & Drop
@@ -322,15 +322,13 @@ export default function Apersepsi() {
   // Efek untuk menampilkan pop-up jika semua benar dan progres < 1
   useEffect(() => {
     if (!userId) return;
-    if (userProgress === null) return; // belum selesai baca
+    if (userProgress === null) return;
     if (showCompletionModal) return;
     if (isProcessing) return;
     if (!isAllActivitiesCorrect()) return;
 
-    // Jika progres sudah >= 1, tidak tampilkan pop-up
     if (userProgress >= 1) return;
 
-    // Jika semua benar dan progres < 1, tampilkan pop-up
     setShowCompletionModal(true);
   }, [
     userId,
@@ -355,17 +353,14 @@ export default function Apersepsi() {
 
     try {
       const mahasiswaRef = doc(db, "mahasiswa", userId);
-      // Baca progres terbaru
       const docSnap = await getDoc(mahasiswaRef);
       if (docSnap.exists()) {
         const data = docSnap.data();
         const currentProgress = data.progres_belajar || 0;
-        // Hanya tambah jika < 1
         if (currentProgress < 1) {
           await updateDoc(mahasiswaRef, {
             progres_belajar: increment(1)
           });
-          // Update state userProgress agar sesuai
           setUserProgress(currentProgress + 1);
         }
       }
@@ -453,34 +448,74 @@ export default function Apersepsi() {
                 <li>
                   Hanya boleh mengandung huruf (a-z, A-Z), angka (0-9), dan garis bawah (_).
                   <br />
-                   nama, _data, nilai_akhir, data2 → <strong style={{color: "#10b981"}}>BENAR</strong>
+                  Contoh:
                   <br />
-                  nama@siswa, angka#1 → <strong style={{color: "#ef4444"}}>SALAH</strong>
+                  <div style={styles.list}>
+                    <div style={styles.exampleRow}>
+                      <span style={styles.exampleLeft}>nama, _data, nilai_akhir, data2</span>
+                      <span style={styles.exampleRight}>→ <strong style={{color: "#10b981"}}>BENAR</strong></span>
+                    </div>
+                    <div style={styles.exampleRow}>
+                      <span style={styles.exampleLeft}>nama@siswa, angka#1</span>
+                      <span style={styles.exampleRight}>→ <strong style={{color: "#ef4444"}}>SALAH</strong></span>
+                    </div>
+                  </div>
                 </li>
                 <li>
                   Harus diawali dengan huruf atau garis bawah. Tidak boleh diawali angka.
                   <br />
-                  nama_siswa → <strong style={{color: "#10b981"}}>BENAR</strong>
+                  Contoh:
                   <br />
-                  _nilai → <strong style={{color: "#10b981"}}>BENAR</strong>
-                  <br />
-                  1siswa → <strong style={{color: "#ef4444"}}>SALAH</strong>
-                  <br />
-                  2nilai → <strong style={{color: "#ef4444"}}>SALAH</strong>
+                  <div style={styles.list}>
+                    <div style={styles.exampleRow}>
+                      <span style={styles.exampleLeft}>nama_siswa</span>
+                      <span style={styles.exampleRight}>→ <strong style={{color: "#10b981"}}>BENAR</strong></span>
+                    </div>
+                    <div style={styles.exampleRow}>
+                      <span style={styles.exampleLeft}>_nilai, angka1</span>
+                      <span style={styles.exampleRight}>→ <strong style={{color: "#10b981"}}>BENAR</strong></span>
+                    </div>
+                    <div style={styles.exampleRow}>
+                      <span style={styles.exampleLeft}>1siswa</span>
+                      <span style={styles.exampleRight}>→ <strong style={{color: "#ef4444"}}>SALAH</strong></span>
+                    </div>
+                    <div style={styles.exampleRow}>
+                      <span style={styles.exampleLeft}>2nilai</span>
+                      <span style={styles.exampleRight}>→ <strong style={{color: "#ef4444"}}>SALAH</strong></span>
+                    </div>
+                  </div>
                 </li>
                 <li>
                   Tidak boleh ada spasi. Gunakan garis bawah untuk memisahkan kata.
                   <br />
-                  jumlah_mahasiswa → <strong style={{color: "#10b981"}}>BENAR</strong>
+                  Contoh:
                   <br />
-                  jumlah mahasiswa → <strong style={{color: "#ef4444"}}>SALAH</strong>
+                  <div style={styles.list}>
+                    <div style={styles.exampleRow}>
+                      <span style={styles.exampleLeft}>jumlah_mahasiswa</span>
+                      <span style={styles.exampleRight}>→ <strong style={{color: "#10b981"}}>BENAR</strong></span>
+                    </div>
+                    <div style={styles.exampleRow}>
+                      <span style={styles.exampleLeft}>jumlah mahasiswa</span>
+                      <span style={styles.exampleRight}>→ <strong style={{color: "#ef4444"}}>SALAH</strong></span>
+                    </div>
+                  </div>
                 </li>
                 <li>
                   Tidak boleh sama dengan kata kunci (keyword) Python, seperti print, if, for, while, input, return, def, True, False, and, or, dll.
                   <br />
-                  print = "halo" → <strong style={{color: "#ef4444"}}>SALAH</strong>
+                  Contoh:
                   <br />
-                  if_statement → <strong style={{color: "#10b981"}}>BENAR</strong>
+                  <div style={styles.list}>
+                    <div style={styles.exampleRow}>
+                      <span style={styles.exampleLeft}>print = "halo"</span>
+                      <span style={styles.exampleRight}>→ <strong style={{color: "#ef4444"}}>SALAH</strong></span>
+                    </div>
+                    <div style={styles.exampleRow}>
+                      <span style={styles.exampleLeft}>if_statement</span>
+                      <span style={styles.exampleRight}>→ <strong style={{color: "#10b981"}}>BENAR</strong></span>
+                    </div>
+                  </div>
                 </li>
                 <li>
                   Bersifat case-sensitive, huruf besar dan kecil dibedakan. Contoh Harga, harga, dan HARGA adalah variabel yang berbeda. Begitupun nama, Nama, NAMA adalah tiga variabel berbeda.
@@ -491,7 +526,18 @@ export default function Apersepsi() {
                   <br />
                 </li>
               </ol>
+
+              {/* MATERI TAMBAHAN: ASSIGNMENT VARIABEL */}
               <p style={styles.text}>
+                Untuk membuat variable menggunakan tanda sama dengan (=) untuk memberi nilai pada variabelnya. Bentuk umumnya:
+                
+                <span style={{ fontFamily: 'monospace', backgroundColor: '#bdd9f5', padding: '2px 6px', borderRadius: '4px' }}>nama_variabel = nilai_yang_ingin_disimpan</span>.
+                
+                Tanda = dalam pemrograman bukan berarti "sama dengan", melainkan "isi variabel kiri dengan nilai kanan". Variabel hanya bisa menyimpan satu nilai pada satu waktu. Jika kita beri nilai baru, nilai lama akan hilang tergantikan. Nilai baru bisa berasal dari perhitungan yang melibatkan variabel itu sendiri.
+              </p>
+
+              <p style={styles.text}>
+                Setiap variabel memiliki tipe data yang menentukan nilai apa yang bisa disimpan. 
                 Tipe data dasar di Python:
               </p>
               <ul style={styles.list}>
@@ -529,14 +575,6 @@ export default function Apersepsi() {
                   <strong style={{ color: "#306998" }}>status_aktif</strong> = <strong style={{ color: "#306998" }}>True</strong>
                 </li>
               </ul>
-
-              <p style={styles.text}>Contoh Kode:</p>
-              <pre style={styles.codeBlock}>
-                {formatCodeWithComments(`panjang = int(input("Masukkan panjang: "))  # input panjang dalam cm
-lebar = float(input("Masukkan lebar: "))      # input lebar dalam cm
-jurusan = "Pendidikan Komputer"               # data string
-status_lulus = True                           # boolean`)}
-              </pre>
 
               {/* AKTIVITAS 1 - GABUNGAN */}
               <div style={styles.activityWrapper}>
@@ -956,14 +994,23 @@ const styles = {
   text: { fontSize: "16px", lineHeight: "1.6", color: "#1e293b", marginBottom: "16px", textAlign: "justify" },
   list: { marginLeft: "24px", marginBottom: "16px", lineHeight: "1.6", color: "#1e293b" },
   listOrdered: { marginLeft: "24px", marginBottom: "16px", lineHeight: "1.8", color: "#1e293b" },
-  codeBlock: { 
-    background: "#0f172a", 
-    color: "#e2e8f0", 
-    padding: "16px", 
-    borderRadius: "20px", 
-    fontFamily: "monospace", 
-    fontSize: "14px", 
-    overflow: "auto", 
+  // Style untuk merapikan panah dengan jarak proporsional
+  exampleRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: "16px",
+    marginBottom: "2px",
+  },
+  exampleLeft: { flex: "0 1 auto" },
+  exampleRight: { flex: "0 0 auto" },
+  codeBlock: {
+    background: "#0f172a",
+    color: "#e2e8f0",
+    padding: "16px",
+    borderRadius: "20px",
+    fontFamily: "monospace",
+    fontSize: "14px",
+    overflow: "auto",
     margin: "20px 0",
     whiteSpace: "pre-wrap",
   },
@@ -977,10 +1024,10 @@ const styles = {
   tableCell: { padding: "12px 16px", fontSize: "14px", color: "#1e293b" },
   activityWrapper: { marginTop: "28px", padding: "16px", backgroundColor: "#fefce8", borderRadius: "20px", borderLeft: "6px solid #FFD43B", boxShadow: "0 2px 8px rgba(0,0,0,0.03)" },
   activityTitle: { fontWeight: "700", fontSize: "18px", marginBottom: "8px", color: "#1e293b" },
-  instruction: { 
-    fontSize: "16px", 
-    color: "#1e293b", 
-    marginBottom: "16px", 
+  instruction: {
+    fontSize: "16px",
+    color: "#1e293b",
+    marginBottom: "16px",
     fontWeight: "400",
     fontStyle: "italic",
   },
@@ -1015,13 +1062,13 @@ const styles = {
   targetValue: { fontWeight: "bold", fontFamily: "monospace", fontSize: "16px" },
   dropAnswer: { color: "#306998", fontStyle: "italic", fontSize: "16px" },
   options: { display: "flex", flexDirection: "column", gap: "12px" },
-  option: { 
-    padding: "12px 20px", 
-    borderRadius: "20px", 
-    cursor: "pointer", 
-    border: "1px solid #e2e8f0", 
-    background: "#fff", 
-    fontWeight: "400", 
+  option: {
+    padding: "12px 20px",
+    borderRadius: "20px",
+    cursor: "pointer",
+    border: "1px solid #e2e8f0",
+    background: "#fff",
+    fontWeight: "400",
     transition: "all 0.2s",
     fontSize: "16px",
   },
