@@ -577,13 +577,7 @@ export default function Apersepsi() {
                 </li>
               </ul>
 
-              <p style={styles.text}>Contoh Kode:</p>
-              <pre style={styles.codeBlock}>
-                {formatCodeWithComments(`panjang = int(input("Masukkan panjang: "))  # input panjang dalam cm
-lebar = float(input("Masukkan lebar: "))      # input lebar dalam cm
-jurusan = "Pendidikan Komputer"               # data string
-status_lulus = True                           # boolean`)}
-              </pre>
+      
 
               {/* AKTIVITAS 1 - GABUNGAN */}
               <div style={styles.activityWrapper}>
