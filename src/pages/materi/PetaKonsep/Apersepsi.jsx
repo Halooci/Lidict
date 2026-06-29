@@ -582,7 +582,7 @@ export default function Apersepsi() {
               {/* AKTIVITAS 1 - GABUNGAN */}
               <div style={styles.activityWrapper}>
                 <div style={styles.activityTitle}>Aktivitas</div>
-                <p style={styles.instruction}>Petunjuk: Kerjakan semua soal di bawah ini. Setiap soal memiliki tombol Periksa dan Reset.</p>
+                <p style={styles.instruction}>Kerjakan semua soal di bawah ini. Setiap soal memiliki tombol Periksa dan Reset.</p>
 
                 {/* Soal 1.1 - Drag & Drop */}
                 <div style={styles.subActivity}>
@@ -710,7 +710,7 @@ export default function Apersepsi() {
               {/* AKTIVITAS 2 - GABUNGAN */}
               <div style={styles.activityWrapper}>
                 <div style={styles.activityTitle}>Aktivitas</div>
-                <p style={styles.instruction}>Petunjuk: Kerjakan semua soal di bawah ini. Setiap soal memiliki tombol Periksa dan Reset.</p>
+                <p style={styles.instruction}>Kerjakan semua soal di bawah ini. Setiap soal memiliki tombol Periksa dan Reset.</p>
 
                 {/* Soal 2.1 - Pembagian Bulat */}
                 <div style={styles.subActivity}>
@@ -807,7 +807,7 @@ umur = int(input("Umur: "))     # konversi ke integer`)}
               {/* AKTIVITAS 3 - GABUNGAN */}
               <div style={styles.activityWrapper}>
                 <div style={styles.activityTitle}>Aktivitas</div>
-                <p style={styles.instruction}>Petunjuk: Kerjakan semua soal di bawah ini. Setiap soal memiliki tombol Periksa dan Reset.</p>
+                <p style={styles.instruction}>Kerjakan semua soal di bawah ini. Setiap soal memiliki tombol Periksa dan Reset.</p>
 
                 {/* Soal 3.1 - Konversi ke Integer (sekarang siswa mengisi "input") */}
                 <div style={styles.subActivity}>
