@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Navbar from "../../komponen/Navbar";
 import SidebarMateri from "../../komponen/SidebarMateri";
 import { db } from "../../../config/firebase";
-import { doc, updateDoc, increment } from "firebase/firestore";
+import { doc, getDoc, updateDoc, increment } from "firebase/firestore";
 
 // ---------- IMPOR CODEMIRROR ----------
 import CodeMirror from '@uiw/react-codemirror';
@@ -68,13 +68,13 @@ const styles = {
   list: {
     paddingLeft: "20px",
     lineHeight: "1.8",
-    textAlign: "justify", // Tambahan untuk rata kiri-kanan
+    textAlign: "justify",
   },
   text: {
     lineHeight: "1.8",
     color: "#333",
     marginBottom: "15px",
-    textAlign: "justify", // Tambahan untuk rata kiri-kanan
+    textAlign: "justify",
   },
   codeEditorContainer: {
     border: "2px solid #306998",
@@ -107,22 +107,14 @@ const styles = {
     fontSize: "14px",
     transition: "all 0.2s",
   },
-  codeInputReadOnly: {
-    width: "100%",
-    minHeight: "120px",
+  codeMirrorWrapper: {
     backgroundColor: "#272822",
-    color: "#f8f8f2",
-    border: "none",
-    padding: "15px",
-    fontFamily: "'Consolas', 'Monaco', 'Courier New', monospace",
-    fontSize: "14px",
-    lineHeight: "1.6",
-    overflow: "auto",
+    padding: "0",
   },
-  codePre: {
-    margin: 0,
-    whiteSpace: "pre-wrap",
-    wordWrap: "break-word",
+  codeMirrorEditableWrapper: {
+    backgroundColor: "#272822",
+    padding: "0",
+    borderBottom: "1px solid #333",
   },
   outputHeader: {
     backgroundColor: "#306998",
@@ -189,16 +181,6 @@ const styles = {
     fontSize: "14px",
     fontWeight: "500",
     borderBottom: "2px solid #1e7e34",
-  },
-  // Gaya untuk area CodeMirror (tambahan)
-  codeMirrorWrapper: {
-    backgroundColor: "#272822",
-    padding: "0",
-  },
-  codeMirrorEditableWrapper: {
-    backgroundColor: "#272822",
-    padding: "0",
-    borderBottom: "1px solid #333",
   },
   matchingContainer: {
     display: "flex",
@@ -1048,7 +1030,6 @@ const CodeEditorWithVisual = ({
         </button>
       </div>
 
-      {/* CodeMirror read-only */}
       <div style={styles.codeMirrorWrapper}>
         <CodeMirror
           value={code}
@@ -1069,13 +1050,11 @@ const CodeEditorWithVisual = ({
         />
       </div>
 
-      {/* Output - ditempatkan sebelum Visualisasi */}
       <div style={styles.outputHeader}><span style={styles.outputTitle}>Output</span></div>
       <div style={styles.codeOutput}>
         <pre style={styles.outputContent}>{output || "(Klik 'Jalankan' untuk melihat hasil)"}</pre>
       </div>
 
-      {/* Visualisasi - ditempatkan setelah Output */}
       <div style={styles.visualHeader}>Visualisasi</div>
       <div style={styles.visualArea}>
         {showVisual ? (
@@ -1122,7 +1101,6 @@ const CodeEditorEditable = ({ title, pyodideReady, runPythonCode, onValidation }
     if (onValidation) onValidation({ isValid: false, isComplete: false });
   }, [onValidation]);
 
-  // Fungsi untuk memeriksa apakah suatu pola ada pada baris non-komentar
   const hasNonCommentLine = (code, pattern) => {
     const lines = code.split('\n');
     for (const line of lines) {
@@ -1141,7 +1119,6 @@ const CodeEditorEditable = ({ title, pyodideReady, runPythonCode, onValidation }
     setOutput("");
     setIsRunning(true);
 
-    // 1. Eksekusi kode user
     let executionOutput = "";
     try {
       const result = await runPythonCode(localCode);
@@ -1159,16 +1136,11 @@ const CodeEditorEditable = ({ title, pyodideReady, runPythonCode, onValidation }
       return;
     }
 
-    // 2. Validasi instruksi (hanya baris non-komentar)
-    // Instruksi 1: membuat list belanja = ["apel", "jeruk", "mangga"]
     const listPattern = /belanja\s*=\s*\[\s*['"]apel['"]\s*,\s*['"]jeruk['"]\s*,\s*['"]mangga['"]\s*\]/;
-    // Instruksi 2: menambah 'pisang' dengan append
     const appendPattern = /belanja\.append\s*\(\s*['"]pisang['"]\s*\)/;
-    // Instruksi 3: menghapus 'jeruk' (bisa remove atau pop)
     const removePattern = /belanja\.remove\s*\(\s*['"]jeruk['"]\s*\)/;
-    const popPattern = /belanja\.pop\s*\(\s*1\s*\)/; // indeks jeruk setelah list awal dan append
+    const popPattern = /belanja\.pop\s*\(\s*1\s*\)/;
     const hasRemoveJeruk = hasNonCommentLine(localCode, removePattern) || hasNonCommentLine(localCode, popPattern);
-    // Instruksi 4: mencetak list belanja
     const printPattern = /print\s*\(\s*belanja\s*\)/;
 
     const hasList = hasNonCommentLine(localCode, listPattern);
@@ -1194,7 +1166,6 @@ const CodeEditorEditable = ({ title, pyodideReady, runPythonCode, onValidation }
         </button>
       </div>
 
-      {/* CodeMirror editable */}
       <div style={styles.codeMirrorEditableWrapper}>
         <CodeMirror
           value={localCode}
@@ -1228,7 +1199,7 @@ const CodeEditorEditable = ({ title, pyodideReady, runPythonCode, onValidation }
   );
 };
 
-// ================= KOMPONEN DRAG-N-DROP MATCHING (SAMA) =================
+// ================= KOMPONEN DRAG-N-DROP MATCHING =================
 const DragDropMatching = ({ items, resetTrigger, onAllCorrectChange }) => {
   const shuffleArray = (arr) => {
     const shuffled = [...arr];
@@ -1508,6 +1479,10 @@ const DragDropMatching = ({ items, resetTrigger, onAllCorrectChange }) => {
 // ================= KOMPONEN UTAMA =================
 export default function OperasiManipulasiList() {
   const navigate = useNavigate();
+  const [userId, setUserId] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [progresBelajar, setProgresBelajar] = useState(null);
+  const [showModal, setShowModal] = useState(false);
 
   // ─────────── KONFIGURASI HALAMAN ───────────
   const TOPIC_NAME = "operasi_manipulasi_list";
@@ -1515,44 +1490,92 @@ export default function OperasiManipulasiList() {
   const BONUS_DONE_KEY = `${TOPIC_NAME}_bonus_done`;
   // ──────────────────────────────────────────
 
+  // Cek autentikasi user
   useEffect(() => {
-    const userId = localStorage.getItem('userId');
+    const uid = localStorage.getItem('userId');
     const userEmail = localStorage.getItem('userEmail');
-    if (!userId || !userEmail) {
+    if (!uid || !userEmail) {
       navigate('/loginregister');
+    } else {
+      setUserId(uid);
     }
   }, [navigate]);
+
+  // Fetch progres_belajar dari Firestore
+  useEffect(() => {
+    if (!userId) return;
+
+    const fetchProgres = async () => {
+      setLoading(true);
+      try {
+        const docRef = doc(db, "mahasiswa", userId);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          const progres = data.progres_belajar || 0;
+          setProgresBelajar(progres);
+
+          // 🔒 Halaman hanya bisa diakses jika progres >= 3
+          if (progres < 3) {
+            navigate('/dashboard');
+            return;
+          }
+          // Jika progres >= 3, boleh akses halaman
+        } else {
+          navigate('/dashboard');
+        }
+      } catch (error) {
+        console.error("Gagal mengambil progres:", error);
+        navigate('/dashboard');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProgres();
+  }, [userId, navigate]);
 
   const [pyodideReady, setPyodideReady] = useState(false);
   const pyodideRef = useRef(null);
   const [resetMatching, setResetMatching] = useState(0);
 
   const [allMatchingCorrect, setAllMatchingCorrect] = useState(false);
-  const [showModal, setShowModal] = useState(false);
-  const [bonusGiven, setBonusGiven] = useState(false);
-  const userId = localStorage.getItem('userId');
 
   // State untuk pesan praktik
   const [praktikMessage, setPraktikMessage] = useState("");
   const [praktikMessageType, setPraktikMessageType] = useState("");
 
+  // Tampilkan modal hanya jika:
+  // 1. progresBelajar < 4 (belum mencapai level 4)
+  // 2. semua matching benar
+  // 3. belum menampilkan modal
   useEffect(() => {
-    const already = localStorage.getItem(BONUS_DONE_KEY);
-    if (already === "true") setBonusGiven(true);
-  }, [BONUS_DONE_KEY]);
-
-  useEffect(() => {
-    if (allMatchingCorrect && !bonusGiven && userId) {
+    if (!userId) return;
+    if (progresBelajar === null) return;
+    if (progresBelajar >= 4) {
+      // Jika progres >= 4, tidak perlu tampilkan modal
+      setShowModal(false);
+      return;
+    }
+    if (allMatchingCorrect && !showModal) {
+      // Jika progres < 4 dan semua matching benar, tampilkan modal
       setShowModal(true);
     }
-  }, [allMatchingCorrect, bonusGiven, userId]);
+  }, [allMatchingCorrect, userId, showModal, progresBelajar]);
 
   const handleCompleteAndNavigate = async () => {
     try {
-      const mahasiswaRef = doc(db, "mahasiswa", userId);
-      await updateDoc(mahasiswaRef, {
-        progres_belajar: increment(1)
-      });
+      // Tambah progres hanya jika masih < 4
+      if (progresBelajar < 4) {
+        const mahasiswaRef = doc(db, "mahasiswa", userId);
+        await updateDoc(mahasiswaRef, {
+          progres_belajar: increment(1)
+        });
+        // Update state lokal
+        setProgresBelajar(progresBelajar + 1);
+      }
+      
+      // Tandai bonus sudah diberikan
       localStorage.setItem(BONUS_DONE_KEY, "true");
       setShowModal(false);
       navigate("/List/RangkumanList");
@@ -1628,7 +1651,7 @@ export default function OperasiManipulasiList() {
     });
   };
 
-  // DATA VISUALISASI (sama seperti asli)
+  // DATA VISUALISASI
   const concatBeforeA = [1,2,3];
   const concatBeforeB = [4,5,6];
   const concatAfter = [1,2,3,4,5,6];
@@ -1913,7 +1936,6 @@ export default function OperasiManipulasiList() {
     }
   }, []);
 
-  // Callback untuk validasi praktik
   const handlePraktikValidation = ({ isValid, isComplete }) => {
     if (isComplete) {
       setPraktikMessage("✅ Selamat! Semua instruksi sudah dikerjakan dengan benar.");
@@ -1936,6 +1958,18 @@ export default function OperasiManipulasiList() {
     { func: "count()", desc: "Menghitung jumlah kemunculan nilai" },
     { func: "index()", desc: "Mencari indeks pertama dari nilai" },
   ];
+
+  // Tampilkan loading saat sedang mengambil data
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: '24px', marginBottom: '16px' }}>⏳</div>
+          <div style={{ fontSize: '18px', color: '#306998' }}>Memuat data...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -2363,7 +2397,6 @@ export default function OperasiManipulasiList() {
                   </ol>
                   <p style={styles.text}>Buatlah program Python sesuai langkah-langkah di atas!</p>
                   
-                  {/* Tempat pesan peringatan / sukses di luar editor */}
                   {praktikMessage && (
                     <div
                       style={{
@@ -2403,7 +2436,7 @@ export default function OperasiManipulasiList() {
         </div>
       </div>
 
-      {/* Modal Sukses */}
+      {/* Modal Sukses - HANYA MUNCUL JIKA PROGRES < 4 */}
       {showModal && (
         <div style={styles.modalOverlay}>
           <div style={styles.modal}>

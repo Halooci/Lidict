@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Navbar from "../../komponen/Navbar";
 import SidebarMateri from "../../komponen/SidebarMateri";
 import { db } from "../../../config/firebase";
-import { doc, updateDoc, increment } from "firebase/firestore";
+import { doc, getDoc, updateDoc, increment } from "firebase/firestore";
 
 // ---------- IMPOR CODEMIRROR ----------
 import CodeMirror from '@uiw/react-codemirror';
@@ -117,7 +117,6 @@ const styles = {
     fontSize: "14px",
     transition: "all 0.2s",
   },
-  // Gaya untuk wrapper CodeMirror
   codeMirrorWrapper: {
     backgroundColor: "#272822",
     padding: "0",
@@ -472,7 +471,7 @@ const styles = {
   },
 };
 
-// ================= KOMPONEN VISUALISASI NESTED LIST INTERAKTIF (DIPERBAIKI) =================
+// ================= KOMPONEN VISUALISASI NESTED LIST INTERAKTIF =================
 const visStyles = {
   container: {
     backgroundColor: "#f8f9fa",
@@ -510,15 +509,12 @@ const NestedListVisualization = ({ data, title, highlightSequence = [], processE
   const [currentHighlight, setCurrentHighlight] = useState(null);
   const [explanationText, setExplanationText] = useState("");
   const [hoveredCell, setHoveredCell] = useState(null);
-  const [stepIndex, setStepIndex] = useState(0);
   const intervalRef = useRef(null);
 
   useEffect(() => {
     if (intervalRef.current) clearInterval(intervalRef.current);
     setCurrentHighlight(null);
     setExplanationText("");
-    setStepIndex(0);
-
     if (!highlightSequence || highlightSequence.length === 0) return;
 
     let step = 0;
@@ -529,7 +525,6 @@ const NestedListVisualization = ({ data, title, highlightSequence = [], processE
           setExplanationText(processExplanations[step]);
         }
         step++;
-        setStepIndex(step);
       } else {
         clearInterval(intervalRef.current);
         setTimeout(() => {
@@ -607,8 +602,7 @@ const NestedListVisualization = ({ data, title, highlightSequence = [], processE
   );
 };
 
-// ================= CODE EDITOR UNTUK CONTOH KODE PROGRAM (dengan CodeMirror) =================
-// DIPERBAIKI: Output dan Visualisasi bertukar tempat. Penjelasan menggunakan angka 1,2,3...
+// ================= CODE EDITOR UNTUK CONTOH KODE PROGRAM =================
 const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, highlightSequenceMapping, pyodideReady, runPythonCode, lineExplanations }) => {
   const [output, setOutput] = useState("");
   const [isRunning, setIsRunning] = useState(false);
@@ -678,7 +672,6 @@ const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, highlightS
         </button>
       </div>
 
-      {/* CodeMirror read-only */}
       <div style={styles.codeMirrorWrapper}>
         <CodeMirror
           value={code}
@@ -699,7 +692,6 @@ const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, highlightS
         />
       </div>
 
-      {/* OUTPUT - ditempatkan sebelum Visualisasi */}
       <div style={styles.outputHeader}>
         <span style={styles.outputTitle}>Output</span>
       </div>
@@ -707,7 +699,6 @@ const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, highlightS
         <pre style={styles.outputContent}>{output}</pre>
       </div>
 
-      {/* VISUALISASI - ditempatkan setelah Output */}
       <div style={styles.visualHeader}>Visualisasi</div>
       <div style={styles.visualArea}>
         {showVisual && visualData ? (
@@ -736,7 +727,7 @@ const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, highlightS
   );
 };
 
-// ================= KOMPONEN PRAKTIK (CODE EDITOR EDITABLE) dengan CodeMirror =================
+// ================= KOMPONEN PRAKTIK (CODE EDITOR EDITABLE) =================
 const CodeEditorEditable = ({ pyodideReady, runPythonCode, onValidation }) => {
   const [localCode, setLocalCode] = useState("");
   const [output, setOutput] = useState("");
@@ -809,7 +800,6 @@ const CodeEditorEditable = ({ pyodideReady, runPythonCode, onValidation }) => {
         </button>
       </div>
 
-      {/* CodeMirror editable */}
       <div style={styles.codeMirrorEditableWrapper}>
         <CodeMirror
           value={localCode}
@@ -1187,41 +1177,99 @@ const StrukturInteraktif = () => {
 // ================= KOMPONEN UTAMA =================
 export default function PembuatanAksesNestedList() {
   const navigate = useNavigate();
+  const [userId, setUserId] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [progresBelajar, setProgresBelajar] = useState(null);
 
   const TOPIC_NAME = "pembuatan_akses_nested_list";
   const BONUS_DONE_KEY = `${TOPIC_NAME}_bonus_done`;
 
+  // Cek autentikasi user
   useEffect(() => {
-    const userId = localStorage.getItem('userId');
+    const uid = localStorage.getItem('userId');
     const userEmail = localStorage.getItem('userEmail');
-    if (!userId || !userEmail) navigate('/loginregister');
+    if (!uid || !userEmail) {
+      navigate('/loginregister');
+    } else {
+      setUserId(uid);
+    }
   }, [navigate]);
+
+  // Fetch progres_belajar dari Firestore
+  useEffect(() => {
+    if (!userId) return;
+
+    const fetchProgres = async () => {
+      setLoading(true);
+      try {
+        const docRef = doc(db, "mahasiswa", userId);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          const progres = data.progres_belajar || 0;
+          setProgresBelajar(progres);
+
+          // 🔒 Halaman hanya bisa diakses jika progres >= 6
+          if (progres < 6) {
+            navigate('/dashboard');
+            return;
+          }
+          // Jika progres >= 6, boleh akses halaman
+        } else {
+          navigate('/dashboard');
+        }
+      } catch (error) {
+        console.error("Gagal mengambil progres:", error);
+        navigate('/dashboard');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProgres();
+  }, [userId, navigate]);
 
   const [pyodideReady, setPyodideReady] = useState(false);
   const pyodideRef = useRef(null);
   const [correctStatus, setCorrectStatus] = useState([false, false, false, false, false]);
   const [isEksplorasiCompleted, setIsEksplorasiCompleted] = useState(false);
   const [showModal, setShowModal] = useState(false);
-  const [bonusGiven, setBonusGiven] = useState(false);
-  const userId = localStorage.getItem('userId');
 
   const [praktikMessage, setPraktikMessage] = useState("");
   const [praktikMessageType, setPraktikMessageType] = useState("");
 
+  // Tampilkan modal hanya jika:
+  // 1. progresBelajar < 7 (belum mencapai level 7)
+  // 2. semua latihan benar
+  // 3. belum menampilkan modal
   useEffect(() => {
-    const already = localStorage.getItem(BONUS_DONE_KEY);
-    if (already === "true") setBonusGiven(true);
-  }, [BONUS_DONE_KEY]);
-
-  const allCorrect = correctStatus.every(v => v === true);
-  useEffect(() => {
-    if (allCorrect && !bonusGiven && userId) setShowModal(true);
-  }, [allCorrect, bonusGiven, userId]);
+    if (!userId) return;
+    if (progresBelajar === null) return;
+    if (progresBelajar >= 7) {
+      // Jika progres >= 7, tidak perlu tampilkan modal
+      setShowModal(false);
+      return;
+    }
+    const allCorrect = correctStatus.every(v => v === true);
+    if (allCorrect && !showModal) {
+      // Jika progres < 7 dan semua latihan benar, tampilkan modal
+      setShowModal(true);
+    }
+  }, [correctStatus, userId, showModal, progresBelajar]);
 
   const handleCompleteAndNavigate = async () => {
     try {
-      const mahasiswaRef = doc(db, "mahasiswa", userId);
-      await updateDoc(mahasiswaRef, { progres_belajar: increment(1) });
+      // Tambah progres hanya jika masih < 7
+      if (progresBelajar < 7) {
+        const mahasiswaRef = doc(db, "mahasiswa", userId);
+        await updateDoc(mahasiswaRef, {
+          progres_belajar: increment(1)
+        });
+        // Update state lokal
+        setProgresBelajar(progresBelajar + 1);
+      }
+      
+      // Tandai bonus sudah diberikan
       localStorage.setItem(BONUS_DONE_KEY, "true");
       setShowModal(false);
       navigate("/NestedList/OperasiNestedList");
@@ -1259,14 +1307,14 @@ print("Elemen baris 2 kolom 3:", matriks[1][2])`;
     "Membuat nested list matriks dengan baris pertama [1,2,3] (indeks 0).",
     "Baris kedua [4,5,6] (indeks 1).",
     'Mencetak "Elemen baris 1 kolom 1:" diikuti nilai matriks[0][0] yaitu 1.',
-    'Mencetak "Elemen baris 2 kolom 3:" diikuti nilai matriks[1][2] yaitu 9.'
+    'Mencetak "Elemen baris 2 kolom 3:" diikuti nilai matriks[1][2] yaitu 6.'
   ];
   
   const highlightAksesSequence = () => ({
     cells: ["0,0", "1,2"],
     explanations: [
       "Perintah `matriks[0][0]` mengambil elemen baris indeks 0, kolom indeks 0 → nilai 1.",
-      "Perintah `matriks[1][2]` mengambil elemen baris indeks 1, kolom indeks 2 → nilai 9."
+      "Perintah `matriks[1][2]` mengambil elemen baris indeks 1, kolom indeks 2 → nilai 6."
     ]
   });
 
@@ -1340,6 +1388,19 @@ _buffer.getvalue()`);
   }, []);
 
   const handleEksplorasiComplete = () => setIsEksplorasiCompleted(true);
+
+  // Tampilkan loading saat sedang mengambil data
+  if (loading) {
+    return (
+      <>
+        <Navbar />
+        <SidebarMateri />
+        <div className="main-content" style={{ paddingTop: "64px", textAlign: "center", padding: "40px" }}>
+          <h2>Memuat data...</h2>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
@@ -1440,27 +1501,6 @@ _buffer.getvalue()`);
                 </div>
               </section>
 
-              {/* <section style={styles.section}>
-                <div style={styles.card}>
-                  <h3 style={{ fontSize: "20px", marginBottom: "15px", color: "#306998" }}>Mengapa Perlu Nested List?</h3>
-                  <p style={styles.text}>
-                    Tanpa nested list, kita harus membuat banyak variabel terpisah yang tidak efisien.
-                  </p>
-                  <div style={styles.highlightBox}>
-                    <pre style={styles.code}>{`# Tidak efisien dengan variabel terpisah
-baris1 = [1, 2, 3]
-baris2 = [4, 5, 6]
-# Sulit untuk diolah dalam perulangan
-
-# Dengan nested list menjadi rapi
-matriks = [[1, 2, 3], [4, 5, 6]]`}</pre>
-                  </div>
-                  <p style={styles.text}>
-                    Dengan nested list, data menjadi terstruktur, mudah diakses dengan perulangan bersarang, dan lebih ringkas.
-                  </p>
-                </div>
-              </section> */}
-
               <section style={styles.section}>
                 <h2 style={styles.sectionTitle}>Ayo Praktik!</h2>
                 <div style={styles.card}>
@@ -1542,12 +1582,6 @@ matriks = [[1, 2, 3], [4, 5, 6]]`}</pre>
                     index={4}
                     onCorrectChange={handleCorrectChange}
                   />
-
-                  {allCorrect && !bonusGiven && (
-                    <div style={styles.finalSuccessBox}>
-                      🎉 Selamat! Semua jawaban benar. Silakan lanjut ke materi berikutnya.
-                    </div>
-                  )}
                 </div>
               </section>
             </>
@@ -1555,6 +1589,7 @@ matriks = [[1, 2, 3], [4, 5, 6]]`}</pre>
         </div>
       </div>
 
+      {/* Modal - HANYA MUNCUL JIKA PROGRES < 7 */}
       {showModal && (
         <div style={styles.modalOverlay}>
           <div style={styles.modal}>

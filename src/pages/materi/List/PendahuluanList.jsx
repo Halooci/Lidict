@@ -3,7 +3,7 @@ import Navbar from "../../komponen/Navbar";
 import SidebarMateri from "../../komponen/SidebarMateri";
 import { useNavigate } from 'react-router-dom';
 import { db } from "../../../config/firebase";
-import { doc, updateDoc, increment } from "firebase/firestore";
+import { doc, getDoc, updateDoc, increment } from "firebase/firestore";
 
 // ---------- IMPOR CODEMIRROR ----------
 import CodeMirror from '@uiw/react-codemirror';
@@ -62,7 +62,7 @@ const styles = {
     lineHeight: "1.8",
     color: "#333",
     marginBottom: "15px",
-    textAlign: "justify", // Tambahan untuk rata kiri-kanan
+    textAlign: "justify",
   },
   code: {
     backgroundColor: "#272822",
@@ -117,12 +117,10 @@ const styles = {
     fontSize: "14px",
     transition: "all 0.2s",
   },
-  // Gaya untuk wrapper CodeMirror
   codeMirrorWrapper: {
     backgroundColor: "#272822",
     padding: "0",
   },
-  // Hapus codeInputReadOnly dan codePre
   outputHeader: {
     backgroundColor: "#306998",
     color: "white",
@@ -241,7 +239,6 @@ const styles = {
     fontSize: "16px",
     fontWeight: "bold",
   },
-  // Modal styles
   modalOverlay: {
     position: "fixed",
     top: 0,
@@ -305,7 +302,6 @@ const CodeEditor = ({ code, title, pyodideReady, runPythonCode }) => {
           {isRunning ? "Menjalankan..." : pyodideReady ? "Jalankan" : "Memuat..."}
         </button>
       </div>
-      {/* CodeMirror read-only */}
       <div style={styles.codeMirrorWrapper}>
         <CodeMirror
           value={code}
@@ -564,15 +560,17 @@ export default function PendahuluanList() {
   const navigate = useNavigate();
   const [userId, setUserId] = useState(null);
   const [showModal, setShowModal] = useState(false);
-  const [bonusGiven, setBonusGiven] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [progresBelajar, setProgresBelajar] = useState(null);
+  const [allLatihanCorrect, setAllLatihanCorrect] = useState(false);
 
   // ─────────── KONFIGURASI HALAMAN ───────────
-  // Ubah TOPIC_NAME untuk halaman lain: "nested_list", "dictionary", dll.
   const TOPIC_NAME = "list";
   const EKSPLORASI_ANSWERS_KEY = `eksplorasi_${TOPIC_NAME}_answers`;
   const BONUS_DONE_KEY = `pendahuluan${TOPIC_NAME}_bonus_done`;
   // ────────────────────────────────────────────
 
+  // Cek autentikasi user
   useEffect(() => {
     const uid = localStorage.getItem('userId');
     const userEmail = localStorage.getItem('userEmail');
@@ -583,10 +581,80 @@ export default function PendahuluanList() {
     }
   }, [navigate]);
 
+  // Fetch progres_belajar dari Firestore
   useEffect(() => {
-    const already = localStorage.getItem(BONUS_DONE_KEY);
-    if (already === "true") setBonusGiven(true);
-  }, [BONUS_DONE_KEY]);
+    if (!userId) return;
+
+    const fetchProgres = async () => {
+      setLoading(true);
+      try {
+        const docRef = doc(db, "mahasiswa", userId);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          const progres = data.progres_belajar || 0;
+          setProgresBelajar(progres);
+
+          // 🔒 Halaman hanya bisa diakses jika progres >= 1
+          if (progres < 1) {
+            navigate('/dashboard');
+            return;
+          }
+          // Jika progres >= 1, boleh akses halaman
+        } else {
+          // Dokumen tidak ditemukan, anggap progres 0
+          navigate('/dashboard');
+        }
+      } catch (error) {
+        console.error("Gagal mengambil progres:", error);
+        navigate('/dashboard');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProgres();
+  }, [userId, navigate]);
+
+  // Tampilkan modal hanya jika:
+  // 1. progresBelajar < 2 (belum mencapai level 2)
+  // 2. semua latihan benar
+  // 3. belum menampilkan modal
+  useEffect(() => {
+    if (!userId) return;
+    if (progresBelajar === null) return;
+    if (progresBelajar >= 2) {
+      // Jika progres >= 2, tidak perlu tampilkan modal
+      setShowModal(false);
+      return;
+    }
+    if (allLatihanCorrect && !showModal) {
+      // Jika progres < 2 dan semua latihan benar, tampilkan modal
+      setShowModal(true);
+    }
+  }, [allLatihanCorrect, userId, showModal, progresBelajar]);
+
+  const handleCompleteAndNavigate = async () => {
+    try {
+      // Tambah progres hanya jika masih < 2
+      if (progresBelajar < 2) {
+        const mahasiswaRef = doc(db, "mahasiswa", userId);
+        await updateDoc(mahasiswaRef, {
+          progres_belajar: increment(1)
+        });
+        // Update state lokal
+        setProgresBelajar(progresBelajar + 1);
+      }
+      
+      // Tandai bonus sudah diberikan
+      localStorage.setItem(BONUS_DONE_KEY, "true");
+      setShowModal(false);
+      navigate("/List/PembuatanAksesElement");
+    } catch (error) {
+      console.error("Gagal update progres:", error);
+      alert("Terjadi kesalahan saat menyimpan progres. Silakan coba lagi.");
+    }
+  };
 
   const [pyodideReady, setPyodideReady] = useState(false);
   const pyodideRef = useRef(null);
@@ -653,43 +721,16 @@ export default function PendahuluanList() {
     setEksplorasiFeedback(newFeedback);
     const allAnswered = eksplorasiSelected.every(sel => sel !== null);
     setIsEksplorasiCompleted(allAnswered);
-    // Simpan jawaban ke localStorage dengan kunci terstruktur
     localStorage.setItem(EKSPLORASI_ANSWERS_KEY, JSON.stringify(eksplorasiSelected));
   }, [eksplorasiSelected, EKSPLORASI_ANSWERS_KEY]);
 
   const handleEksplorasiSelect = (questionIdx, optionIdx) => {
-    if (eksplorasiSelected[questionIdx] !== null) return; // sudah dijawab, terkunci
+    if (eksplorasiSelected[questionIdx] !== null) return;
     setEksplorasiSelected(prev => {
       const newSelected = [...prev];
       newSelected[questionIdx] = optionIdx;
       return newSelected;
     });
-  };
-
-  // State untuk latihan (callback dari komponen LatihanList)
-  const [allLatihanCorrect, setAllLatihanCorrect] = useState(false);
-
-  useEffect(() => {
-    if (!userId) return;
-    if (bonusGiven) return;
-    if (allLatihanCorrect && !showModal) {
-      setShowModal(true);
-    }
-  }, [allLatihanCorrect, userId, bonusGiven, showModal]);
-
-  const handleCompleteAndNavigate = async () => {
-    try {
-      const mahasiswaRef = doc(db, "mahasiswa", userId);
-      await updateDoc(mahasiswaRef, {
-        progres_belajar: increment(1)
-      });
-      localStorage.setItem(BONUS_DONE_KEY, "true");
-      setShowModal(false);
-      navigate("/List/PembuatanAksesElement");
-    } catch (error) {
-      console.error("Gagal update progres:", error);
-      alert("Terjadi kesalahan saat menyimpan progres. Silakan coba lagi.");
-    }
   };
 
   // Kode contoh
@@ -753,6 +794,18 @@ sys.stdout = StringIO()
       return `Error: ${error.message}`;
     }
   }, []);
+
+  // Tampilkan loading saat sedang mengambil data
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: '24px', marginBottom: '16px' }}>⏳</div>
+          <div style={{ fontSize: '18px', color: '#306998' }}>Memuat data...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -921,16 +974,15 @@ sys.stdout = StringIO()
         </div>
       </div>
 
-      {/* MODAL POP-UP */}
+      {/* MODAL POP-UP - HANYA MUNCUL JIKA PROGRES < 2 */}
       {showModal && (
         <div style={styles.modalOverlay}>
           <div style={styles.modal}>
             <div style={styles.modalIcon}>🎉</div>
             <h2 style={styles.modalTitle}>Selamat!</h2>
             <p style={styles.modalText}>
-              Anda telah menyelesaikan materi ini dengan sempurna.
-              <br />
-              Materi selanjutnya akan terbuka.
+              Kamu sudah menyelesaikan materi Pendahuluan List.<br />
+              Materi selanjutnya sudah terbuka.
             </p>
             <button style={styles.modalButton} onClick={handleCompleteAndNavigate}>
               Lanjut ke materi selanjutnya

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Navbar from "../../komponen/Navbar";
 import SidebarMateri from "../../komponen/SidebarMateri";
 import { db } from "../../../config/firebase";
-import { doc, updateDoc, increment } from "firebase/firestore";
+import { doc, getDoc, updateDoc, increment } from "firebase/firestore";
 
 // ===================== KOMPONEN VISUALISASI DICTIONARY =====================
 const DictionaryVisualization = ({ data, title }) => {
@@ -166,6 +166,9 @@ const LatihanSoal = ({ soal, index, selectedAnswer, onSelect, isWrong }) => {
 // ===================== KOMPONEN UTAMA =====================
 export default function PendahuluanDictionary() {
   const navigate = useNavigate();
+  const [userId, setUserId] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [progresBelajar, setProgresBelajar] = useState(null);
 
   // ---------- KONFIGURASI HALAMAN (TERSTRUKTUR) ----------
   const TOPIC_NAME = "pendahuluan_dict";
@@ -173,23 +176,60 @@ export default function PendahuluanDictionary() {
   const BONUS_DONE_KEY = `${TOPIC_NAME}_bonus_done`;
   // --------------------------------------------------------
 
+  // Cek autentikasi user
   useEffect(() => {
-    const userId = localStorage.getItem('userId');
+    const uid = localStorage.getItem('userId');
     const userEmail = localStorage.getItem('userEmail');
-    if (!userId || !userEmail) {
+    if (!uid || !userEmail) {
       navigate('/loginregister');
+    } else {
+      setUserId(uid);
     }
   }, [navigate]);
 
+  // Fetch progres_belajar dari Firestore
+  useEffect(() => {
+    if (!userId) return;
+
+    const fetchProgres = async () => {
+      setLoading(true);
+      try {
+        const docRef = doc(db, "mahasiswa", userId);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          const progres = data.progres_belajar || 0;
+          setProgresBelajar(progres);
+
+          // 🔒 Halaman hanya bisa diakses jika progres >= 9
+          if (progres < 9) {
+            navigate('/dashboard');
+            return;
+          }
+          // Jika progres >= 9, boleh akses halaman
+        } else {
+          navigate('/dashboard');
+        }
+      } catch (error) {
+        console.error("Gagal mengambil progres:", error);
+        navigate('/dashboard');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProgres();
+  }, [userId, navigate]);
+
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [showModal, setShowModal] = useState(false);
-  const [bonusGiven, setBonusGiven] = useState(false);
-  const userId = localStorage.getItem('userId');
 
   // Cek apakah bonus sudah pernah diberikan
   useEffect(() => {
     const already = localStorage.getItem(BONUS_DONE_KEY);
-    if (already === "true") setBonusGiven(true);
+    if (already === "true") {
+      // Tandai bonus sudah diberikan
+    }
   }, [BONUS_DONE_KEY]);
 
   // EKSPLORASI (pretest) - dengan localStorage
@@ -336,6 +376,46 @@ export default function PendahuluanDictionary() {
     soalRefs.current = soalRefs.current.slice(0, latihanSoal.length);
   }, [latihanSoal.length]);
 
+  // Tampilkan modal hanya jika:
+  // 1. progresBelajar < 10 (belum mencapai level 10)
+  // 2. semua latihan benar
+  // 3. belum menampilkan modal
+  useEffect(() => {
+    if (!userId) return;
+    if (progresBelajar === null) return;
+    if (progresBelajar >= 10) {
+      // Jika progres >= 10, tidak perlu tampilkan modal
+      setShowModal(false);
+      return;
+    }
+    if (semuaBenar && !showModal) {
+      // Jika progres < 10 dan semua latihan benar, tampilkan modal
+      setShowModal(true);
+    }
+  }, [semuaBenar, userId, showModal, progresBelajar]);
+
+  const handleCompleteAndNavigate = async () => {
+    try {
+      // Tambah progres hanya jika masih < 10
+      if (progresBelajar < 10) {
+        const mahasiswaRef = doc(db, "mahasiswa", userId);
+        await updateDoc(mahasiswaRef, {
+          progres_belajar: increment(1)
+        });
+        // Update state lokal
+        setProgresBelajar(progresBelajar + 1);
+      }
+      
+      // Tandai bonus sudah diberikan
+      localStorage.setItem(BONUS_DONE_KEY, "true");
+      setShowModal(false);
+      navigate("/Dictionary/PembuatanAksesElementDictionary");
+    } catch (error) {
+      console.error("Gagal update progres:", error);
+      alert("Terjadi kesalahan. Silakan coba lagi.");
+    }
+  };
+
   const handleSelectLatihan = (index, optionIdx) => {
     setJawabanLatihan(prev => {
       const newJaw = [...prev];
@@ -386,26 +466,32 @@ export default function PendahuluanDictionary() {
     }
   };
 
-  useEffect(() => {
-    if (semuaBenar && !bonusGiven && userId) {
-      setShowModal(true);
-    }
-  }, [semuaBenar, bonusGiven, userId]);
-
-  const handleCompleteAndNavigate = async () => {
-    try {
-      const mahasiswaRef = doc(db, "mahasiswa", userId);
-      await updateDoc(mahasiswaRef, {
-        progres_belajar: increment(1)
-      });
-      localStorage.setItem(BONUS_DONE_KEY, "true");
-      setShowModal(false);
-      navigate("/Dictionary/PembuatanAksesElementDictionary");
-    } catch (error) {
-      console.error("Gagal update progres:", error);
-      alert("Terjadi kesalahan. Silakan coba lagi.");
-    }
-  };
+  // Tampilkan loading saat sedang mengambil data
+  if (loading) {
+    return (
+      <>
+        <Navbar />
+        <SidebarMateri isOpen={isSidebarOpen} onToggle={() => setIsSidebarOpen(!isSidebarOpen)} />
+        <div 
+          className="main-content"
+          style={{ 
+            marginLeft: isSidebarOpen ? "280px" : "0",
+            transition: "margin-left 0.3s ease",
+            paddingTop: "64px",
+            minHeight: "100vh",
+            width: "auto",
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '24px', marginBottom: '16px' }}>⏳</div>
+              <div style={{ fontSize: '18px', color: '#306998' }}>Memuat data...</div>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
@@ -565,7 +651,7 @@ export default function PendahuluanDictionary() {
         </div>
       </div>
 
-      {/* Modal Sukses */}
+      {/* Modal Sukses - HANYA MUNCUL JIKA PROGRES < 10 */}
       {showModal && (
         <div style={styles.modalOverlay}>
           <div style={styles.modal}>

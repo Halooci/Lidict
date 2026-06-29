@@ -2,19 +2,76 @@ import { useState, useEffect } from "react";
 import Navbar from "../../komponen/Navbar";
 import SidebarMateri from "../../komponen/SidebarMateri";
 import { useNavigate } from 'react-router-dom';
+import { db } from "../../../config/firebase";
+import { doc, getDoc } from "firebase/firestore";
 
 export default function RangkumanNestedList() {
   const navigate = useNavigate();
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const userId = localStorage.getItem('userId');
     const userEmail = localStorage.getItem('userEmail');
     if (!userId || !userEmail) {
       navigate('/loginregister');
+      return;
     }
+
+    const fetchProgres = async () => {
+      try {
+        const docRef = doc(db, "mahasiswa", userId);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          const progres = data.progres_belajar || 0;
+          
+          // 🔒 Halaman hanya bisa diakses jika progres >= 8
+          if (progres < 8) {
+            navigate('/dashboard');
+            return;
+          }
+          // Jika progres >= 8, boleh akses halaman
+        } else {
+          navigate('/dashboard');
+        }
+      } catch (error) {
+        console.error("Gagal mengambil progres:", error);
+        navigate('/dashboard');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProgres();
   }, [navigate]);
 
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  // Tampilkan loading saat sedang mengambil data
+  if (loading) {
+    return (
+      <>
+        <Navbar />
+        <SidebarMateri isOpen={isSidebarOpen} onToggle={() => setIsSidebarOpen(!isSidebarOpen)} />
+        <div 
+          className="main-content"
+          style={{ 
+            marginLeft: isSidebarOpen ? "280px" : "0",
+            transition: "margin-left 0.3s ease",
+            paddingTop: "64px",
+            minHeight: "100vh",
+            width: "auto",
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '24px', marginBottom: '16px' }}>⏳</div>
+              <div style={{ fontSize: '18px', color: '#306998' }}>Memuat data...</div>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
@@ -164,7 +221,7 @@ const styles = {
   },
   gridColumnLeft: {
     paddingRight: "15px",
-    borderRight: "2px solid #dee2e6", // garis pemisah di sebelah kanan kolom kiri
+    borderRight: "2px solid #dee2e6",
   },
   gridColumnRight: {
     paddingLeft: "15px",

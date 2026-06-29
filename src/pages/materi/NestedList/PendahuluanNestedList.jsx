@@ -3,7 +3,7 @@ import Navbar from "../../komponen/Navbar";
 import SidebarMateri from "../../komponen/SidebarMateri";
 import { useNavigate } from 'react-router-dom';
 import { db } from "../../../config/firebase";
-import { doc, updateDoc, increment } from "firebase/firestore";
+import { doc, getDoc, updateDoc, increment } from "firebase/firestore";
 
 // ---------- IMPOR CODEMIRROR ----------
 import CodeMirror from '@uiw/react-codemirror';
@@ -168,7 +168,6 @@ const ContohNestedList = ({ code, visualData, visualTitle, rowLabels, colLabels 
       <div style={styles.codeEditorHeader}>
         <span style={styles.codeEditorTitle}>Contoh Kode Program</span>
       </div>
-      {/* CodeMirror read-only */}
       <div style={styles.codeMirrorWrapper}>
         <CodeMirror
           value={code}
@@ -222,7 +221,6 @@ const CodeEditor = ({ code, codeKey, pyodideReady, runPythonCode }) => {
           {pyodideReady ? "▶ Jalankan" : "⏳ Memuat..."}
         </button>
       </div>
-      {/* CodeMirror read-only */}
       <div style={styles.codeMirrorWrapper}>
         <CodeMirror
           value={code}
@@ -372,7 +370,6 @@ const Eksplorasi = ({ topicName, onComplete }) => {
     }
   ];
 
-  // Inisialisasi dari localStorage (jika ada)
   const [selected, setSelected] = useState(() => {
     try {
       const saved = localStorage.getItem(EKSPLORASI_ANSWERS_KEY);
@@ -386,13 +383,11 @@ const Eksplorasi = ({ topicName, onComplete }) => {
     return Array(questions.length).fill(null);
   });
 
-  // Feedback dihitung langsung dari selected
   const feedback = selected.map((sel, i) => {
     if (sel === null) return "";
     return sel === questions[i].correct ? "Benar" : "Salah";
   });
 
-  // Simpan ke localStorage setiap selected berubah, dan cek selesai
   useEffect(() => {
     localStorage.setItem(EKSPLORASI_ANSWERS_KEY, JSON.stringify(selected));
     const allAnswered = selected.every(s => s !== null);
@@ -402,7 +397,7 @@ const Eksplorasi = ({ topicName, onComplete }) => {
   }, [selected, EKSPLORASI_ANSWERS_KEY, onComplete]);
 
   const handleAnswer = (qIdx, optIdx) => {
-    if (selected[qIdx] !== null) return; // sudah dijawab
+    if (selected[qIdx] !== null) return;
     setSelected(prev => {
       const newSel = [...prev];
       newSel[qIdx] = optIdx;
@@ -649,19 +644,59 @@ const LatihanNestedList = ({ onAllCorrectChange }) => {
 // ===================== MAIN COMPONENT =====================
 export default function PendahuluanNestedList() {
   const navigate = useNavigate();
+  const [userId, setUserId] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [progresBelajar, setProgresBelajar] = useState(null);
 
   // ---------- KONFIGURASI HALAMAN (TERSTRUKTUR) ----------
   const TOPIC_NAME = "pendahuluan_nested_list";
   const BONUS_DONE_KEY = `${TOPIC_NAME}_bonus_done`;
   // --------------------------------------------------------
 
+  // Cek autentikasi user
   useEffect(() => {
-    const userId = localStorage.getItem('userId');
+    const uid = localStorage.getItem('userId');
     const userEmail = localStorage.getItem('userEmail');
-    if (!userId || !userEmail) {
+    if (!uid || !userEmail) {
       navigate('/loginregister');
+    } else {
+      setUserId(uid);
     }
   }, [navigate]);
+
+  // Fetch progres_belajar dari Firestore
+  useEffect(() => {
+    if (!userId) return;
+
+    const fetchProgres = async () => {
+      setLoading(true);
+      try {
+        const docRef = doc(db, "mahasiswa", userId);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          const progres = data.progres_belajar || 0;
+          setProgresBelajar(progres);
+
+          // 🔒 Halaman hanya bisa diakses jika progres >= 5
+          if (progres < 5) {
+            navigate('/dashboard');
+            return;
+          }
+          // Jika progres >= 5, boleh akses halaman
+        } else {
+          navigate('/dashboard');
+        }
+      } catch (error) {
+        console.error("Gagal mengambil progres:", error);
+        navigate('/dashboard');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProgres();
+  }, [userId, navigate]);
 
   const [pyodideReady, setPyodideReady] = useState(false);
   const pyodideRef = useRef(null);
@@ -670,26 +705,38 @@ export default function PendahuluanNestedList() {
 
   const [allLatihanCorrect, setAllLatihanCorrect] = useState(false);
   const [showModal, setShowModal] = useState(false);
-  const [bonusGiven, setBonusGiven] = useState(false);
-  const userId = localStorage.getItem('userId');
 
+  // Tampilkan modal hanya jika:
+  // 1. progresBelajar < 6 (belum mencapai level 6)
+  // 2. semua latihan benar
+  // 3. belum menampilkan modal
   useEffect(() => {
-    const already = localStorage.getItem(BONUS_DONE_KEY);
-    if (already === "true") setBonusGiven(true);
-  }, [BONUS_DONE_KEY]);
-
-  useEffect(() => {
-    if (allLatihanCorrect && !bonusGiven && userId) {
+    if (!userId) return;
+    if (progresBelajar === null) return;
+    if (progresBelajar >= 6) {
+      // Jika progres >= 6, tidak perlu tampilkan modal
+      setShowModal(false);
+      return;
+    }
+    if (allLatihanCorrect && !showModal) {
+      // Jika progres < 6 dan semua latihan benar, tampilkan modal
       setShowModal(true);
     }
-  }, [allLatihanCorrect, bonusGiven, userId]);
+  }, [allLatihanCorrect, userId, showModal, progresBelajar]);
 
   const handleCompleteAndNavigate = async () => {
     try {
-      const mahasiswaRef = doc(db, "mahasiswa", userId);
-      await updateDoc(mahasiswaRef, {
-        progres_belajar: increment(1)
-      });
+      // Tambah progres hanya jika masih < 6
+      if (progresBelajar < 6) {
+        const mahasiswaRef = doc(db, "mahasiswa", userId);
+        await updateDoc(mahasiswaRef, {
+          progres_belajar: increment(1)
+        });
+        // Update state lokal
+        setProgresBelajar(progresBelajar + 1);
+      }
+      
+      // Tandai bonus sudah diberikan
       localStorage.setItem(BONUS_DONE_KEY, "true");
       setShowModal(false);
       navigate("/NestedList/PembuatanAksesNestedList");
@@ -780,7 +827,7 @@ _buffer.getvalue()
   const rowLabelsKoordinat = ["Titik 1", "Titik 2", "Titik 3", "Titik 4"];
   const colLabelsKoordinat = ["X", "Y"];
 
-  // Kode program untuk setiap contoh (hanya deklarasi variabel, tanpa print)
+  // Kode program untuk setiap contoh
   const kodeNilai = `nilai_siswa = [
     [85, 90, 78],  # Siswa 0: Matematika, Bahasa Inggris, IPA
     [92, 88, 84],  # Siswa 1: Matematika, Bahasa Inggris, IPA
@@ -803,6 +850,24 @@ _buffer.getvalue()
     [5, 1],
     [7, 8]
 ]`;
+
+  // Tampilkan loading saat sedang mengambil data
+  if (loading) {
+    return (
+      <>
+        <Navbar />
+        <SidebarMateri isOpen={isSidebarOpen} onToggle={() => setIsSidebarOpen(!isSidebarOpen)} />
+        <div className="main-content" style={{ marginLeft: isSidebarOpen ? "280px" : "0", transition: "margin-left 0.3s ease", paddingTop: "64px", minHeight: "100vh", width: "auto" }}>
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '24px', marginBottom: '16px' }}>⏳</div>
+              <div style={{ fontSize: '18px', color: '#306998' }}>Memuat data...</div>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
@@ -909,6 +974,7 @@ _buffer.getvalue()
         </div>
       </div>
 
+      {/* Modal - HANYA MUNCUL JIKA PROGRES < 6 */}
       {showModal && (
         <div style={styles.modalOverlay}>
           <div style={styles.modal}>

@@ -23,6 +23,8 @@ export default function KuisList() {
   const [tokenKelas, setTokenKelas] = useState(null);
   const [kelasId, setKelasId] = useState(null);
   const [kkm, setKkm] = useState(75);
+  const [loading, setLoading] = useState(true);
+  const [progresBelajar, setProgresBelajar] = useState(null);
 
   // DURASI KUIS
   const DURASI_KUIS = 600;
@@ -51,6 +53,16 @@ export default function KuisList() {
           const mhsSnap = await getDoc(doc(db, 'mahasiswa', userId));
           if (mhsSnap.exists()) {
             const mhsData = mhsSnap.data();
+            const progres = mhsData.progres_belajar || 0;
+            setProgresBelajar(progres);
+
+            // 🔒 Halaman hanya bisa diakses jika progres >= 4
+            if (progres < 4) {
+              navigate('/dashboard');
+              return;
+            }
+            // Jika progres >= 4, boleh akses halaman
+
             setTokenKelas(mhsData.Token_mahasiswa);
             setKelasId(mhsData.Token_mahasiswa);
             setUserData(mhsData);
@@ -67,6 +79,8 @@ export default function KuisList() {
         }
       } catch (err) {
         console.error(err);
+      } finally {
+        setLoading(false);
       }
     };
     fetchUserData();
@@ -201,6 +215,7 @@ export default function KuisList() {
     setUnsures(newUnsures);
   };
 
+  // ========== PERBAIKAN UTAMA ==========
   const handleSubmit = async (auto = false) => {
     if (submitted || questions.length === 0 || isSubmittingRef.current) return;
     isSubmittingRef.current = true;
@@ -245,14 +260,18 @@ export default function KuisList() {
         const isPassed = nilaiAkhir >= kkm;
 
         if (isPassed) {
-          const bonusKey = `kuis_list_bonus_done_${kelasId}`;
-          const alreadyBonus = localStorage.getItem(bonusKey);
-          if (!alreadyBonus) {
+          // Baca ulang progres terbaru dari Firestore
+          const currentProgres = mahasiswaDoc.data().progres_belajar || 0;
+          
+          // Hanya tambah jika progres < 5
+          if (currentProgres < 5) {
             await updateDoc(mahasiswaRef, {
               progres_belajar: increment(1)
             });
-            localStorage.setItem(bonusKey, "true");
+            // Update state lokal dengan nilai baru
+            setProgresBelajar(currentProgres + 1);
           }
+          // Jika progres >= 5, tidak ada penambahan
         }
       } catch (error) {
         console.error("Gagal menyimpan nilai:", error);
@@ -263,6 +282,7 @@ export default function KuisList() {
     }
     isSubmittingRef.current = false;
   };
+  // ===================================
 
   const handleCollectClick = () => {
     const hasUnsure = unsures.some(u => u === true);
@@ -308,7 +328,7 @@ export default function KuisList() {
   };
 
   const goToPreviousMaterial = () => {
-    window.location.href = '/List/PendahuluanList';
+    window.location.href = '/List/OperasiDanManipulasi';
   };
 
   // CSS hover global
@@ -328,7 +348,20 @@ export default function KuisList() {
     return () => document.head.removeChild(style);
   }, []);
 
-  // RENDER LOADING
+  // Tampilkan loading saat sedang mengambil data
+  if (loading) {
+    return (
+      <>
+        <Navbar />
+        <SidebarMateri />
+        <div className="main-content" style={{ paddingTop: "64px", textAlign: "center", padding: "40px" }}>
+          <h2>Memuat data...</h2>
+        </div>
+      </>
+    );
+  }
+
+  // RENDER LOADING SOAL
   if (loadingSoal) {
     return (
       <>
@@ -396,7 +429,7 @@ export default function KuisList() {
     );
   }
 
-  // Halaman hasil (progress bar sudah dihapus)
+  // Halaman hasil
   if (submitted && resultsData) {
     const { finalScore, waktuDigunakan } = resultsData;
     const minutesUsed = Math.floor(waktuDigunakan / 60);
@@ -487,7 +520,6 @@ export default function KuisList() {
   // Halaman kuis aktif
   const q = questions[currentQuestion];
   const isUnsure = unsures[currentQuestion];
-  // HANYA SOAL NOMOR 5 (indeks 4) yang menggunakan ukuran kecil
   const isSmallOption = currentQuestion === 4;
 
   // Mobile layout

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Navbar from "../../komponen/Navbar";
 import SidebarMateri from "../../komponen/SidebarMateri";
 import { db } from "../../../config/firebase";
-import { doc, updateDoc, increment } from "firebase/firestore";
+import { doc, getDoc, updateDoc, increment } from "firebase/firestore";
 
 // ---------- IMPOR CODEMIRROR ----------
 import CodeMirror from '@uiw/react-codemirror';
@@ -136,7 +136,6 @@ const styles = {
     fontWeight: "600",
     fontSize: "14px",
   },
-  // Gaya untuk wrapper CodeMirror
   codeMirrorWrapper: {
     backgroundColor: "#272822",
     padding: "0",
@@ -146,7 +145,6 @@ const styles = {
     padding: "0",
     borderBottom: "1px solid #333",
   },
-  // Hapus codeInputReadOnly dan codeInputEditable
   outputHeader: {
     backgroundColor: "#306998",
     color: "white",
@@ -360,19 +358,17 @@ const styles = {
   },
 };
 
-// ================= KOMPONEN VISUALISASI NESTED LIST (TANPA LABEL BARIS) =================
+// ================= KOMPONEN VISUALISASI NESTED LIST =================
 const NestedListVisualization = ({ data, title, highlightCell = null, processExplanation = "", highlightSequence = [], processExplanations = [] }) => {
   const [currentHighlight, setCurrentHighlight] = useState(null);
   const [explanationText, setExplanationText] = useState("");
   const [hoveredCell, setHoveredCell] = useState(null);
-  const [seqIndex, setSeqIndex] = useState(0);
   const intervalRef = useRef(null);
 
   useEffect(() => {
     if (intervalRef.current) clearInterval(intervalRef.current);
     setCurrentHighlight(null);
     setExplanationText("");
-    setSeqIndex(0);
 
     if (!highlightSequence || highlightSequence.length === 0) {
       if (highlightCell) setCurrentHighlight(highlightCell);
@@ -388,7 +384,6 @@ const NestedListVisualization = ({ data, title, highlightCell = null, processExp
           setExplanationText(processExplanations[step]);
         }
         step++;
-        setSeqIndex(step);
       } else {
         clearInterval(intervalRef.current);
         setTimeout(() => {
@@ -497,7 +492,7 @@ const visStyles = {
   note: { fontSize: "12px", color: "#666", marginTop: "10px", textAlign: "center" },
 };
 
-// ================= KOMPONEN PERBANDINGAN DUA NESTED LIST (SEBELUM & SESUDAH) =================
+// ================= KOMPONEN PERBANDINGAN DUA NESTED LIST =================
 const ComparisonVisualization = ({ beforeData, afterData, beforeTitle, afterTitle, beforeHighlight = null, afterHighlight = null, beforeSequence = [], afterSequence = [], beforeExplanations = [], afterExplanations = [] }) => {
   return (
     <div style={{ display: "flex", gap: "20px", justifyContent: "space-between", flexWrap: "wrap" }}>
@@ -523,8 +518,7 @@ const ComparisonVisualization = ({ beforeData, afterData, beforeTitle, afterTitl
   );
 };
 
-// ================= CODE EDITOR DENGAN VISUALISASI PERBANDINGAN (dengan CodeMirror) =================
-// DIPERBAIKI: Output dan Visualisasi bertukar tempat. Penjelasan menggunakan angka 1,2,3...
+// ================= CODE EDITOR DENGAN VISUALISASI PERBANDINGAN =================
 const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, pyodideReady, runPythonCode, lineExplanations, beforeData, afterData, beforeTitle, afterTitle, highlightSequence, processExplanations }) => {
   const [output, setOutput] = useState("");
   const [isRunning, setIsRunning] = useState(false);
@@ -579,7 +573,6 @@ const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, pyodideRea
         </button>
       </div>
 
-      {/* CodeMirror read-only */}
       <div style={styles.codeMirrorWrapper}>
         <CodeMirror
           value={code}
@@ -600,7 +593,6 @@ const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, pyodideRea
         />
       </div>
 
-      {/* OUTPUT - ditempatkan sebelum Visualisasi */}
       <div style={styles.outputHeader}>
         <span style={styles.outputTitle}>Output</span>
       </div>
@@ -608,7 +600,6 @@ const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, pyodideRea
         <pre style={styles.outputContent}>{output}</pre>
       </div>
 
-      {/* VISUALISASI - ditempatkan setelah Output */}
       <div style={styles.visualHeader}>Visualisasi</div>
       <div style={styles.visualArea}>
         {showDetail && (
@@ -642,7 +633,7 @@ const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, pyodideRea
   );
 };
 
-// ================= KOMPONEN PRAKTIK (EDITOR) DENGAN CODEMIRROR =================
+// ================= KOMPONEN PRAKTIK (EDITOR) =================
 const CodeEditorEditable = ({ pyodideReady, runPythonCode, onValidation }) => {
   const [localCode, setLocalCode] = useState("");
   const [output, setOutput] = useState("");
@@ -688,7 +679,6 @@ const CodeEditorEditable = ({ pyodideReady, runPythonCode, onValidation }) => {
       return;
     }
 
-    // 4 instruksi:
     const listPattern = /data\s*=\s*\[\s*\[\s*1\s*,\s*2\s*,\s*3\s*\]\s*,\s*\[\s*4\s*,\s*5\s*,\s*6\s*\]\s*,\s*\[\s*7\s*,\s*8\s*,\s*9\s*\]\s*\]/;
     const changePattern = /data\s*\[\s*0\s*\]\s*\[\s*0\s*\]\s*=\s*100/;
     const printPattern = /print\s*\(\s*data\s*\[\s*2\s*\]\s*\[\s*1\s*\]\s*\)/;
@@ -718,7 +708,6 @@ const CodeEditorEditable = ({ pyodideReady, runPythonCode, onValidation }) => {
         </button>
       </div>
 
-      {/* CodeMirror editable */}
       <div style={styles.codeMirrorEditableWrapper}>
         <CodeMirror
           value={localCode}
@@ -752,7 +741,7 @@ const CodeEditorEditable = ({ pyodideReady, runPythonCode, onValidation }) => {
   );
 };
 
-// ================= SOAL LATIHAN (sama seperti asli) =================
+// ================= SOAL LATIHAN =================
 const normalizeAnswer = (str) => str.trim().replace(/'/g, '"').replace(/\s+/g, ' ');
 
 const CodeCompletionQuestion = ({ question, codeParts, placeholders, expectedAnswers, onCheck }) => {
@@ -1099,15 +1088,57 @@ const Eksplorasi = ({ topicName, onComplete }) => {
 // ================= KOMPONEN UTAMA =================
 export default function OperasiNestedList() {
   const navigate = useNavigate();
+  const [userId, setUserId] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [progresBelajar, setProgresBelajar] = useState(null);
 
   const TOPIC_NAME = "operasi_nested_list";
   const BONUS_DONE_KEY = `${TOPIC_NAME}_bonus_done`;
 
+  // Cek autentikasi user
   useEffect(() => {
-    const userId = localStorage.getItem('userId');
+    const uid = localStorage.getItem('userId');
     const userEmail = localStorage.getItem('userEmail');
-    if (!userId || !userEmail) navigate('/loginregister');
+    if (!uid || !userEmail) {
+      navigate('/loginregister');
+    } else {
+      setUserId(uid);
+    }
   }, [navigate]);
+
+  // Fetch progres_belajar dari Firestore
+  useEffect(() => {
+    if (!userId) return;
+
+    const fetchProgres = async () => {
+      setLoading(true);
+      try {
+        const docRef = doc(db, "mahasiswa", userId);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          const progres = data.progres_belajar || 0;
+          setProgresBelajar(progres);
+
+          // 🔒 Halaman hanya bisa diakses jika progres >= 7
+          if (progres < 7) {
+            navigate('/dashboard');
+            return;
+          }
+          // Jika progres >= 7, boleh akses halaman
+        } else {
+          navigate('/dashboard');
+        }
+      } catch (error) {
+        console.error("Gagal mengambil progres:", error);
+        navigate('/dashboard');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProgres();
+  }, [userId, navigate]);
 
   const [pyodideReady, setPyodideReady] = useState(false);
   const pyodideRef = useRef(null);
@@ -1116,38 +1147,57 @@ export default function OperasiNestedList() {
   const [exerciseStatus, setExerciseStatus] = useState([false, false, false, false, false]);
   const [allExercisesCorrect, setAllExercisesCorrect] = useState(false);
   const [showModal, setShowModal] = useState(false);
-  const [bonusGiven, setBonusGiven] = useState(false);
-  const userId = localStorage.getItem('userId');
 
   const [praktikMessage, setPraktikMessage] = useState("");
   const [praktikMessageType, setPraktikMessageType] = useState("");
 
+  // Tampilkan modal hanya jika:
+  // 1. progresBelajar < 8 (belum mencapai level 8)
+  // 2. semua latihan benar
+  // 3. belum menampilkan modal
   useEffect(() => {
-    const already = localStorage.getItem(BONUS_DONE_KEY);
-    if (already === "true") setBonusGiven(true);
-  }, [BONUS_DONE_KEY]);
-
-  useEffect(() => {
-    setAllExercisesCorrect(exerciseStatus.every(v => v === true));
-  }, [exerciseStatus]);
-
-  useEffect(() => {
-    if (allExercisesCorrect && !bonusGiven && userId) setShowModal(true);
-  }, [allExercisesCorrect, bonusGiven, userId]);
+    if (!userId) return;
+    if (progresBelajar === null) return;
+    if (progresBelajar >= 8) {
+      // Jika progres >= 8, tidak perlu tampilkan modal
+      setShowModal(false);
+      return;
+    }
+    if (allExercisesCorrect && !showModal) {
+      // Jika progres < 8 dan semua latihan benar, tampilkan modal
+      setShowModal(true);
+    }
+  }, [allExercisesCorrect, userId, showModal, progresBelajar]);
 
   const handleCompleteAndNavigate = async () => {
     try {
-      const mahasiswaRef = doc(db, "mahasiswa", userId);
-      await updateDoc(mahasiswaRef, { progres_belajar: increment(1) });
+      // Tambah progres hanya jika masih < 8
+      if (progresBelajar < 8) {
+        const mahasiswaRef = doc(db, "mahasiswa", userId);
+        await updateDoc(mahasiswaRef, {
+          progres_belajar: increment(1)
+        });
+        // Update state lokal
+        setProgresBelajar(progresBelajar + 1);
+      }
+      
+      // Tandai bonus sudah diberikan
       localStorage.setItem(BONUS_DONE_KEY, "true");
       setShowModal(false);
       navigate("/NestedList/RangkumanNestedList");
-    } catch (error) { console.error("Gagal update progres:", error); alert("Terjadi kesalahan. Silakan coba lagi."); }
+    } catch (error) {
+      console.error("Gagal update progres:", error);
+      alert("Terjadi kesalahan. Silakan coba lagi.");
+    }
   };
 
   const updateExerciseStatus = (index, isCorrect) => {
     setExerciseStatus(prev => { const newStatus = [...prev]; newStatus[index] = isCorrect; return newStatus; });
   };
+
+  useEffect(() => {
+    setAllExercisesCorrect(exerciseStatus.every(v => v === true));
+  }, [exerciseStatus]);
 
   const handlePraktikValidation = ({ isValid, isComplete }) => {
     if (isComplete) {
@@ -1180,7 +1230,7 @@ export default function OperasiNestedList() {
   const matrix3x3_before_delcol = [[1,2,3],[4,5,6],[7,8,9]];
   const matrix3x3_after_delcol = [[1,3],[4,6],[7,9]];
 
-  // Sequence untuk pencarian (menyorot setiap sel hingga menemukan 5)
+  // Sequence untuk pencarian
   const searchSequenceBefore = [
     "0,0", "0,1", "0,2", "1,0", "1,1"
   ];
@@ -1192,7 +1242,7 @@ export default function OperasiNestedList() {
     "Memeriksa data[1][1] = 5 → ditemukan! Menampilkan pesan."
   ];
 
-  // Sequence untuk iterasi (menyorot setiap sel berurutan)
+  // Sequence untuk iterasi
   const iterasiSequenceBefore = [
     "0,0", "0,1", "0,2", "1,0", "1,1", "1,2"
   ];
@@ -1215,7 +1265,7 @@ export default function OperasiNestedList() {
     after: ["data[0][0] telah menjadi 99", "data[1][2] telah menjadi 88", "data[2][1] telah menjadi 77"]
   };
 
-  // Line explanations untuk setiap kode contoh (tidak diubah selain pencarian)
+  // Line explanations
   const lineExplMengubah = [
     "Komentar: Mengubah nilai elemen nested list.",
     "Membuat nested list data 3x3.",
@@ -1228,14 +1278,13 @@ export default function OperasiNestedList() {
     "Menampilkan data setelah perubahan."
   ];
 
-  // Perbaiki lineExplMencari agar sesuai dengan 13 baris dan penjelasan yang benar (sesuai gambar 3)
   const lineExplMencari = [
     "Komentar: Mencari nilai dalam nested list.",
     "Membuat data 3x3.",
     "Baris kedua.",
     "Baris ketiga.",
     "Nilai yang dicari = 5.",
-    "Flag ditemukan = False. Awalnya dianggap bahwa nilai belum ditemukan.",
+    "Flag ditemukan = False.",
     "Perulangan untuk setiap baris (i).",
     "Perulangan untuk setiap kolom (j).",
     "data[i][j] mengambil nilai pada baris ke-i dan kolom ke-j",
@@ -1463,6 +1512,24 @@ _buffer.getvalue()
 
   const handleEksplorasiComplete = () => setIsEksplorasiCompleted(true);
 
+  // Tampilkan loading saat sedang mengambil data
+  if (loading) {
+    return (
+      <>
+        <Navbar />
+        <SidebarMateri isOpen={isSidebarOpen} onToggle={() => setIsSidebarOpen(!isSidebarOpen)} />
+        <div className="main-content" style={{ marginLeft: isSidebarOpen ? "280px" : "0", transition: "margin-left 0.3s ease", paddingTop: "64px", minHeight: "100vh", width: "auto" }}>
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '24px', marginBottom: '16px' }}>⏳</div>
+              <div style={{ fontSize: '18px', color: '#306998' }}>Memuat data...</div>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
+
   return (
     <>
       <Navbar />
@@ -1490,7 +1557,6 @@ _buffer.getvalue()
               <section style={styles.section}>
                 <h2 style={styles.sectionTitle}>Operasi Dasar Nested List</h2>
                 <div style={styles.card}>
-                  {/* 1. Mengubah Nilai Elemen */}
                   <h3>1. Mengubah Nilai Elemen</h3>
                   <p style={styles.text}>Akses lalu tetapkan nilai baru.</p>
                   <CodeEditorWithVisual
@@ -1507,7 +1573,6 @@ _buffer.getvalue()
                     processExplanations={changeExplanations}
                   />
 
-                  {/* 2. Mencari Nilai */}
                   <h3>2. Mencari Nilai</h3>
                   <p style={styles.text}>Mencari nilai tertentu dalam nested list menggunakan perulangan bersarang.</p>
                   <CodeEditorWithVisual
@@ -1523,7 +1588,6 @@ _buffer.getvalue()
                     processExplanations={{ before: searchExplanationsBefore, after: [] }}
                   />
 
-                  {/* 3. Iterasi Seluruh Elemen */}
                   <h3>3. Iterasi Seluruh Elemen</h3>
                   <p style={styles.text}>Melakukan iterasi seluruh elemen nested list bisa menggunakan perulangan bersarang.</p>
                   <CodeEditorWithVisual
@@ -1539,7 +1603,6 @@ _buffer.getvalue()
                     processExplanations={{ before: iterasiExplanationsBefore, after: [] }}
                   />
 
-                  {/* 4. Menggabungkan Banyak Nested List */}
                   <h3>4. Menggabungkan Banyak Nested List</h3>
                   <p style={styles.text}>Operator + digunakan untuk menggabungkan dua atau lebih nested list.</p>
                   <CodeEditorWithVisual
@@ -1677,6 +1740,7 @@ _buffer.getvalue()
         </div>
       </div>
 
+      {/* Modal - HANYA MUNCUL JIKA PROGRES < 8 */}
       {showModal && (
         <div style={styles.modalOverlay}>
           <div style={styles.modal}>

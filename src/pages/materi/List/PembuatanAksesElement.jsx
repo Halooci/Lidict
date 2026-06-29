@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Navbar from "../../komponen/Navbar";
 import SidebarMateri from "../../komponen/SidebarMateri";
 import { db } from "../../../config/firebase";
-import { doc, updateDoc, increment } from "firebase/firestore";
+import { doc, getDoc, updateDoc, increment } from "firebase/firestore";
 
 // ---------- IMPOR CODEMIRROR ----------
 import CodeMirror from '@uiw/react-codemirror';
@@ -66,13 +66,13 @@ const styles = {
   list: { 
     paddingLeft: "20px", 
     lineHeight: "1.8",
-    textAlign: "justify", // Tambahan untuk rata kiri-kanan
+    textAlign: "justify",
   },
   text: { 
     lineHeight: "1.8", 
     color: "#333", 
     marginBottom: "15px",
-    textAlign: "justify", // Tambahan untuk rata kiri-kanan
+    textAlign: "justify",
   },
   code: {
     backgroundColor: "#272822",
@@ -127,7 +127,6 @@ const styles = {
     fontSize: "14px",
     transition: "all 0.2s",
   },
-  // Gaya untuk area CodeMirror
   codeMirrorWrapper: {
     backgroundColor: "#272822",
     padding: "0",
@@ -281,8 +280,6 @@ const styles = {
     fontWeight: "500",
     borderBottom: "2px solid #1e7e34",
   },
-  // Gaya untuk CodeMirror edit (akan di-override oleh CodeMirror sendiri)
-  // tidak perlu textarea lagi
   questionCard: {
     backgroundColor: "#f9f9f9",
     borderRadius: "8px",
@@ -354,7 +351,6 @@ const styles = {
     fontSize: "14px",
   },
   feedback: { marginTop: "8px", fontSize: "14px", fontStyle: "italic", color: "#333" },
-  // Modal styles
   modalOverlay: {
     position: "fixed",
     top: 0,
@@ -627,7 +623,6 @@ const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, highlightM
         </button>
       </div>
 
-      {/* CodeMirror read-only */}
       <div style={styles.codeMirrorWrapper}>
         <CodeMirror
           value={code}
@@ -648,7 +643,6 @@ const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, highlightM
         />
       </div>
 
-      {/* Output */}
       <div style={styles.outputHeader}>
         <span style={styles.outputTitle}>Output</span>
       </div>
@@ -656,7 +650,6 @@ const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, highlightM
         <pre style={styles.outputContent}>{output || ""}</pre>
       </div>
 
-      {/* Visualisasi */}
       <div style={styles.visualHeader}>Visualisasi</div>
       <div style={styles.visualArea}>
         {showVisual && visualData ? (
@@ -755,7 +748,6 @@ const CodeEditorEditable = ({ title, pyodideReady, runPythonCode, onValidation }
         </button>
       </div>
 
-      {/* CodeMirror editable */}
       <div style={styles.codeMirrorEditableWrapper}>
         <CodeMirror
           value={localCode}
@@ -960,6 +952,10 @@ const GuessOutputQuestion = ({ question, codeSnippet, expectedOutput, explanatio
 // ================= KOMPONEN UTAMA =================
 export default function PembuatanAksesElement() {
   const navigate = useNavigate();
+  const [userId, setUserId] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [progresBelajar, setProgresBelajar] = useState(null);
+  const [showModal, setShowModal] = useState(false);
 
   // ─────────── KONFIGURASI HALAMAN ───────────
   const TOPIC_NAME = "pembuatan_akses_element";
@@ -967,29 +963,58 @@ export default function PembuatanAksesElement() {
   const BONUS_DONE_KEY = `${TOPIC_NAME}_bonus_done`;
   // ──────────────────────────────────────────
 
+  // Cek autentikasi user
   useEffect(() => {
-    const userId = localStorage.getItem('userId');
+    const uid = localStorage.getItem('userId');
     const userEmail = localStorage.getItem('userEmail');
-    if (!userId || !userEmail) {
+    if (!uid || !userEmail) {
       navigate('/loginregister');
+    } else {
+      setUserId(uid);
     }
   }, [navigate]);
+
+  // Fetch progres_belajar dari Firestore
+  useEffect(() => {
+    if (!userId) return;
+
+    const fetchProgres = async () => {
+      setLoading(true);
+      try {
+        const docRef = doc(db, "mahasiswa", userId);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          const progres = data.progres_belajar || 0;
+          setProgresBelajar(progres);
+
+          // Halaman hanya bisa diakses jika progres >= 2
+          if (progres < 2) {
+            navigate('/dashboard');
+            return;
+          }
+          // Jika progres >= 2, boleh akses halaman
+        } else {
+          // Dokumen tidak ditemukan, anggap progres 0
+          navigate('/dashboard');
+        }
+      } catch (error) {
+        console.error("Gagal mengambil progres:", error);
+        navigate('/dashboard');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProgres();
+  }, [userId, navigate]);
 
   const [pyodideReady, setPyodideReady] = useState(false);
   const pyodideRef = useRef(null);
   const [correctStatus, setCorrectStatus] = useState([false, false, false, false, false]);
 
-  const [showModal, setShowModal] = useState(false);
-  const [bonusGiven, setBonusGiven] = useState(false);
-  const userId = localStorage.getItem('userId');
-
   const [praktikMessage, setPraktikMessage] = useState("");
   const [praktikMessageType, setPraktikMessageType] = useState("");
-
-  useEffect(() => {
-    const already = localStorage.getItem(BONUS_DONE_KEY);
-    if (already === "true") setBonusGiven(true);
-  }, [BONUS_DONE_KEY]);
 
   const eksplorasiQuestions = [
     {
@@ -1016,7 +1041,6 @@ export default function PembuatanAksesElement() {
     },
   ];
 
-  // State eksplorasi diinisialisasi dari localStorage
   const [eksplorasiSelected, setEksplorasiSelected] = useState(() => {
     try {
       const saved = localStorage.getItem(EKSPLORASI_ANSWERS_KEY);
@@ -1043,7 +1067,6 @@ export default function PembuatanAksesElement() {
     () => eksplorasiSelected.every(sel => sel !== null)
   );
 
-  // Sinkronisasi: setiap kali eksplorasiSelected berubah, simpan ke localStorage
   useEffect(() => {
     const newFeedback = eksplorasiSelected.map((sel, i) => {
       if (sel === null) return "";
@@ -1198,18 +1221,37 @@ print(angka[-2])`;
 
   const allCorrect = correctStatus.every(v => v === true);
 
+  // Tampilkan modal hanya jika:
+  // 1. progresBelajar < 3 (belum mencapai level 3)
+  // 2. semua latihan benar
+  // 3. belum menampilkan modal
   useEffect(() => {
-    if (allCorrect && !bonusGiven && userId) {
+    if (!userId) return;
+    if (progresBelajar === null) return;
+    if (progresBelajar >= 3) {
+      // Jika progres >= 3, tidak perlu tampilkan modal
+      setShowModal(false);
+      return;
+    }
+    if (allCorrect && !showModal) {
+      // Jika progres < 3 dan semua latihan benar, tampilkan modal
       setShowModal(true);
     }
-  }, [allCorrect, bonusGiven, userId]);
+  }, [allCorrect, userId, showModal, progresBelajar]);
 
   const handleCompleteAndNavigate = async () => {
     try {
-      const mahasiswaRef = doc(db, "mahasiswa", userId);
-      await updateDoc(mahasiswaRef, {
-        progres_belajar: increment(1)
-      });
+      // Tambah progres hanya jika masih < 3
+      if (progresBelajar < 3) {
+        const mahasiswaRef = doc(db, "mahasiswa", userId);
+        await updateDoc(mahasiswaRef, {
+          progres_belajar: increment(1)
+        });
+        // Update state lokal
+        setProgresBelajar(progresBelajar + 1);
+      }
+      
+      // Tandai bonus sudah diberikan
       localStorage.setItem(BONUS_DONE_KEY, "true");
       setShowModal(false);
       navigate("/List/OperasiDanManipulasi");
@@ -1267,6 +1309,18 @@ sys.stdout = StringIO()
       setPraktikMessageType("warning");
     }
   };
+
+  // Tampilkan loading saat sedang mengambil data
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: '24px', marginBottom: '16px' }}>⏳</div>
+          <div style={{ fontSize: '18px', color: '#306998' }}>Memuat data...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -1458,28 +1512,6 @@ sys.stdout = StringIO()
                 </div>
               </section>
 
-              {/* <section style={styles.section}>
-                <h2 style={styles.sectionTitle}>Mengapa Perlu List?</h2>
-                <div style={styles.card}>
-                  <p style={styles.text}>
-                    Tanpa list, kita harus membuat banyak variabel terpisah yang tidak efisien.
-                  </p>
-                  <div style={styles.highlightBox}>
-                    <pre style={styles.code}>{`# Tidak efisien dengan variabel terpisah
-nilai1 = 85
-nilai2 = 90
-nilai3 = 78
-# ... sulit diolah`}</pre>
-                  </div>
-                  <p style={styles.text}>
-                    Dengan list, data menjadi terstruktur, mudah diakses dengan perulangan, dan ringkas.
-                  </p>
-                  <div style={styles.infoBox}>
-                    <strong>Keunggulan List:</strong> Menghemat jumlah variabel dan dapat ditambah, dihapus, atau diubah elemennya.
-                  </div>
-                </div>
-              </section> */}
-
               <section style={styles.section}>
                 <h2 style={styles.sectionTitle}>Ayo Praktik!</h2>
                 <div style={styles.card}>
@@ -1581,7 +1613,7 @@ nilai3 = 78
         </div>
       </div>
 
-      {/* Modal Sukses */}
+      {/* Modal Sukses - HANYA MUNCUL JIKA PROGRES < 3 */}
       {showModal && (
         <div style={styles.modalOverlay}>
           <div style={styles.modal}>

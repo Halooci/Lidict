@@ -23,6 +23,8 @@ export default function KuisNestedList() {
   const [tokenKelas, setTokenKelas] = useState(null);
   const [kelasId, setKelasId] = useState(null);
   const [kkm, setKkm] = useState(75);
+  const [loading, setLoading] = useState(true);
+  const [progresBelajar, setProgresBelajar] = useState(null);
 
   // DURASI KUIS (10 menit)
   const DURASI_KUIS = 600;
@@ -51,6 +53,16 @@ export default function KuisNestedList() {
           const mhsSnap = await getDoc(doc(db, 'mahasiswa', userId));
           if (mhsSnap.exists()) {
             const mhsData = mhsSnap.data();
+            const progres = mhsData.progres_belajar || 0;
+            setProgresBelajar(progres);
+
+            // 🔒 Halaman hanya bisa diakses jika progres >= 8
+            if (progres < 8) {
+              navigate('/dashboard');
+              return;
+            }
+            // Jika progres >= 8, boleh akses halaman
+
             setTokenKelas(mhsData.Token_mahasiswa);
             setKelasId(mhsData.Token_mahasiswa);
             setUserData(mhsData);
@@ -67,6 +79,8 @@ export default function KuisNestedList() {
         }
       } catch (err) {
         console.error(err);
+      } finally {
+        setLoading(false);
       }
     };
     fetchUserData();
@@ -253,10 +267,14 @@ export default function KuisNestedList() {
         if (isPassed) {
           const bonusKey = `kuis_nested_bonus_done_${kelasId}`;
           const alreadyBonus = localStorage.getItem(bonusKey);
-          if (!alreadyBonus) {
+          
+          // Tambah progres hanya jika masih < 9
+          if (!alreadyBonus && progresBelajar < 9) {
             await updateDoc(mahasiswaRef, {
               progres_belajar: increment(1)
             });
+            // Update state lokal
+            setProgresBelajar(progresBelajar + 1);
             localStorage.setItem(bonusKey, "true");
           }
         }
@@ -314,7 +332,7 @@ export default function KuisNestedList() {
   };
 
   const goToPreviousMaterial = () => {
-    window.location.href = '/NestedList/PendahuluanNestedList';
+    window.location.href = '/NestedList/OperasiNestedList';
   };
 
   // CSS hover global
@@ -334,7 +352,20 @@ export default function KuisNestedList() {
     return () => document.head.removeChild(style);
   }, []);
 
-  // ---------- RENDER ----------
+  // Tampilkan loading saat sedang mengambil data
+  if (loading) {
+    return (
+      <>
+        <Navbar />
+        <SidebarMateri />
+        <div className="main-content" style={{ paddingTop: "64px", textAlign: "center", padding: "40px" }}>
+          <h2>Memuat data...</h2>
+        </div>
+      </>
+    );
+  }
+
+  // RENDER LOADING SOAL
   if (loadingSoal) {
     return (
       <>
@@ -401,7 +432,7 @@ export default function KuisNestedList() {
     );
   }
 
-  // Halaman Hasil (progress bar dihapus)
+  // Halaman Hasil
   if (submitted && resultsData) {
     const { finalScore, waktuDigunakan } = resultsData;
     const minutesUsed = Math.floor(waktuDigunakan / 60);

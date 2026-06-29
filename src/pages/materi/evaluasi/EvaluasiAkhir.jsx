@@ -23,6 +23,8 @@ export default function EvaluasiAkhir() {
   const [tokenKelas, setTokenKelas] = useState(null);
   const [kelasId, setKelasId] = useState(null);
   const [kkm, setKkm] = useState(70);
+  const [loading, setLoading] = useState(true);
+  const [progresBelajar, setProgresBelajar] = useState(null);
 
   // DURASI EVALUASI (1500 untuk 25 menit)
   const DURASI_KUIS = 1500;
@@ -51,6 +53,16 @@ export default function EvaluasiAkhir() {
           const mhsSnap = await getDoc(doc(db, 'mahasiswa', userId));
           if (mhsSnap.exists()) {
             const mhsData = mhsSnap.data();
+            const progres = mhsData.progres_belajar || 0;
+            setProgresBelajar(progres);
+
+            // 🔒 Halaman hanya bisa diakses jika progres >= 13
+            if (progres < 13) {
+              navigate('/dashboard');
+              return;
+            }
+            // Jika progres >= 13, boleh akses halaman
+
             setTokenKelas(mhsData.Token_mahasiswa);
             setKelasId(mhsData.Token_mahasiswa);
             setUserData(mhsData);
@@ -67,6 +79,8 @@ export default function EvaluasiAkhir() {
         }
       } catch (err) {
         console.error(err);
+      } finally {
+        setLoading(false);
       }
     };
     fetchUserData();
@@ -264,8 +278,12 @@ export default function EvaluasiAkhir() {
         if (isPassed) {
           const bonusKey = `evaluasi_bonus_done_${kelasId}`;
           const alreadyBonus = localStorage.getItem(bonusKey);
-          if (!alreadyBonus) {
+          
+          // Tambah progres hanya jika masih < 14
+          if (!alreadyBonus && progresBelajar < 14) {
             await updateDoc(mahasiswaRef, { progres_belajar: increment(1) });
+            // Update state lokal
+            setProgresBelajar(progresBelajar + 1);
             localStorage.setItem(bonusKey, "true");
           }
         }
@@ -323,7 +341,20 @@ export default function EvaluasiAkhir() {
     return () => document.head.removeChild(style);
   }, []);
 
-  // ---------- RENDER ----------
+  // Tampilkan loading saat sedang mengambil data
+  if (loading) {
+    return (
+      <>
+        <Navbar />
+        <SidebarMateri />
+        <div className="main-content" style={{ paddingTop: "64px", textAlign: "center", padding: "40px" }}>
+          <h2>Memuat data...</h2>
+        </div>
+      </>
+    );
+  }
+
+  // RENDER LOADING SOAL
   if (loadingSoal) {
     return (
       <>
@@ -460,7 +491,6 @@ export default function EvaluasiAkhir() {
               ) : (
                 <div style={styles.failedBoxNew}>
                   <div style={{ fontWeight: 'bold', fontSize: '18px' }}>Status: TIDAK LULUS</div>
-                  {/* <div style={{ marginTop: '6px' }}>Nilai {totalScore} &lt; KKM {kkm}</div> */}
                   <div style={{ marginTop: '8px', fontSize: '15px' }}>Silahkan ulangi pengerjaan evaluasi atau kembali ke materi.</div>
                 </div>
               )
@@ -1037,7 +1067,7 @@ const styles = {
     whiteSpace: "pre-line",
     flexShrink: 0,
   },
-  // Opsi normal (tanpa scroll, tidak diubah)
+  // Opsi normal
   optionsContainer: {
     display: "flex",
     flexDirection: "column",
@@ -1058,7 +1088,7 @@ const styles = {
     cursor: "pointer",
     border: "1px solid #e2e8f0",
   },
-  // Opsi untuk soal yang bermasalah (tanpa scroll, padding lebih kecil)
+  // Opsi untuk soal yang bermasalah (tanpa scroll)
   optionsContainerNoScroll: {
     display: "flex",
     flexDirection: "column",

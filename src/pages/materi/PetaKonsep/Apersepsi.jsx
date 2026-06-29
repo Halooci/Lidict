@@ -3,13 +3,14 @@ import { useNavigate } from "react-router-dom";
 import Navbar from "../../komponen/Navbar";
 import SidebarMateri from "../../komponen/SidebarMateri";
 import { db } from "../../../config/firebase";
-import { doc, updateDoc, increment } from "firebase/firestore";
+import { doc, getDoc, updateDoc, increment } from "firebase/firestore";
 
 export default function Apersepsi() {
   const navigate = useNavigate();
   const [userId, setUserId] = useState(null);
   const [showCompletionModal, setShowCompletionModal] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [userProgress, setUserProgress] = useState(null); // tambahan state untuk menyimpan progres
 
   // ==================== MATERI 1: VARIABEL & TIPE DATA ====================
   // Drag & Drop
@@ -27,7 +28,7 @@ export default function Apersepsi() {
   });
   const [dragDropAllDone, setDragDropAllDone] = useState(false);
   const [dragDropFeedback, setDragDropFeedback] = useState("");
-  const [dragDropAttempt, setDragDropAttempt] = useState(0); // baru
+  const [dragDropAttempt, setDragDropAttempt] = useState(0);
   const dragItems = ["integer", "float", "string", "boolean"];
   const targets = ["3.14", "True", "'Python'", "42"];
   const correctMatches = {
@@ -51,14 +52,12 @@ export default function Apersepsi() {
   };
   const handleDrop = (e, targetKey) => {
     e.preventDefault();
-    // Jika target sudah benar, kunci (tidak bisa diubah)
     if (dragDropStatus[targetKey]) return;
 
     const draggedItem = e.dataTransfer.getData("text/plain");
     const newAnswers = { ...dragDropAnswers, [targetKey]: draggedItem };
     setDragDropAnswers(newAnswers);
 
-    // Set status target menjadi false (belum dicek)
     const newStatus = { ...dragDropStatus, [targetKey]: false };
     setDragDropStatus(newStatus);
     setDragDropAllDone(false);
@@ -68,7 +67,6 @@ export default function Apersepsi() {
   const checkDragDrop = () => {
     const newStatus = { ...dragDropStatus };
     let allCorrect = true;
-    let correctList = [];
     let wrongList = [];
 
     for (const [target, expected] of Object.entries(correctMatches)) {
@@ -76,10 +74,7 @@ export default function Apersepsi() {
       const isCorrect = userAnswer === expected;
       newStatus[target] = isCorrect;
       if (!isCorrect) allCorrect = false;
-
-      if (isCorrect) {
-        correctList.push(`${target} → ${expected}`);
-      } else {
+      if (!isCorrect) {
         const userAns = userAnswer || "kosong";
         wrongList.push(`${target} → ${userAns} (seharusnya ${expected})`);
       }
@@ -105,7 +100,6 @@ export default function Apersepsi() {
   };
 
   const resetDragDrop = () => {
-    // Hanya reset jawaban yang statusnya false (salah)
     const newAnswers = { ...dragDropAnswers };
     const newStatus = { ...dragDropStatus };
     let hasWrong = false;
@@ -116,7 +110,6 @@ export default function Apersepsi() {
         newStatus[target] = false;
         hasWrong = true;
       }
-      // jika benar, biarkan apa adanya
     }
 
     setDragDropAnswers(newAnswers);
@@ -136,7 +129,7 @@ export default function Apersepsi() {
     "def = 10",
     "nama siswa = 'Andi'"
   ];
-  const varPilihanCorrect = 1; // indeks ke-1 (B)
+  const varPilihanCorrect = 1;
   const checkVarPilihan = () => {
     if (varPilihanSelected === null) {
       setVarPilihanFeedback("❌ Silakan pilih salah satu opsi terlebih dahulu.");
@@ -291,11 +284,26 @@ export default function Apersepsi() {
     setUserId(uid);
   }, [navigate]);
 
-  const [bonusGiven, setBonusGiven] = useState(false);
+  // Ambil progres dari Firestore saat userId tersedia
   useEffect(() => {
-    const already = localStorage.getItem("apersepsi_bonus_done");
-    if (already === "true") setBonusGiven(true);
-  }, []);
+    const fetchProgress = async () => {
+      if (!userId) return;
+      try {
+        const docRef = doc(db, "mahasiswa", userId);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          setUserProgress(data.progres_belajar || 0);
+        } else {
+          setUserProgress(0);
+        }
+      } catch (error) {
+        console.error("Gagal mengambil progres:", error);
+        setUserProgress(0);
+      }
+    };
+    fetchProgress();
+  }, [userId]);
 
   // Fungsi untuk mengecek apakah semua aktivitas sudah dijawab dengan benar
   const isAllActivitiesCorrect = () => {
@@ -311,14 +319,24 @@ export default function Apersepsi() {
     return true;
   };
 
+  // Efek untuk menampilkan pop-up jika semua benar dan progres < 1
   useEffect(() => {
     if (!userId) return;
-    if (bonusGiven) return;
-    if (isAllActivitiesCorrect() && !showCompletionModal && !isProcessing) {
-      setShowCompletionModal(true);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (userProgress === null) return; // belum selesai baca
+    if (showCompletionModal) return;
+    if (isProcessing) return;
+    if (!isAllActivitiesCorrect()) return;
+
+    // Jika progres sudah >= 1, tidak tampilkan pop-up
+    if (userProgress >= 1) return;
+
+    // Jika semua benar dan progres < 1, tampilkan pop-up
+    setShowCompletionModal(true);
   }, [
+    userId,
+    userProgress,
+    showCompletionModal,
+    isProcessing,
     dragDropAllDone,
     varPilihanFeedback,
     tipeNilaiFeedback,
@@ -328,23 +346,29 @@ export default function Apersepsi() {
     ioFeedback,
     outputAnswer,
     printVarFeedback,
-    userId,
-    bonusGiven,
-    showCompletionModal,
-    isProcessing,
   ]);
 
+  // Fungsi untuk menangani tombol "Materi berikutnya"
   const handleCompleteAndContinue = async () => {
     if (isProcessing) return;
     setIsProcessing(true);
 
     try {
       const mahasiswaRef = doc(db, "mahasiswa", userId);
-      await updateDoc(mahasiswaRef, {
-        progres_belajar: increment(1)
-      });
-      localStorage.setItem("apersepsi_bonus_done", "true");
-      setBonusGiven(true);
+      // Baca progres terbaru
+      const docSnap = await getDoc(mahasiswaRef);
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        const currentProgress = data.progres_belajar || 0;
+        // Hanya tambah jika < 1
+        if (currentProgress < 1) {
+          await updateDoc(mahasiswaRef, {
+            progres_belajar: increment(1)
+          });
+          // Update state userProgress agar sesuai
+          setUserProgress(currentProgress + 1);
+        }
+      }
       setShowCompletionModal(false);
       navigate("/list/pendahuluanlist");
     } catch (error) {

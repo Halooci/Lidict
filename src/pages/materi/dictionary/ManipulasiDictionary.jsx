@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Navbar from "../../komponen/Navbar";
 import SidebarMateri from "../../komponen/SidebarMateri";
 import { db } from "../../../config/firebase";
-import { doc, updateDoc, increment } from "firebase/firestore";
+import { doc, getDoc, updateDoc, increment } from "firebase/firestore";
 
 // ---------- IMPOR CODEMIRROR ----------
 import CodeMirror from '@uiw/react-codemirror';
@@ -251,7 +251,6 @@ const DictionaryComparison = ({ beforeData, afterData, beforeTitle, afterTitle, 
 };
 
 // ===================== KOMPONEN EDITOR READ-ONLY (dengan CodeMirror) =====================
-// DIPERBAIKI: Output di atas Visualisasi, penjelasan tanpa kata "Baris", kode berwarna kuning
 const CodeEditor = ({ code, pyodideReady, runPythonCode, explanations, beforeData, afterData, beforeTitle, afterTitle, addedKeys = [], removedKeys = [], accessSequenceAfter = [] }) => {
   const [output, setOutput] = useState("");
   const [hasRun, setHasRun] = useState(false);
@@ -405,7 +404,7 @@ const CodeEditorEditable = ({ title, pyodideReady, runPythonCode, onValidation }
     // Regex untuk print inventaris
     const printPattern = /print\s*\(\s*inventaris\s*\)/;
     
-    // Larangan: tidak boleh ada print selain print inventaris (misal print nilai hasil pop, print sebelum update, dll)
+    // Larangan: tidak boleh ada print selain print inventaris
     const allPrintStatements = code.match(/print\s*\([^)]*\)/g) || [];
     const hasExtraPrint = allPrintStatements.some(stmt => !printPattern.test(stmt));
     // Larangan: tidak boleh ada perintah pop selain untuk 'Data Science'
@@ -422,7 +421,7 @@ const CodeEditorEditable = ({ title, pyodideReady, runPythonCode, onValidation }
     // Validasi: harus memiliki semua instruksi, dan tidak boleh ada print ekstra, tidak boleh ada pop/update lain
     const isComplete = hasDict && hasUpdate && hasPop && hasPrint && !hasExtraPrint && !otherPop && !otherUpdate;
     
-    // Eksekusi kode (tetap jalankan walau tidak memenuhi instruksi, untuk menampilkan output)
+    // Eksekusi kode
     let executionOutput = "";
     try {
       const result = await runPythonCode(code);
@@ -480,7 +479,7 @@ const CodeEditorEditable = ({ title, pyodideReady, runPythonCode, onValidation }
   );
 };
 
-// ===================== KOMPONEN LATIHAN SOAL (TIDAK DIUBAH) =====================
+// ===================== KOMPONEN LATIHAN SOAL =====================
 const LatihanSoal = ({ questions, resetTrigger, onAllCorrectChange }) => {
   const [answers, setAnswers] = useState(questions.map(() => null));
   const [feedback, setFeedback] = useState(questions.map(() => ""));
@@ -602,18 +601,58 @@ const eksplorasiQuestions = [
 // ===================== KOMPONEN UTAMA =====================
 export default function ManipulasiDictionary() {
   const navigate = useNavigate();
+  const [userId, setUserId] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [progresBelajar, setProgresBelajar] = useState(null);
 
   const TOPIC_NAME = "manipulasi_dict";
   const EKSPLORASI_ANSWERS_KEY = `eksplorasi_${TOPIC_NAME}_answers`;
   const BONUS_DONE_KEY = `${TOPIC_NAME}_bonus_done`;
 
+  // Cek autentikasi user
   useEffect(() => {
-    const userId = localStorage.getItem('userId');
+    const uid = localStorage.getItem('userId');
     const userEmail = localStorage.getItem('userEmail');
-    if (!userId || !userEmail) {
+    if (!uid || !userEmail) {
       navigate('/loginregister');
+    } else {
+      setUserId(uid);
     }
   }, [navigate]);
+
+  // Fetch progres_belajar dari Firestore
+  useEffect(() => {
+    if (!userId) return;
+
+    const fetchProgres = async () => {
+      setLoading(true);
+      try {
+        const docRef = doc(db, "mahasiswa", userId);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+          const data = docSnap.data();
+          const progres = data.progres_belajar || 0;
+          setProgresBelajar(progres);
+
+          // 🔒 Halaman hanya bisa diakses jika progres >= 11
+          if (progres < 11) {
+            navigate('/dashboard');
+            return;
+          }
+          // Jika progres >= 11, boleh akses halaman
+        } else {
+          navigate('/dashboard');
+        }
+      } catch (error) {
+        console.error("Gagal mengambil progres:", error);
+        navigate('/dashboard');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProgres();
+  }, [userId, navigate]);
 
   const [pyodideReady, setPyodideReady] = useState(false);
   const pyodideRef = useRef(null);
@@ -622,30 +661,42 @@ export default function ManipulasiDictionary() {
 
   const [allLatihanCorrect, setAllLatihanCorrect] = useState(false);
   const [showModal, setShowModal] = useState(false);
-  const [bonusGiven, setBonusGiven] = useState(false);
-  const userId = localStorage.getItem('userId');
 
   // State untuk pesan praktik (di luar editor)
   const [praktikMessage, setPraktikMessage] = useState("");
   const [praktikMessageType, setPraktikMessageType] = useState("");
 
+  // Tampilkan modal hanya jika:
+  // 1. progresBelajar < 12 (belum mencapai level 12)
+  // 2. semua latihan benar
+  // 3. belum menampilkan modal
   useEffect(() => {
-    const already = localStorage.getItem(BONUS_DONE_KEY);
-    if (already === "true") setBonusGiven(true);
-  }, [BONUS_DONE_KEY]);
-
-  useEffect(() => {
-    if (allLatihanCorrect && !bonusGiven && userId) {
+    if (!userId) return;
+    if (progresBelajar === null) return;
+    if (progresBelajar >= 12) {
+      // Jika progres >= 12, tidak perlu tampilkan modal
+      setShowModal(false);
+      return;
+    }
+    if (allLatihanCorrect && !showModal) {
+      // Jika progres < 12 dan semua latihan benar, tampilkan modal
       setShowModal(true);
     }
-  }, [allLatihanCorrect, bonusGiven, userId]);
+  }, [allLatihanCorrect, userId, showModal, progresBelajar]);
 
   const handleCompleteAndNavigate = async () => {
     try {
-      const mahasiswaRef = doc(db, "mahasiswa", userId);
-      await updateDoc(mahasiswaRef, {
-        progres_belajar: increment(1)
-      });
+      // Tambah progres hanya jika masih < 12
+      if (progresBelajar < 12) {
+        const mahasiswaRef = doc(db, "mahasiswa", userId);
+        await updateDoc(mahasiswaRef, {
+          progres_belajar: increment(1)
+        });
+        // Update state lokal
+        setProgresBelajar(progresBelajar + 1);
+      }
+      
+      // Tandai bonus sudah diberikan
       localStorage.setItem(BONUS_DONE_KEY, "true");
       setShowModal(false);
       navigate("/Dictionary/RangkumanDictionary");
@@ -853,6 +904,33 @@ _buffer.getvalue()
       return `Error: ${error.message}`;
     }
   }, []);
+
+  // Tampilkan loading saat sedang mengambil data
+  if (loading) {
+    return (
+      <>
+        <Navbar />
+        <SidebarMateri isOpen={isSidebarOpen} onToggle={() => setIsSidebarOpen(!isSidebarOpen)} />
+        <div 
+          className="main-content"
+          style={{ 
+            marginLeft: isSidebarOpen ? "280px" : "0",
+            transition: "margin-left 0.3s ease",
+            paddingTop: "64px",
+            minHeight: "100vh",
+            width: "auto",
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '24px', marginBottom: '16px' }}>⏳</div>
+              <div style={{ fontSize: '18px', color: '#306998' }}>Memuat data...</div>
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
@@ -1072,7 +1150,7 @@ _buffer.getvalue()
         </div>
       </div>
 
-      {/* Modal Sukses */}
+      {/* Modal Sukses - HANYA MUNCUL JIKA PROGRES < 12 */}
       {showModal && (
         <div style={styles.modalOverlay}>
           <div style={styles.modal}>
@@ -1203,7 +1281,6 @@ const styles = {
     fontWeight: "600",
     fontSize: "14px",
   },
-  // Gaya untuk wrapper CodeMirror
   codeMirrorWrapper: {
     backgroundColor: "#272822",
     padding: "0",
@@ -1230,7 +1307,6 @@ const styles = {
     wordWrap: "break-word",
     lineHeight: "1.5"
   },
-  // Gaya untuk Visualisasi
   visualHeader: {
     backgroundColor: "#306998",
     color: "white",
@@ -1271,7 +1347,7 @@ const styles = {
     gap: "8px",
   },
   lineNumber: {
-    color: "#61afef", // biru terang
+    color: "#61afef",
     fontWeight: "bold",
     minWidth: "30px",
   },
@@ -1279,11 +1355,11 @@ const styles = {
     backgroundColor: "#3c3c3c",
     padding: "2px 6px",
     borderRadius: "4px",
-    color: "#e5c07b", // kuning
+    color: "#e5c07b",
     fontFamily: "monospace",
   },
   lineExplanation: {
-    color: "#ffffff", // putih
+    color: "#ffffff",
     flex: "1",
   },
   eksplorasiOption: {
