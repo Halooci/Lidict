@@ -224,14 +224,15 @@ export default function Apersepsi() {
   };
 
   // ==================== MATERI 3: INPUT / OUTPUT ====================
+  // Soal 3.1 - sekarang siswa diminta mengisi "input"
   const [ioAnswer, setIoAnswer] = useState("");
   const [ioFeedback, setIoFeedback] = useState("");
   const checkIO = () => {
     const jawaban = ioAnswer.trim().toLowerCase();
-    if (jawaban === "int" || jawaban === "int()") {
-      setIoFeedback("✓ Benar! int() mengubah string menjadi integer.");
+    if (jawaban === "input") {
+      setIoFeedback("✓ Benar! input() digunakan untuk menerima masukan dari pengguna.");
     } else {
-      setIoFeedback("✗ Salah. Gunakan fungsi int() untuk konversi ke integer.");
+      setIoFeedback("✗ Salah.");
     }
   };
   const resetIO = () => {
@@ -530,9 +531,9 @@ export default function Apersepsi() {
               {/* MATERI TAMBAHAN: ASSIGNMENT VARIABEL */}
               <p style={styles.text}>
                 Untuk membuat variable menggunakan tanda sama dengan (=) untuk memberi nilai pada variabelnya. Bentuk umumnya:
-                
-                <span style={{ fontFamily: 'monospace', backgroundColor: '#bdd9f5', padding: '2px 6px', borderRadius: '4px' }}>nama_variabel = nilai_yang_ingin_disimpan</span>.
-                
+                <br />
+                <span style={{ fontFamily: 'monospace', backgroundColor: '#f1f5f9', padding: '2px 6px', borderRadius: '4px' }}>nama_variabel = nilai_yang_ingin_disimpan</span>
+                <br />
                 Tanda = dalam pemrograman bukan berarti "sama dengan", melainkan "isi variabel kiri dengan nilai kanan". Variabel hanya bisa menyimpan satu nilai pada satu waktu. Jika kita beri nilai baru, nilai lama akan hilang tergantikan. Nilai baru bisa berasal dari perhitungan yang melibatkan variabel itu sendiri.
               </p>
 
@@ -575,6 +576,14 @@ export default function Apersepsi() {
                   <strong style={{ color: "#306998" }}>status_aktif</strong> = <strong style={{ color: "#306998" }}>True</strong>
                 </li>
               </ul>
+
+              <p style={styles.text}>Contoh Kode:</p>
+              <pre style={styles.codeBlock}>
+                {formatCodeWithComments(`panjang = int(input("Masukkan panjang: "))  # input panjang dalam cm
+lebar = float(input("Masukkan lebar: "))      # input lebar dalam cm
+jurusan = "Pendidikan Komputer"               # data string
+status_lulus = True                           # boolean`)}
+              </pre>
 
               {/* AKTIVITAS 1 - GABUNGAN */}
               <div style={styles.activityWrapper}>
@@ -806,13 +815,16 @@ umur = int(input("Umur: "))     # konversi ke integer`)}
                 <div style={styles.activityTitle}>Aktivitas</div>
                 <p style={styles.instruction}>Petunjuk: Kerjakan semua soal di bawah ini. Setiap soal memiliki tombol Periksa dan Reset.</p>
 
-                {/* Soal 3.1 - Konversi ke Integer */}
+                {/* Soal 3.1 - Konversi ke Integer (sekarang siswa mengisi "input") */}
                 <div style={styles.subActivity}>
-                  <p style={styles.instruction}>Petunjuk: Lengkapi kode agar variabel nim bertipe integer:<br /> <span style={styles.codeInline}>nim = ______(input("NIM: "))</span></p>
+                  <p style={styles.instruction}>
+                    Petunjuk: Lengkapi kode agar program menerima input dari user:<br />
+                    <span style={styles.codeInline}>nim = int(______("NIM: "))</span>
+                  </p>
                   <div style={styles.inputGroup}>
                     <input
                       type="text"
-                      placeholder=""
+                      placeholder="Tulis fungsi yang tepat"
                       value={ioAnswer}
                       onChange={(e) => setIoAnswer(e.target.value)}
                       style={styles.inputText}
