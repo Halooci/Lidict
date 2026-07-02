@@ -980,11 +980,15 @@ _buffer.getvalue()
                     <h3 style={styles.subTitle}>Mengakses Nilai Dictionary</h3>
                   </div>
                   <p style={styles.text}>
-                    Ada dua cara mengakses nilai: menggunakan <code>nama_dict["key"]</code> (akan error jika key tidak ada) atau metode <code>.get("key", default)</code> (lebih aman).
+                    Ada dua cara mengakses nilai: menggunakan nama_dict["key"] atau metode .get("key", default).
                     <br />
-                    <strong>Persamaan:</strong> Keduanya mengembalikan nilai yang terkait dengan key jika key ada.
+                    <strong>Persamaan:</strong> Keduanya mengembalikan nilai yang terkait dengan key jika 
+                    key ada.
                     <br />
-                    <strong>Perbedaan:</strong> Notasi kurung siku <code>[]</code> akan memicu <code>KeyError</code> jika key tidak ditemukan, sedangkan <code>get()</code> mengembalikan <code>None</code> atau nilai default yang ditentukan. Gunakan kurung siku jika yakin key ada, gunakan <code>get()</code> jika key mungkin tidak ada.
+                    <strong>Perbedaan:</strong> Notasi kurung siku [] akan memicu 
+                    KeyError jika key tidak ditemukan, sedangkan get()
+                    mengembalikan None atau nilai default yang ditentukan. Gunakan 
+                    kurung siku jika yakin key ada, gunakan get() jika key mungkin tidak ada.
                   </p>
                   <CodeEditor 
                     code={exampleCodes.aksesDict} 

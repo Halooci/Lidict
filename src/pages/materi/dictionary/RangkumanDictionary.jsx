@@ -97,15 +97,15 @@ export default function RangkumanDictionary() {
             <div style={styles.card}>
               <p style={styles.text}>
                 <strong>Dictionary</strong> adalah struktur data Python yang menyimpan pasangan <strong>key-value</strong> (kunci-nilai). 
-                Key bersifat unik dan immutable, value dapat berupa tipe data apa pun. Dictionary bersifat mutable, dinamis, dan sangat efisien untuk pencarian data.
+                Key bersifat unik dan immutable, value dapat berupa tipe data apa pun. Dictionary bersifat mutable, dinamis, dan efisien untuk pencarian data.
               </p>
 
               <div style={styles.gridContainer}>
                 <div style={styles.gridColumnLeft}>
                   <h3 style={styles.subTitle}>Karakteristik</h3>
                   <ul style={styles.list}>
-                    <li><strong>Key unik</strong> – tidak boleh duplikat; jika sama, nilai tertimpa.</li>
-                    <li><strong>Key immutable</strong> – hanya boleh string, integer, tuple (list tidak boleh).</li>
+                    <li><strong>Key unik</strong> – tidak boleh duplikat; jika sama, nilai sebelumnya akan tertimpa.</li>
+                    <li><strong>Key immutable (tidak bisa diubah)</strong> – hanya boleh string, integer, tuple (list tidak boleh).</li>
                     <li><strong>Value bebas</strong> – bisa list, dictionary lain, fungsi, dll.</li>
                     <li><strong>Mutable</strong> – dapat ditambah, diubah, dihapus; ukuran otomatis menyesuaikan.</li>
                   </ul>
@@ -141,7 +141,7 @@ export default function RangkumanDictionary() {
                     <li><strong>Kunci:</strong> List hanya indeks angka, Dictionary key harus unik dan immutable.</li>
                   </ul>
 
-                  <h3 style={styles.subTitle}>Metode Penting</h3>
+                  <h3 style={styles.subTitle}>Method Dictionary</h3>
                   <ul style={styles.list}>
                     <li>clear() – hapus semua item</li>
                     <li>get(key, default) – ambil nilai atau default</li>

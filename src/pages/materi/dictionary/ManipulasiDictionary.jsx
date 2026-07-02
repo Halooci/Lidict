@@ -587,7 +587,7 @@ const eksplorasiQuestions = [
     correct: 1,
   },
   {
-    text: "Perhatikan dictionary: `stok = {'apel': 10, 'mangga': 5}`. Kode manakah yang akan menghapus key 'mangga' beserta nilainya?",
+    text: "Perhatikan dictionary: `stok = {'apel': 10, 'mangga': 5}`. Kode yang akan menghapus key 'mangga' beserta nilainya adalah ….",
     options: ["stok.remove('mangga')", "del stok['mangga']", "stok.delete('mangga')", "stok.pop('mangga')", "stok.popitem('mangga')"],
     correct: 3,
   },
@@ -797,13 +797,13 @@ print("Setelah clear:", data)`,
     ],
     popitem: [
       "Membuat dictionary 'data' dengan tiga pasangan key-value.",
-      "Menghapus item terakhir (karena Python 3.7+ mempertahankan urutan) menggunakan popitem(), mengembalikan tuple (key, value).",
+      "Menghapus item terakhir menggunakan popitem().",
       "Mencetak item yang dihapus.",
       "Mencetak dictionary setelah popitem."
     ],
     clear: [
       "Membuat dictionary 'data' dengan tiga key.",
-      "Menghapus semua item menggunakan metode clear().",
+      "Menghapus semua item menggunakan clear().",
       "Mencetak dictionary kosong {}."
     ],
   };
@@ -1022,8 +1022,8 @@ _buffer.getvalue()
             <>
               <section style={styles.section}>
                 <div style={styles.card}>
-                  <h3 style={styles.subTitle}>1. Menambah/Mengupdate dengan update()</h3>
-                  <p style={styles.text}>Metode <code>update()</code> digunakan untuk menambah atau memperbarui beberapa pasangan key-value sekaligus.</p>
+                  <h3 style={styles.subTitle}>1. Menambah/Memperbarui dengan update()</h3>
+                  <p style={styles.text}>Metode update() digunakan untuk menambah atau memperbarui beberapa pasangan key-value sekaligus.</p>
                   <CodeEditor 
                     code={exampleCodes.update} 
                     pyodideReady={pyodideReady} 
@@ -1055,7 +1055,7 @@ _buffer.getvalue()
                   />
 
                   <h3 style={styles.subTitle}>3. Menghapus Item Terakhir dengan popitem()</h3>
-                  <p style={styles.text}><code>popitem()</code> menghapus item terakhir (berdasarkan urutan penyisipan) dan mengembalikan tuple (key, value).</p>
+                  <p style={styles.text}><code>popitem()</code> menghapus item terakhir (berdasarkan urutan penyisipan).</p>
                   <CodeEditor 
                     code={exampleCodes.popitem} 
                     pyodideReady={pyodideReady} 
@@ -1094,15 +1094,18 @@ _buffer.getvalue()
                   <div style={styles.alertBox}>
                     <strong>Cerita Kasus: Inventaris Toko Buku</strong>
                     <p style={{ marginTop: "8px", textAlign: "justify" }}>
-                      Sebuah toko buku memiliki dictionary <code>inventaris</code> yang menyimpan stok buku dengan format <code>{"{'judul buku': jumlah_stok}"}</code>. 
-                      Saat ini inventaris berisi: <code>{"{'Python Dasar': 10, 'Data Science': 5, 'Web Programming': 7}"}</code>.
+                      Sebuah toko buku memiliki dictionary inventaris yang 
+                      menyimpan stok buku awal awal: 'Python Dasar':10, 'Data Science':5, 'Web Programming':7.  
+                  
                     </p>
-                    <p style={{ textAlign: "justify" }}><strong>Petunjuk:</strong> Ikuti instruksi secara berurutan. Pastikan Anda mengikuti setiap instruksi.</p>
+                    <p style={{ textAlign: "justify" }}><strong>Petunjuk:</strong> Ikuti instruksi secara berurutan. 
+                    Kode akan diperiksa langkah demi langkah. Pastikan mengikuti setiap instruksi.</p>
+                    
                     <ol style={{ marginLeft: "20px", lineHeight: "1.8", marginTop: "8px", textAlign: "justify" }}>
-                      <li>Buat dictionary <code>inventaris</code> dengan stok awal: 'Python Dasar':10, 'Data Science':5, 'Web Programming':7.</li>
-                      <li>Tambah stok buku baru <code>"Machine Learning"</code> sebanyak 3 eksemplar menggunakan metode <code>update()</code>.</li>
-                      <li>Buku <code>"Data Science"</code> habis terjual, hapus buku tersebut dari inventaris menggunakan <code>pop()</code>.</li>
-                      <li>Tampilkan isi <code>inventaris</code> terakhir menggunakan <code>print()</code>.</li>
+                      <li>Buat dictionary inventaris dengan stok awal: 'Python Dasar':10, 'Data Science':5, 'Web Programming':7.</li>
+                      <li>Tambah stok buku baru "Machine Learning" sebanyak 3 eksemplar menggunakan metode update().</li>
+                      <li>Buku "Data Science" habis terjual, hapus buku tersebut dari inventaris menggunakan pop().</li>
+                      <li>Tampilkan isi inventaris terakhir.</li>
                     </ol>
                   </div>
 

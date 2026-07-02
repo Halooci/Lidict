@@ -482,11 +482,11 @@ export default function EvaluasiAkhir() {
             {role === 'mahasiswa' ? (
               isPassed ? (
                 <div style={styles.passedBoxNew}>
-                  <div style={{ fontSize: '22px', fontWeight: 'bold', marginBottom: '6px' }}>SELAMAT!</div>
+                  <div style={{ fontSize: '22px', fontWeight: 'bold', marginBottom: '6px' }}>SELAMAT! <br></ br> SUDAH MENYELESAIKAN PEMBELAJARAN MATERI LIST DAN DICTIONARY</div>
                   <div>Status: LULUS</div>
-                  <div style={{ marginTop: '8px', fontSize: '15px', opacity: 0.9 }}>
-                    Materi berikutnya sudah terbuka, silahkan akses.
-                  </div>
+                  {/* <div style={{ marginTop: '8px', fontSize: '15px', opacity: 0.9 }}>
+                    
+                  </div> */}
                 </div>
               ) : (
                 <div style={styles.failedBoxNew}>

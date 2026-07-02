@@ -400,7 +400,7 @@ const LatihanList = ({ onAllCorrectChange }) => {
     },
     {
       id: 3,
-      question: "Manakah pernyataan yang BENAR tentang konsep dasar list di Python?",
+      question: "Pernyataan yang BENAR tentang konep dasar list di Python adalah ....",
       options: [
         "Indeks list dimulai dari 1",
         "List bersifat immutable (tidak dapat diubah)",
@@ -679,7 +679,7 @@ export default function PendahuluanList() {
       correct: 1,
     },
     {
-      text: "Manakah pernyataan yang BENAR tentang konsep dasar list di Python?",
+      text: "Pernyataan yang BENAR tentang konsep dasar list di Python adalah ....",
       options: [
         "Indeks list dimulai dari 1",
         "List bersifat immutable (tidak dapat diubah)",

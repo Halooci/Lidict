@@ -235,7 +235,7 @@ export default function PendahuluanDictionary() {
   // EKSPLORASI (pretest) - dengan localStorage
   const eksplorasiQuestions = [
     {
-      text: "Apa yang dimaksud dengan dictionary dalam Python?",
+      text: "Yang dimaksud dengan dictionary dalam Python adalah ….",
       options: [
         "Kumpulan data berurutan yang dapat diubah",
         "Kumpulan pasangan key-value yang tidak berurutan",
@@ -246,7 +246,7 @@ export default function PendahuluanDictionary() {
       correct: 1,
     },
     {
-      text: "Manakah pernyataan yang BENAR tentang key pada dictionary?",
+      text: "Pernyataan yang BENAR tentang key pada dictionary adalah ….",
       options: [
         "Key boleh duplikat",
         "Key harus berupa string",
@@ -519,7 +519,7 @@ export default function PendahuluanDictionary() {
               <ul style={styles.list}>
                 <li>Memahami konsep dictionary sebagai struktur data pasangan key-value.</li>
                 <li>Mengetahui karakteristik utama dictionary (key unik, mutable, tidak berurutan).</li>
-                <li>Mengenal perbedaan dasar antara dictionary dengan tipe data lain.</li>
+                {/* <li>Mengenal perbedaan dasar antara dictionary dengan tipe data lain.</li> */}
               </ul>
             </div>
           </section>
