@@ -727,9 +727,12 @@ const CodeEditorEditable = ({ title, pyodideReady, runPythonCode, onValidation }
     const hasPrintFirst = printFirstRegex.test(code);
     const printLastRegex = /print\s*\(\s*belanja\s*\[\s*-\s*1\s*\]\s*\)/;
     const hasPrintLast = printLastRegex.test(code);
+    // Tambahan untuk slicing (indeks 1:3)
+    const sliceRegex = /print\s*\(\s*belanja\s*\[\s*1\s*:\s*3\s*\]\s*\)/;
+    const hasSlice = sliceRegex.test(code);
 
-    const isComplete = hasCorrectList && hasPrintFirst && hasPrintLast;
-    const isValid = hasCorrectList && hasPrintFirst && hasPrintLast;
+    const isComplete = hasCorrectList && hasPrintFirst && hasPrintLast && hasSlice;
+    const isValid = hasCorrectList && hasPrintFirst && hasPrintLast && hasSlice;
 
     setOutput(executionOutput);
     setIsRunning(false);
@@ -1338,7 +1341,7 @@ sys.stdout = StringIO()
             <div style={styles.card}>
               <ol style={styles.list}>
                 <li>Mahasiswa mampu membuat list dalam Python.</li>
-                <li>Mahasiswa mampu mengambil elemen list menggunakan indeks positif dan negatif.</li>
+                <li>Mahasiswa mampu mengakses elemen list menggunakan indeks positif, negatif, dan slicing.</li>
               </ol>
             </div>
           </section>
@@ -1523,6 +1526,7 @@ sys.stdout = StringIO()
                     <li>Membuat list bernama belanja dengan isi apel, jeruk, mangga.</li>
                     <li>Menampilkan elemen pertama yaitu apel menggunakan indeks positif.</li>
                     <li>Menampilkan elemen terakhir yaitu mangga menggunakan indeks negatif.</li>
+                    <li>Menampilkan elemen kedua dan ketiga (jeruk dan mangga) menggunakan slicing.</li>
                   </ol>
                   <p style={styles.text}>
                     Tulis kode Anda di area editor di bawah. Klik Jalankan untuk menjalankan.

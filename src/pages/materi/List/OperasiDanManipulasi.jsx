@@ -2057,7 +2057,9 @@ export default function OperasiManipulasiList() {
                 <h2 style={styles.sectionTitle}>Operasi Dasar List</h2>
                 <div style={styles.card}>
                   <h3>1. Concatenation (+) – Menggabungkan List</h3>
-                  <p style={styles.text}>Operasi + menggabungkan dua list menjadi satu list baru. Semua elemen list kiri diikuti semua elemen list kanan.</p>
+                  <p style={styles.text}>Operasi + menggabungkan dua list menjadi satu list baru. Semua elemen list kiri diikuti semua elemen list kanan. 
+                    Struktur penulisan pada umumnya <strong><code>list_baru = list_pertama + list_kedua</code></strong>.
+                  </p>
                   <CodeEditorWithVisual
                     code={codeExamples.concat}
                     title="Contoh Kode Program"

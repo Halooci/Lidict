@@ -120,17 +120,17 @@ export default function RangkumanList() {
 
                   <h3 style={styles.subTitle}>Akses Elemen</h3>
                   <ul style={styles.list}>
-                    <li><strong>Indeks positif</strong> – list[0] (pertama), list[n-1] (terakhir).</li>
-                    <li><strong>Indeks negatif</strong> – list[-1] (terakhir), list[-n] (pertama).</li>
-                    <li><strong>Slicing</strong> – list[awal:akhir:langkah] untuk mengambil sub-list.</li>
+                    <li><strong>Indeks positif</strong> : dimulai dari 0 (elemen pertama).</li>
+                    <li><strong>Indeks negatif</strong> : dimulai dari -1 (elemen terakhir).</li>
+                    <li><strong>Slicing</strong> : <strong>list[awal:akhir]</strong> mengambil elemen dari indeks awal hingga sebelum akhir.</li>
                   </ul>
 
                   <h3 style={styles.subTitle}>Operasi Dasar</h3>
                   <ul style={styles.list}>
-                    <li><strong>+</strong> – menggabungkan dua list.</li>
-                    <li><strong>*</strong> – mengulang list.</li>
-                    <li><strong>in</strong> – mengecek keanggotaan.</li>
-                    <li><strong>len()</strong> – menghitung jumlah elemen.</li>
+                    <li><strong>Concatenation (+)</strong> –  Menggabungkan dua atau lebih list menjadi list baru.</li>
+                    <li><strong>Repetition (*)</strong> – Mengulang list sebanyak n kali.</li>
+                    <li><strong>Keanggotaan (in)</strong> – Mengecek apakah suatu nilai ada di dalam list (hasil True/False).</li>
+                    <li><strong>Panjang (len)</strong> – Menghitung jumlah elemen list.</li>
                   </ul>
                 </div>
 
@@ -160,14 +160,14 @@ export default function RangkumanList() {
 
                   <h4 style={styles.subSubTitle}>Pengurutan & Pembalikan</h4>
                   <ul style={styles.list}>
-                    <li>sort() – urutkan menaik (ascending). Gunakan reverse=True untuk menurun.</li>
-                    <li>reverse() – balik urutan elemen.</li>
+                    <li>sort(): mengurutkan list secara ascending (nilai terkecil ke terbesar) secara permanen.</li>
+                    <li>reverse(): membalik urutan list secara permanen.</li>
                   </ul>
 
                   <h4 style={styles.subSubTitle}>Method Lainnya</h4>
                   <ul style={styles.list}>
-                    <li>count(x) – jumlah kemunculan x.</li>
-                    <li>index(x) – indeks pertama x (error jika tidak ditemukan).</li>
+                    <li>count(x) – jumlah kemunculan x dalam list. Hasilnya integer; jika x tidak ditemukan, hasilnya 0. Contoh: [1, 2, 2, 3].count(2) menghasilkan 2</li>
+                    <li>index(x) – mengembalikan posisi indeks pertama kemunculan x (dimulai dari 0). Jika x tidak ada, akan memunculkan ValueError. Contoh: [10, 20, 30, 20].index(20) menghasilkan 1.</li>
                   </ul>
                 </div>
               </div>

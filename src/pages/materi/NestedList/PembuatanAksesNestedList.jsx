@@ -361,53 +361,22 @@ const styles = {
     padding: "10px",
     borderRadius: "8px",
   },
-  strukturWrapper: {
-    display: "flex",
-    justifyContent: "center",
-    gap: "30px",
-    flexWrap: "wrap",
-  },
-  strukturSeluruh: { textAlign: "center", cursor: "pointer" },
-  strukturSeluruhButton: {
-    padding: "20px",
-    backgroundColor: "#306998",
-    color: "white",
-    borderRadius: "12px",
-    minWidth: "150px",
-  },
-  strukturSeluruhActive: {
-    padding: "20px",
-    backgroundColor: "#FFD43B",
-    color: "#306998",
-    borderRadius: "12px",
-    minWidth: "150px",
-  },
-  strukturLabel: { marginTop: "8px" },
-  strukturTable: {
-    borderCollapse: "collapse",
-    backgroundColor: "white",
-    border: "1px solid #ccc",
-  },
-  strukturTableHeader: { backgroundColor: "#e9ecef", border: "1px solid #ccc" },
-  strukturTableRowLabel: {
-    fontWeight: "bold",
-    cursor: "pointer",
-    padding: "8px",
-    border: "1px solid #ccc",
-    backgroundColor: "#f8f9fa",
-  },
-  strukturTableCell: {
-    padding: "12px",
-    cursor: "pointer",
-    backgroundColor: "#f1f3f5",
-    border: "1px solid #ccc",
-  },
   strukturInfo: {
     marginTop: "20px",
     padding: "12px",
     backgroundColor: "#fff3cd",
     borderLeft: "5px solid #FFD43B",
     borderRadius: "8px",
+  },
+  strukturPenjelasan: {
+    marginTop: "20px",
+    padding: "15px",
+    backgroundColor: "#e8f1ff",
+    borderLeft: "4px solid #306998",
+    borderRadius: "8px",
+    fontSize: "14px",
+    lineHeight: "1.8",
+    color: "#1f2937",
   },
   modalOverlay: {
     position: "fixed",
@@ -471,7 +440,7 @@ const styles = {
   },
 };
 
-// ================= KOMPONEN VISUALISASI NESTED LIST INTERAKTIF =================
+// ================= KOMPONEN VISUALISASI NESTED LIST (TANPA LABEL BARIS/KOLOM) =================
 const visStyles = {
   container: {
     backgroundColor: "#f8f9fa",
@@ -482,8 +451,14 @@ const visStyles = {
   },
   title: { fontSize: "16px", fontWeight: "bold", marginBottom: "15px", color: "#306998", textAlign: "center" },
   table: { borderCollapse: "collapse", margin: "0 auto" },
-  rowLabel: { fontWeight: "bold", padding: "8px 12px", backgroundColor: "#e9ecef", border: "1px solid #ccc" },
-  cell: { padding: "12px 16px", textAlign: "center", border: "1px solid #ccc", transition: "all 0.3s ease", cursor: "pointer" },
+  cell: { 
+    padding: "12px 20px", 
+    textAlign: "center", 
+    border: "1px solid #ccc", 
+    transition: "all 0.3s ease", 
+    cursor: "pointer",
+    minWidth: "50px",
+  },
   hoverExplanationBox: {
     backgroundColor: "#fff3cd",
     padding: "12px",
@@ -562,7 +537,6 @@ const NestedListVisualization = ({ data, title, highlightSequence = [], processE
         <tbody>
           {displayData.map((row, rowIdx) => (
             <tr key={rowIdx}>
-              <td style={visStyles.rowLabel}>Baris {rowIdx}</td>
               {row.map((value, colIdx) => (
                 <td
                   key={colIdx}
@@ -1088,88 +1062,167 @@ const Eksplorasi = ({ topicName, onComplete }) => {
   );
 };
 
-// ================= STRUKTUR INTERAKTIF =================
+// ================= STRUKTUR INTERAKTIF (DIPERBAIKI: INFORMASI HANYA BARIS/KOLOM, TIDAK MENYEBUT CARA AKSES) =================
 const StrukturInteraktif = () => {
+  const [activeKey, setActiveKey] = useState(null);
   const [selectedElement, setSelectedElement] = useState(null);
+  const [hoveredKey, setHoveredKey] = useState(null);
+  const [hoveredText, setHoveredText] = useState("");
   const data = [[85, 90, 78], [88, 92, 80]];
 
-  const handleClick = (row, col) => {
-    if (row === null && col === null)
-      setSelectedElement({ text: "nilai_siswa → [[85, 90, 78], [88, 92, 80]] (seluruh nested list)" });
-    else if (col === null)
-      setSelectedElement({ text: `nilai_siswa[${row}] → [${data[row].join(", ")}] (seluruh baris ke-${row + 1})` });
-    else
-      setSelectedElement({ text: `nilai_siswa[${row}][${col}] → ${data[row][col]} (baris ${row + 1}, kolom ${col + 1})` });
+  // Informasi hanya menyebutkan baris, kolom, dan nilai, tanpa menyebut cara mengakses
+  const getInfoText = (row, col) => {
+    if (row === null && col === null) {
+      return `Tabel ini memiliki 2 baris dan 3 kolom.`;
+    } else if (col === null) {
+      return `Baris ${row + 1} berisi nilai: ${data[row].join(", ")}`;
+    } else {
+      return `Baris ${row + 1}, Kolom ${col + 1} → ${data[row][col]}`;
+    }
   };
 
-  useEffect(() => {
-    const style = document.createElement("style");
-    style.textContent = `
-      .strukturTableCell {
-        transition: all 0.2s ease;
-        cursor: pointer;
-      }
-      .strukturTableCell:hover {
-        background-color: #e0e0e0 !important;
-        transform: scale(1.02);
-      }
-      .strukturTableRowLabel {
-        transition: all 0.2s ease;
-        cursor: pointer;
-      }
-      .strukturTableRowLabel:hover {
-        background-color: #e2e6ea !important;
-      }
-    `;
-    document.head.appendChild(style);
-    return () => document.head.removeChild(style);
-  }, []);
+  const handleClick = (row, col) => {
+    let key;
+    if (row === null && col === null) {
+      key = 'all';
+      setSelectedElement({ text: getInfoText(null, null) });
+    } else if (col === null) {
+      key = `row-${row}`;
+      setSelectedElement({ text: getInfoText(row, null) });
+    } else {
+      key = `cell-${row}-${col}`;
+      setSelectedElement({ text: getInfoText(row, col) });
+    }
+    setActiveKey(key);
+  };
+
+  const handleHover = (row, col) => {
+    if (col === null) {
+      setHoveredKey(`row-${row}`);
+      setHoveredText(getInfoText(row, null));
+    } else {
+      setHoveredKey(`cell-${row}-${col}`);
+      setHoveredText(getInfoText(row, col));
+    }
+  };
+
+  const handleLeave = () => {
+    setHoveredKey(null);
+    setHoveredText("");
+  };
+
+  const isActive = (key) => activeKey === key;
+
+  const getCellStyle = (rowIdx, colIdx) => {
+    const key = `cell-${rowIdx}-${colIdx}`;
+    const base = {
+      padding: "12px 20px",
+      border: "1px solid #ccc",
+      textAlign: "center",
+      cursor: "pointer",
+      transition: "background 0.2s, border 0.2s, transform 0.1s",
+    };
+    if (isActive(key)) {
+      return {
+        ...base,
+        backgroundColor: "#FFD43B",
+        border: "2px solid #306998",
+        fontWeight: "bold",
+        transform: "scale(1.02)",
+      };
+    }
+    if (hoveredKey === key) {
+      return {
+        ...base,
+        backgroundColor: "#FFE082",
+        border: "2px solid #FFA000",
+      };
+    }
+    return {
+      ...base,
+      backgroundColor: rowIdx % 2 === 0 ? "#f8f9fa" : "#e9ecef",
+    };
+  };
+
+  const getRowLabelStyle = (rowIdx) => {
+    const key = `row-${rowIdx}`;
+    const base = {
+      fontWeight: "bold",
+      padding: "10px 15px",
+      border: "1px solid #ccc",
+      cursor: "pointer",
+      transition: "background 0.2s, border 0.2s",
+    };
+    if (isActive(key)) {
+      return {
+        ...base,
+        backgroundColor: "#FFD43B",
+        border: "2px solid #306998",
+      };
+    }
+    if (hoveredKey === key) {
+      return {
+        ...base,
+        backgroundColor: "#FFE082",
+        border: "2px solid #FFA000",
+      };
+    }
+    return { ...base, backgroundColor: "#e9ecef" };
+  };
+
+  const infoDisplay = hoveredText || (selectedElement ? selectedElement.text : "Arahkan kursor atau klik pada elemen tabel.");
 
   return (
     <div style={styles.strukturContainer}>
-      <h4 style={styles.strukturTitle}>Visualisasi Struktur Nested List (Klik pada elemen)</h4>
-      <p style={styles.strukturPetunjuk}>💡 Petunjuk: Klik pada kotak "nilai_siswa", pada setiap judul baris, atau pada setiap angka dalam tabel.</p>
+      <h4 style={styles.strukturTitle}>Visualisasi Struktur Nested List</h4>
+      <p style={styles.strukturPetunjuk}>💡 Arahkan kursor untuk info sementara, klik untuk menandai dan melihat detail.</p>
       <div style={styles.strukturKode}>
         <pre style={styles.strukturPre}>nilai_siswa = [[85, 90, 78], [88, 92, 80]]</pre>
       </div>
-      <div style={styles.strukturWrapper}>
-        <div style={styles.strukturSeluruh} onClick={() => handleClick(null, null)}>
-          <div style={selectedElement?.text?.includes("seluruh") ? styles.strukturSeluruhActive : styles.strukturSeluruhButton}>
-            Klik untuk info seluruh data
-          </div>
-          <div style={styles.strukturLabel}>nilai_siswa</div>
-        </div>
-        <table style={styles.strukturTable}>
-          <thead>
-            <tr style={styles.strukturTableHeader}>
-              <th></th>
-              <th>Kolom 0</th>
-              <th>Kolom 1</th>
-              <th>Kolom 2</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.map((row, rowIdx) => (
-              <tr key={rowIdx}>
-                <td style={styles.strukturTableRowLabel} onClick={() => handleClick(rowIdx, null)}>
-                  Baris {rowIdx + 1}
+      <table style={{ borderCollapse: "collapse", margin: "0 auto", backgroundColor: "white", border: "2px solid #306998", borderRadius: "8px", overflow: "hidden" }}>
+        <thead>
+          <tr style={{ backgroundColor: "#306998", color: "white" }}>
+            <th style={{ padding: "10px 15px", border: "1px solid #306998" }}></th>
+            <th style={{ padding: "10px 15px", border: "1px solid #306998" }}>Kolom 0</th>
+            <th style={{ padding: "10px 15px", border: "1px solid #306998" }}>Kolom 1</th>
+            <th style={{ padding: "10px 15px", border: "1px solid #306998" }}>Kolom 2</th>
+          </tr>
+        </thead>
+        <tbody>
+          {data.map((row, rowIdx) => (
+            <tr key={rowIdx}>
+              <td
+                style={getRowLabelStyle(rowIdx)}
+                onMouseEnter={() => handleHover(rowIdx, null)}
+                onMouseLeave={handleLeave}
+                onClick={() => handleClick(rowIdx, null)}
+              >
+                Baris {rowIdx + 1}
+              </td>
+              {row.map((val, colIdx) => (
+                <td
+                  key={colIdx}
+                  style={getCellStyle(rowIdx, colIdx)}
+                  onMouseEnter={() => handleHover(rowIdx, colIdx)}
+                  onMouseLeave={handleLeave}
+                  onClick={() => handleClick(rowIdx, colIdx)}
+                >
+                  {val}
                 </td>
-                {row.map((val, colIdx) => (
-                  <td
-                    key={colIdx}
-                    className="strukturTableCell"
-                    style={styles.strukturTableCell}
-                    onClick={() => handleClick(rowIdx, colIdx)}
-                  >
-                    {val}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <div style={styles.strukturInfo}>{infoDisplay}</div>
+      
+      {/* Penjelasan setelah tabel */}
+      <div style={styles.strukturPenjelasan}>
+        <strong>Penjelasan:</strong> Tabel di atas merepresentasikan nested list <code>nilai_siswa</code> yang memiliki 
+        2 baris dan 3 kolom. Setiap baris adalah sebuah list, dan setiap kolom adalah elemen di dalam list tersebut. 
+        Misalnya, baris pertama (indeks 0) berisi nilai [85, 90, 78] dan baris kedua (indeks 1) berisi [88, 92, 80]. 
+        Dengan memahami struktur ini, kita dapat mengakses setiap elemen menggunakan indeks baris dan kolom.
       </div>
-      {selectedElement && <div style={styles.strukturInfo}>{selectedElement.text}</div>}
     </div>
   );
 };
@@ -1429,14 +1482,7 @@ _buffer.getvalue()`);
 
           {isEksplorasiCompleted && (
             <>
-              <section style={styles.section}>
-                <div style={styles.card}>
-                  <h3 style={{ fontSize: "20px", marginBottom: "15px", color: "#306998" }}>Struktur Nested List</h3>
-                  <p style={styles.text}>Nested list dapat dipandang sebagai tabel/matriks. Indeks pertama = baris, kedua = kolom.</p>
-                  <StrukturInteraktif />
-                </div>
-              </section>
-
+              {/* Bagian Membuat Nested List */}
               <section style={styles.section}>
                 <div style={styles.card}>
                   <h3 style={{ fontSize: "20px", marginBottom: "15px", color: "#306998" }}>Membuat Nested List</h3>
@@ -1470,6 +1516,16 @@ _buffer.getvalue()`);
                 </div>
               </section>
 
+              {/* Bagian Struktur Nested List (dipindahkan ke sini) */}
+              <section style={styles.section}>
+                <div style={styles.card}>
+                  <h3 style={{ fontSize: "20px", marginBottom: "15px", color: "#306998" }}>Struktur Nested List</h3>
+                  <p style={styles.text}>Nested list dapat dipandang sebagai tabel/matriks. Indeks pertama = baris, kedua = kolom.</p>
+                  <StrukturInteraktif />
+                </div>
+              </section>
+
+              {/* Bagian Mengakses Elemen */}
               <section style={styles.section}>
                 <div style={styles.card}>
                   <h3 style={{ fontSize: "20px", marginBottom: "15px", color: "#306998" }}>Mengakses Elemen</h3>

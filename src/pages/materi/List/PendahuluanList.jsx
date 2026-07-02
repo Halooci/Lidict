@@ -383,7 +383,7 @@ const LatihanList = ({ onAllCorrectChange }) => {
         "Tipe data khusus untuk bilangan desimal"
       ],
       answer: 2,
-      explanation: "List Struktur data untuk menyimpan banyak nilai dalam satu variabel`."
+      explanation: "List adalah struktur data untuk menyimpan banyak nilai dalam satu variabel."
     },
     {
       id: 2,
@@ -400,10 +400,16 @@ const LatihanList = ({ onAllCorrectChange }) => {
     },
     {
       id: 3,
-      question: "Output dari kode berikut:\n\nbuah = [\"apel\", \"jeruk\"]\nprint(len(buah)) \n\nadalah ....",
-      options: ["0", "1", "2", "3", "4"],
-      answer: 2,
-      explanation: "Fungsi `len()` mengembalikan banyaknya elemen dalam list. Karena ada dua elemen ('apel' dan 'jeruk'), hasilnya adalah 2."
+      question: "Manakah pernyataan yang BENAR tentang konsep dasar list di Python?",
+      options: [
+        "Indeks list dimulai dari 1",
+        "List bersifat immutable (tidak dapat diubah)",
+        "List hanya dapat menyimpan tipe data yang sama",
+        "List dapat menyimpan berbagai tipe data dan bersifat mutable",
+        "List tidak dapat diubah setelah dibuat"
+      ],
+      answer: 3,
+      explanation: "List di Python bersifat mutable (dapat diubah) dan dapat menyimpan berbagai tipe data (heterogen). Indeks dimulai dari 0, bukan 1."
     },
     {
       id: 4,
@@ -659,7 +665,7 @@ export default function PendahuluanList() {
   const [pyodideReady, setPyodideReady] = useState(false);
   const pyodideRef = useRef(null);
 
-  // Eksplorasi questions
+  // Eksplorasi questions (5 opsi)
   const eksplorasiQuestions = [
     {
       text: "Yang dimaksud dengan 'list' dalam pemrograman Python adalah ....",
@@ -673,15 +679,15 @@ export default function PendahuluanList() {
       correct: 1,
     },
     {
-      text: "yang merupakan contoh penulisan list yang benar di Python adalah ....",
+      text: "Manakah pernyataan yang BENAR tentang konsep dasar list di Python?",
       options: [
-        "{1, 2, 3}",
-        "(1, 2, 3)",
-        "[1, 2, 3]",
-        "<1, 2, 3>",
-        "list(1, 2, 3)"
+        "Indeks list dimulai dari 1",
+        "List bersifat immutable (tidak dapat diubah)",
+        "List hanya dapat menyimpan tipe data yang sama",
+        "List dapat menyimpan berbagai tipe data dan bersifat mutable",
+        "List tidak dapat diakses dengan indeks negatif"
       ],
-      correct: 2,
+      correct: 3,
     },
   ];
 

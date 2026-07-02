@@ -633,6 +633,117 @@ const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, pyodideRea
   );
 };
 
+// ================= CODE EDITOR DENGAN TIGA VISUALISASI (UNTUK GABUNGAN) =================
+const CodeEditorWithTripleVisual = ({ code, title, pyodideReady, runPythonCode, lineExplanations, dataA, dataB, dataResult, titleA, titleB, titleResult }) => {
+  const [output, setOutput] = useState("");
+  const [isRunning, setIsRunning] = useState(false);
+  const [showDetail, setShowDetail] = useState(false);
+
+  const handleRun = useCallback(async () => {
+    if (!pyodideReady) {
+      setOutput("Pyodide sedang dimuat...");
+      setShowDetail(true);
+      return;
+    }
+    setIsRunning(true);
+    setShowDetail(false);
+    const result = await runPythonCode(code);
+    setOutput(result);
+    setIsRunning(false);
+    setShowDetail(true);
+  }, [pyodideReady, code, runPythonCode]);
+
+  const renderLineExplanations = () => {
+    if (!lineExplanations || lineExplanations.length === 0) return null;
+    const lines = code.split("\n");
+    const maxLen = Math.max(lines.length, lineExplanations.length);
+    const explanations = [];
+    for (let i = 0; i < maxLen; i++) explanations.push(lineExplanations[i] || "");
+    return (
+      <div style={styles.explanationContent}>
+        {lines.map((line, idx) => {
+          const explanation = explanations[idx] || "";
+          if (!explanation.trim() && line.trim() === "") return null;
+          return (
+            <div key={idx} style={styles.explanationLine}>
+              <span style={styles.explanationLineNumber}>{idx+1}:</span>
+              <code style={styles.explanationCode}>{line || "(baris kosong)"}</code>
+              <span style={styles.explanationArrow}> → </span>
+              <span style={styles.explanationText}>{explanation}</span>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
+
+  return (
+    <div style={styles.codeEditorContainer}>
+      <div style={styles.codeEditorHeader}>
+        <span style={styles.codeEditorTitle}>{title}</span>
+        <button style={styles.runButton} onClick={handleRun} disabled={!pyodideReady || isRunning}>
+          {isRunning ? "Menjalankan..." : pyodideReady ? "Jalankan" : "Memuat..."}
+        </button>
+      </div>
+
+      <div style={styles.codeMirrorWrapper}>
+        <CodeMirror
+          value={code}
+          height="auto"
+          theme="dark"
+          extensions={[
+            python(),
+            lineNumbers(),
+            EditorView.editable.of(false),
+          ]}
+          style={{ fontSize: '14px' }}
+          basicSetup={{
+            lineNumbers: true,
+            foldGutter: false,
+            highlightActiveLine: false,
+            indentOnInput: false,
+          }}
+        />
+      </div>
+
+      <div style={styles.outputHeader}>
+        <span style={styles.outputTitle}>Output</span>
+      </div>
+      <div style={styles.codeOutput}>
+        <pre style={styles.outputContent}>{output}</pre>
+      </div>
+
+      <div style={styles.visualHeader}>Visualisasi</div>
+      <div style={styles.visualArea}>
+        {showDetail && dataA && dataB && dataResult ? (
+          <div style={{ display: "flex", gap: "20px", justifyContent: "space-between", flexWrap: "wrap" }}>
+            <div style={{ flex: 1, minWidth: "200px" }}>
+              <NestedListVisualization data={dataA} title={titleA || "List a"} />
+            </div>
+            <div style={{ flex: 1, minWidth: "200px" }}>
+              <NestedListVisualization data={dataB} title={titleB || "List b"} />
+            </div>
+            <div style={{ flex: 1, minWidth: "200px" }}>
+              <NestedListVisualization data={dataResult} title={titleResult || "Hasil penggabungan"} />
+            </div>
+          </div>
+        ) : (
+          <div style={styles.visualPlaceholder}>(Klik 'Jalankan' untuk melihat hasil)</div>
+        )}
+      </div>
+
+      {showDetail && lineExplanations && lineExplanations.length > 0 && (
+        <>
+          <div style={styles.explanationHeader}>
+            <span style={styles.outputTitle}>Penjelasan Kode Program</span>
+          </div>
+          {renderLineExplanations()}
+        </>
+      )}
+    </div>
+  );
+};
+
 // ================= KOMPONEN PRAKTIK (EDITOR) =================
 const CodeEditorEditable = ({ pyodideReady, runPythonCode, onValidation }) => {
   const [localCode, setLocalCode] = useState("");
@@ -1558,7 +1669,9 @@ _buffer.getvalue()
                 <h2 style={styles.sectionTitle}>Operasi Dasar Nested List</h2>
                 <div style={styles.card}>
                   <h3>1. Mengubah Nilai Elemen</h3>
-                  <p style={styles.text}>Akses lalu tetapkan nilai baru.</p>
+                  <p style={styles.text}>Untuk mengubah nilai elemen yang harus dilakukan adalah 
+                    dengan mengakses elemen melalui indeks baris dan kolom yang ingin diubah lalu 
+                    tetapkan nilai baru, dengan struktur nama_variabel[indeks_baris][indeks_kolom] = nilai_baru.</p>
                   <CodeEditorWithVisual
                     code={codeMengubah}
                     title="Contoh Kode Program"
@@ -1604,17 +1717,20 @@ _buffer.getvalue()
                   />
 
                   <h3>4. Menggabungkan Banyak Nested List</h3>
-                  <p style={styles.text}>Operator + digunakan untuk menggabungkan dua atau lebih nested list.</p>
-                  <CodeEditorWithVisual
+                  <p style={styles.text}>Operator + bisa digunakan untuk mengabungkan dua atau lebih nested list,
+                     menggunakan struktur nama_variabel_baru = variable_lama_1 + variable_lama_2 + dst ….</p>
+                  <CodeEditorWithTripleVisual
                     code={codeGabung}
                     title="Contoh Kode Program"
                     pyodideReady={pyodideReady}
                     runPythonCode={runPythonCode}
                     lineExplanations={lineExplGabung}
-                    beforeData={[[1,2],[3,4]]}
-                    afterData={gabungan}
-                    beforeTitle="List a dan b (terpisah)"
-                    afterTitle="Hasil penggabungan a + b"
+                    dataA={[[1,2],[3,4]]}
+                    dataB={[[5,6],[7,8]]}
+                    dataResult={gabungan}
+                    titleA="List a"
+                    titleB="List b"
+                    titleResult="Hasil penggabungan a + b"
                   />
                 </div>
               </section>
@@ -1623,6 +1739,9 @@ _buffer.getvalue()
                 <h2 style={styles.sectionTitle}>Manipulasi Nested List</h2>
                 <div style={styles.card}>
                   <h3>1. Menambah Baris (append)</h3>
+                  <p style={styles.text}>Untuk menambahkan baris baru pada nested list, dapat menggunakan append 
+                    dengan struktur <strong>nama_variabel.append(variable_baris_baru)</strong>. 
+                    Baris baru akan otomatis ditambahkan di indeks paling belakang.</p>
                   <CodeEditorWithVisual
                     code={codeTambahBaris}
                     title="Contoh Kode Program"
@@ -1636,6 +1755,9 @@ _buffer.getvalue()
                   />
 
                   <h3>2. Menyisipkan Baris (insert)</h3>
+                  <p style={styles.text}>Untuk menyisipkan baris baru pada nested list, 
+                    dapat menggunakan insert dengan struktur <strong>nama_variabel.insert(indeks_baris[baris_baru])</strong>.  
+                    Baris baru akan ditambahkan sesuai indeks baris yang ditentukan.</p>
                   <CodeEditorWithVisual
                     code={codeSisipBaris}
                     title="Contoh Kode Program"
@@ -1649,6 +1771,16 @@ _buffer.getvalue()
                   />
 
                   <h3>3. Menghapus Baris (pop, del)</h3>
+                  <p style={styles.text}>
+                    Untuk menghapus baris pada nested list, dapat menggunakan dua cara yaitu pop() dan del. Berikut penjelasannya.
+                    <br />
+                    • <strong>pop()</strong> digunakan untuk menghapus baris pada indeks tertentu sekaligus mengembalikan 
+                    nilai baris yang dihapus. Jika tidak diberikan indeks, maka pop() akan menghapus baris terakhir. 
+                    Struktur penulisannya: <strong>nama_variabel.pop(indeks_baris)</strong>.
+                    <br />
+                    • <strong>del</strong> digunakan untuk menghapus baris pada indeks tertentu tanpa mengembalikan nilai. 
+                    Struktur penulisannya: <strong>del nama_variabel[indeks_baris]</strong>.
+                  </p>
                   <CodeEditorWithVisual
                     code={codeHapusBaris}
                     title="Contoh Kode Program"
@@ -1662,6 +1794,12 @@ _buffer.getvalue()
                   />
 
                   <h3>4. Menambah Kolom</h3>
+                  <p style={styles.text}>Untuk menambah kolom di nested list, kita 
+                    dapat menggunakan perulangan untuk mengakses baris dan menambahkan 
+                    elemen baru di akhir baris menggunakan append(). 
+                    Karena setiap baris adalah list, menambah kolom berarti menambah 
+                    elemen baru pada sub‑list tersebut. 
+                    Strukturnya for baris in data: baris.append(nilai_baru).</p>
                   <CodeEditorWithVisual
                     code={codeTambahKolom}
                     title="Contoh Kode Program"
@@ -1675,6 +1813,13 @@ _buffer.getvalue()
                   />
 
                   <h3>5. Menghapus Kolom</h3>
+                  <p style={styles.text}>Untuk menghapus kolom pada setiap baris di nested list, 
+                    kita dapat menggunakan perulangan untuk mengakses setiap baris (yang merupakan list) 
+                    dan menghapus elemen pada indeks kolom tertentu menggunakan method pop(). Karena setiap baris 
+                    adalah list, menghapus kolom berarti menghapus elemen pada posisi yang sama di setiap sub‑list.
+                    Struktur penulisannya <strong>for baris in data: baris.pop(indeks_kolom)</strong>. Dengan menggunakan struktur kode ini akan 
+                    menghapus elemen pada indeks yang diberikan dan mengembalikan nilai yang dihapus
+                  </p>
                   <CodeEditorWithVisual
                     code={codeHapusKolom}
                     title="Contoh Kode Program"
