@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Navbar from "../../komponen/Navbar";
 import SidebarMateri from "../../komponen/SidebarMateri";
 import { db } from "../../../config/firebase";
-import { doc, getDoc, updateDoc, increment } from "firebase/firestore";
+import { doc, getDoc, updateDoc, increment, setDoc } from "firebase/firestore";
 
 // ---------- IMPOR CODEMIRROR ----------
 import CodeMirror from '@uiw/react-codemirror';
@@ -353,33 +353,43 @@ const CodeEditor = ({ code, pyodideReady, runPythonCode, explanations, beforeDat
   );
 };
 
-// ===================== KOMPONEN PRAKTIK (dengan CodeMirror) =====================
-const CodeEditorEditable = ({ title, pyodideReady, runPythonCode, onValidation }) => {
-  const [localCode, setLocalCode] = useState("");
+// ===================== KOMPONEN PRAKTIK (EDITABLE) - DIPERBAIKI UNTUK MULTI-BARIS =====================
+const CodeEditorEditable = ({ title, pyodideReady, runPythonCode, onValidation, initialCode = "" }) => {
+  const [localCode, setLocalCode] = useState(initialCode);
   const [output, setOutput] = useState("");
   const [isRunning, setIsRunning] = useState(false);
   const [currentMessage, setCurrentMessage] = useState(null);
 
+  // Update localCode jika initialCode berubah
+  useEffect(() => {
+    setLocalCode(initialCode);
+  }, [initialCode]);
+
   const handleChange = useCallback((value) => {
     setLocalCode(value);
     setCurrentMessage(null);
-    if (onValidation) onValidation({ isValid: false, isComplete: false });
+    if (onValidation) onValidation({ isValid: false, isComplete: false, code: value });
   }, [onValidation]);
 
-  const hasNonCommentLine = (code, pattern) => {
-    const lines = code.split('\n');
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (trimmed === '' || trimmed.startsWith('#')) continue;
-      if (pattern.test(trimmed)) return true;
-    }
-    return false;
+  // 🔽 Fungsi untuk membersihkan kode dari komentar dan menggabungkan baris
+  const getCleanCode = (code) => {
+    return code
+      .split('\n')
+      .map(line => line.trim())
+      .filter(line => line && !line.startsWith('#'))
+      .join(' ');
+  };
+
+  // 🔽 Fungsi untuk mengecek pola pada kode bersih
+  const hasPattern = (code, pattern) => {
+    const clean = getCleanCode(code);
+    return pattern.test(clean);
   };
 
   const validateAndRun = useCallback(async () => {
     if (!pyodideReady) {
       setCurrentMessage({ type: 'error', text: "Pyodide sedang dimuat, harap tunggu..." });
-      if (onValidation) onValidation({ isValid: false, isComplete: false });
+      if (onValidation) onValidation({ isValid: false, isComplete: false, code: localCode });
       return;
     }
     setOutput("");
@@ -390,7 +400,7 @@ const CodeEditorEditable = ({ title, pyodideReady, runPythonCode, onValidation }
     
     if (code.trim() === "") {
       setCurrentMessage({ type: 'error', text: "Silakan isi jawaban Anda terlebih dahulu." });
-      if (onValidation) onValidation({ isValid: false, isComplete: false });
+      if (onValidation) onValidation({ isValid: false, isComplete: false, code: localCode });
       setIsRunning(false);
       return;
     }
@@ -404,19 +414,20 @@ const CodeEditorEditable = ({ title, pyodideReady, runPythonCode, onValidation }
     // Regex untuk print inventaris
     const printPattern = /print\s*\(\s*inventaris\s*\)/;
     
+    // 🔽 Gunakan hasPattern (bukan hasNonCommentLine)
+    const hasDict = hasPattern(code, dictPattern);
+    const hasUpdate = hasPattern(code, updatePattern);
+    const hasPop = hasPattern(code, popPattern);
+    const hasPrint = hasPattern(code, printPattern);
+    
     // Larangan: tidak boleh ada print selain print inventaris
-    const allPrintStatements = code.match(/print\s*\([^)]*\)/g) || [];
+    const cleanCode = getCleanCode(code);
+    const allPrintStatements = cleanCode.match(/print\s*\([^)]*\)/g) || [];
     const hasExtraPrint = allPrintStatements.some(stmt => !printPattern.test(stmt));
     // Larangan: tidak boleh ada perintah pop selain untuk 'Data Science'
-    const otherPop = /inventaris\.pop\s*\(\s*(?:"|')(?!Data\s+Science)([^)]*)\s*\)/i.test(code);
+    const otherPop = /inventaris\.pop\s*\(\s*(?:"|')(?!Data\s+Science)([^)]*)\s*\)/i.test(cleanCode);
     // Larangan: tidak boleh ada perintah update selain untuk 'Machine Learning'
-    const otherUpdate = /inventaris\.update\s*\(\s*\{\s*(?:"|')(?!Machine\s+Learning)([^)]*)\s*:\s*\d+\s*\}\s*\)/i.test(code);
-    
-    // Cek keberadaan instruksi yang diperlukan
-    const hasDict = hasNonCommentLine(code, dictPattern);
-    const hasUpdate = hasNonCommentLine(code, updatePattern);
-    const hasPop = hasNonCommentLine(code, popPattern);
-    const hasPrint = hasNonCommentLine(code, printPattern);
+    const otherUpdate = /inventaris\.update\s*\(\s*\{\s*(?:"|')(?!Machine\s+Learning)([^)]*)\s*:\s*\d+\s*\}\s*\)/i.test(cleanCode);
     
     // Validasi: harus memiliki semua instruksi, dan tidak boleh ada print ekstra, tidak boleh ada pop/update lain
     const isComplete = hasDict && hasUpdate && hasPop && hasPrint && !hasExtraPrint && !otherPop && !otherUpdate;
@@ -434,7 +445,7 @@ const CodeEditorEditable = ({ title, pyodideReady, runPythonCode, onValidation }
     
     // Kirim status validasi ke parent
     if (onValidation) {
-      onValidation({ isValid: isComplete, isComplete: isComplete });
+      onValidation({ isValid: isComplete, isComplete: isComplete, code: localCode });
     }
   }, [localCode, pyodideReady, runPythonCode, onValidation]);
 
@@ -479,8 +490,8 @@ const CodeEditorEditable = ({ title, pyodideReady, runPythonCode, onValidation }
   );
 };
 
-// ===================== KOMPONEN LATIHAN SOAL =====================
-const LatihanSoal = ({ questions, resetTrigger, onAllCorrectChange }) => {
+// ===================== KOMPONEN LATIHAN SOAL - DENGAN PRAKTIKUM SELESAI =====================
+const LatihanSoal = ({ questions, resetTrigger, onAllCorrectChange, praktikumSelesai }) => {
   const [answers, setAnswers] = useState(questions.map(() => null));
   const [feedback, setFeedback] = useState(questions.map(() => ""));
   const [locked, setLocked] = useState(questions.map(() => false));
@@ -509,6 +520,12 @@ const LatihanSoal = ({ questions, resetTrigger, onAllCorrectChange }) => {
   };
 
   const handleCheckAll = () => {
+    // 🔽 CEK APAKAH PRAKTIKUM SUDAH SELESAI
+    if (!praktikumSelesai) {
+      alert("Anda harus menyelesaikan Praktikum terlebih dahulu sebelum mengerjakan latihan!");
+      return;
+    }
+
     const allAnswered = answers.every(ans => ans !== null);
     if (!allAnswered) {
       setGlobalError("Anda harus menjawab semua soal terlebih dahulu!");
@@ -609,6 +626,10 @@ export default function ManipulasiDictionary() {
   const EKSPLORASI_ANSWERS_KEY = `eksplorasi_${TOPIC_NAME}_answers`;
   const BONUS_DONE_KEY = `${TOPIC_NAME}_bonus_done`;
 
+  // STATE UNTUK PRAKTIKUM
+  const [praktikumSelesai, setPraktikumSelesai] = useState(false);
+  const [savedCode, setSavedCode] = useState("");
+
   // Cek autentikasi user
   useEffect(() => {
     const uid = localStorage.getItem('userId');
@@ -653,6 +674,28 @@ export default function ManipulasiDictionary() {
 
     fetchProgres();
   }, [userId, navigate]);
+
+  // Ambil data praktikum dari Firestore
+  useEffect(() => {
+    if (!userId) return;
+    const fetchPraktikum = async () => {
+      try {
+        const praktikRef = doc(db, "Praktikum", userId);
+        const praktikSnap = await getDoc(praktikRef);
+        if (praktikSnap.exists()) {
+          const data = praktikSnap.data();
+          const code = data.manipulasi_dict || "";
+          if (code.trim() !== "") {
+            setSavedCode(code);
+            setPraktikumSelesai(true);
+          }
+        }
+      } catch (error) {
+        console.error("Gagal mengambil data praktikum:", error);
+      }
+    };
+    fetchPraktikum();
+  }, [userId]);
 
   const [pyodideReady, setPyodideReady] = useState(false);
   const pyodideRef = useRef(null);
@@ -740,16 +783,33 @@ export default function ManipulasiDictionary() {
     });
   };
 
-  // Callback untuk validasi praktik
-  const handlePraktikValidation = ({ isValid, isComplete }) => {
+  // ─── FUNGSI UNTUK MENYIMPAN KODE PRAKTIK KE FIRESTORE ───
+  const savePraktikCode = useCallback(async (code) => {
+    if (!userId) return;
+    try {
+      const praktikRef = doc(db, "Praktikum", userId);
+      await setDoc(praktikRef, {
+        manipulasi_dict: code,
+      }, { merge: true });
+      console.log("Kode praktik berhasil disimpan.");
+    } catch (error) {
+      console.error("Gagal menyimpan kode praktik:", error);
+    }
+  }, [userId]);
+
+  // ─── HANDLER VALIDASI PRAKTIK ───
+  const handlePraktikValidation = useCallback(({ isValid, isComplete, code }) => {
     if (isComplete) {
       setPraktikMessage("✅ Selamat! Semua instruksi sudah dikerjakan dengan benar.");
       setPraktikMessageType("success");
+      setPraktikumSelesai(true);
+      setSavedCode(code);
+      savePraktikCode(code);
     } else {
       setPraktikMessage("⚠️ Periksa kembali instruksi!");
       setPraktikMessageType("warning");
     }
-  };
+  }, [savePraktikCode]);
 
   // Data untuk visualisasi perbandingan
   const dataUpdateBefore = { a: 1, b: 2 };
@@ -1133,6 +1193,7 @@ _buffer.getvalue()
                     pyodideReady={pyodideReady} 
                     runPythonCode={runPythonCode} 
                     onValidation={handlePraktikValidation}
+                    initialCode={savedCode}
                   />
                 </div>
               </section>
@@ -1145,6 +1206,7 @@ _buffer.getvalue()
                     questions={latihanQuestions} 
                     resetTrigger={resetInteractives} 
                     onAllCorrectChange={setAllLatihanCorrect}
+                    praktikumSelesai={praktikumSelesai}
                   />
                 </div>
               </section>

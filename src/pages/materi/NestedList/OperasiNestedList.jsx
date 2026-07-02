@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Navbar from "../../komponen/Navbar";
 import SidebarMateri from "../../komponen/SidebarMateri";
 import { db } from "../../../config/firebase";
-import { doc, getDoc, updateDoc, increment } from "firebase/firestore";
+import { doc, getDoc, updateDoc, increment, setDoc } from "firebase/firestore";
 
 // ---------- IMPOR CODEMIRROR ----------
 import CodeMirror from '@uiw/react-codemirror';
@@ -744,25 +744,35 @@ const CodeEditorWithTripleVisual = ({ code, title, pyodideReady, runPythonCode, 
   );
 };
 
-// ================= KOMPONEN PRAKTIK (EDITOR) =================
-const CodeEditorEditable = ({ pyodideReady, runPythonCode, onValidation }) => {
-  const [localCode, setLocalCode] = useState("");
+// ================= KOMPONEN PRAKTIK (EDITOR) - DIPERBAIKI VALIDASI MULTI-BARIS =================
+const CodeEditorEditable = ({ pyodideReady, runPythonCode, onValidation, initialCode = "" }) => {
+  const [localCode, setLocalCode] = useState(initialCode);
   const [output, setOutput] = useState("");
   const [isRunning, setIsRunning] = useState(false);
 
+  // Update localCode jika initialCode berubah
+  useEffect(() => {
+    setLocalCode(initialCode);
+  }, [initialCode]);
+
   const handleChange = useCallback((value) => {
     setLocalCode(value);
-    if (onValidation) onValidation({ isValid: false, isComplete: false });
+    if (onValidation) onValidation({ isValid: false, isComplete: false, code: value });
   }, [onValidation]);
 
-  const hasNonCommentLine = (code, pattern) => {
-    const lines = code.split('\n');
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (trimmed === '' || trimmed.startsWith('#')) continue;
-      if (pattern.test(trimmed)) return true;
-    }
-    return false;
+  // Fungsi untuk membersihkan kode dari komentar dan menggabungkan baris
+  const getCleanCode = (code) => {
+    return code
+      .split('\n')
+      .map(line => line.trim())
+      .filter(line => line && !line.startsWith('#'))
+      .join(' ');
+  };
+
+  // Fungsi untuk mengecek pola pada kode bersih
+  const hasPattern = (code, pattern) => {
+    const clean = getCleanCode(code);
+    return pattern.test(clean);
   };
 
   const handleRun = useCallback(async () => {
@@ -779,13 +789,13 @@ const CodeEditorEditable = ({ pyodideReady, runPythonCode, onValidation }) => {
       executionOutput = result;
       if (result.startsWith("Error:")) {
         setOutput(result);
-        if (onValidation) onValidation({ isValid: false, isComplete: false });
+        if (onValidation) onValidation({ isValid: false, isComplete: false, code: localCode });
         setIsRunning(false);
         return;
       }
     } catch (err) {
       setOutput(`Error: ${err.message}`);
-      if (onValidation) onValidation({ isValid: false, isComplete: false });
+      if (onValidation) onValidation({ isValid: false, isComplete: false, code: localCode });
       setIsRunning(false);
       return;
     }
@@ -795,10 +805,11 @@ const CodeEditorEditable = ({ pyodideReady, runPythonCode, onValidation }) => {
     const printPattern = /print\s*\(\s*data\s*\[\s*2\s*\]\s*\[\s*1\s*\]\s*\)/;
     const printAllPattern = /print\s*\(\s*data\s*\)/;
 
-    const hasList = hasNonCommentLine(localCode, listPattern);
-    const hasChange = hasNonCommentLine(localCode, changePattern);
-    const hasPrint = hasNonCommentLine(localCode, printPattern);
-    const hasPrintAll = hasNonCommentLine(localCode, printAllPattern);
+    // Gunakan hasPattern yang sudah menggabungkan baris
+    const hasList = hasPattern(localCode, listPattern);
+    const hasChange = hasPattern(localCode, changePattern);
+    const hasPrint = hasPattern(localCode, printPattern);
+    const hasPrintAll = hasPattern(localCode, printAllPattern);
 
     const isComplete = hasList && hasChange && hasPrint && hasPrintAll;
 
@@ -806,7 +817,7 @@ const CodeEditorEditable = ({ pyodideReady, runPythonCode, onValidation }) => {
     setIsRunning(false);
 
     if (onValidation) {
-      onValidation({ isValid: isComplete, isComplete: isComplete });
+      onValidation({ isValid: isComplete, isComplete: isComplete, code: localCode });
     }
   }, [localCode, pyodideReady, runPythonCode, onValidation]);
 
@@ -852,10 +863,10 @@ const CodeEditorEditable = ({ pyodideReady, runPythonCode, onValidation }) => {
   );
 };
 
-// ================= SOAL LATIHAN =================
+// ================= SOAL LATIHAN - MODIFIKASI DENGAN PRAKTIKUM SELESAI =================
 const normalizeAnswer = (str) => str.trim().replace(/'/g, '"').replace(/\s+/g, ' ');
 
-const CodeCompletionQuestion = ({ question, codeParts, placeholders, expectedAnswers, onCheck }) => {
+const CodeCompletionQuestion = ({ question, codeParts, placeholders, expectedAnswers, onCheck, praktikumSelesai }) => {
   const [answers, setAnswers] = useState(placeholders.map(() => ""));
   const [feedback, setFeedback] = useState("");
   const [checked, setChecked] = useState(false);
@@ -874,6 +885,11 @@ const CodeCompletionQuestion = ({ question, codeParts, placeholders, expectedAns
   };
 
   const handleCheck = () => {
+    if (!praktikumSelesai) {
+      alert("Anda harus menyelesaikan Praktikum terlebih dahulu sebelum mengerjakan latihan!");
+      return;
+    }
+
     let allCorrect = true;
     for (let i = 0; i < expectedAnswers.length; i++) {
       if (normalizeAnswer(answers[i]) !== normalizeAnswer(expectedAnswers[i])) {
@@ -935,13 +951,18 @@ const CodeCompletionQuestion = ({ question, codeParts, placeholders, expectedAns
   );
 };
 
-const DragDropCompletionQuestion = ({ question, codeTemplate, placeholders, options, expectedAnswers, onCheck }) => {
+const DragDropCompletionQuestion = ({ question, codeTemplate, placeholders, options, expectedAnswers, onCheck, praktikumSelesai }) => {
   const [answers, setAnswers] = useState(placeholders.map(() => ""));
   const [feedback, setFeedback] = useState("");
   const [checked, setChecked] = useState(false);
   const [isCorrect, setIsCorrect] = useState(false);
 
   const handleDragStart = (e, value) => {
+    if (!praktikumSelesai) {
+      alert("Anda harus menyelesaikan Praktikum terlebih dahulu sebelum mengerjakan latihan!");
+      e.preventDefault();
+      return;
+    }
     e.dataTransfer.setData("text/plain", value);
     e.dataTransfer.effectAllowed = "copy";
   };
@@ -952,6 +973,11 @@ const DragDropCompletionQuestion = ({ question, codeTemplate, placeholders, opti
   };
 
   const handleDrop = useCallback((e, idx) => {
+    if (!praktikumSelesai) {
+      alert("Anda harus menyelesaikan Praktikum terlebih dahulu sebelum mengerjakan latihan!");
+      e.preventDefault();
+      return;
+    }
     e.preventDefault();
     e.stopPropagation();
     const droppedValue = e.dataTransfer.getData("text/plain");
@@ -968,7 +994,7 @@ const DragDropCompletionQuestion = ({ question, codeTemplate, placeholders, opti
         if (onCheck) onCheck(false);
       }
     }
-  }, [isCorrect, onCheck]);
+  }, [isCorrect, onCheck, praktikumSelesai]);
 
   const handleResetSlot = useCallback((idx) => {
     setAnswers(prev => {
@@ -993,6 +1019,11 @@ const DragDropCompletionQuestion = ({ question, codeTemplate, placeholders, opti
   };
 
   const handleCheck = () => {
+    if (!praktikumSelesai) {
+      alert("Anda harus menyelesaikan Praktikum terlebih dahulu sebelum mengerjakan latihan!");
+      return;
+    }
+
     let allCorrect = true;
     for (let i = 0; i < expectedAnswers.length; i++) {
       if (normalizeAnswer(answers[i]) !== normalizeAnswer(expectedAnswers[i])) {
@@ -1206,6 +1237,10 @@ export default function OperasiNestedList() {
   const TOPIC_NAME = "operasi_nested_list";
   const BONUS_DONE_KEY = `${TOPIC_NAME}_bonus_done`;
 
+  // STATE UNTUK PRAKTIKUM
+  const [praktikumSelesai, setPraktikumSelesai] = useState(false);
+  const [savedCode, setSavedCode] = useState("");
+
   // Cek autentikasi user
   useEffect(() => {
     const uid = localStorage.getItem('userId');
@@ -1231,12 +1266,11 @@ export default function OperasiNestedList() {
           const progres = data.progres_belajar || 0;
           setProgresBelajar(progres);
 
-          // 🔒 Halaman hanya bisa diakses jika progres >= 7
+          // Halaman hanya bisa diakses jika progres >= 7
           if (progres < 7) {
             navigate('/dashboard');
             return;
           }
-          // Jika progres >= 7, boleh akses halaman
         } else {
           navigate('/dashboard');
         }
@@ -1251,6 +1285,28 @@ export default function OperasiNestedList() {
     fetchProgres();
   }, [userId, navigate]);
 
+  // Ambil data praktikum dari Firestore
+  useEffect(() => {
+    if (!userId) return;
+    const fetchPraktikum = async () => {
+      try {
+        const praktikRef = doc(db, "Praktikum", userId);
+        const praktikSnap = await getDoc(praktikRef);
+        if (praktikSnap.exists()) {
+          const data = praktikSnap.data();
+          const code = data.operasi_nested_list || "";
+          if (code.trim() !== "") {
+            setSavedCode(code);
+            setPraktikumSelesai(true);
+          }
+        }
+      } catch (error) {
+        console.error("Gagal mengambil data praktikum:", error);
+      }
+    };
+    fetchPraktikum();
+  }, [userId]);
+
   const [pyodideReady, setPyodideReady] = useState(false);
   const pyodideRef = useRef(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
@@ -1262,37 +1318,29 @@ export default function OperasiNestedList() {
   const [praktikMessage, setPraktikMessage] = useState("");
   const [praktikMessageType, setPraktikMessageType] = useState("");
 
-  // Tampilkan modal hanya jika:
-  // 1. progresBelajar < 8 (belum mencapai level 8)
-  // 2. semua latihan benar
-  // 3. belum menampilkan modal
+  // Tampilkan modal hanya jika progres < 8 dan semua latihan benar
   useEffect(() => {
     if (!userId) return;
     if (progresBelajar === null) return;
     if (progresBelajar >= 8) {
-      // Jika progres >= 8, tidak perlu tampilkan modal
       setShowModal(false);
       return;
     }
     if (allExercisesCorrect && !showModal) {
-      // Jika progres < 8 dan semua latihan benar, tampilkan modal
       setShowModal(true);
     }
   }, [allExercisesCorrect, userId, showModal, progresBelajar]);
 
   const handleCompleteAndNavigate = async () => {
     try {
-      // Tambah progres hanya jika masih < 8
       if (progresBelajar < 8) {
         const mahasiswaRef = doc(db, "mahasiswa", userId);
         await updateDoc(mahasiswaRef, {
           progres_belajar: increment(1)
         });
-        // Update state lokal
         setProgresBelajar(progresBelajar + 1);
       }
       
-      // Tandai bonus sudah diberikan
       localStorage.setItem(BONUS_DONE_KEY, "true");
       setShowModal(false);
       navigate("/NestedList/RangkumanNestedList");
@@ -1310,15 +1358,33 @@ export default function OperasiNestedList() {
     setAllExercisesCorrect(exerciseStatus.every(v => v === true));
   }, [exerciseStatus]);
 
-  const handlePraktikValidation = ({ isValid, isComplete }) => {
+  // ─── FUNGSI UNTUK MENYIMPAN KODE PRAKTIK KE FIRESTORE ───
+  const savePraktikCode = useCallback(async (code) => {
+    if (!userId) return;
+    try {
+      const praktikRef = doc(db, "Praktikum", userId);
+      await setDoc(praktikRef, {
+        operasi_nested_list: code,
+      }, { merge: true });
+      console.log("Kode praktik berhasil disimpan.");
+    } catch (error) {
+      console.error("Gagal menyimpan kode praktik:", error);
+    }
+  }, [userId]);
+
+  // ─── HANDLER VALIDASI PRAKTIK ───
+  const handlePraktikValidation = useCallback(({ isValid, isComplete, code }) => {
     if (isComplete) {
       setPraktikMessage("✅ Selamat! Semua instruksi sudah dikerjakan dengan benar.");
       setPraktikMessageType("success");
+      setPraktikumSelesai(true);
+      setSavedCode(code);
+      savePraktikCode(code);
     } else {
       setPraktikMessage("⚠️ Periksa kembali instruksi!");
       setPraktikMessageType("warning");
     }
-  };
+  }, [savePraktikCode]);
 
   // Data untuk contoh kode
   const matrix3x3 = [[1,2,3],[4,5,6],[7,8,9]];
@@ -1862,6 +1928,7 @@ _buffer.getvalue()
                     pyodideReady={pyodideReady}
                     runPythonCode={runPythonCode}
                     onValidation={handlePraktikValidation}
+                    initialCode={savedCode}
                   />
                 </div>
               </section>
@@ -1871,11 +1938,53 @@ _buffer.getvalue()
                 <div style={styles.card}>
                   <p style={styles.text}>Isilah bagian yang kosong pada kode dan drag pilihan ke area kosong.</p>
                   
-                  <CodeCompletionQuestion question="1. Lengkapi kode untuk mengubah elemen baris pertama kolom kedua menjadi 99." codeParts={soal1CodeParts} placeholders={soal1Placeholders} expectedAnswers={soal1Expected} onCheck={(isCorrect) => updateExerciseStatus(0, isCorrect)} />
-                  <CodeCompletionQuestion question="2. Lengkapi kode untuk menambahkan baris baru [5,6] di akhir nested list." codeParts={soal2CodeParts} placeholders={soal2Placeholders} expectedAnswers={soal2Expected} onCheck={(isCorrect) => updateExerciseStatus(1, isCorrect)} />
-                  <DragDropCompletionQuestion question="3. Lengkapi kode berikut untuk menambahkan kolom (nilai 0) pada setiap baris nested list." codeTemplate={soal3Template} placeholders={soal3Placeholders} options={soal3Options} expectedAnswers={soal3Expected} onCheck={(isCorrect) => updateExerciseStatus(2, isCorrect)} />
-                  <DragDropCompletionQuestion question="4. Lengkapi kode berikut untuk menghapus baris pertama dari nested list." codeTemplate={soal4Template} placeholders={soal4Placeholders} options={soal4Options} expectedAnswers={soal4Expected} onCheck={(isCorrect) => updateExerciseStatus(3, isCorrect)} />
-                  <DragDropCompletionQuestion question="5. Lengkapi kode berikut untuk mengubah elemen baris kedua kolom pertama menjadi 99." codeTemplate={soal5Template} placeholders={soal5Placeholders} options={soal5Options} expectedAnswers={soal5Expected} onCheck={(isCorrect) => updateExerciseStatus(4, isCorrect)} />
+                  <CodeCompletionQuestion 
+                    question="1. Lengkapi kode untuk mengubah elemen baris pertama kolom kedua menjadi 99." 
+                    codeParts={soal1CodeParts} 
+                    placeholders={soal1Placeholders} 
+                    expectedAnswers={soal1Expected} 
+                    onCheck={(isCorrect) => updateExerciseStatus(0, isCorrect)} 
+                    praktikumSelesai={praktikumSelesai} 
+                  />
+                  
+                  <CodeCompletionQuestion 
+                    question="2. Lengkapi kode untuk menambahkan baris baru [5,6] di akhir nested list." 
+                    codeParts={soal2CodeParts} 
+                    placeholders={soal2Placeholders} 
+                    expectedAnswers={soal2Expected} 
+                    onCheck={(isCorrect) => updateExerciseStatus(1, isCorrect)} 
+                    praktikumSelesai={praktikumSelesai} 
+                  />
+                  
+                  <DragDropCompletionQuestion 
+                    question="3. Lengkapi kode berikut untuk menambahkan kolom (nilai 0) pada setiap baris nested list." 
+                    codeTemplate={soal3Template} 
+                    placeholders={soal3Placeholders} 
+                    options={soal3Options} 
+                    expectedAnswers={soal3Expected} 
+                    onCheck={(isCorrect) => updateExerciseStatus(2, isCorrect)} 
+                    praktikumSelesai={praktikumSelesai} 
+                  />
+                  
+                  <DragDropCompletionQuestion 
+                    question="4. Lengkapi kode berikut untuk menghapus baris pertama dari nested list." 
+                    codeTemplate={soal4Template} 
+                    placeholders={soal4Placeholders} 
+                    options={soal4Options} 
+                    expectedAnswers={soal4Expected} 
+                    onCheck={(isCorrect) => updateExerciseStatus(3, isCorrect)} 
+                    praktikumSelesai={praktikumSelesai} 
+                  />
+                  
+                  <DragDropCompletionQuestion 
+                    question="5. Lengkapi kode berikut untuk mengubah elemen baris kedua kolom pertama menjadi 99." 
+                    codeTemplate={soal5Template} 
+                    placeholders={soal5Placeholders} 
+                    options={soal5Options} 
+                    expectedAnswers={soal5Expected} 
+                    onCheck={(isCorrect) => updateExerciseStatus(4, isCorrect)} 
+                    praktikumSelesai={praktikumSelesai} 
+                  />
                 </div>
               </section>
             </>

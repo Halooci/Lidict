@@ -159,6 +159,12 @@ const SidebarDosen = () => {
               <span>Daftar Nilai Mahasiswa</span>
             </NavLink>
           </li>
+          <li style={{ marginBottom: '4px' }}>
+            <NavLink to="/dosen/praktik" style={navLinkStyle}>
+              <ClipboardList size={20} />
+              <span>Praktikum Mahasiswa</span>
+            </NavLink>
+          </li>
         </ul>
       </aside>
     </>

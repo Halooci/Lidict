@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Navbar from "../../komponen/Navbar";
 import SidebarMateri from "../../komponen/SidebarMateri";
 import { db } from "../../../config/firebase";
-import { doc, getDoc, updateDoc, increment } from "firebase/firestore";
+import { doc, getDoc, updateDoc, increment, setDoc } from "firebase/firestore";
 
 // ---------- IMPOR CODEMIRROR ----------
 import CodeMirror from '@uiw/react-codemirror';
@@ -1091,14 +1091,20 @@ const CodeEditorWithVisual = ({
 };
 
 // ================= KOMPONEN UNTUK LATIHAN PRAKTIK CODING (EDITABLE) =================
-const CodeEditorEditable = ({ title, pyodideReady, runPythonCode, onValidation }) => {
-  const [localCode, setLocalCode] = useState("");
+// 🔽 MODIFIKASI: menerima prop initialCode
+const CodeEditorEditable = ({ title, pyodideReady, runPythonCode, onValidation, initialCode = "" }) => {
+  const [localCode, setLocalCode] = useState(initialCode);
   const [output, setOutput] = useState("");
   const [isRunning, setIsRunning] = useState(false);
 
+  // 🔽 Update localCode jika initialCode berubah
+  useEffect(() => {
+    setLocalCode(initialCode);
+  }, [initialCode]);
+
   const handleChange = useCallback((value) => {
     setLocalCode(value);
-    if (onValidation) onValidation({ isValid: false, isComplete: false });
+    if (onValidation) onValidation({ isValid: false, isComplete: false, code: value });
   }, [onValidation]);
 
   const hasNonCommentLine = (code, pattern) => {
@@ -1125,13 +1131,13 @@ const CodeEditorEditable = ({ title, pyodideReady, runPythonCode, onValidation }
       executionOutput = result;
       if (result.startsWith("Error:")) {
         setOutput(result);
-        if (onValidation) onValidation({ isValid: false, isComplete: false });
+        if (onValidation) onValidation({ isValid: false, isComplete: false, code: localCode });
         setIsRunning(false);
         return;
       }
     } catch (err) {
       setOutput(`Error: ${err.message}`);
-      if (onValidation) onValidation({ isValid: false, isComplete: false });
+      if (onValidation) onValidation({ isValid: false, isComplete: false, code: localCode });
       setIsRunning(false);
       return;
     }
@@ -1153,7 +1159,7 @@ const CodeEditorEditable = ({ title, pyodideReady, runPythonCode, onValidation }
     setIsRunning(false);
 
     if (onValidation) {
-      onValidation({ isValid: isComplete, isComplete: isComplete });
+      onValidation({ isValid: isComplete, isComplete: isComplete, code: localCode });
     }
   }, [localCode, pyodideReady, runPythonCode, onValidation]);
 
@@ -1200,7 +1206,8 @@ const CodeEditorEditable = ({ title, pyodideReady, runPythonCode, onValidation }
 };
 
 // ================= KOMPONEN DRAG-N-DROP MATCHING =================
-const DragDropMatching = ({ items, resetTrigger, onAllCorrectChange }) => {
+// 🔽 MODIFIKASI: tambahkan prop praktikumSelesai
+const DragDropMatching = ({ items, resetTrigger, onAllCorrectChange, praktikumSelesai }) => {
   const shuffleArray = (arr) => {
     const shuffled = [...arr];
     for (let i = shuffled.length - 1; i > 0; i--) {
@@ -1226,6 +1233,12 @@ const DragDropMatching = ({ items, resetTrigger, onAllCorrectChange }) => {
   const [correctDescIds, setCorrectDescIds] = useState(new Set());
 
   const checkAnswers = () => {
+    // 🔽 CEK APAKAH PRAKTIKUM SUDAH SELESAI
+    if (!praktikumSelesai) {
+      alert("Anda harus menyelesaikan Praktikum terlebih dahulu sebelum mengerjakan latihan!");
+      return;
+    }
+
     const allMatched = functions.every(f => f.matchedDescId !== null);
     if (!allMatched) {
       setFeedbackMsg("⚠️ Lengkapi semua pasangan terlebih dahulu. ⚠️");
@@ -1484,6 +1497,10 @@ export default function OperasiManipulasiList() {
   const [progresBelajar, setProgresBelajar] = useState(null);
   const [showModal, setShowModal] = useState(false);
 
+  // 🔽 STATE UNTUK PRAKTIKUM
+  const [praktikumSelesai, setPraktikumSelesai] = useState(false);
+  const [savedCode, setSavedCode] = useState(""); // untuk menyimpan kode yang sudah benar
+
   // ─────────── KONFIGURASI HALAMAN ───────────
   const TOPIC_NAME = "operasi_manipulasi_list";
   const EKSPLORASI_ANSWERS_KEY = `eksplorasi_${TOPIC_NAME}_answers`;
@@ -1501,17 +1518,18 @@ export default function OperasiManipulasiList() {
     }
   }, [navigate]);
 
-  // Fetch progres_belajar dari Firestore
+  // Fetch progres_belajar dari Firestore & data praktikum
   useEffect(() => {
     if (!userId) return;
 
-    const fetchProgres = async () => {
+    const fetchData = async () => {
       setLoading(true);
       try {
-        const docRef = doc(db, "mahasiswa", userId);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          const data = docSnap.data();
+        // Ambil data mahasiswa
+        const mahasiswaRef = doc(db, "mahasiswa", userId);
+        const mahasiswaSnap = await getDoc(mahasiswaRef);
+        if (mahasiswaSnap.exists()) {
+          const data = mahasiswaSnap.data();
           const progres = data.progres_belajar || 0;
           setProgresBelajar(progres);
 
@@ -1520,19 +1538,31 @@ export default function OperasiManipulasiList() {
             navigate('/dashboard');
             return;
           }
-          // Jika progres >= 3, boleh akses halaman
         } else {
           navigate('/dashboard');
+          return;
+        }
+
+        // Ambil data praktikum dari koleksi "Praktikum"
+        const praktikRef = doc(db, "Praktikum", userId);
+        const praktikSnap = await getDoc(praktikRef);
+        if (praktikSnap.exists()) {
+          const praktikData = praktikSnap.data();
+          const code = praktikData.operasi_manipulasi_list || "";
+          if (code.trim() !== "") {
+            setSavedCode(code);
+            setPraktikumSelesai(true);
+          }
         }
       } catch (error) {
-        console.error("Gagal mengambil progres:", error);
+        console.error("Gagal mengambil data:", error);
         navigate('/dashboard');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchProgres();
+    fetchData();
   }, [userId, navigate]);
 
   const [pyodideReady, setPyodideReady] = useState(false);
@@ -1553,29 +1583,24 @@ export default function OperasiManipulasiList() {
     if (!userId) return;
     if (progresBelajar === null) return;
     if (progresBelajar >= 4) {
-      // Jika progres >= 4, tidak perlu tampilkan modal
       setShowModal(false);
       return;
     }
     if (allMatchingCorrect && !showModal) {
-      // Jika progres < 4 dan semua matching benar, tampilkan modal
       setShowModal(true);
     }
   }, [allMatchingCorrect, userId, showModal, progresBelajar]);
 
   const handleCompleteAndNavigate = async () => {
     try {
-      // Tambah progres hanya jika masih < 4
       if (progresBelajar < 4) {
         const mahasiswaRef = doc(db, "mahasiswa", userId);
         await updateDoc(mahasiswaRef, {
           progres_belajar: increment(1)
         });
-        // Update state lokal
         setProgresBelajar(progresBelajar + 1);
       }
       
-      // Tandai bonus sudah diberikan
       localStorage.setItem(BONUS_DONE_KEY, "true");
       setShowModal(false);
       navigate("/List/RangkumanList");
@@ -1936,15 +1961,33 @@ export default function OperasiManipulasiList() {
     }
   }, []);
 
-  const handlePraktikValidation = ({ isValid, isComplete }) => {
+  // ─── FUNGSI UNTUK MENYIMPAN KODE PRAKTIK KE FIRESTORE ───
+  const savePraktikCode = useCallback(async (code) => {
+    if (!userId) return;
+    try {
+      const praktikRef = doc(db, "Praktikum", userId);
+      await setDoc(praktikRef, {
+        operasi_manipulasi_list: code,
+      }, { merge: true });
+      console.log("Kode praktik berhasil disimpan.");
+    } catch (error) {
+      console.error("Gagal menyimpan kode praktik:", error);
+    }
+  }, [userId]);
+
+  // ─── HANDLER VALIDASI PRAKTIK ───
+  const handlePraktikValidation = useCallback(({ isValid, isComplete, code }) => {
     if (isComplete) {
       setPraktikMessage("✅ Selamat! Semua instruksi sudah dikerjakan dengan benar.");
       setPraktikMessageType("success");
+      setPraktikumSelesai(true);
+      setSavedCode(code); // simpan ke state agar editor menampilkan kode yang benar
+      savePraktikCode(code);
     } else {
       setPraktikMessage("⚠️ Periksa kembali instruksi!");
       setPraktikMessageType("warning");
     }
-  };
+  }, [savePraktikCode]);
 
   const matchingItems = [
     { func: "append()", desc: "Menambah elemen di akhir list" },
@@ -2415,6 +2458,7 @@ export default function OperasiManipulasiList() {
                     pyodideReady={pyodideReady}
                     runPythonCode={runPythonCode}
                     onValidation={handlePraktikValidation}
+                    initialCode={savedCode} // 🔽 TAMPILKAN KODE YANG TERSIMPAN
                   />
                 </div>
               </section>
@@ -2429,7 +2473,8 @@ export default function OperasiManipulasiList() {
                   <DragDropMatching 
                     items={matchingItems} 
                     resetTrigger={resetMatching} 
-                    onAllCorrectChange={setAllMatchingCorrect} 
+                    onAllCorrectChange={setAllMatchingCorrect}
+                    praktikumSelesai={praktikumSelesai} // 🔽 KIRIMKAN STATUS PRAKTIKUM
                   />
                 </div>
               </section>

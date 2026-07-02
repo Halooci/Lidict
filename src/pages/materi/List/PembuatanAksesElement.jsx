@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Navbar from "../../komponen/Navbar";
 import SidebarMateri from "../../komponen/SidebarMateri";
 import { db } from "../../../config/firebase";
-import { doc, getDoc, updateDoc, increment } from "firebase/firestore";
+import { doc, getDoc, updateDoc, increment, setDoc } from "firebase/firestore";
 
 // ---------- IMPOR CODEMIRROR ----------
 import CodeMirror from '@uiw/react-codemirror';
@@ -682,14 +682,20 @@ const CodeEditorWithVisual = ({ code, title, visualData, visualTitle, highlightM
 };
 
 // ================= KOMPONEN EDITOR UNTUK AYO PRAKTIK (EDITABLE) =================
-const CodeEditorEditable = ({ title, pyodideReady, runPythonCode, onValidation }) => {
-  const [localCode, setLocalCode] = useState("");
+// 🔽 MODIFIKASI: menerima prop initialCode
+const CodeEditorEditable = ({ title, pyodideReady, runPythonCode, onValidation, initialCode = "" }) => {
+  const [localCode, setLocalCode] = useState(initialCode);
   const [output, setOutput] = useState("");
   const [isRunning, setIsRunning] = useState(false);
 
+  // 🔽 Update localCode jika initialCode berubah (misal saat data dari Firestore selesai dimuat)
+  useEffect(() => {
+    setLocalCode(initialCode);
+  }, [initialCode]);
+
   const handleChange = useCallback((value) => {
     setLocalCode(value);
-    if (onValidation) onValidation({ isValid: false, isComplete: false });
+    if (onValidation) onValidation({ isValid: false, isComplete: false, code: value });
   }, [onValidation]);
 
   const handleRun = useCallback(async () => {
@@ -708,14 +714,14 @@ const CodeEditorEditable = ({ title, pyodideReady, runPythonCode, onValidation }
       if (result.startsWith("Error:")) {
         hasError = true;
         setOutput(result);
-        if (onValidation) onValidation({ isValid: false, isComplete: false });
+        if (onValidation) onValidation({ isValid: false, isComplete: false, code: localCode });
         setIsRunning(false);
         return;
       }
     } catch (err) {
       hasError = true;
       setOutput(`Error: ${err.message}`);
-      if (onValidation) onValidation({ isValid: false, isComplete: false });
+      if (onValidation) onValidation({ isValid: false, isComplete: false, code: localCode });
       setIsRunning(false);
       return;
     }
@@ -727,7 +733,6 @@ const CodeEditorEditable = ({ title, pyodideReady, runPythonCode, onValidation }
     const hasPrintFirst = printFirstRegex.test(code);
     const printLastRegex = /print\s*\(\s*belanja\s*\[\s*-\s*1\s*\]\s*\)/;
     const hasPrintLast = printLastRegex.test(code);
-    // Tambahan untuk slicing (indeks 1:3)
     const sliceRegex = /print\s*\(\s*belanja\s*\[\s*1\s*:\s*3\s*\]\s*\)/;
     const hasSlice = sliceRegex.test(code);
 
@@ -738,7 +743,7 @@ const CodeEditorEditable = ({ title, pyodideReady, runPythonCode, onValidation }
     setIsRunning(false);
 
     if (onValidation) {
-      onValidation({ isValid: isValid, isComplete: isComplete });
+      onValidation({ isValid: isValid, isComplete: isComplete, code: localCode });
     }
   }, [localCode, pyodideReady, runPythonCode, onValidation]);
 
@@ -785,7 +790,7 @@ const CodeEditorEditable = ({ title, pyodideReady, runPythonCode, onValidation }
 };
 
 // ================= KOMPONEN SOAL MELENGKAPI KODE =================
-const CodeCompletionQuestion = ({ question, codeParts, placeholders, expectedAnswers, explanation, index, onCorrectChange }) => {
+const CodeCompletionQuestion = ({ question, codeParts, placeholders, expectedAnswers, explanation, index, onCorrectChange, praktikumSelesai }) => {
   const [answers, setAnswers] = useState(placeholders.map(() => ""));
   const [feedback, setFeedback] = useState("");
   const [checked, setChecked] = useState(false);
@@ -813,6 +818,11 @@ const CodeCompletionQuestion = ({ question, codeParts, placeholders, expectedAns
   };
 
   const handleCheck = () => {
+    if (!praktikumSelesai) {
+      alert("Anda harus menyelesaikan Praktikum terlebih dahulu sebelum mengerjakan latihan!");
+      return;
+    }
+
     let allCorrect = true;
     for (let i = 0; i < expectedAnswers.length; i++) {
       const userAnswer = answers[i].trim().replace(/["']/g, '"');
@@ -886,7 +896,7 @@ const CodeCompletionQuestion = ({ question, codeParts, placeholders, expectedAns
 };
 
 // ================= KOMPONEN SOAL MENENTUKAN OUTPUT =================
-const GuessOutputQuestion = ({ question, codeSnippet, expectedOutput, explanation, index, onCorrectChange }) => {
+const GuessOutputQuestion = ({ question, codeSnippet, expectedOutput, explanation, index, onCorrectChange, praktikumSelesai }) => {
   const [userAnswer, setUserAnswer] = useState("");
   const [feedback, setFeedback] = useState("");
   const [checked, setChecked] = useState(false);
@@ -903,6 +913,11 @@ const GuessOutputQuestion = ({ question, codeSnippet, expectedOutput, explanatio
   };
 
   const handleCheck = () => {
+    if (!praktikumSelesai) {
+      alert("Anda harus menyelesaikan Praktikum terlebih dahulu sebelum mengerjakan latihan!");
+      return;
+    }
+
     const correct = userAnswer.trim() === expectedOutput;
     setChecked(true);
     if (correct) {
@@ -959,6 +974,9 @@ export default function PembuatanAksesElement() {
   const [loading, setLoading] = useState(true);
   const [progresBelajar, setProgresBelajar] = useState(null);
   const [showModal, setShowModal] = useState(false);
+  // 🔽 STATE UNTUK PRAKTIKUM
+  const [praktikumSelesai, setPraktikumSelesai] = useState(false);
+  const [savedCode, setSavedCode] = useState(""); // untuk menyimpan kode yang sudah benar
 
   // ─────────── KONFIGURASI HALAMAN ───────────
   const TOPIC_NAME = "pembuatan_akses_element";
@@ -977,39 +995,50 @@ export default function PembuatanAksesElement() {
     }
   }, [navigate]);
 
-  // Fetch progres_belajar dari Firestore
+  // Fetch progres_belajar dari Firestore & data praktikum
   useEffect(() => {
     if (!userId) return;
 
-    const fetchProgres = async () => {
+    const fetchData = async () => {
       setLoading(true);
       try {
-        const docRef = doc(db, "mahasiswa", userId);
-        const docSnap = await getDoc(docRef);
-        if (docSnap.exists()) {
-          const data = docSnap.data();
+        // Ambil data mahasiswa
+        const mahasiswaRef = doc(db, "mahasiswa", userId);
+        const mahasiswaSnap = await getDoc(mahasiswaRef);
+        if (mahasiswaSnap.exists()) {
+          const data = mahasiswaSnap.data();
           const progres = data.progres_belajar || 0;
           setProgresBelajar(progres);
 
-          // Halaman hanya bisa diakses jika progres >= 2
           if (progres < 2) {
             navigate('/dashboard');
             return;
           }
-          // Jika progres >= 2, boleh akses halaman
         } else {
-          // Dokumen tidak ditemukan, anggap progres 0
           navigate('/dashboard');
+          return;
+        }
+
+        // Ambil data praktikum dari koleksi "Praktikum"
+        const praktikRef = doc(db, "Praktikum", userId);
+        const praktikSnap = await getDoc(praktikRef);
+        if (praktikSnap.exists()) {
+          const praktikData = praktikSnap.data();
+          const code = praktikData.pembuatan_akses_element || "";
+          if (code.trim() !== "") {
+            setSavedCode(code);
+            setPraktikumSelesai(true);
+          }
         }
       } catch (error) {
-        console.error("Gagal mengambil progres:", error);
+        console.error("Gagal mengambil data:", error);
         navigate('/dashboard');
       } finally {
         setLoading(false);
       }
     };
 
-    fetchProgres();
+    fetchData();
   }, [userId, navigate]);
 
   const [pyodideReady, setPyodideReady] = useState(false);
@@ -1224,37 +1253,28 @@ print(angka[-2])`;
 
   const allCorrect = correctStatus.every(v => v === true);
 
-  // Tampilkan modal hanya jika:
-  // 1. progresBelajar < 3 (belum mencapai level 3)
-  // 2. semua latihan benar
-  // 3. belum menampilkan modal
   useEffect(() => {
     if (!userId) return;
     if (progresBelajar === null) return;
     if (progresBelajar >= 3) {
-      // Jika progres >= 3, tidak perlu tampilkan modal
       setShowModal(false);
       return;
     }
     if (allCorrect && !showModal) {
-      // Jika progres < 3 dan semua latihan benar, tampilkan modal
       setShowModal(true);
     }
   }, [allCorrect, userId, showModal, progresBelajar]);
 
   const handleCompleteAndNavigate = async () => {
     try {
-      // Tambah progres hanya jika masih < 3
       if (progresBelajar < 3) {
         const mahasiswaRef = doc(db, "mahasiswa", userId);
         await updateDoc(mahasiswaRef, {
           progres_belajar: increment(1)
         });
-        // Update state lokal
         setProgresBelajar(progresBelajar + 1);
       }
       
-      // Tandai bonus sudah diberikan
       localStorage.setItem(BONUS_DONE_KEY, "true");
       setShowModal(false);
       navigate("/List/OperasiDanManipulasi");
@@ -1303,15 +1323,33 @@ sys.stdout = StringIO()
     }
   }, []);
 
-  const handlePraktikValidation = ({ isValid, isComplete }) => {
+  // ─── FUNGSI UNTUK MENYIMPAN KODE PRAKTIK KE FIRESTORE ───
+  const savePraktikCode = useCallback(async (code) => {
+    if (!userId) return;
+    try {
+      const praktikRef = doc(db, "Praktikum", userId);
+      await setDoc(praktikRef, {
+        pembuatan_akses_element: code,
+      }, { merge: true });
+      console.log("Kode praktik berhasil disimpan.");
+    } catch (error) {
+      console.error("Gagal menyimpan kode praktik:", error);
+    }
+  }, [userId]);
+
+  // ─── HANDLER VALIDASI PRAKTIK ───
+  const handlePraktikValidation = useCallback(({ isValid, isComplete, code }) => {
     if (isComplete) {
       setPraktikMessage("✅ Selamat! Semua instruksi sudah dikerjakan dengan benar.");
       setPraktikMessageType("success");
+      setPraktikumSelesai(true);
+      setSavedCode(code); // simpan ke state agar editor menampilkan kode yang benar
+      savePraktikCode(code);
     } else {
       setPraktikMessage("⚠️ Periksa kembali instruksi!");
       setPraktikMessageType("warning");
     }
-  };
+  }, [savePraktikCode]);
 
   // Tampilkan loading saat sedang mengambil data
   if (loading) {
@@ -1543,11 +1581,13 @@ sys.stdout = StringIO()
                     </div>
                   )}
 
+                  {/* 🔽 Kirim prop initialCode dengan savedCode */}
                   <CodeEditorEditable
                     title="Ayo Praktik"
                     pyodideReady={pyodideReady}
                     runPythonCode={runPythonCode}
                     onValidation={handlePraktikValidation}
+                    initialCode={savedCode}
                   />
                 </div>
               </section>
@@ -1565,6 +1605,7 @@ sys.stdout = StringIO()
                     explanation={soal1Explanation}
                     index={0}
                     onCorrectChange={handleCorrectChange}
+                    praktikumSelesai={praktikumSelesai}
                   />
 
                   <CodeCompletionQuestion
@@ -1575,6 +1616,7 @@ sys.stdout = StringIO()
                     explanation={soal2Explanation}
                     index={1}
                     onCorrectChange={handleCorrectChange}
+                    praktikumSelesai={praktikumSelesai}
                   />
 
                   <CodeCompletionQuestion
@@ -1585,6 +1627,7 @@ sys.stdout = StringIO()
                     explanation={soal3Explanation}
                     index={2}
                     onCorrectChange={handleCorrectChange}
+                    praktikumSelesai={praktikumSelesai}
                   />
 
                   <GuessOutputQuestion
@@ -1594,6 +1637,7 @@ sys.stdout = StringIO()
                     explanation={soal4Explanation}
                     index={3}
                     onCorrectChange={handleCorrectChange}
+                    praktikumSelesai={praktikumSelesai}
                   />
 
                   <GuessOutputQuestion
@@ -1603,6 +1647,7 @@ sys.stdout = StringIO()
                     explanation={soal5Explanation}
                     index={4}
                     onCorrectChange={handleCorrectChange}
+                    praktikumSelesai={praktikumSelesai}
                   />
 
                   {allCorrect && (
