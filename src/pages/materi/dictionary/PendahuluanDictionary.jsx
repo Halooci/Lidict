@@ -4,6 +4,7 @@ import Navbar from "../../komponen/Navbar";
 import SidebarMateri from "../../komponen/SidebarMateri";
 import { db } from "../../../config/firebase";
 import { doc, getDoc, updateDoc, increment } from "firebase/firestore";
+import MateriPagination from "../../komponen/MateriPagination"; // <-- import
 
 // ===================== KOMPONEN VISUALISASI DICTIONARY =====================
 const DictionaryVisualization = ({ data, title }) => {
@@ -648,6 +649,10 @@ export default function PendahuluanDictionary() {
               </section>
             </>
           )}
+
+          {/* ===== PAGINATION DENGAN DISABLE NEXT ===== */}
+          <MateriPagination nextDisabled={progresBelajar !== null && progresBelajar < 10} />
+
         </div>
       </div>
 

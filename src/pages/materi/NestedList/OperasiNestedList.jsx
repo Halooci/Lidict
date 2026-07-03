@@ -4,6 +4,7 @@ import Navbar from "../../komponen/Navbar";
 import SidebarMateri from "../../komponen/SidebarMateri";
 import { db } from "../../../config/firebase";
 import { doc, getDoc, updateDoc, increment, setDoc } from "firebase/firestore";
+import MateriPagination from "../../komponen/MateriPagination"; // <-- import
 
 // ---------- IMPOR CODEMIRROR ----------
 import CodeMirror from '@uiw/react-codemirror';
@@ -1991,6 +1992,10 @@ _buffer.getvalue()
           )}
 
           {!isEksplorasiCompleted && <div style={styles.lockMessage}>🔒 Materi terkunci. Selesaikan eksplorasi di atas dengan menjawab kedua pertanyaan.</div>}
+
+          {/* ===== PAGINATION DENGAN DISABLE NEXT ===== */}
+          <MateriPagination nextDisabled={progresBelajar !== null && progresBelajar < 8} />
+
         </div>
       </div>
 

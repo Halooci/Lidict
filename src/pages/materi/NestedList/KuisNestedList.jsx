@@ -13,6 +13,7 @@ import {
   where,
   getDocs,
 } from "firebase/firestore";
+import MateriPagination from "../../komponen/MateriPagination"; // <-- import
 
 export default function KuisNestedList() {
   const navigate = useNavigate();
@@ -378,6 +379,7 @@ export default function KuisNestedList() {
     );
   }
 
+  // Tidak ada soal
   if (questions.length === 0 && !submitted) {
     return (
       <>
@@ -393,6 +395,8 @@ export default function KuisNestedList() {
               <h2 style={styles.instructionTitle}>Petunjuk</h2>
               <p>Belum ada soal untuk kuis ini. Hubungi dosen pengampu.</p>
             </div>
+            {/* ===== PAGINATION ===== */}
+            <MateriPagination nextDisabled={true} />
           </div>
         </div>
       </>
@@ -426,6 +430,8 @@ export default function KuisNestedList() {
               </ul>
               <button className="btn-hover-primary" style={styles.startButton} onClick={startQuiz}>MULAI KUIS</button>
             </div>
+            {/* ===== PAGINATION ===== */}
+            <MateriPagination nextDisabled={true} />
           </div>
         </div>
       </>
@@ -515,17 +521,20 @@ export default function KuisNestedList() {
               <button className="btn-hover-retry" style={styles.retryButtonNew} onClick={resetQuiz} disabled={savingData}>Ulangi Kuis</button>
             )}
           </div>
+          {/* ===== PAGINATION ===== */}
+          <div style={{ marginTop: '20px' }}>
+            <MateriPagination nextDisabled={true} />
+          </div>
         </div>
       </div>
     );
   }
 
-  // Halaman Kuis
+  // Halaman Kuis - Mobile
   const q = questions[currentQuestion];
   const isUnsure = unsures[currentQuestion];
   const isSmallOption = currentQuestion === 7; // soal nomor 8
 
-  // Mobile layout
   if (isMobile) {
     return (
       <div style={stylesMobile.fullscreenQuiz}>

@@ -4,6 +4,7 @@ import Navbar from "../../komponen/Navbar";
 import SidebarMateri from "../../komponen/SidebarMateri";
 import { db } from "../../../config/firebase";
 import { doc, getDoc, updateDoc, increment, setDoc } from "firebase/firestore";
+import MateriPagination from "../../komponen/MateriPagination"; // <-- import pagination
 
 // ---------- IMPOR CODEMIRROR ----------
 import CodeMirror from '@uiw/react-codemirror';
@@ -2458,7 +2459,7 @@ export default function OperasiManipulasiList() {
                     pyodideReady={pyodideReady}
                     runPythonCode={runPythonCode}
                     onValidation={handlePraktikValidation}
-                    initialCode={savedCode} // 🔽 TAMPILKAN KODE YANG TERSIMPAN
+                    initialCode={savedCode}
                   />
                 </div>
               </section>
@@ -2474,12 +2475,16 @@ export default function OperasiManipulasiList() {
                     items={matchingItems} 
                     resetTrigger={resetMatching} 
                     onAllCorrectChange={setAllMatchingCorrect}
-                    praktikumSelesai={praktikumSelesai} // 🔽 KIRIMKAN STATUS PRAKTIKUM
+                    praktikumSelesai={praktikumSelesai}
                   />
                 </div>
               </section>
             </>
           )}
+
+          {/* ===== PAGINATION DENGAN DISABLE NEXT ===== */}
+          <MateriPagination nextDisabled={progresBelajar !== null && progresBelajar < 4} />
+
         </div>
       </div>
 

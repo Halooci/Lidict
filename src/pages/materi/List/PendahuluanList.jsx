@@ -4,6 +4,7 @@ import SidebarMateri from "../../komponen/SidebarMateri";
 import { useNavigate } from 'react-router-dom';
 import { db } from "../../../config/firebase";
 import { doc, getDoc, updateDoc, increment } from "firebase/firestore";
+import MateriPagination from "../../komponen/MateriPagination";
 
 // ---------- IMPOR CODEMIRROR ----------
 import CodeMirror from '@uiw/react-codemirror';
@@ -482,7 +483,7 @@ const LatihanList = ({ onAllCorrectChange }) => {
 
   return (
     <div>
-      <h2 style={styles.sectionTitle}>Latihan</h2>
+      <h2 style={styles.sectionTitle}>6. Latihan</h2>
       <div style={styles.card}>
         <p style={styles.text}>
           Jawab semua soal dengan memilih opsi yang benar. Klik "Cek Semua Jawaban" untuk memeriksa.
@@ -825,9 +826,9 @@ sys.stdout = StringIO()
             <h1 style={styles.headerTitle}>PENDAHULUAN LIST</h1>
           </div>
 
-          {/* TUJUAN PEMBELAJARAN */}
+          {/* 1. TUJUAN PEMBELAJARAN */}
           <section style={styles.section}>
-            <h2 style={styles.sectionTitle}>Tujuan Pembelajaran</h2>
+            <h2 style={styles.sectionTitle}>1. Tujuan Pembelajaran</h2>
             <div style={styles.card}>
               <ol style={styles.list}>
                 <li style={{ textAlign: "justify" }}>Mahasiswa mampu menjelaskan pengertian list sebagai struktur data untuk menyimpan kumpulan data dalam Python.</li>
@@ -837,9 +838,9 @@ sys.stdout = StringIO()
             </div>
           </section>
 
-          {/* EKSPLORASI AWAL */}
+          {/* 2. EKSPLORASI AWAL */}
           <section style={styles.section}>
-            <h2 style={styles.sectionTitle}>Eksplorasi Awal</h2>
+            <h2 style={styles.sectionTitle}>2. Eksplorasi Awal</h2>
             <div style={styles.card}>
               <p style={styles.text}>
                 Sebelum mempelajari lebih dalam, jawab pertanyaan berikut dengan memilih opsi yang tersedia. 
@@ -906,8 +907,9 @@ sys.stdout = StringIO()
           {/* MATERI UTAMA (muncul jika eksplorasi selesai) */}
           {isEksplorasiCompleted && (
             <>
+              {/* 3. APA ITU LIST? */}
               <section style={styles.section}>
-                <h2 style={styles.sectionTitle}>Apa Itu List?</h2>
+                <h2 style={styles.sectionTitle}>3. Apa Itu List?</h2>
                 <div style={styles.card}>
                   <p style={styles.text}>
                     List adalah salah satu struktur data bawaan Python yang digunakan untuk menyimpan kumpulan item (elemen) dalam satu variabel. List bersifat mutable (dapat diubah) dan berurutan (ordered). Elemen dalam list dapat diakses melalui indeks yang dimulai dari 0.
@@ -934,8 +936,9 @@ sys.stdout = StringIO()
                 </div>
               </section>
 
+              {/* 4. FUNGSI DAN KEGUNAAN LIST */}
               <section style={styles.section}>
-                <h2 style={styles.sectionTitle}>Fungsi dan Kegunaan List</h2>
+                <h2 style={styles.sectionTitle}>4. Fungsi dan Kegunaan List</h2>
                 <div style={styles.card}>
                   <p style={styles.text}>
                     List digunakan ketika kita perlu menyimpan banyak data dan dengan tipe data yang berbeda di dalam satu wadah. Tanpa list, kita harus membuat banyak variabel terpisah (tidak efisien). Contoh tanpa list:
@@ -950,8 +953,9 @@ sys.stdout = StringIO()
                 </div>
               </section>
 
+              {/* 5. KONSEP DASAR LIST */}
               <section style={styles.section}>
-                <h2 style={styles.sectionTitle}>Konsep Dasar List</h2>
+                <h2 style={styles.sectionTitle}>5. Konsep Dasar List</h2>
                 <div style={styles.card}>
                   <p style={styles.text}>
                     Beberapa konsep penting yang harus dipahami tentang list:
@@ -973,10 +977,14 @@ sys.stdout = StringIO()
                 </div>
               </section>
 
-              {/* LATIHAN */}
+              {/* 6. LATIHAN */}
               <LatihanList onAllCorrectChange={setAllLatihanCorrect} />
             </>
           )}
+
+          {/* ===== PAGINATION DENGAN DISABLE NEXT (TAPI TETAP BISA DIKLIK) ===== */}
+          <MateriPagination nextDisabled={progresBelajar !== null && progresBelajar < 2} />
+
         </div>
       </div>
 

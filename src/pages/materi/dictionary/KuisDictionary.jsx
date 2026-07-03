@@ -13,6 +13,7 @@ import {
   where,
   getDocs,
 } from "firebase/firestore";
+import MateriPagination from "../../komponen/MateriPagination"; // <-- import
 
 export default function KuisDictionary() {
   const navigate = useNavigate();
@@ -378,6 +379,7 @@ export default function KuisDictionary() {
     );
   }
 
+  // Tidak ada soal
   if (questions.length === 0 && !submitted) {
     return (
       <>
@@ -393,6 +395,8 @@ export default function KuisDictionary() {
               <h2 style={styles.instructionTitle}>Petunjuk</h2>
               <p>Belum ada soal untuk kuis ini. Hubungi dosen pengampu.</p>
             </div>
+            {/* ===== PAGINATION ===== */}
+            <MateriPagination nextDisabled={true} />
           </div>
         </div>
       </>
@@ -426,6 +430,8 @@ export default function KuisDictionary() {
               </ul>
               <button className="btn-hover-primary" style={styles.startButton} onClick={startQuiz}>MULAI KUIS</button>
             </div>
+            {/* ===== PAGINATION ===== */}
+            <MateriPagination nextDisabled={true} />
           </div>
         </div>
       </>
@@ -514,6 +520,10 @@ export default function KuisDictionary() {
             {role === 'dosen' && (
               <button className="btn-hover-retry" style={styles.retryButtonNew} onClick={resetQuiz} disabled={savingData}>Ulangi Kuis</button>
             )}
+          </div>
+          {/* ===== PAGINATION ===== */}
+          <div style={{ marginTop: '20px' }}>
+            <MateriPagination nextDisabled={true} />
           </div>
         </div>
       </div>

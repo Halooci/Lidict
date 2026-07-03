@@ -3,74 +3,49 @@ import { useNavigate } from 'react-router-dom';
 import Navbar from "../../komponen/Navbar";
 import SidebarMateri from "../../komponen/SidebarMateri";
 import PetaKonsepImage from '../../../assets/PetaKonsepImage.png';
+import MateriPagination from "../../komponen/MateriPagination";
 
 const styles = {
   page: {
-    padding: "5px 20px", // padding vertikal sangat kecil
+    padding: "20px 20px", // tambah padding atas-bawah agar tidak terlalu rapat
     backgroundColor: "#f5f7fa",
-    height: "100%",
-    overflow: "hidden",
+    minHeight: "100%",
     fontFamily: "Poppins, sans-serif",
     display: "flex",
     flexDirection: "column",
-    justifyContent: "center",
-  },
-  header: {
-    backgroundColor: "#306998",
-    color: "white",
-    padding: "18px 24px",
-    borderRadius: "6px",
-    marginBottom: "30px",
-    position: "relative",
-  },
-  headerAccent: {
-    position: "absolute",
-    left: 0,
-    top: 0,
-    bottom: 0,
-    width: "8px",
-    backgroundColor: "#FFD43B",
-  },
-  headerTitle: {
-    margin: 0,
-    textAlign: "center",
-    fontSize: "28px",
-    fontWeight: "700",
+    alignItems: "center",
   },
   section: {
-    marginBottom: 0,
-    flex: 1,
+    width: "100%",
+    maxWidth: "1100px",
     display: "flex",
+    flexDirection: "column",
     alignItems: "center",
-    justifyContent: "center",
-  },
-  sectionTitle: {
-    fontSize: "22px",
-    fontWeight: "700",
-    marginBottom: "15px",
-    borderLeft: "5px solid #306998",
-    paddingLeft: "12px",
+    flex: 1,
   },
   card: {
     backgroundColor: "white",
     borderRadius: "10px",
-    padding: "8px 25px", // padding card diperkecil
+    padding: "15px 25px",
     boxShadow: "0 5px 15px rgba(0,0,0,0.08)",
     width: "100%",
-    maxWidth: "1100px", // lebih lebar agar gambar bisa lebih besar
-    margin: "0 auto",
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
   },
-  text: { lineHeight: "1.8", color: "#333", marginBottom: "15px" },
   image: {
     maxWidth: "100%",
-    maxHeight: "calc(100vh - 100px)", // lebih besar, memperhitungkan navbar + padding tipis
-    width: "auto",
     height: "auto",
+    maxHeight: "calc(100vh - 250px)", // sesuaikan agar ada ruang untuk navbar + pagination + padding
+    objectFit: "contain",
     display: "block",
-    margin: "0 auto",
     borderRadius: "8px",
     boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
-    objectFit: "contain",
+  },
+  paginationWrapper: {
+    width: "100%",
+    marginTop: "15px",
+    flexShrink: 0,
   },
 };
 
@@ -93,9 +68,9 @@ const PetaKonsep = () => {
         className="main-content" 
         style={{ 
           paddingTop: "64px", 
-          height: "calc(100vh - 64px)", 
-          overflow: "hidden",
+          minHeight: "calc(100vh - 64px)",
           boxSizing: "border-box",
+          overflowY: "auto", // biarkan scroll jika konten melebihi layar
         }}
       >
         <div style={styles.page}>
@@ -106,6 +81,9 @@ const PetaKonsep = () => {
                 alt="Peta Konsep List Python" 
                 style={styles.image} 
               />
+            </div>
+            <div style={styles.paginationWrapper}>
+              <MateriPagination />
             </div>
           </section>
         </div>

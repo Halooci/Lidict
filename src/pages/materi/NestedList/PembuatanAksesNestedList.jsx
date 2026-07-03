@@ -4,6 +4,7 @@ import Navbar from "../../komponen/Navbar";
 import SidebarMateri from "../../komponen/SidebarMateri";
 import { db } from "../../../config/firebase";
 import { doc, getDoc, updateDoc, increment, setDoc } from "firebase/firestore";
+import MateriPagination from "../../komponen/MateriPagination"; // <-- import
 
 // ---------- IMPOR CODEMIRROR ----------
 import CodeMirror from '@uiw/react-codemirror';
@@ -1711,6 +1712,10 @@ _buffer.getvalue()`);
               </section>
             </>
           )}
+
+          {/* ===== PAGINATION DENGAN DISABLE NEXT ===== */}
+          <MateriPagination nextDisabled={progresBelajar !== null && progresBelajar < 7} />
+
         </div>
       </div>
 

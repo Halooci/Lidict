@@ -4,6 +4,7 @@ import Navbar from "../../komponen/Navbar";
 import SidebarMateri from "../../komponen/SidebarMateri";
 import { db } from "../../../config/firebase";
 import { doc, getDoc, updateDoc, increment } from "firebase/firestore";
+import MateriPagination from "../../komponen/MateriPagination"; // <-- import pagination
 
 export default function Apersepsi() {
   const navigate = useNavigate();
@@ -875,6 +876,10 @@ print("Halo", ______)`}</pre>
               </div>
             </div>
           </section>
+
+          {/* ===== TAMBAHKAN PAGINATION DI SINI ===== */}
+          <MateriPagination />
+
         </div>
       </div>
 
@@ -894,7 +899,7 @@ print("Halo", ______)`}</pre>
             </p>
             <button 
               style={modalStyles.button} 
-              onClick={handleCompleteAndContinue}
+              onClick={handleCompleteAndNavigate}
               disabled={isProcessing}
             >
               {isProcessing ? "Memproses..." : "Materi berikutnya"}

@@ -13,6 +13,7 @@ import {
   where,
   getDocs,
 } from "firebase/firestore";
+import MateriPagination from "../../komponen/MateriPagination"; // <-- import
 
 export default function KuisList() {
   const navigate = useNavigate();
@@ -390,6 +391,8 @@ export default function KuisList() {
               <h2 style={styles.instructionTitle}>Petunjuk</h2>
               <p>Belum ada soal untuk kuis ini. Hubungi dosen pengampu.</p>
             </div>
+            {/* Pagination */}
+            <MateriPagination nextDisabled={true} />
           </div>
         </div>
       </>
@@ -423,6 +426,8 @@ export default function KuisList() {
               </ul>
               <button className="btn-hover-primary" style={styles.startButton} onClick={startQuiz}>MULAI KUIS</button>
             </div>
+            {/* Pagination */}
+            <MateriPagination nextDisabled={true} />
           </div>
         </div>
       </>
@@ -512,17 +517,16 @@ export default function KuisList() {
               <button className="btn-hover-retry" style={styles.retryButtonNew} onClick={resetQuiz} disabled={savingData}>Ulangi Kuis</button>
             )}
           </div>
+          {/* Pagination */}
+          <div style={{ marginTop: '20px' }}>
+            <MateriPagination nextDisabled={true} />
+          </div>
         </div>
       </div>
     );
   }
 
-  // Halaman kuis aktif
-  const q = questions[currentQuestion];
-  const isUnsure = unsures[currentQuestion];
-  const isSmallOption = currentQuestion === 4;
-
-  // Mobile layout
+  // Halaman kuis aktif (mobile)
   if (isMobile) {
     return (
       <div style={stylesMobile.fullscreenQuiz}>
@@ -704,7 +708,11 @@ export default function KuisList() {
     );
   }
 
-  // Desktop layout
+  // Desktop kuis aktif
+  const q = questions[currentQuestion];
+  const isUnsure = unsures[currentQuestion];
+  const isSmallOption = currentQuestion === 4;
+
   return (
     <div style={styles.fullscreenQuiz}>
       <div style={styles.quizHeader}>
@@ -811,7 +819,7 @@ export default function KuisList() {
         </div>
       </div>
 
-      {/* Modal desktop */}
+      {/* Modal */}
       {showConfirmModal && (
         <div style={styles.modalOverlay}>
           <div style={styles.modalContainer}>

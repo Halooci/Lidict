@@ -4,6 +4,7 @@ import SidebarMateri from "../../komponen/SidebarMateri";
 import { useNavigate } from 'react-router-dom';
 import { db } from "../../../config/firebase";
 import { doc, getDoc, updateDoc, increment } from "firebase/firestore";
+import MateriPagination from "../../komponen/MateriPagination"; // <-- import pagination
 
 // ---------- IMPOR CODEMIRROR ----------
 import CodeMirror from '@uiw/react-codemirror';
@@ -971,6 +972,10 @@ _buffer.getvalue()
           {!isEksplorasiCompleted && (
             <div style={styles.lockMessage}>🔒 Materi terkunci. Selesaikan eksplorasi di atas dengan menjawab kedua pertanyaan.</div>
           )}
+
+          {/* ===== PAGINATION DENGAN DISABLE NEXT ===== */}
+          <MateriPagination nextDisabled={progresBelajar !== null && progresBelajar < 6} />
+
         </div>
       </div>
 

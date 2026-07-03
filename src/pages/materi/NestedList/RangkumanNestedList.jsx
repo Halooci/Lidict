@@ -4,11 +4,13 @@ import SidebarMateri from "../../komponen/SidebarMateri";
 import { useNavigate } from 'react-router-dom';
 import { db } from "../../../config/firebase";
 import { doc, getDoc } from "firebase/firestore";
+import MateriPagination from "../../komponen/MateriPagination"; // <-- import
 
 export default function RangkumanNestedList() {
   const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [loading, setLoading] = useState(true);
+  const [progresBelajar, setProgresBelajar] = useState(null);
 
   useEffect(() => {
     const userId = localStorage.getItem('userId');
@@ -25,6 +27,7 @@ export default function RangkumanNestedList() {
         if (docSnap.exists()) {
           const data = docSnap.data();
           const progres = data.progres_belajar || 0;
+          setProgresBelajar(progres);
           
           // 🔒 Halaman hanya bisa diakses jika progres >= 8
           if (progres < 8) {
@@ -166,6 +169,10 @@ export default function RangkumanNestedList() {
               </div>
             </div>
           </section>
+
+          {/* ===== PAGINATION ===== */}
+          <MateriPagination nextDisabled={progresBelajar !== null && progresBelajar < 8} />
+
         </div>
       </div>
     </>
