@@ -4,7 +4,7 @@ import Navbar from "../../komponen/Navbar";
 import SidebarMateri from "../../komponen/SidebarMateri";
 import { db } from "../../../config/firebase";
 import { doc, getDoc, updateDoc, increment } from "firebase/firestore";
-import MateriPagination from "../../komponen/MateriPagination"; // <-- import pagination
+import MateriPagination from "../../komponen/MateriPagination";
 
 export default function Apersepsi() {
   const navigate = useNavigate();
@@ -225,7 +225,6 @@ export default function Apersepsi() {
   };
 
   // ==================== MATERI 3: INPUT / OUTPUT ====================
-  // Soal 3.1 - sekarang siswa diminta mengisi "input"
   const [ioAnswer, setIoAnswer] = useState("");
   const [ioFeedback, setIoFeedback] = useState("");
   const checkIO = () => {
@@ -348,9 +347,16 @@ export default function Apersepsi() {
     printVarFeedback,
   ]);
 
-  // Fungsi untuk menangani tombol "Materi berikutnya"
+  // ============================================================
+  // PERBAIKAN UTAMA: fungsi untuk tombol "Materi berikutnya"
+  // ============================================================
   const handleCompleteAndContinue = async () => {
     if (isProcessing) return;
+    if (!userId) {
+      alert("User ID tidak ditemukan. Silakan login ulang.");
+      return;
+    }
+
     setIsProcessing(true);
 
     try {
@@ -359,20 +365,33 @@ export default function Apersepsi() {
       if (docSnap.exists()) {
         const data = docSnap.data();
         const currentProgress = data.progres_belajar || 0;
+        // Hanya tambah jika progres masih kurang dari 1
         if (currentProgress < 1) {
           await updateDoc(mahasiswaRef, {
             progres_belajar: increment(1)
           });
           setUserProgress(currentProgress + 1);
+        } else {
+          // Jika sudah >=1, tetap lanjutkan tanpa update
+          console.log("Progres sudah 1 atau lebih, tidak perlu update.");
         }
+      } else {
+        // Jika dokumen tidak ada, buat dengan progres 1
+        await updateDoc(mahasiswaRef, {
+          progres_belajar: 1
+        });
+        setUserProgress(1);
       }
+
+      // Tutup modal dan navigasi
       setShowCompletionModal(false);
       navigate("/list/pendahuluanlist");
     } catch (error) {
       console.error("Gagal update progres:", error);
       alert("Terjadi kesalahan saat menyimpan progres. Silakan coba lagi.");
+      // Jangan tutup modal agar user bisa mencoba lagi
+    } finally {
       setIsProcessing(false);
-      setShowCompletionModal(false);
     }
   };
 
@@ -577,8 +596,6 @@ export default function Apersepsi() {
                   <strong style={{ color: "#306998" }}>status_aktif</strong> = <strong style={{ color: "#306998" }}>True</strong>
                 </li>
               </ul>
-
-      
 
               {/* AKTIVITAS 1 - GABUNGAN */}
               <div style={styles.activityWrapper}>
@@ -877,7 +894,7 @@ print("Halo", ______)`}</pre>
             </div>
           </section>
 
-          {/* ===== TAMBAHKAN PAGINATION DI SINI ===== */}
+          {/* PAGINATION */}
           <MateriPagination />
 
         </div>
@@ -897,9 +914,10 @@ print("Halo", ______)`}</pre>
             <p style={modalStyles.subMessage}>
               Materi berikutnya sudah terbuka.
             </p>
-            <button 
-              style={modalStyles.button} 
-              onClick={handleCompleteAndNavigate}
+            {/* PERBAIKAN: gunakan handleCompleteAndContinue */}
+            <button
+              style={modalStyles.button}
+              onClick={handleCompleteAndContinue}
               disabled={isProcessing}
             >
               {isProcessing ? "Memproses..." : "Materi berikutnya"}
@@ -1005,7 +1023,6 @@ const styles = {
   text: { fontSize: "16px", lineHeight: "1.6", color: "#1e293b", marginBottom: "16px", textAlign: "justify" },
   list: { marginLeft: "24px", marginBottom: "16px", lineHeight: "1.6", color: "#1e293b" },
   listOrdered: { marginLeft: "24px", marginBottom: "16px", lineHeight: "1.8", color: "#1e293b" },
-  // Style untuk merapikan panah dengan jarak proporsional
   exampleRow: {
     display: "flex",
     alignItems: "center",

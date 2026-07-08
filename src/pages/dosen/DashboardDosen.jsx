@@ -346,6 +346,14 @@ const getDefaultQuizzes = () => [
         jawaban_benar: 1,
         bobot: 10,
       },
+      // SOAL ESAI dengan jawaban benar
+      {
+        pertanyaan: "Buatlah list bernama 'buah' yang berisi 'apel', 'anggur', dan 'jeruk'.",
+        pilihan: [],
+        jawaban_benar: "buah = ['apel', 'anggur', 'jeruk']",
+        bobot: 10,
+        isEssay: true,
+      },
     ],
   },
   {
@@ -412,6 +420,14 @@ const getDefaultQuizzes = () => [
         jawaban_benar: 1,
         bobot: 10,
       },
+      // SOAL ESAI dengan jawaban benar
+      {
+        pertanyaan: "Buatlah nested list bernama 'matriks' dengan baris pertama [5,6] dan baris kedua [7,8].",
+        pilihan: [],
+        jawaban_benar: "matriks = [[5, 6], [7, 8]]",
+        bobot: 10,
+        isEssay: true,
+      },
     ],
   },
   {
@@ -477,6 +493,14 @@ const getDefaultQuizzes = () => [
         pilihan: ['a.merge(b)', 'a.extend(b)', 'a.append(b)', 'a.update(b)', 'a+b'],
         jawaban_benar: 3,
         bobot: 10,
+      },
+      // SOAL ESAI dengan jawaban benar
+      {
+        pertanyaan: "Buatlah dictionary bernama 'data' dengan key 'nama' bernilai 'Budi' dan key 'usia' bernilai 20.",
+        pilihan: [],
+        jawaban_benar: "data = {'nama': 'Budi', 'usia': 20}",
+        bobot: 10,
+        isEssay: true,
       },
     ],
   },
@@ -603,6 +627,14 @@ const getDefaultQuizzes = () => [
         pilihan: ['0', '1', '2', 'Error', 'None'],
         jawaban_benar: 1,
         bobot: 5,
+      },
+      // SOAL ESAI dengan jawaban benar
+      {
+        pertanyaan: "Buatlah list bernama 'angka' berisi 5 elemen pertama dari deret bilangan genap (2,4,6,8,10).",
+        pilihan: [],
+        jawaban_benar: "angka = [2, 4, 6, 8, 10]",
+        bobot: 5,
+        isEssay: true,
       },
     ],
   },
@@ -816,6 +848,7 @@ const DashboardDosen = () => {
           jawaban_benar: soal.jawaban_benar,
           bobot: soal.bobot,
           pembahasan: soal.pembahasan || '',
+          isEssay: soal.isEssay || false,
         });
       });
     }

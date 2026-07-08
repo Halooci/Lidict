@@ -74,6 +74,8 @@ const styles = `
     color: #374151;
   }
   .btn-outline:hover { background: #f3f4f6; }
+  .btn-gray { background: #9ca3af; color: white; }
+  .btn-gray:hover { background: #6b7280; }
 
   .kelas-selector {
     display: flex;
@@ -152,6 +154,26 @@ const styles = `
     border-radius: 0.375rem;
     font-size: 1rem;
   }
+  .form-group .pilihan-item {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    margin-bottom: 0.5rem;
+  }
+  .form-group .pilihan-item input {
+    flex: 1;
+  }
+  .form-group .pilihan-item .btn-remove-pil {
+    background: #ef4444;
+    color: white;
+    border: none;
+    border-radius: 0.375rem;
+    padding: 0.25rem 0.5rem;
+    cursor: pointer;
+  }
+  .form-group .pilihan-item .btn-remove-pil:hover {
+    background: #dc2626;
+  }
 
   .modal-overlay {
     position: fixed;
@@ -182,6 +204,14 @@ const styles = `
     color: #6b7280;
     margin-top: 0.5rem;
   }
+  .essay-badge {
+    background: #f59e0b;
+    color: white;
+    padding: 0.2rem 0.6rem;
+    border-radius: 0.375rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+  }
 `;
 
 // ==================== COMPONENT ====================
@@ -202,6 +232,8 @@ const Soal = () => {
     jawaban_benar: 0,
     bobot: 10,
     pembahasan: '',
+    isEssay: false,
+    jawaban_teks: '', // untuk esai
   });
 
   const userId = localStorage.getItem('userId'); // NIP dosen
@@ -239,7 +271,6 @@ const Soal = () => {
       setKuisAktif(null);
       return;
     }
-    // Simpan ke localStorage sebagai default pilihan
     localStorage.setItem('activeKelasId', kelasAktif.id);
 
     const fetchKuis = async () => {
@@ -283,6 +314,8 @@ const Soal = () => {
       jawaban_benar: 0,
       bobot: 10,
       pembahasan: '',
+      isEssay: false,
+      jawaban_teks: '',
     });
     setShowModal(true);
   };
@@ -296,6 +329,8 @@ const Soal = () => {
       jawaban_benar: soal.jawaban_benar,
       bobot: soal.bobot || 10,
       pembahasan: soal.pembahasan || '',
+      isEssay: soal.isEssay || false,
+      jawaban_teks: soal.isEssay ? soal.jawaban_benar : '',
     });
     setShowModal(true);
   };
@@ -306,13 +341,30 @@ const Soal = () => {
     if (!formSoal.pertanyaan.trim()) return alert('Pertanyaan wajib diisi.');
     if (!kuisAktif) return;
 
+    // Validasi: jika esai, jawaban_teks harus diisi
+    if (formSoal.isEssay && !formSoal.jawaban_teks.trim()) {
+      return alert('Jawaban untuk soal esai harus diisi.');
+    }
+
+    // Jika bukan esai, pastikan minimal ada 2 pilihan
+    if (!formSoal.isEssay) {
+      const pilTerisi = formSoal.pilihan.filter(p => p.trim() !== '');
+      if (pilTerisi.length < 2) {
+        return alert('Minimal 2 pilihan harus diisi untuk soal pilihan ganda.');
+      }
+      if (formSoal.jawaban_benar < 0 || formSoal.jawaban_benar >= formSoal.pilihan.length) {
+        return alert('Indeks jawaban benar tidak valid.');
+      }
+    }
+
     const dataSoal = {
       kuis_id: kuisAktif.id,
       pertanyaan: formSoal.pertanyaan,
-      pilihan: formSoal.pilihan,
-      jawaban_benar: formSoal.jawaban_benar,
+      pilihan: formSoal.isEssay ? [] : formSoal.pilihan,
+      jawaban_benar: formSoal.isEssay ? formSoal.jawaban_teks : formSoal.jawaban_benar,
       bobot: formSoal.bobot,
       pembahasan: formSoal.pembahasan,
+      isEssay: formSoal.isEssay,
     };
 
     try {
@@ -346,6 +398,20 @@ const Soal = () => {
       console.error(err);
       alert('Gagal menghapus soal.');
     }
+  };
+
+  // === Tambah pilihan baru ===
+  const addPilihan = () => {
+    if (formSoal.pilihan.length < 6) {
+      setFormSoal({...formSoal, pilihan: [...formSoal.pilihan, '']});
+    }
+  };
+
+  // === Hapus pilihan ===
+  const removePilihan = (idx) => {
+    if (formSoal.pilihan.length <= 2) return;
+    const newPil = formSoal.pilihan.filter((_, i) => i !== idx);
+    setFormSoal({...formSoal, pilihan: newPil});
   };
 
   // Jika tidak ada userId
@@ -408,7 +474,7 @@ const Soal = () => {
           {/* Hanya tampilkan jika kelas aktif */}
           {kelasAktif && (
             <>
-              {/* Pilih kuis (tanpa tombol buat kuis) */}
+              {/* Pilih kuis */}
               <div className="card">
                 <div className="card-title">Pilih Kuis</div>
                 {kuisList.length === 0 ? (
@@ -446,7 +512,7 @@ const Soal = () => {
                           <tr>
                             <th>No</th>
                             <th>Pertanyaan</th>
-                            <th>Pilihan</th>
+                            <th>Pilihan / Tipe</th>
                             <th>Jawaban</th>
                             <th>Bobot</th>
                             <th>Aksi</th>
@@ -458,15 +524,27 @@ const Soal = () => {
                               <td>{soal.nomor || idx+1}</td>
                               <td>{soal.pertanyaan}</td>
                               <td>
-                                <ul style={{ margin: 0, paddingLeft: '1rem' }}>
-                                  {soal.pilihan?.map((pil, i) => (
-                                    <li key={i} style={{ fontWeight: i === soal.jawaban_benar ? 'bold' : 'normal' }}>
-                                      {pil}
-                                    </li>
-                                  ))}
-                                </ul>
+                                {soal.isEssay ? (
+                                  <span className="essay-badge">Esai (Tulis Kode)</span>
+                                ) : (
+                                  <ul style={{ margin: 0, paddingLeft: '1rem' }}>
+                                    {soal.pilihan?.map((pil, i) => (
+                                      <li key={i} style={{ fontWeight: i === soal.jawaban_benar ? 'bold' : 'normal' }}>
+                                        {pil}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                )}
                               </td>
-                              <td>{soal.jawaban_benar}</td>
+                              <td>
+                                {soal.isEssay ? (
+                                  <code style={{ background: '#f3f4f6', padding: '0.2rem 0.4rem', borderRadius: '0.25rem', fontSize: '0.85rem' }}>
+                                    {soal.jawaban_benar}
+                                  </code>
+                                ) : (
+                                  soal.jawaban_benar
+                                )}
+                              </td>
                               <td>{soal.bobot}</td>
                               <td style={{ display: 'flex', gap: '0.5rem' }}>
                                 <button className="btn btn-blue" onClick={() => openEditSoal(soal)}>
@@ -501,35 +579,99 @@ const Soal = () => {
                   <label>Pertanyaan</label>
                   <textarea rows="3" value={formSoal.pertanyaan} onChange={e => setFormSoal({...formSoal, pertanyaan: e.target.value})} required />
                 </div>
+
                 <div className="form-group">
-                  <label>Pilihan (minimal 2)</label>
-                  {formSoal.pilihan.map((pil, idx) => (
-                    <input
-                      key={idx}
-                      type="text"
-                      placeholder={`Pilihan ${idx+1}`}
-                      value={pil}
-                      style={{ marginBottom: '0.5rem' }}
-                      onChange={e => {
-                        const newPil = [...formSoal.pilihan];
-                        newPil[idx] = e.target.value;
-                        setFormSoal({...formSoal, pilihan: newPil});
-                      }}
+                  <label>Tipe Soal</label>
+                  <div style={{ display: 'flex', gap: '1rem' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <input
+                        type="radio"
+                        checked={!formSoal.isEssay}
+                        onChange={() => setFormSoal({...formSoal, isEssay: false})}
+                      />
+                      Pilihan Ganda
+                    </label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <input
+                        type="radio"
+                        checked={formSoal.isEssay}
+                        onChange={() => setFormSoal({...formSoal, isEssay: true})}
+                      />
+                      Esai (Tulis Kode)
+                    </label>
+                  </div>
+                </div>
+
+                {!formSoal.isEssay ? (
+                  <>
+                    <div className="form-group">
+                      <label>Pilihan Jawaban (minimal 2)</label>
+                      {formSoal.pilihan.map((pil, idx) => (
+                        <div key={idx} className="pilihan-item">
+                          <input
+                            type="text"
+                            placeholder={`Pilihan ${idx+1}`}
+                            value={pil}
+                            onChange={e => {
+                              const newPil = [...formSoal.pilihan];
+                              newPil[idx] = e.target.value;
+                              setFormSoal({...formSoal, pilihan: newPil});
+                            }}
+                          />
+                          <button
+                            type="button"
+                            className="btn-remove-pil"
+                            onClick={() => removePilihan(idx)}
+                            disabled={formSoal.pilihan.length <= 2}
+                          >
+                            <X size={16} />
+                          </button>
+                        </div>
+                      ))}
+                      <button type="button" className="btn btn-outline" onClick={addPilihan} style={{ marginTop: '0.5rem' }}>
+                        Tambah Pilihan
+                      </button>
+                    </div>
+                    <div className="form-group">
+                      <label>Jawaban Benar (indeks pilihan)</label>
+                      <input
+                        type="number"
+                        min="0"
+                        max={formSoal.pilihan.length - 1}
+                        value={formSoal.jawaban_benar}
+                        onChange={e => setFormSoal({...formSoal, jawaban_benar: parseInt(e.target.value) || 0})}
+                      />
+                      <small style={{ color: '#6b7280' }}>Indeks dimulai dari 0</small>
+                    </div>
+                  </>
+                ) : (
+                  <div className="form-group">
+                    <label>Jawaban Benar (kode yang diharapkan)</label>
+                    <textarea
+                      rows="2"
+                      placeholder="Contoh: buah = ['apel', 'anggur', 'jeruk']"
+                      value={formSoal.jawaban_teks}
+                      onChange={e => setFormSoal({...formSoal, jawaban_teks: e.target.value})}
+                      required
                     />
-                  ))}
-                </div>
-                <div className="form-group">
-                  <label>Jawaban Benar (indeks 0-3)</label>
-                  <input type="number" min="0" max="3" value={formSoal.jawaban_benar} onChange={e => setFormSoal({...formSoal, jawaban_benar: parseInt(e.target.value) || 0})} />
-                </div>
+                    <small style={{ color: '#6b7280' }}>Mahasiswa akan mengetik kode, sistem akan mencocokkan dengan jawaban ini.</small>
+                  </div>
+                )}
+
                 <div className="form-group">
                   <label>Bobot</label>
-                  <input type="number" min="0" value={formSoal.bobot} onChange={e => setFormSoal({...formSoal, bobot: parseInt(e.target.value) || 0})} />
+                  <input
+                    type="number"
+                    min="0"
+                    value={formSoal.bobot}
+                    onChange={e => setFormSoal({...formSoal, bobot: parseInt(e.target.value) || 0})}
+                  />
                 </div>
                 <div className="form-group">
                   <label>Pembahasan (opsional)</label>
                   <textarea rows="2" value={formSoal.pembahasan} onChange={e => setFormSoal({...formSoal, pembahasan: e.target.value})} />
                 </div>
+
                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.5rem' }}>
                   <button type="button" className="btn btn-outline" onClick={() => setShowModal(false)}>Batal</button>
                   <button type="submit" className="btn btn-blue">
