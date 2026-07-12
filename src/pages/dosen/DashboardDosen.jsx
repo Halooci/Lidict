@@ -286,12 +286,12 @@ const getDefaultQuizzes = () => [
     judul: 'Kuis List',
     tipe: 'list',
     soal: [
-      {
-        pertanyaan: 'Cara membuat list kosong yang benar adalah ....',
-        pilihan: ['list = ()', 'list = []', 'list = {}', 'list = list[]', 'list = empty()'],
-        jawaban_benar: 1,
-        bobot: 10,
-      },
+      // {
+      //   pertanyaan: 'Cara membuat list kosong yang benar adalah ....',
+      //   pilihan: ['list = ()', 'list = []', 'list = {}', 'list = list[]', 'list = empty()'],
+      //   jawaban_benar: 1,
+      //   bobot: 10,
+      // },
       {
         pertanyaan: "Output dari kode berikut adalah ….\nbuah = ['apel', 'mangga', 'jeruk']\nprint(buah[-1])",
         pilihan: ['apel', 'mangga', 'jeruk', 'Error', 'None'],
@@ -360,12 +360,12 @@ const getDefaultQuizzes = () => [
     judul: 'Kuis Nested List',
     tipe: 'nested_list',
     soal: [
-      {
-        pertanyaan: 'Cara mengakses angka 30 dari nested list berikut adalah ….\ndata = [[10, 20], [30, 40]]',
-        pilihan: ['data[0][1]', 'data[1][0]', 'data[1][1]', 'data[0][0]', 'data[2][0]'],
-        jawaban_benar: 1,
-        bobot: 10,
-      },
+      // {
+      //   pertanyaan: 'Cara mengakses angka 30 dari nested list berikut adalah ….\ndata = [[10, 20], [30, 40]]',
+      //   pilihan: ['data[0][1]', 'data[1][0]', 'data[1][1]', 'data[0][0]', 'data[2][0]'],
+      //   jawaban_benar: 1,
+      //   bobot: 10,
+      // },
       {
         pertanyaan: 'Output dari kode berikut adalah ….\nmatrix = [[1,2,3],[4,5,6],[7,8,9]]\nprint(matrix[1][2])',
         pilihan: ['2', '4', '5', '6', '8'],
@@ -434,12 +434,12 @@ const getDefaultQuizzes = () => [
     judul: 'Kuis Dictionary',
     tipe: 'dictionary',
     soal: [
-      {
-        pertanyaan: 'Pernyataan yang BENAR tentang dictionary di Python adalah ...',
-        pilihan: ['Dictionary dapat diakses menggunakan indeks angka seperti list', 'Key dalam dictionary harus bersifat unik dan immutable', 'Dictionary tidak dapat diubah setelah dibuat (immutable)', 'Dictionary hanya bisa menyimpan tipe data string sebagai value', 'Key dalam dictionary boleh berupa list'],
-        jawaban_benar: 1,
-        bobot: 10,
-      },
+      // {
+      //   pertanyaan: 'Pernyataan yang BENAR tentang dictionary di Python adalah ...',
+      //   pilihan: ['Dictionary dapat diakses menggunakan indeks angka seperti list', 'Key dalam dictionary harus bersifat unik dan immutable', 'Dictionary tidak dapat diubah setelah dibuat (immutable)', 'Dictionary hanya bisa menyimpan tipe data string sebagai value', 'Key dalam dictionary boleh berupa list'],
+      //   jawaban_benar: 1,
+      //   bobot: 10,
+      // },
       {
         pertanyaan: "Output dari kode berikut adalah ….\ndata = {'a': 1, 'b': 2, 'c': 3}\nprint(data.get('d', 0))",
         pilihan: ['None', 'Error', '0', "'d'", '3'],
@@ -508,12 +508,12 @@ const getDefaultQuizzes = () => [
     judul: 'Evaluasi',
     tipe: 'evaluasi',
     soal: [
-      {
-        pertanyaan: 'Perhatikan pernyataan tentang list pada Python:\n(1) List dapat menyimpan elemen dengan tipe data berbeda.\n(2) List bersifat immutable (tidak bisa diubah).\n(3) List didefinisikan dengan tanda kurung siku [].\n(4) Elemen list dapat diakses menggunakan indeks mulai dari 0.\nPernyataan yang benar adalah ….',
-        pilihan: ['(1), (2), dan (3)', '(1), (3), dan (4)', '(2) dan (4)', '(1), (2), dan (4)', 'Semua benar'],
-        jawaban_benar: 1,
-        bobot: 5,
-      },
+      // {
+      //   pertanyaan: 'Perhatikan pernyataan tentang list pada Python:\n(1) List dapat menyimpan elemen dengan tipe data berbeda.\n(2) List bersifat immutable (tidak bisa diubah).\n(3) List didefinisikan dengan tanda kurung siku [].\n(4) Elemen list dapat diakses menggunakan indeks mulai dari 0.\nPernyataan yang benar adalah ….',
+      //   pilihan: ['(1), (2), dan (3)', '(1), (3), dan (4)', '(2) dan (4)', '(1), (2), dan (4)', 'Semua benar'],
+      //   jawaban_benar: 1,
+      //   bobot: 5,
+      // },
       {
         pertanyaan: "Diberikan kode berikut:\nbuah = ['apel', 'pisang', 'jeruk', 'mangga']\nprint(buah[-2])\nOutput yang dihasilkan adalah ….",
         pilihan: ['apel', 'pisang', 'jeruk', 'mangga', 'Error'],
