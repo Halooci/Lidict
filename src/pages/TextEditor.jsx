@@ -203,10 +203,10 @@ sys.stdout = sys.__stdout__
           </div>
         </div>
 
-        <div className="footer-shortcuts">
+        {/* <div className="footer-shortcuts">
           <span>⌨️ Ctrl+Enter / Cmd+Enter: Run</span>
           <span>Ctrl+S / Cmd+S: Export</span>
-        </div>
+        </div> */}
 
         <style>{`
           .text-editor-container {

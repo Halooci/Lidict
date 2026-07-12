@@ -79,6 +79,74 @@ const InformasiPage = () => {
           flex: 1;
         }
 
+        /* Panduan Penggunaan */
+        .panduan-card {
+          background: rgba(255, 255, 255, 0.95);
+          color: #1f2937;
+          padding: 2rem 2.5rem;
+          border-radius: 14px;
+          box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+          margin-bottom: 2.5rem;
+        }
+
+        .panduan-card h2 {
+          font-size: 1.8rem;
+          margin-bottom: 0.75rem;
+          color: #1f2937;
+          border-left: 6px solid #FFD43B;
+          padding-left: 12px;
+        }
+
+        .panduan-card .subtitle {
+          color: #4b5563;
+          margin-bottom: 1.5rem;
+          font-size: 0.95rem;
+        }
+
+        .pdf-embed-wrapper {
+          position: relative;
+          width: 100%;
+          padding-bottom: 75%; /* 4:3 aspect ratio */
+          height: 0;
+          overflow: hidden;
+          border-radius: 10px;
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+          background: #f9fafb;
+        }
+
+        .pdf-embed-wrapper iframe {
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          border: none;
+          border-radius: 10px;
+        }
+
+        .pdf-link {
+          display: inline-block;
+          margin-top: 1.25rem;
+          padding: 0.65rem 1.75rem;
+          background: #3a86c4;
+          color: #ffffff;
+          border-radius: 8px;
+          font-weight: 600;
+          text-decoration: none;
+          transition: background 0.25s ease, transform 0.2s ease;
+          font-size: 0.95rem;
+        }
+
+        .pdf-link:hover {
+          background: #2a6fa0;
+          transform: translateY(-2px);
+        }
+
+        .pdf-link i {
+          margin-right: 8px;
+        }
+
+        /* Daftar Pustaka */
         .daftar-pustaka-card {
           background: rgba(255, 255, 255, 0.95);
           color: #1f2937;
@@ -160,13 +228,48 @@ const InformasiPage = () => {
           color: #f3f4f6;
           line-height: 1.6;
         }
+
+        /* Responsive */
+        @media (max-width: 640px) {
+          .info-title {
+            font-size: 1.8rem;
+          }
+
+          .info-card,
+          .panduan-card,
+          .daftar-pustaka-card {
+            padding: 1.5rem;
+          }
+
+          .info-row {
+            flex-wrap: wrap;
+          }
+
+          .info-label {
+            width: 140px;
+          }
+
+          .panduan-card h2,
+          .daftar-pustaka-card h2 {
+            font-size: 1.4rem;
+          }
+
+          .pdf-embed-wrapper {
+            padding-bottom: 100%;
+          }
+
+          .pdf-link {
+            width: 100%;
+            text-align: center;
+          }
+        }
       `}</style>
 
       <div className="info-wrapper">
         <div className="info-page">
-
           <h1 className="info-title">Informasi</h1>
 
+          {/* Kartu identitas */}
           <div className="info-card">
             <p>
               Media pembelajaran ini dibuat untuk memenuhi persyaratan dalam
@@ -227,6 +330,33 @@ const InformasiPage = () => {
             </div>
           </div>
 
+          {/* Panduan Penggunaan Aplikasi */}
+          <div className="panduan-card">
+            <h2>Panduan Penggunaan Aplikasi</h2>
+            <p className="subtitle">
+              Baca panduan lengkap untuk memahami cara menggunakan media pembelajaran
+              interaktif ini.
+            </p>
+
+            <div className="pdf-embed-wrapper">
+              <iframe
+                src="https://drive.google.com/file/d/1n5Z60lXMmtDZ1ZhqYdUBqsT7o5Y3J0Sh/preview"
+                title="Panduan Penggunaan Aplikasi"
+                allow="autoplay"
+                loading="lazy"
+              />
+            </div>
+
+            <a
+              className="pdf-link"
+              href="https://drive.google.com/file/d/1n5Z60lXMmtDZ1ZhqYdUBqsT7o5Y3J0Sh/view?usp=sharing"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <i className="fa-solid fa-arrow-up-right-from-square" /> Buka di Google Drive
+            </a>
+          </div>
+
           {/* Daftar Pustaka */}
           <div className="daftar-pustaka-card">
             <h2>Daftar Pustaka</h2>
@@ -240,46 +370,40 @@ const InformasiPage = () => {
             </ul>
           </div>
 
-          {/* Bagian berikut tetap seperti semula (tidak diubah) */}
-          {/* <section className="info-section">
+          {/* Bagian lain (peta konsep, ringkasan) – dikomentari sesuai permintaan */}
+          {/* 
+          <section className="info-section">
             <h2>Peta Konsep</h2>
             <div className="concept-map">
               <img src="/images/peta-konsep.png" alt="Peta Konsep" />
             </div>
-          </section> */}
-
-          {/* <section className="info-section">
+          </section>
+          <section className="info-section">
             <h2>Ringkasan Materi</h2>
-
             <div className="materi-list">
               <div className="materi-item">
                 <h3>1. Pendahuluan</h3>
                 <p>Mengenalkan konsep struktur data serta peran List dan Dictionary dalam Python.</p>
               </div>
-
               <div className="materi-item">
                 <h3>2. List pada Python</h3>
                 <p>Membahas pengertian, karakteristik, dan contoh penggunaan List.</p>
               </div>
-
               <div className="materi-item">
                 <h3>3. Operasi List</h3>
                 <p>Penambahan, penghapusan, pengubahan, dan pengaksesan elemen.</p>
               </div>
-
               <div className="materi-item">
                 <h3>4. Dictionary pada Python</h3>
                 <p>Konsep pasangan key–value serta pengelolaannya.</p>
               </div>
-
               <div className="materi-item">
                 <h3>5. Evaluasi</h3>
                 <p>Latihan dan evaluasi pemahaman mahasiswa.</p>
               </div>
             </div>
-
-          </section> */}
-
+          </section>
+          */}
         </div>
       </div>
     </>
