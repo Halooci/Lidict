@@ -17,6 +17,7 @@ export default function Navbar() {
     if (pathname === "/" || pathname === "") return "beranda";
     if (pathname.startsWith("/PetaKonsep") || pathname.startsWith("/dosen/materi")) return "materi";
     if (pathname.startsWith("/InformasiPage") || pathname.startsWith("/dosen/informasi")) return "informasi";
+    if (pathname.startsWith("/Texteditor")) return "texteditor"; // <-- Tambahan untuk Text Editor
     if (pathname.startsWith("/dosen/dashboard")) return "dashboard";
     return "";
   };
@@ -78,7 +79,12 @@ export default function Navbar() {
         <Link to="/InformasiPage" className={`nav-item ${activeTab === "informasi" ? "active" : ""}`}>
           Informasi
         </Link>
-        
+
+        {/* 👇 Menu Text Editor - muncul untuk semua pengguna */}
+        <Link to="/Texteditor" className={`nav-item ${activeTab === "texteditor" ? "active" : ""}`}>
+          Text Editor
+        </Link>
+
         {isLoggedIn && userRole === "dosen" && (
           <Link to="/dosen/dashboard" className={`nav-item ${activeTab === "dashboard" ? "active" : ""}`}>
             Dashboard

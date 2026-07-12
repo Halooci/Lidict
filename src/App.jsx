@@ -36,6 +36,7 @@ import DaftarMahasiswa from "./pages/dosen/DaftarMahasiswa";
 import Soal from "./pages/dosen/Soal";
 import NilaiMahasiswa from "./pages/dosen/NilaiMahasiswa";
 import PraktikumMahasiswa from "./pages/dosen/PraktikumMahasiswa";
+import TextEditor from "./pages/TextEditor";
 
 function App() {
   // Cek koneksi Firestore (bisa dihapus nanti setelah yakin koneksi berhasil)
@@ -62,6 +63,7 @@ function App() {
         {/* Rute materi untuk MAHASISWA (tetap seperti semula) */}
         <Route path="/PetaKonsep" element={<PetaKonsep />} />
         <Route path="/Apersepsi" element={<Apersepsi />} />
+        <Route path="/Texteditor" element={<TextEditor />} />
       
         {/* <Route path="/Pengantar" element={<Pengantar />} /> */}
         <Route path="/List/PendahuluanList" element={<PendahuluanList />} />
