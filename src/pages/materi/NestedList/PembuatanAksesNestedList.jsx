@@ -980,7 +980,7 @@ const GuessOutputQuestion = ({ question, codeSnippet, expectedOutput, index, onC
 };
 
 // ================= EKSPLORASI =================
-const Eksplorasi = ({ topicName, onComplete }) => {
+const Eksplorasi = ({ topicName, onComplete, onReset }) => {
   const EKSPLORASI_ANSWERS_KEY = `eksplorasi_${topicName}_answers`;
 
   const questions = [
@@ -1031,6 +1031,14 @@ const Eksplorasi = ({ topicName, onComplete }) => {
     });
   };
 
+  const handleReset = () => {
+    setSelected(Array(questions.length).fill(null));
+    localStorage.removeItem(EKSPLORASI_ANSWERS_KEY);
+    if (onReset) onReset();
+  };
+
+  const allAnswered = selected.every(s => s !== null);
+
   return (
     <div>
       <h2 style={styles.sectionTitle}>Eksplorasi Awal</h2>
@@ -1040,7 +1048,7 @@ const Eksplorasi = ({ topicName, onComplete }) => {
           Eksplorasi awal ini bertujuan untuk mengukur pemahaman awal Anda terhadap materi yang akan dipelajari.
           Maka dari itu, <strong>jawaban</strong> Anda <strong>tidak harus benar</strong>, jawab sesuai pemahaman Anda. 
           <strong> Materi akan terbuka setelah kedua pertanyaan dijawab.</strong>
-          {selected.every(s => s !== null) && " (Anda sudah menyelesaikan eksplorasi ini sebelumnya.)"}
+          {allAnswered && " (Anda sudah menyelesaikan eksplorasi ini sebelumnya.)"}
         </p>
         {questions.map((q, idx) => {
           const isAnswered = selected[idx] !== null;
@@ -1071,7 +1079,34 @@ const Eksplorasi = ({ topicName, onComplete }) => {
             </div>
           );
         })}
-        {!selected.every(s => s !== null) && <div style={styles.infoMessage}>Jawab kedua pertanyaan di atas untuk membuka materi pembelajaran.</div>}
+        {!allAnswered && <div style={styles.infoMessage}>Jawab kedua pertanyaan di atas untuk membuka materi pembelajaran.</div>}
+        {allAnswered && (
+          <>
+            <div style={styles.infoMessage}>
+              ✅ Eksplorasi selesai. Materi telah terbuka di bawah ini.
+            </div>
+            <div style={{ marginTop: '15px', textAlign: 'center' }}>
+              <button
+                onClick={handleReset}
+                style={{
+                  backgroundColor: '#dc3545',
+                  color: 'white',
+                  border: 'none',
+                  padding: '8px 24px',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontWeight: '600',
+                  fontSize: '14px',
+                  transition: '0.2s',
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#b02a37'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#dc3545'}
+              >
+                Reset Jawaban
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );
@@ -1502,6 +1537,7 @@ _buffer.getvalue()`);
   }, []);
 
   const handleEksplorasiComplete = () => setIsEksplorasiCompleted(true);
+  const handleEksplorasiReset = () => setIsEksplorasiCompleted(false);
 
   // Tampilkan loading saat sedang mengambil data
   if (loading) {
@@ -1538,7 +1574,11 @@ _buffer.getvalue()`);
           </section>
 
           <section style={styles.section}>
-            <Eksplorasi topicName={TOPIC_NAME} onComplete={handleEksplorasiComplete} />
+            <Eksplorasi 
+              topicName={TOPIC_NAME} 
+              onComplete={handleEksplorasiComplete}
+              onReset={handleEksplorasiReset}
+            />
           </section>
 
           {isEksplorasiCompleted && (

@@ -1682,6 +1682,13 @@ export default function OperasiManipulasiList() {
     });
   };
 
+  // --- FUNGSI RESET EKSPLORASI (TAMBAHAN) ---
+  const resetEksplorasi = () => {
+    setEksplorasiSelected(Array(eksplorasiQuestions.length).fill(null));
+    localStorage.removeItem(EKSPLORASI_ANSWERS_KEY);
+  };
+  // ------------------------------------------
+
   // DATA VISUALISASI
   const concatBeforeA = [1,2,3];
   const concatBeforeB = [4,5,6];
@@ -2095,6 +2102,34 @@ export default function OperasiManipulasiList() {
                 <div style={styles.infoMessage}>
                   Jawab kedua pertanyaan di atas untuk membuka materi pembelajaran.
                 </div>
+              )}
+              {isEksplorasiCompleted && (
+                <>
+                  <div style={styles.infoMessage}>
+                    ✅ Eksplorasi selesai. Materi telah terbuka di bawah ini.
+                  </div>
+                  {/* TOMBOL RESET (TAMBAHAN) */}
+                  <div style={{ marginTop: '15px', textAlign: 'center' }}>
+                    <button
+                      onClick={resetEksplorasi}
+                      style={{
+                        backgroundColor: '#dc3545',
+                        color: 'white',
+                        border: 'none',
+                        padding: '8px 24px',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        fontWeight: '600',
+                        fontSize: '14px',
+                        transition: '0.2s',
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#b02a37'}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#dc3545'}
+                    >
+                      Reset Jawaban
+                    </button>
+                  </div>
+                </>
               )}
             </div>
           </section>

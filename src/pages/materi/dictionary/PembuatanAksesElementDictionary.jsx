@@ -719,6 +719,13 @@ export default function PembuatanAksesElementDictionary() {
     });
   };
 
+  // ----- FUNGSI RESET EKSPLORASI (TAMBAHAN) -----
+  const resetEksplorasi = () => {
+    setEksplorasiSelected(Array(eksplorasiQuestions.length).fill(null));
+    localStorage.removeItem(EKSPLORASI_ANSWERS_KEY);
+  };
+  // ---------------------------------------------
+
   // Data untuk visualisasi
   const dictMembuat = {
     nama: "Budi Santoso",
@@ -1004,6 +1011,33 @@ _buffer.getvalue()
                   </div>
                 );
               })}
+              {isEksplorasiCompleted && (
+                <>
+                  <div style={styles.infoMessage}>
+                    ✅ Eksplorasi selesai. Materi telah terbuka di bawah ini.
+                  </div>
+                  <div style={{ marginTop: '15px', textAlign: 'center' }}>
+                    <button
+                      onClick={resetEksplorasi}
+                      style={{
+                        backgroundColor: '#dc3545',
+                        color: 'white',
+                        border: 'none',
+                        padding: '8px 24px',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        fontWeight: '600',
+                        fontSize: '14px',
+                        transition: '0.2s',
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#b02a37'}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#dc3545'}
+                    >
+                      Reset Jawaban
+                    </button>
+                  </div>
+                </>
+              )}
               {!isEksplorasiCompleted && (
                 <div style={styles.lockMessage}>Materi terkunci. Jawab semua pertanyaan di atas untuk membuka materi.</div>
               )}
@@ -1471,6 +1505,15 @@ const styles = {
     backgroundColor: "#f9f9f9",
   },
   lockMessage: {
+    marginTop: "20px",
+    padding: "15px",
+    backgroundColor: "#cfe2ff",
+    borderLeft: "5px solid #0d6efd",
+    borderRadius: "8px",
+    textAlign: "center",
+    color: "#084298",
+  },
+  infoMessage: {
     marginTop: "20px",
     padding: "15px",
     backgroundColor: "#cfe2ff",

@@ -1105,6 +1105,7 @@ export default function PembuatanAksesElement() {
     () => eksplorasiSelected.every(sel => sel !== null)
   );
 
+  // Efek untuk sinkronisasi feedback dan localStorage
   useEffect(() => {
     const newFeedback = eksplorasiSelected.map((sel, i) => {
       if (sel === null) return "";
@@ -1124,6 +1125,13 @@ export default function PembuatanAksesElement() {
       return newSelected;
     });
   };
+
+  // --- FUNGSI RESET EKSPLORASI (TAMBAHAN) ---
+  const resetEksplorasi = () => {
+    setEksplorasiSelected(Array(eksplorasiQuestions.length).fill(null));
+    localStorage.removeItem(EKSPLORASI_ANSWERS_KEY);
+  };
+  // ------------------------------------------
 
   const campuranData = ["apel", 100, true, 3.14];
   const angkaData = [10, 20, 30, 40, 50];
@@ -1450,6 +1458,34 @@ sys.stdout = StringIO()
                 <div style={styles.infoMessage}>
                   Jawab kedua pertanyaan di atas untuk membuka materi pembelajaran.
                 </div>
+              )}
+              {isEksplorasiCompleted && (
+                <>
+                  <div style={styles.infoMessage}>
+                    ✅ Eksplorasi selesai. Materi telah terbuka di bawah ini.
+                  </div>
+                  {/* TOMBOL RESET (TAMBAHAN) */}
+                  <div style={{ marginTop: '15px', textAlign: 'center' }}>
+                    <button
+                      onClick={resetEksplorasi}
+                      style={{
+                        backgroundColor: '#dc3545',
+                        color: 'white',
+                        border: 'none',
+                        padding: '8px 24px',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        fontWeight: '600',
+                        fontSize: '14px',
+                        transition: '0.2s',
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#b02a37'}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#dc3545'}
+                    >
+                      Reset Jawaban
+                    </button>
+                  </div>
+                </>
               )}
             </div>
           </section>

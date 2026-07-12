@@ -342,7 +342,7 @@ const IlustrasiPerbandingan = () => {
   );
 };
 
-// ===================== EKSPLORASI (DIMODIFIKASI UNTUK LOCAL STORAGE) =====================
+// ===================== EKSPLORASI (DIMODIFIKASI UNTUK LOCAL STORAGE DAN RESET) =====================
 const Eksplorasi = ({ topicName, onComplete }) => {
   const EKSPLORASI_ANSWERS_KEY = `eksplorasi_${topicName}_answers`;
 
@@ -389,13 +389,14 @@ const Eksplorasi = ({ topicName, onComplete }) => {
     return sel === questions[i].correct ? "Benar" : "Salah";
   });
 
+  const isCompleted = selected.every(s => s !== null);
+
   useEffect(() => {
     localStorage.setItem(EKSPLORASI_ANSWERS_KEY, JSON.stringify(selected));
-    const allAnswered = selected.every(s => s !== null);
-    if (allAnswered) {
+    if (isCompleted) {
       onComplete();
     }
-  }, [selected, EKSPLORASI_ANSWERS_KEY, onComplete]);
+  }, [selected, EKSPLORASI_ANSWERS_KEY, onComplete, isCompleted]);
 
   const handleAnswer = (qIdx, optIdx) => {
     if (selected[qIdx] !== null) return;
@@ -404,6 +405,11 @@ const Eksplorasi = ({ topicName, onComplete }) => {
       newSel[qIdx] = optIdx;
       return newSel;
     });
+  };
+
+  const resetEksplorasi = () => {
+    setSelected(Array(questions.length).fill(null));
+    localStorage.removeItem(EKSPLORASI_ANSWERS_KEY);
   };
 
   return (
@@ -415,7 +421,7 @@ const Eksplorasi = ({ topicName, onComplete }) => {
           Eksplorasi awal ini bertujuan untuk mengukur pemahaman awal Anda terhadap materi yang akan dipelajari.
           Maka dari itu, <strong>jawaban</strong> Anda <strong>tidak harus benar</strong>, jawab sesuai pemahaman Anda. 
           <strong> Materi akan terbuka setelah kedua pertanyaan dijawab.</strong>
-          {selected.every(s => s !== null) && " (Anda sudah menyelesaikan eksplorasi ini sebelumnya.)"}
+          {isCompleted && " (Anda sudah menyelesaikan eksplorasi ini sebelumnya.)"}
         </p>
         {questions.map((q, idx) => {
           const isAnswered = selected[idx] !== null;
@@ -453,6 +459,33 @@ const Eksplorasi = ({ topicName, onComplete }) => {
             </div>
           );
         })}
+        {isCompleted && (
+          <div style={{ marginTop: '20px', textAlign: 'center' }}>
+            <div style={styles.infoMessage}>
+              ✅ Eksplorasi selesai. Materi telah terbuka di bawah ini.
+            </div>
+            <div style={{ marginTop: '15px' }}>
+              <button
+                onClick={resetEksplorasi}
+                style={{
+                  backgroundColor: '#dc3545',
+                  color: 'white',
+                  border: 'none',
+                  padding: '8px 24px',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontWeight: '600',
+                  fontSize: '14px',
+                  transition: '0.2s',
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#b02a37'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#dc3545'}
+              >
+                Reset Jawaban
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

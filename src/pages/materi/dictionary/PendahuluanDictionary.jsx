@@ -314,6 +314,13 @@ export default function PendahuluanDictionary() {
     });
   };
 
+  // --- FUNGSI RESET EKSPLORASI (TAMBAHAN) ---
+  const resetEksplorasi = () => {
+    setEksplorasiSelected(Array(eksplorasiQuestions.length).fill(null));
+    localStorage.removeItem(EKSPLORASI_ANSWERS_KEY);
+  };
+  // ------------------------------------------
+
   // Data visualisasi contoh dictionary
   const contohDictionary = {
     nama: "Budi",
@@ -580,6 +587,33 @@ export default function PendahuluanDictionary() {
                   </div>
                 );
               })}
+              {isEksplorasiCompleted && (
+                <>
+                  <div style={styles.lockMessage}>
+                    ✅ Eksplorasi selesai. Materi telah terbuka di bawah ini.
+                  </div>
+                  <div style={{ marginTop: '15px', textAlign: 'center' }}>
+                    <button
+                      onClick={resetEksplorasi}
+                      style={{
+                        backgroundColor: '#dc3545',
+                        color: 'white',
+                        border: 'none',
+                        padding: '8px 24px',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        fontWeight: '600',
+                        fontSize: '14px',
+                        transition: '0.2s',
+                      }}
+                      onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#b02a37'}
+                      onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#dc3545'}
+                    >
+                      Reset Jawaban
+                    </button>
+                  </div>
+                </>
+              )}
               {!isEksplorasiCompleted && (
                 <div style={styles.lockMessage}>
                   🔒 Materi terkunci. Jawab semua pertanyaan di atas untuk membuka materi.

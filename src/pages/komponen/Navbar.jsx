@@ -1,13 +1,16 @@
-import { Link, useLocation } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useState, useEffect, useRef } from "react";
 import AvatarDropdown from "./AvatarDropdown";
 import logo from "../../assets/logo-media-terbaru.png";
 
 export default function Navbar() {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userName, setUserName] = useState("");
   const [userRole, setUserRole] = useState("");
-  const location = useLocation();
+  const [openLoginDropdown, setOpenLoginDropdown] = useState(false);
+  const dropdownRef = useRef(null);
 
   // Fungsi untuk menentukan tab aktif berdasarkan pathname
   const getActiveTab = (pathname) => {
@@ -41,6 +44,22 @@ export default function Navbar() {
     }
   }, []);
 
+  // Tutup dropdown jika klik di luar
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setOpenLoginDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const handleLoginClick = () => {
+    setOpenLoginDropdown(false);
+    navigate("/loginregister");
+  };
+
   return (
     <nav className="navbar">
       <div className="left">
@@ -69,7 +88,25 @@ export default function Navbar() {
         {isLoggedIn ? (
           <AvatarDropdown userName={userName} userRole={userRole} />
         ) : (
-          <div className="avatar">👤</div>
+          <div className="avatar-dropdown" ref={dropdownRef}>
+            <div className="avatar" onClick={() => setOpenLoginDropdown(!openLoginDropdown)}>
+              👤
+            </div>
+            {openLoginDropdown && (
+              <div className="dropdown-menu">
+                <div className="dropdown-item" style={{ fontWeight: "bold", color: "#333" }}>
+                  Belum Login
+                </div>
+                <div className="dropdown-item" style={{ fontSize: "12px", color: "#666" }}>
+                  Silakan login untuk mengakses fitur
+                </div>
+                <hr style={{ margin: "8px 0" }} />
+                <div className="dropdown-item login-btn" onClick={handleLoginClick}>
+                  🔑 Login
+                </div>
+              </div>
+            )}
+          </div>
         )}
       </div>
 
@@ -128,6 +165,11 @@ export default function Navbar() {
           color: #FFD43B !important;
         }
 
+        .avatar-dropdown {
+          position: relative;
+          display: inline-block;
+        }
+
         .avatar {
           width: 34px;
           height: 34px;
@@ -139,6 +181,46 @@ export default function Navbar() {
           justify-content: center;
           font-weight: 600;
           cursor: pointer;
+          font-size: 18px;
+          transition: transform 0.2s;
+        }
+
+        .avatar:hover {
+          transform: scale(1.05);
+          opacity: 0.9;
+        }
+
+        .dropdown-menu {
+          position: absolute;
+          top: 45px;
+          right: 0;
+          background: white;
+          border-radius: 8px;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+          width: 180px;
+          padding: 8px 0;
+          z-index: 1000;
+        }
+
+        .dropdown-item {
+          padding: 8px 16px;
+          cursor: pointer;
+          transition: background 0.2s;
+          font-size: 14px;
+          color: #333;
+        }
+
+        .dropdown-item:hover {
+          background: #f3f4f6;
+        }
+
+        .login-btn {
+          color: #306998;
+          font-weight: 600;
+        }
+
+        .login-btn:hover {
+          background: #e3f2fd;
         }
 
         @media (max-width: 768px) {
@@ -168,6 +250,10 @@ export default function Navbar() {
             width: 30px;
             height: 30px;
             font-size: 14px;
+          }
+          .dropdown-menu {
+            width: 160px;
+            right: 0;
           }
         }
 
@@ -200,6 +286,10 @@ export default function Navbar() {
             height: 28px;
             font-size: 12px;
           }
+          .dropdown-menu {
+            width: 150px;
+            right: 0;
+          }
         }
 
         @media (max-width: 480px) {
@@ -211,6 +301,10 @@ export default function Navbar() {
           }
           .logo-image {
             height: 32px;
+          }
+          .dropdown-menu {
+            width: 140px;
+            right: 0;
           }
         }
       `}</style>
