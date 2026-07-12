@@ -13,6 +13,8 @@ import {
   where,
   getDocs,
 } from "firebase/firestore";
+import CodeMirror from '@uiw/react-codemirror';
+import { python } from '@codemirror/lang-python';
 
 export default function EvaluasiAkhir() {
   const navigate = useNavigate();
@@ -208,10 +210,35 @@ export default function EvaluasiAkhir() {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
+  // ---------- FUNGSI PEMBANDING JAWABAN ESAI ----------
+  const compareEssayAnswers = (userAns, correctAns) => {
+    if (!userAns && !correctAns) return true;
+    if (!userAns || !correctAns) return false;
+    const u = userAns.trim();
+    const c = correctAns.trim();
+    try {
+      const normalize = (s) => {
+        let normalized = s.replace(/\s/g, '');
+        normalized = normalized.replace(/"/g, "'");
+        return normalized;
+      };
+      return normalize(u) === normalize(c);
+    } catch (e) {
+      return u === c;
+    }
+  };
+
   // ---------- HANDLER ----------
   const handleAnswer = (answerIndex) => {
     const newAnswers = [...answers];
     newAnswers[currentIndex] = answerIndex;
+    setAnswers(newAnswers);
+  };
+
+  // Handler untuk esai
+  const handleEssayAnswer = (value) => {
+    const newAnswers = [...answers];
+    newAnswers[currentIndex] = value;
     setAnswers(newAnswers);
   };
 
@@ -228,7 +255,17 @@ export default function EvaluasiAkhir() {
       return;
     }
 
-    const allAnswered = answers.every(ans => ans !== null);
+    // Validasi semua soal terjawab (termasuk esai)
+    const allAnswered = answers.every((ans, idx) => {
+      const q = questions[idx];
+      const isEssay = q.isEssay || (q.pilihan && q.pilihan.length === 0);
+      if (isEssay) {
+        return ans && ans.trim() !== '';
+      } else {
+        return ans !== null;
+      }
+    });
+
     if (!allAnswered) {
       setShowWarningModal(true);
       return;
@@ -253,7 +290,16 @@ export default function EvaluasiAkhir() {
     for (let i = 0; i < questions.length; i++) {
       const q = questions[i];
       const userAnswer = currentAnswers[i];
-      const isCorrect = (userAnswer !== null && userAnswer === Number(q.jawaban_benar));
+      let isCorrect = false;
+
+      const isEssay = q.isEssay || (q.pilihan && q.pilihan.length === 0);
+
+      if (isEssay) {
+        isCorrect = compareEssayAnswers(userAnswer || '', q.jawaban_benar || '');
+      } else {
+        isCorrect = (userAnswer !== null && userAnswer === Number(q.jawaban_benar));
+      }
+
       if (isCorrect) correct++;
       results.push({ ...q, userAnswer, isCorrect });
     }
@@ -336,6 +382,8 @@ export default function EvaluasiAkhir() {
       .btn-hover-retry:hover { background-color: #e67e22 !important; transform: translateY(-2px); }
       .btn-hover-next:hover { background-color: #1e4a76 !important; transform: translateY(-2px); }
       .nav-box-hover:hover { transform: scale(1.05); box-shadow: 0 2px 8px rgba(0,0,0,0.2); transition: all 0.15s ease; }
+      .cm-editor { border-radius: 12px; border: 1px solid #e2e8f0; background: #f8fafc; }
+      .cm-editor.cm-focused { outline: none; border-color: #306998; }
     `;
     document.head.appendChild(style);
     return () => document.head.removeChild(style);
@@ -405,7 +453,7 @@ export default function EvaluasiAkhir() {
             <div style={styles.cardInstruction}>
               <h2 style={styles.instructionTitle}>Petunjuk Pengerjaan</h2>
               <ul style={styles.instructionList}>
-                <li>Evaluasi terdiri dari {totalSoal} soal pilihan ganda.</li>
+                <li>Evaluasi terdiri dari {totalSoal} soal (pilihan ganda &amp; isian kode).</li>
                 <li>Setiap soal bernilai {bobot} poin (total maksimal {totalSoal * bobot}).</li>
                 <li>Waktu pengerjaan: 25 menit (timer berjalan setelah tombol mulai evaluasi diklik).</li>
                 <li>Pastikan semua jawaban sudah dipilih sebelum menekan KUMPULKAN JAWABAN.</li>
@@ -482,11 +530,8 @@ export default function EvaluasiAkhir() {
             {role === 'mahasiswa' ? (
               isPassed ? (
                 <div style={styles.passedBoxNew}>
-                  <div style={{ fontSize: '22px', fontWeight: 'bold', marginBottom: '6px' }}>SELAMAT! <br></ br> SUDAH MENYELESAIKAN PEMBELAJARAN MATERI LIST DAN DICTIONARY</div>
+                  <div style={{ fontSize: '22px', fontWeight: 'bold', marginBottom: '6px' }}>SELAMAT! <br></br> SUDAH MENYELESAIKAN PEMBELAJARAN MATERI LIST DAN DICTIONARY</div>
                   <div>Status: LULUS</div>
-                  {/* <div style={{ marginTop: '8px', fontSize: '15px', opacity: 0.9 }}>
-                    
-                  </div> */}
                 </div>
               ) : (
                 <div style={styles.failedBoxNew}>
@@ -525,6 +570,7 @@ export default function EvaluasiAkhir() {
   // Halaman kuis
   const q = questions[currentIndex];
   const isUnsure = unsures[currentIndex];
+  const isEssay = q.isEssay || (q.pilihan && q.pilihan.length === 0);
   // Daftar indeks soal yang perlu diperbaiki: nomor 1,4,6,11,18,20 -> indeks 0,3,5,10,17,19
   const smallQuestionIndices = [0, 3, 5, 10, 17, 19];
   const isSmallQuestion = smallQuestionIndices.includes(currentIndex);
@@ -553,7 +599,7 @@ export default function EvaluasiAkhir() {
                   boxStyle = { ...stylesMobile.navBox, ...stylesMobile.navBoxActive };
                 } else if (unsures[idx]) {
                   boxStyle = { ...stylesMobile.navBox, ...stylesMobile.navBoxUnsure };
-                } else if (answers[idx] !== null) {
+                } else if (answers[idx] !== null && (typeof answers[idx] === 'string' ? answers[idx].trim() !== '' : true)) {
                   boxStyle = { ...stylesMobile.navBox, ...stylesMobile.navBoxAnswered };
                 }
                 return (
@@ -603,20 +649,46 @@ export default function EvaluasiAkhir() {
               {q.pertanyaan}
             </p>
 
-            <div style={isSmallQuestion ? stylesMobile.optionsContainerNoScroll : stylesMobile.optionsContainer}>
-              {q.pilihan.map((opt, idx) => (
-                <label key={idx} style={isSmallQuestion ? stylesMobile.optionLabelNoScroll : stylesMobile.optionLabel}>
-                  <input
-                    type="radio"
-                    name="question"
-                    value={idx}
-                    checked={answers[currentIndex] === idx}
-                    onChange={() => handleAnswer(idx)}
-                  />
-                  <span style={stylesMobile.optionLetter}>{String.fromCharCode(65 + idx)}.</span> {opt}
-                </label>
-              ))}
-            </div>
+            {isEssay ? (
+              // ===== SOAL ESAI dengan CodeMirror =====
+              <div style={stylesMobile.essayContainer}>
+                <CodeMirror
+                  value={answers[currentIndex] || ''}
+                  onChange={handleEssayAnswer}
+                  extensions={[python()]}
+                  theme="light"
+                  style={{ fontSize: '14px', fontFamily: 'monospace' }}
+                  basicSetup={{
+                    lineNumbers: true,
+                    tabSize: 2,
+                    indentOnInput: true,
+                    bracketMatching: true,
+                    closeBrackets: true,
+                    autocompletion: true,
+                  }}
+                  height="auto"
+                  minHeight="120px"
+                  maxHeight="300px"
+                  width="100%"
+                />
+              </div>
+            ) : (
+              // ===== SOAL PILIHAN GANDA =====
+              <div style={isSmallQuestion ? stylesMobile.optionsContainerNoScroll : stylesMobile.optionsContainer}>
+                {q.pilihan.map((opt, idx) => (
+                  <label key={idx} style={isSmallQuestion ? stylesMobile.optionLabelNoScroll : stylesMobile.optionLabel}>
+                    <input
+                      type="radio"
+                      name="question"
+                      value={idx}
+                      checked={answers[currentIndex] === idx}
+                      onChange={() => handleAnswer(idx)}
+                    />
+                    <span style={stylesMobile.optionLetter}>{String.fromCharCode(65 + idx)}.</span> {opt}
+                  </label>
+                ))}
+              </div>
+            )}
 
             <div style={stylesMobile.navButtons}>
               <button
@@ -744,20 +816,46 @@ export default function EvaluasiAkhir() {
             {q.pertanyaan}
           </p>
 
-          <div style={isSmallQuestion ? styles.optionsContainerNoScroll : styles.optionsContainer}>
-            {q.pilihan.map((opt, idx) => (
-              <label key={idx} style={isSmallQuestion ? styles.optionLabelNoScroll : styles.optionLabel}>
-                <input
-                  type="radio"
-                  name="question"
-                  value={idx}
-                  checked={answers[currentIndex] === idx}
-                  onChange={() => handleAnswer(idx)}
-                />
-                <span style={styles.optionLetter}>{String.fromCharCode(65 + idx)}.</span> {opt}
-              </label>
-            ))}
-          </div>
+          {isEssay ? (
+            // ===== SOAL ESAI dengan CodeMirror =====
+            <div style={styles.essayContainer}>
+              <CodeMirror
+                value={answers[currentIndex] || ''}
+                onChange={handleEssayAnswer}
+                extensions={[python()]}
+                theme="light"
+                style={{ fontSize: '15px', fontFamily: 'monospace' }}
+                basicSetup={{
+                  lineNumbers: true,
+                  tabSize: 2,
+                  indentOnInput: true,
+                  bracketMatching: true,
+                  closeBrackets: true,
+                  autocompletion: true,
+                }}
+                height="auto"
+                minHeight="150px"
+                maxHeight="400px"
+                width="100%"
+              />
+            </div>
+          ) : (
+            // ===== SOAL PILIHAN GANDA =====
+            <div style={isSmallQuestion ? styles.optionsContainerNoScroll : styles.optionsContainer}>
+              {q.pilihan.map((opt, idx) => (
+                <label key={idx} style={isSmallQuestion ? styles.optionLabelNoScroll : styles.optionLabel}>
+                  <input
+                    type="radio"
+                    name="question"
+                    value={idx}
+                    checked={answers[currentIndex] === idx}
+                    onChange={() => handleAnswer(idx)}
+                  />
+                  <span style={styles.optionLetter}>{String.fromCharCode(65 + idx)}.</span> {opt}
+                </label>
+              ))}
+            </div>
+          )}
 
           <div style={styles.navButtons}>
             <button
@@ -788,7 +886,7 @@ export default function EvaluasiAkhir() {
                 boxStyle = { ...styles.navBox, ...styles.navBoxActive };
               } else if (unsures[idx]) {
                 boxStyle = { ...styles.navBox, ...styles.navBoxUnsure };
-              } else if (answers[idx] !== null) {
+              } else if (answers[idx] !== null && (typeof answers[idx] === 'string' ? answers[idx].trim() !== '' : true)) {
                 boxStyle = { ...styles.navBox, ...styles.navBoxAnswered };
               }
               return (
@@ -1114,6 +1212,12 @@ const styles = {
     color: "#306998",
     width: "24px",
     fontSize: "14px",
+  },
+  essayContainer: {
+    flex: "1 1 auto",
+    marginBottom: "14px",
+    display: "flex",
+    flexDirection: "column",
   },
   navButtons: {
     display: "flex",
@@ -1749,6 +1853,12 @@ const stylesMobile = {
     color: "#306998",
     width: "20px",
     fontSize: "13px",
+  },
+  essayContainer: {
+    flex: "1 1 auto",
+    marginBottom: "12px",
+    display: "flex",
+    flexDirection: "column",
   },
   navButtons: {
     display: "flex",

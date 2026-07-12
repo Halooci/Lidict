@@ -13,7 +13,9 @@ import {
   where,
   getDocs,
 } from "firebase/firestore";
-import MateriPagination from "../../komponen/MateriPagination"; // <-- import
+import MateriPagination from "../../komponen/MateriPagination";
+import CodeMirror from '@uiw/react-codemirror';
+import { python } from '@codemirror/lang-python';
 
 export default function KuisNestedList() {
   const navigate = useNavigate();
@@ -216,10 +218,42 @@ export default function KuisNestedList() {
     setAnswers(newAnswers);
   };
 
+  // Handler untuk soal esai (input code) – menggunakan CodeMirror
+  const handleEssayAnswer = (value) => {
+    const newAnswers = [...answers];
+    newAnswers[currentQuestion] = value;
+    setAnswers(newAnswers);
+  };
+
   const toggleUnsure = () => {
     const newUnsures = [...unsures];
     newUnsures[currentQuestion] = !newUnsures[currentQuestion];
     setUnsures(newUnsures);
+  };
+
+  // ========== FUNGSI PEMBANDING JAWABAN ESAI (lebih pintar) ==========
+  const compareEssayAnswers = (userAns, correctAns) => {
+    if (!userAns && !correctAns) return true;
+    if (!userAns || !correctAns) return false;
+
+    // Trim terlebih dahulu
+    const u = userAns.trim();
+    const c = correctAns.trim();
+
+    // Normalisasi: hilangkan spasi dan seragamkan tanda petik
+    try {
+      const normalize = (s) => {
+        // Hapus semua spasi
+        let normalized = s.replace(/\s/g, '');
+        // Ganti semua double quote dengan single quote
+        normalized = normalized.replace(/"/g, "'");
+        return normalized;
+      };
+      return normalize(u) === normalize(c);
+    } catch (e) {
+      // Fallback ke perbandingan string biasa
+      return u === c;
+    }
   };
 
   const handleSubmit = async (auto = false) => {
@@ -239,7 +273,19 @@ export default function KuisNestedList() {
     for (let i = 0; i < questions.length; i++) {
       const q = questions[i];
       const userAnswer = currentAnswers[i];
-      const isCorrect = (userAnswer !== null && userAnswer === Number(q.jawaban_benar));
+      let isCorrect = false;
+
+      // Deteksi esai: jika isEssay true atau pilihan kosong
+      const isEssay = q.isEssay || (q.pilihan && q.pilihan.length === 0);
+
+      if (isEssay) {
+        // Gunakan pembanding yang lebih cerdas
+        isCorrect = compareEssayAnswers(userAnswer || '', q.jawaban_benar || '');
+      } else {
+        // Soal pilihan ganda
+        isCorrect = (userAnswer !== null && userAnswer === Number(q.jawaban_benar));
+      }
+
       if (isCorrect) score++;
       results.push({ ...q, userAnswer, isCorrect });
     }
@@ -296,7 +342,17 @@ export default function KuisNestedList() {
       return;
     }
 
-    const allAnswered = answers.every(ans => ans !== null);
+    // Validasi semua soal terjawab (termasuk esai)
+    const allAnswered = answers.every((ans, idx) => {
+      const q = questions[idx];
+      const isEssay = q.isEssay || (q.pilihan && q.pilihan.length === 0);
+      if (isEssay) {
+        return ans && ans.trim() !== '';
+      } else {
+        return ans !== null;
+      }
+    });
+
     if (!allAnswered) {
       setShowWarningModal(true);
       return;
@@ -348,6 +404,8 @@ export default function KuisNestedList() {
       .btn-hover-back:hover { background-color: #5a6268 !important; transform: translateY(-2px); }
       .btn-hover-next:hover { background-color: #1e4a76 !important; transform: translateY(-2px); }
       .nav-box-hover:hover { transform: scale(1.05); box-shadow: 0 2px 8px rgba(0,0,0,0.2); transition: all 0.15s ease; }
+      .cm-editor { border-radius: 12px; border: 1px solid #e2e8f0; background: #f8fafc; }
+      .cm-editor.cm-focused { outline: none; border-color: #306998; }
     `;
     document.head.appendChild(style);
     return () => document.head.removeChild(style);
@@ -418,11 +476,11 @@ export default function KuisNestedList() {
             <div style={styles.cardInstruction}>
               <h2 style={styles.instructionTitle}>Petunjuk Pengerjaan</h2>
               <ul style={styles.instructionList}>
-                <li>Kuis terdiri dari {questions.length} soal pilihan ganda.</li>
+                <li>Kuis terdiri dari {questions.length} soal (pilihan ganda &amp; isian kode).</li>
                 <li>Setiap soal bernilai 10 poin (total maksimal 100).</li>
                 <li>Waktu pengerjaan: 10 menit (timer berjalan setelah tombol mulai kuis diklik).</li>
                 <li>Gunakan fitur "Ragu-ragu" untuk soal yang perlu ditinjau ulang.</li>
-                <li>Pastikan tombol ragu-ragu nonaktif disemua soal sebelum mengumpulkan jawaban.</li>
+                <li>Pastikan tombol ragu-ragu nonaktif di semua soal sebelum mengumpulkan jawaban.</li>
                 <li>Navigasi soal dapat melalui panel kotak nomor atau tombol Sebelumnya/Selanjutnya.</li>
                 <li>Pastikan semua soal sudah terjawab sebelum menekan KUMPULKAN JAWABAN.</li>
                 <li>Jika waktu habis, jawaban yang sudah terisi akan tersimpan dan terkirim secara otomatis.</li>
@@ -523,7 +581,7 @@ export default function KuisNestedList() {
           </div>
           {/* ===== PAGINATION ===== */}
           <div style={{ marginTop: '20px' }}>
-            <MateriPagination nextDisabled={true} />
+            {/* <MateriPagination nextDisabled={true} /> */}
           </div>
         </div>
       </div>
@@ -533,7 +591,7 @@ export default function KuisNestedList() {
   // Halaman Kuis - Mobile
   const q = questions[currentQuestion];
   const isUnsure = unsures[currentQuestion];
-  const isSmallOption = currentQuestion === 7; // soal nomor 8
+  const isEssay = q.isEssay || (q.pilihan && q.pilihan.length === 0);
 
   if (isMobile) {
     return (
@@ -558,7 +616,7 @@ export default function KuisNestedList() {
                   boxStyle = { ...stylesMobile.navBox, ...stylesMobile.navBoxActive };
                 } else if (unsures[idx]) {
                   boxStyle = { ...stylesMobile.navBox, ...stylesMobile.navBoxUnsure };
-                } else if (answers[idx] !== null) {
+                } else if (answers[idx] !== null && (typeof answers[idx] === 'string' ? answers[idx].trim() !== '' : true)) {
                   boxStyle = { ...stylesMobile.navBox, ...stylesMobile.navBoxAnswered };
                 }
                 return (
@@ -606,20 +664,46 @@ export default function KuisNestedList() {
             </div>
             <p style={stylesMobile.questionText}>{q.pertanyaan}</p>
 
-            <div style={isSmallOption ? stylesMobile.optionsContainerSmall : stylesMobile.optionsContainer}>
-              {q.pilihan.map((opt, idx) => (
-                <label key={idx} style={isSmallOption ? stylesMobile.optionLabelSmall : stylesMobile.optionLabel}>
-                  <input
-                    type="radio"
-                    name="question"
-                    value={idx}
-                    checked={answers[currentQuestion] === idx}
-                    onChange={() => handleMCAnswer(idx)}
-                  />
-                  <span style={stylesMobile.optionLetter}>{String.fromCharCode(65 + idx)}.</span> {opt}
-                </label>
-              ))}
-            </div>
+            {isEssay ? (
+              // ===== SOAL ESAI dengan CodeMirror =====
+              <div style={stylesMobile.essayContainer}>
+                <CodeMirror
+                  value={answers[currentQuestion] || ''}
+                  onChange={handleEssayAnswer}
+                  extensions={[python()]}
+                  theme="light"
+                  style={{ fontSize: '14px', fontFamily: 'monospace' }}
+                  basicSetup={{
+                    lineNumbers: true,
+                    tabSize: 2,
+                    indentOnInput: true,
+                    bracketMatching: true,
+                    closeBrackets: true,
+                    autocompletion: true,
+                  }}
+                  height="auto"
+                  minHeight="120px"
+                  maxHeight="300px"
+                  width="100%"
+                />
+              </div>
+            ) : (
+              // ===== SOAL PILIHAN GANDA =====
+              <div style={stylesMobile.optionsContainer}>
+                {q.pilihan.map((opt, idx) => (
+                  <label key={idx} style={stylesMobile.optionLabel}>
+                    <input
+                      type="radio"
+                      name="question"
+                      value={idx}
+                      checked={answers[currentQuestion] === idx}
+                      onChange={() => handleMCAnswer(idx)}
+                    />
+                    <span style={stylesMobile.optionLetter}>{String.fromCharCode(65 + idx)}.</span> {opt}
+                  </label>
+                ))}
+              </div>
+            )}
 
             <div style={stylesMobile.navButtons}>
               <button
@@ -745,20 +829,46 @@ export default function KuisNestedList() {
           </div>
           <p style={styles.questionText}>{q.pertanyaan}</p>
 
-          <div style={isSmallOption ? styles.optionsContainerSmall : styles.optionsContainer}>
-            {q.pilihan.map((opt, idx) => (
-              <label key={idx} style={isSmallOption ? styles.optionLabelSmall : styles.optionLabel}>
-                <input
-                  type="radio"
-                  name="question"
-                  value={idx}
-                  checked={answers[currentQuestion] === idx}
-                  onChange={() => handleMCAnswer(idx)}
-                />
-                <span style={styles.optionLetter}>{String.fromCharCode(65 + idx)}.</span> {opt}
-              </label>
-            ))}
-          </div>
+          {isEssay ? (
+            // ===== SOAL ESAI dengan CodeMirror =====
+            <div style={styles.essayContainer}>
+              <CodeMirror
+                value={answers[currentQuestion] || ''}
+                onChange={handleEssayAnswer}
+                extensions={[python()]}
+                theme="light"
+                style={{ fontSize: '15px', fontFamily: 'monospace' }}
+                basicSetup={{
+                  lineNumbers: true,
+                  tabSize: 2,
+                  indentOnInput: true,
+                  bracketMatching: true,
+                  closeBrackets: true,
+                  autocompletion: true,
+                }}
+                height="auto"
+                minHeight="150px"
+                maxHeight="400px"
+                width="100%"
+              />
+            </div>
+          ) : (
+            // ===== SOAL PILIHAN GANDA =====
+            <div style={styles.optionsContainer}>
+              {q.pilihan.map((opt, idx) => (
+                <label key={idx} style={styles.optionLabel}>
+                  <input
+                    type="radio"
+                    name="question"
+                    value={idx}
+                    checked={answers[currentQuestion] === idx}
+                    onChange={() => handleMCAnswer(idx)}
+                  />
+                  <span style={styles.optionLetter}>{String.fromCharCode(65 + idx)}.</span> {opt}
+                </label>
+              ))}
+            </div>
+          )}
 
           <div style={styles.navButtons}>
             <button
@@ -789,7 +899,7 @@ export default function KuisNestedList() {
                 boxStyle = { ...styles.navBox, ...styles.navBoxActive };
               } else if (unsures[idx]) {
                 boxStyle = { ...styles.navBox, ...styles.navBoxUnsure };
-              } else if (answers[idx] !== null) {
+              } else if (answers[idx] !== null && (typeof answers[idx] === 'string' ? answers[idx].trim() !== '' : true)) {
                 boxStyle = { ...styles.navBox, ...styles.navBoxAnswered };
               }
               return (
@@ -1113,6 +1223,12 @@ const styles = {
     color: "#306998",
     width: "24px",
     fontSize: "14px",
+  },
+  essayContainer: {
+    flex: "1 1 auto",
+    marginBottom: "14px",
+    display: "flex",
+    flexDirection: "column",
   },
   navButtons: {
     display: "flex",
@@ -1734,6 +1850,12 @@ const stylesMobile = {
     color: "#306998",
     width: "20px",
     fontSize: "13px",
+  },
+  essayContainer: {
+    flex: "1 1 auto",
+    marginBottom: "12px",
+    display: "flex",
+    flexDirection: "column",
   },
   navButtons: {
     display: "flex",
