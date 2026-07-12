@@ -256,6 +256,7 @@ export default function KuisNestedList() {
     }
   };
 
+  // ========== PERBAIKAN UTAMA: Simpan nilai tertinggi dengan batas KKM ==========
   const handleSubmit = async (auto = false) => {
     if (submitted || questions.length === 0 || isSubmittingRef.current) return;
     isSubmittingRef.current = true;
@@ -290,40 +291,54 @@ export default function KuisNestedList() {
       results.push({ ...q, userAnswer, isCorrect });
     }
     const finalScore = score;
+    let newScore = finalScore * 10;
 
     const waktuDigunakan = auto ? DURASI_KUIS : DURASI_KUIS - (timeLeft < 0 ? 0 : timeLeft);
     setResultsData({ results, finalScore, waktuDigunakan });
 
+    // ===== MAHASISWA: Simpan hanya jika nilai lebih tinggi, dengan batas KKM =====
     if (role === 'mahasiswa') {
       setSavingData(true);
       try {
         const userId = localStorage.getItem('userId');
         if (!userId) throw new Error("User ID tidak ditemukan");
+
+        // Batasi nilai maksimal = KKM
+        let scoreToSave = newScore;
+        if (scoreToSave > kkm) {
+          scoreToSave = kkm;
+        }
+
         const nilaiRef = doc(db, "nilai", userId);
-        await updateDoc(nilaiRef, {
-          "Kuis Nested List": finalScore * 10
-        });
+        const nilaiDoc = await getDoc(nilaiRef);
+        const nilaiData = nilaiDoc.exists() ? nilaiDoc.data() : {};
+        const existingScore = nilaiData["Kuis Nested List"] || 0;
 
-        const mahasiswaRef = doc(db, "mahasiswa", userId);
-        const mahasiswaDoc = await getDoc(mahasiswaRef);
-        if (!mahasiswaDoc.exists()) throw new Error("Data mahasiswa tidak ditemukan");
+        // Bandingkan nilai
+        if (scoreToSave > existingScore) {
+          // Simpan nilai baru
+          await updateDoc(nilaiRef, {
+            "Kuis Nested List": scoreToSave
+          });
 
-        const nilaiAkhir = finalScore * 10;
-        const isPassed = nilaiAkhir >= kkm;
-
-        if (isPassed) {
-          const bonusKey = `kuis_nested_bonus_done_${kelasId}`;
-          const alreadyBonus = localStorage.getItem(bonusKey);
-          
-          // Tambah progres hanya jika masih < 9
-          if (!alreadyBonus && progresBelajar < 9) {
-            await updateDoc(mahasiswaRef, {
-              progres_belajar: increment(1)
-            });
-            // Update state lokal
-            setProgresBelajar(progresBelajar + 1);
-            localStorage.setItem(bonusKey, "true");
+          // Update progres jika lulus
+          const mahasiswaRef = doc(db, "mahasiswa", userId);
+          const mahasiswaDoc = await getDoc(mahasiswaRef);
+          if (mahasiswaDoc.exists()) {
+            const isPassed = scoreToSave >= kkm;
+            if (isPassed) {
+              const currentProgres = mahasiswaDoc.data().progres_belajar || 0;
+              if (currentProgres < 9) {
+                await updateDoc(mahasiswaRef, {
+                  progres_belajar: increment(1)
+                });
+                setProgresBelajar(currentProgres + 1);
+              }
+            }
           }
+          alert(`Nilai berhasil disimpan: ${scoreToSave}`);
+        } else {
+          alert(`Nilai Anda saat ini ${existingScore} lebih tinggi dari nilai baru ${scoreToSave}.\nNilai tidak diupdate.`);
         }
       } catch (error) {
         console.error("Gagal menyimpan nilai:", error);
@@ -332,6 +347,7 @@ export default function KuisNestedList() {
         setSavingData(false);
       }
     }
+
     isSubmittingRef.current = false;
   };
 

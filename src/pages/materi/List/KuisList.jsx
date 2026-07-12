@@ -229,27 +229,22 @@ export default function KuisList() {
     if (!userAns && !correctAns) return true;
     if (!userAns || !correctAns) return false;
 
-    // Trim terlebih dahulu
     const u = userAns.trim();
     const c = correctAns.trim();
 
-    // Normalisasi: hilangkan spasi dan seragamkan tanda petik
     try {
       const normalize = (s) => {
-        // Hapus semua spasi
         let normalized = s.replace(/\s/g, '');
-        // Ganti semua double quote dengan single quote
         normalized = normalized.replace(/"/g, "'");
         return normalized;
       };
       return normalize(u) === normalize(c);
     } catch (e) {
-      // Fallback ke perbandingan string biasa
       return u === c;
     }
   };
 
-  // ========== PERBAIKAN UTAMA ==========
+  // ========== PERBAIKAN UTAMA: Simpan nilai tertinggi dengan batas KKM ==========
   const handleSubmit = async (auto = false) => {
     if (submitted || questions.length === 0 || isSubmittingRef.current) return;
     isSubmittingRef.current = true;
@@ -269,14 +264,11 @@ export default function KuisList() {
       const userAnswer = currentAnswers[i];
       let isCorrect = false;
 
-      // Deteksi esai: jika isEssay true atau pilihan kosong
       const isEssay = q.isEssay || (q.pilihan && q.pilihan.length === 0);
 
       if (isEssay) {
-        // Gunakan pembanding yang lebih cerdas
         isCorrect = compareEssayAnswers(userAnswer || '', q.jawaban_benar || '');
       } else {
-        // Soal pilihan ganda
         isCorrect = (userAnswer !== null && userAnswer === Number(q.jawaban_benar));
       }
 
@@ -284,35 +276,54 @@ export default function KuisList() {
       results.push({ ...q, userAnswer, isCorrect });
     }
     const finalScore = score;
+    let newScore = finalScore * 10;
 
     const waktuDigunakan = auto ? DURASI_KUIS : DURASI_KUIS - (timeLeft < 0 ? 0 : timeLeft);
     setResultsData({ results, finalScore, waktuDigunakan });
 
+    // ===== MAHASISWA: Simpan hanya jika nilai lebih tinggi, dengan batas KKM =====
     if (role === 'mahasiswa') {
       setSavingData(true);
       try {
         const userId = localStorage.getItem('userId');
         if (!userId) throw new Error("User ID tidak ditemukan");
+
+        // Batasi nilai maksimal = KKM
+        let scoreToSave = newScore;
+        if (scoreToSave > kkm) {
+          scoreToSave = kkm;
+        }
+
         const nilaiRef = doc(db, "nilai", userId);
-        await updateDoc(nilaiRef, {
-          "Kuis List": finalScore * 10
-        });
+        const nilaiDoc = await getDoc(nilaiRef);
+        const nilaiData = nilaiDoc.exists() ? nilaiDoc.data() : {};
+        const existingScore = nilaiData["Kuis List"] || 0;
 
-        const mahasiswaRef = doc(db, "mahasiswa", userId);
-        const mahasiswaDoc = await getDoc(mahasiswaRef);
-        if (!mahasiswaDoc.exists()) throw new Error("Data mahasiswa tidak ditemukan");
+        // Bandingkan nilai
+        if (scoreToSave > existingScore) {
+          // Simpan nilai baru
+          await updateDoc(nilaiRef, {
+            "Kuis List": scoreToSave
+          });
 
-        const nilaiAkhir = finalScore * 10;
-        const isPassed = nilaiAkhir >= kkm;
-
-        if (isPassed) {
-          const currentProgres = mahasiswaDoc.data().progres_belajar || 0;
-          if (currentProgres < 5) {
-            await updateDoc(mahasiswaRef, {
-              progres_belajar: increment(1)
-            });
-            setProgresBelajar(currentProgres + 1);
+          // Update progres jika lulus
+          const mahasiswaRef = doc(db, "mahasiswa", userId);
+          const mahasiswaDoc = await getDoc(mahasiswaRef);
+          if (mahasiswaDoc.exists()) {
+            const isPassed = scoreToSave >= kkm;
+            if (isPassed) {
+              const currentProgres = mahasiswaDoc.data().progres_belajar || 0;
+              if (currentProgres < 5) {
+                await updateDoc(mahasiswaRef, {
+                  progres_belajar: increment(1)
+                });
+                setProgresBelajar(currentProgres + 1);
+              }
+            }
           }
+          alert(`Nilai berhasil disimpan: ${scoreToSave}`);
+        } else {
+          alert(`Nilai Anda saat ini ${existingScore} lebih tinggi dari nilai baru ${scoreToSave}.\nNilai tidak diupdate.`);
         }
       } catch (error) {
         console.error("Gagal menyimpan nilai:", error);
@@ -321,9 +332,9 @@ export default function KuisList() {
         setSavingData(false);
       }
     }
+
     isSubmittingRef.current = false;
   };
-  // ===================================
 
   const handleCollectClick = () => {
     const hasUnsure = unsures.some(u => u === true);
@@ -332,7 +343,6 @@ export default function KuisList() {
       return;
     }
 
-    // Validasi semua soal terjawab (termasuk esai)
     const allAnswered = answers.every((ans, idx) => {
       const q = questions[idx];
       const isEssay = q.isEssay || (q.pilihan && q.pilihan.length === 0);
@@ -652,7 +662,6 @@ export default function KuisList() {
             <p style={stylesMobile.questionText}>{q.pertanyaan}</p>
 
             {isEssay ? (
-              // ===== SOAL ESAI dengan CodeMirror =====
               <div style={stylesMobile.essayContainer}>
                 <CodeMirror
                   value={answers[currentQuestion] || ''}
@@ -675,7 +684,6 @@ export default function KuisList() {
                 />
               </div>
             ) : (
-              // ===== SOAL PILIHAN GANDA =====
               <div style={stylesMobile.optionsContainer}>
                 {q.pilihan.map((opt, idx) => (
                   <label key={idx} style={stylesMobile.optionLabel}>
@@ -821,7 +829,6 @@ export default function KuisList() {
           <p style={styles.questionText}>{q.pertanyaan}</p>
 
           {isEssay ? (
-            // ===== SOAL ESAI dengan CodeMirror =====
             <div style={styles.essayContainer}>
               <CodeMirror
                 value={answers[currentQuestion] || ''}
@@ -844,7 +851,6 @@ export default function KuisList() {
               />
             </div>
           ) : (
-            // ===== SOAL PILIHAN GANDA =====
             <div style={styles.optionsContainer}>
               {q.pilihan.map((opt, idx) => (
                 <label key={idx} style={styles.optionLabel}>

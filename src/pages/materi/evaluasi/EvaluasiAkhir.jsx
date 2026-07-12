@@ -273,6 +273,7 @@ export default function EvaluasiAkhir() {
     setShowConfirmModal(true);
   };
 
+  // ========== PERBAIKAN UTAMA: Simpan nilai tertinggi dengan batas KKM ==========
   const processSubmit = async (auto = false) => {
     if (submitted || questions.length === 0 || isSubmittingRef.current) return;
     isSubmittingRef.current = true;
@@ -304,34 +305,49 @@ export default function EvaluasiAkhir() {
       results.push({ ...q, userAnswer, isCorrect });
     }
     const wrong = questions.length - correct;
-    const totalScore = correct * (questions[0]?.bobot || 5);
+    let totalScore = correct * (questions[0]?.bobot || 5);
     const waktuDigunakan = auto ? DURASI_KUIS : DURASI_KUIS - (timeLeft < 0 ? 0 : timeLeft);
     setResultsData({ results, correct, wrong, totalScore, waktuDigunakan });
 
+    // ===== MAHASISWA: Simpan hanya jika nilai lebih tinggi, dengan batas KKM =====
     if (role === 'mahasiswa') {
       setSavingData(true);
       try {
         const userId = localStorage.getItem('userId');
         if (!userId) throw new Error("User ID tidak ditemukan");
+
+        // Batasi nilai maksimal = KKM
+        let newScore = totalScore;
+        if (newScore > kkm) {
+          newScore = kkm;
+        }
+
         const nilaiRef = doc(db, "nilai", userId);
-        await updateDoc(nilaiRef, { Evaluasi: totalScore });
+        const nilaiDoc = await getDoc(nilaiRef);
+        const nilaiData = nilaiDoc.exists() ? nilaiDoc.data() : {};
+        const existingScore = nilaiData["Evaluasi"] || 0;
 
-        const mahasiswaRef = doc(db, "mahasiswa", userId);
-        const mahasiswaDoc = await getDoc(mahasiswaRef);
-        if (!mahasiswaDoc.exists()) throw new Error("Data mahasiswa tidak ditemukan");
+        // Bandingkan nilai (dengan batas KKM)
+        if (newScore > existingScore) {
+          // Simpan nilai baru
+          await updateDoc(nilaiRef, { Evaluasi: newScore });
 
-        const isPassed = totalScore >= kkm;
-        if (isPassed) {
-          const bonusKey = `evaluasi_bonus_done_${kelasId}`;
-          const alreadyBonus = localStorage.getItem(bonusKey);
-          
-          // Tambah progres hanya jika masih < 14
-          if (!alreadyBonus && progresBelajar < 14) {
-            await updateDoc(mahasiswaRef, { progres_belajar: increment(1) });
-            // Update state lokal
-            setProgresBelajar(progresBelajar + 1);
-            localStorage.setItem(bonusKey, "true");
+          // Update progres jika lulus (newScore >= kkm)
+          const mahasiswaRef = doc(db, "mahasiswa", userId);
+          const mahasiswaDoc = await getDoc(mahasiswaRef);
+          if (mahasiswaDoc.exists()) {
+            const isPassed = newScore >= kkm;
+            if (isPassed) {
+              const currentProgres = mahasiswaDoc.data().progres_belajar || 0;
+              if (currentProgres < 14) {
+                await updateDoc(mahasiswaRef, { progres_belajar: increment(1) });
+                setProgresBelajar(currentProgres + 1);
+              }
+            }
           }
+          alert(`Nilai berhasil disimpan: ${newScore}`);
+        } else {
+          alert(`Nilai Anda saat ini ${existingScore} lebih tinggi dari nilai baru ${newScore}.\nNilai tidak diupdate.`);
         }
       } catch (err) {
         console.error(err);
