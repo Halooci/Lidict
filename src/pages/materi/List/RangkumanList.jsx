@@ -4,19 +4,30 @@ import SidebarMateri from "../../komponen/SidebarMateri";
 import { useNavigate } from 'react-router-dom';
 import { db } from "../../../config/firebase";
 import { doc, getDoc } from "firebase/firestore";
-import MateriPagination from "../../komponen/MateriPagination"; // <-- import pagination
+import MateriPagination from "../../komponen/MateriPagination";
 
 export default function RangkumanList() {
   const navigate = useNavigate();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [loading, setLoading] = useState(true);
   const [progresBelajar, setProgresBelajar] = useState(null);
+  const [userRole, setUserRole] = useState(null);
 
   useEffect(() => {
     const userId = localStorage.getItem('userId');
     const userEmail = localStorage.getItem('userEmail');
+    const role = localStorage.getItem('userRole');
+    
     if (!userId || !userEmail) {
       navigate('/loginregister');
+      return;
+    }
+    
+    setUserRole(role);
+
+    // Jika role adalah dosen, tidak perlu fetch progres
+    if (role === 'dosen') {
+      setLoading(false);
       return;
     }
 
@@ -29,7 +40,7 @@ export default function RangkumanList() {
           const progres = data.progres_belajar || 0;
           setProgresBelajar(progres);
           
-          // 🔒 Halaman hanya bisa diakses jika progres >= 4
+          // 🔒 Halaman hanya bisa diakses jika progres >= 4 (hanya untuk mahasiswa)
           if (progres < 4) {
             navigate('/dashboard');
             return;
@@ -177,8 +188,8 @@ export default function RangkumanList() {
             </div>
           </section>
 
-          {/* ===== PAGINATION DENGAN DISABLE NEXT ===== */}
-          <MateriPagination nextDisabled={progresBelajar !== null && progresBelajar < 4} />
+          {/* ===== PAGINATION ===== */}
+          <MateriPagination nextDisabled={userRole === 'mahasiswa' && progresBelajar !== null && progresBelajar < 4} />
 
         </div>
       </div>

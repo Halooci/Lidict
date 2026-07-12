@@ -1,4 +1,4 @@
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
 import logo from "../../assets/logo-media-terbaru.png";
 
@@ -89,6 +89,21 @@ export default function NavbarDosen() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userName, setUserName] = useState("");
   const navigate = useNavigate();
+  const location = useLocation();
+
+  // Tentukan tab aktif berdasarkan pathname
+  const getActiveTab = (pathname) => {
+    if (pathname.startsWith("/dosen/dashboard")) return "dashboard";
+    if (pathname.startsWith("/dosen/materi")) return "materi";
+    if (pathname.startsWith("/dosen/informasi")) return "informasi";
+    return "";
+  };
+
+  const [activeTab, setActiveTab] = useState(getActiveTab(location.pathname));
+
+  useEffect(() => {
+    setActiveTab(getActiveTab(location.pathname));
+  }, [location.pathname]);
 
   useEffect(() => {
     const userId = localStorage.getItem("userId");
@@ -118,13 +133,28 @@ export default function NavbarDosen() {
       </div>
 
       <div className="right-section">
-        <Link to="/dosen/dashboard" className="nav-item">Dashboard Dosen</Link>
-        <Link to="/dosen/materi" className="nav-item">Materi</Link>
-        <Link to="/dosen/informasi" className="nav-item">Informasi</Link>
+        <Link 
+          to="/dosen/dashboard" 
+          className={`nav-item ${activeTab === "dashboard" ? "active" : ""}`}
+        >
+          Dashboard Dosen
+        </Link>
+        <Link 
+          to="/dosen/materi" 
+          className={`nav-item ${activeTab === "materi" ? "active" : ""}`}
+        >
+          Materi
+        </Link>
+        <Link 
+          to="/dosen/informasi" 
+          className={`nav-item ${activeTab === "informasi" ? "active" : ""}`}
+        >
+          Informasi
+        </Link>
         {isLoggedIn ? (
           <AvatarDropdown userName={userName} userRole={localStorage.getItem("userRole")} />
         ) : (
-        <div className="avatar">👤</div>
+          <div className="avatar">👤</div>
         )}
       </div>
 
@@ -168,6 +198,10 @@ export default function NavbarDosen() {
           transition: all 0.2s ease;
         }
         .nav-item:hover {
+          border-bottom: 2px solid #FFD43B;
+          color: #FFD43B;
+        }
+        .nav-item.active {
           border-bottom: 2px solid #FFD43B;
           color: #FFD43B;
         }

@@ -4,7 +4,7 @@ import Navbar from "../../komponen/Navbar";
 import SidebarMateri from "../../komponen/SidebarMateri";
 import { db } from "../../../config/firebase";
 import { doc, getDoc, updateDoc, increment, setDoc } from "firebase/firestore";
-import MateriPagination from "../../komponen/MateriPagination"; // <-- import
+import MateriPagination from "../../komponen/MateriPagination";
 
 // ---------- IMPOR CODEMIRROR ----------
 import CodeMirror from '@uiw/react-codemirror';
@@ -354,7 +354,7 @@ const CodeEditor = ({ code, pyodideReady, runPythonCode, explanations, beforeDat
   );
 };
 
-// ===================== KOMPONEN PRAKTIK (EDITABLE) - DIPERBAIKI UNTUK MULTI-BARIS =====================
+// ===================== KOMPONEN PRAKTIK (EDITABLE) =====================
 const CodeEditorEditable = ({ title, pyodideReady, runPythonCode, onValidation, initialCode = "" }) => {
   const [localCode, setLocalCode] = useState(initialCode);
   const [output, setOutput] = useState("");
@@ -372,7 +372,7 @@ const CodeEditorEditable = ({ title, pyodideReady, runPythonCode, onValidation, 
     if (onValidation) onValidation({ isValid: false, isComplete: false, code: value });
   }, [onValidation]);
 
-  // 🔽 Fungsi untuk membersihkan kode dari komentar dan menggabungkan baris
+  // Fungsi untuk membersihkan kode dari komentar dan menggabungkan baris
   const getCleanCode = (code) => {
     return code
       .split('\n')
@@ -381,7 +381,7 @@ const CodeEditorEditable = ({ title, pyodideReady, runPythonCode, onValidation, 
       .join(' ');
   };
 
-  // 🔽 Fungsi untuk mengecek pola pada kode bersih
+  // Fungsi untuk mengecek pola pada kode bersih
   const hasPattern = (code, pattern) => {
     const clean = getCleanCode(code);
     return pattern.test(clean);
@@ -415,7 +415,7 @@ const CodeEditorEditable = ({ title, pyodideReady, runPythonCode, onValidation, 
     // Regex untuk print inventaris
     const printPattern = /print\s*\(\s*inventaris\s*\)/;
     
-    // 🔽 Gunakan hasPattern (bukan hasNonCommentLine)
+    // Gunakan hasPattern
     const hasDict = hasPattern(code, dictPattern);
     const hasUpdate = hasPattern(code, updatePattern);
     const hasPop = hasPattern(code, popPattern);
@@ -491,7 +491,7 @@ const CodeEditorEditable = ({ title, pyodideReady, runPythonCode, onValidation, 
   );
 };
 
-// ===================== KOMPONEN LATIHAN SOAL - DENGAN PRAKTIKUM SELESAI =====================
+// ===================== KOMPONEN LATIHAN SOAL =====================
 const LatihanSoal = ({ questions, resetTrigger, onAllCorrectChange, praktikumSelesai }) => {
   const [answers, setAnswers] = useState(questions.map(() => null));
   const [feedback, setFeedback] = useState(questions.map(() => ""));
@@ -521,7 +521,7 @@ const LatihanSoal = ({ questions, resetTrigger, onAllCorrectChange, praktikumSel
   };
 
   const handleCheckAll = () => {
-    // 🔽 CEK APAKAH PRAKTIKUM SUDAH SELESAI
+    // CEK APAKAH PRAKTIKUM SUDAH SELESAI
     if (!praktikumSelesai) {
       alert("Anda harus menyelesaikan Praktikum terlebih dahulu sebelum mengerjakan latihan!");
       return;
@@ -620,6 +620,7 @@ const eksplorasiQuestions = [
 export default function ManipulasiDictionary() {
   const navigate = useNavigate();
   const [userId, setUserId] = useState(null);
+  const [userRole, setUserRole] = useState(null);
   const [loading, setLoading] = useState(true);
   const [progresBelajar, setProgresBelajar] = useState(null);
 
@@ -635,16 +636,23 @@ export default function ManipulasiDictionary() {
   useEffect(() => {
     const uid = localStorage.getItem('userId');
     const userEmail = localStorage.getItem('userEmail');
+    const role = localStorage.getItem('userRole');
     if (!uid || !userEmail) {
       navigate('/loginregister');
     } else {
       setUserId(uid);
+      setUserRole(role);
     }
   }, [navigate]);
 
-  // Fetch progres_belajar dari Firestore
+  // Fetch progres_belajar dari Firestore (hanya untuk mahasiswa)
   useEffect(() => {
     if (!userId) return;
+    // Jika role dosen, tidak perlu fetch progres dan tidak perlu redirect
+    if (userRole === 'dosen') {
+      setLoading(false);
+      return;
+    }
 
     const fetchProgres = async () => {
       setLoading(true);
@@ -656,7 +664,7 @@ export default function ManipulasiDictionary() {
           const progres = data.progres_belajar || 0;
           setProgresBelajar(progres);
 
-          // 🔒 Halaman hanya bisa diakses jika progres >= 11
+          // 🔒 Halaman hanya bisa diakses jika progres >= 11 (hanya untuk mahasiswa)
           if (progres < 11) {
             navigate('/dashboard');
             return;
@@ -674,7 +682,7 @@ export default function ManipulasiDictionary() {
     };
 
     fetchProgres();
-  }, [userId, navigate]);
+  }, [userId, userRole, navigate]);
 
   // Ambil data praktikum dari Firestore
   useEffect(() => {
@@ -710,37 +718,34 @@ export default function ManipulasiDictionary() {
   const [praktikMessage, setPraktikMessage] = useState("");
   const [praktikMessageType, setPraktikMessageType] = useState("");
 
-  // Tampilkan modal hanya jika:
-  // 1. progresBelajar < 12 (belum mencapai level 12)
-  // 2. semua latihan benar
-  // 3. belum menampilkan modal
+  // Tampilkan modal hanya jika role mahasiswa dan progres < 12 dan semua latihan benar
   useEffect(() => {
     if (!userId) return;
+    if (userRole === 'dosen') {
+      setShowModal(false);
+      return;
+    }
     if (progresBelajar === null) return;
     if (progresBelajar >= 12) {
-      // Jika progres >= 12, tidak perlu tampilkan modal
       setShowModal(false);
       return;
     }
     if (allLatihanCorrect && !showModal) {
-      // Jika progres < 12 dan semua latihan benar, tampilkan modal
       setShowModal(true);
     }
-  }, [allLatihanCorrect, userId, showModal, progresBelajar]);
+  }, [allLatihanCorrect, userId, showModal, progresBelajar, userRole]);
 
   const handleCompleteAndNavigate = async () => {
     try {
-      // Tambah progres hanya jika masih < 12
-      if (progresBelajar < 12) {
+      // Tambah progres hanya jika mahasiswa dan masih < 12
+      if (userRole === 'mahasiswa' && progresBelajar < 12) {
         const mahasiswaRef = doc(db, "mahasiswa", userId);
         await updateDoc(mahasiswaRef, {
           progres_belajar: increment(1)
         });
-        // Update state lokal
         setProgresBelajar(progresBelajar + 1);
       }
       
-      // Tandai bonus sudah diberikan
       localStorage.setItem(BONUS_DONE_KEY, "true");
       setShowModal(false);
       navigate("/Dictionary/RangkumanDictionary");
@@ -1214,13 +1219,13 @@ _buffer.getvalue()
             </>
           )}
 
-          {/* ===== PAGINATION DENGAN DISABLE NEXT ===== */}
-          <MateriPagination nextDisabled={progresBelajar !== null && progresBelajar < 12} />
+          {/* ===== PAGINATION ===== */}
+          <MateriPagination nextDisabled={userRole === 'mahasiswa' && progresBelajar !== null && progresBelajar < 12} />
 
         </div>
       </div>
 
-      {/* Modal Sukses - HANYA MUNCUL JIKA PROGRES < 12 */}
+      {/* Modal Sukses - HANYA UNTUK MAHASISWA DENGAN PROGRES < 12 */}
       {showModal && (
         <div style={styles.modalOverlay}>
           <div style={styles.modal}>

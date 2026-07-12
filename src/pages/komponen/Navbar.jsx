@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useState, useEffect } from "react";
 import AvatarDropdown from "./AvatarDropdown";
 import logo from "../../assets/logo-media-terbaru.png";
@@ -7,6 +7,23 @@ export default function Navbar() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [userName, setUserName] = useState("");
   const [userRole, setUserRole] = useState("");
+  const location = useLocation();
+
+  // Fungsi untuk menentukan tab aktif berdasarkan pathname
+  const getActiveTab = (pathname) => {
+    if (pathname === "/" || pathname === "") return "beranda";
+    if (pathname.startsWith("/PetaKonsep") || pathname.startsWith("/dosen/materi")) return "materi";
+    if (pathname.startsWith("/InformasiPage") || pathname.startsWith("/dosen/informasi")) return "informasi";
+    if (pathname.startsWith("/dosen/dashboard")) return "dashboard";
+    return "";
+  };
+
+  const [activeTab, setActiveTab] = useState(getActiveTab(location.pathname));
+
+  // Update activeTab saat pathname berubah
+  useEffect(() => {
+    setActiveTab(getActiveTab(location.pathname));
+  }, [location.pathname]);
 
   useEffect(() => {
     const userId = localStorage.getItem("userId");
@@ -33,12 +50,20 @@ export default function Navbar() {
       </div>
 
       <div className="right-section">
-        <Link to="/" className="nav-item">Beranda</Link>
-        <Link to="/PetaKonsep" className="nav-item">Materi</Link>
-        <Link to="/InformasiPage" className="nav-item">Informasi</Link>
+        <Link to="/" className={`nav-item ${activeTab === "beranda" ? "active" : ""}`}>
+          Beranda
+        </Link>
+        <Link to="/PetaKonsep" className={`nav-item ${activeTab === "materi" ? "active" : ""}`}>
+          Materi
+        </Link>
+        <Link to="/InformasiPage" className={`nav-item ${activeTab === "informasi" ? "active" : ""}`}>
+          Informasi
+        </Link>
         
         {isLoggedIn && userRole === "dosen" && (
-          <Link to="/dosen/dashboard" className="nav-item">Dashboard</Link>
+          <Link to="/dosen/dashboard" className={`nav-item ${activeTab === "dashboard" ? "active" : ""}`}>
+            Dashboard
+          </Link>
         )}
 
         {isLoggedIn ? (
@@ -96,6 +121,11 @@ export default function Navbar() {
         .nav-item:hover {
           border-bottom: 2px solid #FFD43B;
           color: #FFD43B;
+        }
+
+        .nav-item.active {
+          border-bottom: 2px solid #FFD43B !important;
+          color: #FFD43B !important;
         }
 
         .avatar {

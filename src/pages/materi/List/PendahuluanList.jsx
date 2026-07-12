@@ -566,6 +566,7 @@ const LatihanList = ({ onAllCorrectChange }) => {
 export default function PendahuluanList() {
   const navigate = useNavigate();
   const [userId, setUserId] = useState(null);
+  const [userRole, setUserRole] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(true);
   const [progresBelajar, setProgresBelajar] = useState(null);
@@ -577,20 +578,27 @@ export default function PendahuluanList() {
   const BONUS_DONE_KEY = `pendahuluan${TOPIC_NAME}_bonus_done`;
   // ────────────────────────────────────────────
 
-  // Cek autentikasi user
+  // Cek autentikasi user dan role
   useEffect(() => {
     const uid = localStorage.getItem('userId');
     const userEmail = localStorage.getItem('userEmail');
+    const role = localStorage.getItem('userRole');
     if (!uid || !userEmail) {
       navigate('/loginregister');
     } else {
       setUserId(uid);
+      setUserRole(role);
     }
   }, [navigate]);
 
-  // Fetch progres_belajar dari Firestore
+  // Fetch progres_belajar dari Firestore (hanya untuk mahasiswa)
   useEffect(() => {
     if (!userId) return;
+    // Jika role adalah dosen, tidak perlu fetch progres dan tidak perlu redirect
+    if (userRole === 'dosen') {
+      setLoading(false);
+      return;
+    }
 
     const fetchProgres = async () => {
       setLoading(true);
@@ -602,58 +610,59 @@ export default function PendahuluanList() {
           const progres = data.progres_belajar || 0;
           setProgresBelajar(progres);
 
-          // 🔒 Halaman hanya bisa diakses jika progres >= 1
+          // 🔒 Halaman hanya bisa diakses jika progres >= 1 (hanya untuk mahasiswa)
           if (progres < 1) {
-            navigate('/dashboard');
+            navigate('/PetaKonsep');
             return;
           }
           // Jika progres >= 1, boleh akses halaman
         } else {
           // Dokumen tidak ditemukan, anggap progres 0
-          navigate('/dashboard');
+          navigate('/PetaKonsep');
         }
       } catch (error) {
         console.error("Gagal mengambil progres:", error);
-        navigate('/dashboard');
+        navigate('/PetaKonsep');
       } finally {
         setLoading(false);
       }
     };
 
     fetchProgres();
-  }, [userId, navigate]);
+  }, [userId, userRole, navigate]);
 
   // Tampilkan modal hanya jika:
-  // 1. progresBelajar < 2 (belum mencapai level 2)
-  // 2. semua latihan benar
-  // 3. belum menampilkan modal
+  // - role mahasiswa
+  // - progresBelajar < 2
+  // - semua latihan benar
+  // - belum menampilkan modal
   useEffect(() => {
     if (!userId) return;
+    if (userRole === 'dosen') {
+      setShowModal(false);
+      return;
+    }
     if (progresBelajar === null) return;
     if (progresBelajar >= 2) {
-      // Jika progres >= 2, tidak perlu tampilkan modal
       setShowModal(false);
       return;
     }
     if (allLatihanCorrect && !showModal) {
-      // Jika progres < 2 dan semua latihan benar, tampilkan modal
       setShowModal(true);
     }
-  }, [allLatihanCorrect, userId, showModal, progresBelajar]);
+  }, [allLatihanCorrect, userId, showModal, progresBelajar, userRole]);
 
   const handleCompleteAndNavigate = async () => {
     try {
-      // Tambah progres hanya jika masih < 2
-      if (progresBelajar < 2) {
+      // Tambah progres hanya jika mahasiswa dan masih < 2
+      if (userRole === 'mahasiswa' && progresBelajar < 2) {
         const mahasiswaRef = doc(db, "mahasiswa", userId);
         await updateDoc(mahasiswaRef, {
           progres_belajar: increment(1)
         });
-        // Update state lokal
         setProgresBelajar(progresBelajar + 1);
       }
       
-      // Tandai bonus sudah diberikan
       localStorage.setItem(BONUS_DONE_KEY, "true");
       setShowModal(false);
       navigate("/List/PembuatanAksesElement");
@@ -982,13 +991,13 @@ sys.stdout = StringIO()
             </>
           )}
 
-          {/* ===== PAGINATION DENGAN DISABLE NEXT (TAPI TETAP BISA DIKLIK) ===== */}
-          <MateriPagination nextDisabled={progresBelajar !== null && progresBelajar < 2} />
+          {/* ===== PAGINATION ===== */}
+          <MateriPagination nextDisabled={userRole === 'mahasiswa' && progresBelajar !== null && progresBelajar < 2} />
 
         </div>
       </div>
 
-      {/* MODAL POP-UP - HANYA MUNCUL JIKA PROGRES < 2 */}
+      {/* MODAL POP-UP - HANYA MUNCUL UNTUK MAHASISWA DENGAN PROGRES < 2 */}
       {showModal && (
         <div style={styles.modalOverlay}>
           <div style={styles.modal}>

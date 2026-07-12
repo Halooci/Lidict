@@ -4,7 +4,7 @@ import Navbar from "../../komponen/Navbar";
 import SidebarMateri from "../../komponen/SidebarMateri";
 import { db } from "../../../config/firebase";
 import { doc, getDoc, updateDoc, increment } from "firebase/firestore";
-import MateriPagination from "../../komponen/MateriPagination"; // <-- import
+import MateriPagination from "../../komponen/MateriPagination";
 
 // ===================== KOMPONEN VISUALISASI DICTIONARY =====================
 const DictionaryVisualization = ({ data, title }) => {
@@ -168,6 +168,7 @@ const LatihanSoal = ({ soal, index, selectedAnswer, onSelect, isWrong }) => {
 export default function PendahuluanDictionary() {
   const navigate = useNavigate();
   const [userId, setUserId] = useState(null);
+  const [userRole, setUserRole] = useState(null);
   const [loading, setLoading] = useState(true);
   const [progresBelajar, setProgresBelajar] = useState(null);
 
@@ -181,16 +182,23 @@ export default function PendahuluanDictionary() {
   useEffect(() => {
     const uid = localStorage.getItem('userId');
     const userEmail = localStorage.getItem('userEmail');
+    const role = localStorage.getItem('userRole');
     if (!uid || !userEmail) {
       navigate('/loginregister');
     } else {
       setUserId(uid);
+      setUserRole(role);
     }
   }, [navigate]);
 
-  // Fetch progres_belajar dari Firestore
+  // Fetch progres_belajar dari Firestore (hanya untuk mahasiswa)
   useEffect(() => {
     if (!userId) return;
+    // Jika role dosen, tidak perlu fetch progres dan tidak perlu redirect
+    if (userRole === 'dosen') {
+      setLoading(false);
+      return;
+    }
 
     const fetchProgres = async () => {
       setLoading(true);
@@ -202,7 +210,7 @@ export default function PendahuluanDictionary() {
           const progres = data.progres_belajar || 0;
           setProgresBelajar(progres);
 
-          // 🔒 Halaman hanya bisa diakses jika progres >= 9
+          // 🔒 Halaman hanya bisa diakses jika progres >= 9 (hanya untuk mahasiswa)
           if (progres < 9) {
             navigate('/dashboard');
             return;
@@ -220,7 +228,7 @@ export default function PendahuluanDictionary() {
     };
 
     fetchProgres();
-  }, [userId, navigate]);
+  }, [userId, userRole, navigate]);
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -377,37 +385,34 @@ export default function PendahuluanDictionary() {
     soalRefs.current = soalRefs.current.slice(0, latihanSoal.length);
   }, [latihanSoal.length]);
 
-  // Tampilkan modal hanya jika:
-  // 1. progresBelajar < 10 (belum mencapai level 10)
-  // 2. semua latihan benar
-  // 3. belum menampilkan modal
+  // Tampilkan modal hanya jika role mahasiswa dan progres < 10 dan semua latihan benar
   useEffect(() => {
     if (!userId) return;
+    if (userRole === 'dosen') {
+      setShowModal(false);
+      return;
+    }
     if (progresBelajar === null) return;
     if (progresBelajar >= 10) {
-      // Jika progres >= 10, tidak perlu tampilkan modal
       setShowModal(false);
       return;
     }
     if (semuaBenar && !showModal) {
-      // Jika progres < 10 dan semua latihan benar, tampilkan modal
       setShowModal(true);
     }
-  }, [semuaBenar, userId, showModal, progresBelajar]);
+  }, [semuaBenar, userId, showModal, progresBelajar, userRole]);
 
   const handleCompleteAndNavigate = async () => {
     try {
-      // Tambah progres hanya jika masih < 10
-      if (progresBelajar < 10) {
+      // Tambah progres hanya jika mahasiswa dan masih < 10
+      if (userRole === 'mahasiswa' && progresBelajar < 10) {
         const mahasiswaRef = doc(db, "mahasiswa", userId);
         await updateDoc(mahasiswaRef, {
           progres_belajar: increment(1)
         });
-        // Update state lokal
         setProgresBelajar(progresBelajar + 1);
       }
       
-      // Tandai bonus sudah diberikan
       localStorage.setItem(BONUS_DONE_KEY, "true");
       setShowModal(false);
       navigate("/Dictionary/PembuatanAksesElementDictionary");
@@ -650,13 +655,13 @@ export default function PendahuluanDictionary() {
             </>
           )}
 
-          {/* ===== PAGINATION DENGAN DISABLE NEXT ===== */}
-          <MateriPagination nextDisabled={progresBelajar !== null && progresBelajar < 10} />
+          {/* ===== PAGINATION ===== */}
+          <MateriPagination nextDisabled={userRole === 'mahasiswa' && progresBelajar !== null && progresBelajar < 10} />
 
         </div>
       </div>
 
-      {/* Modal Sukses - HANYA MUNCUL JIKA PROGRES < 10 */}
+      {/* Modal Sukses - HANYA UNTUK MAHASISWA DENGAN PROGRES < 10 */}
       {showModal && (
         <div style={styles.modalOverlay}>
           <div style={styles.modal}>

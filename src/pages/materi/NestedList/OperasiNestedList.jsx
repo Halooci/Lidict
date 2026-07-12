@@ -4,7 +4,7 @@ import Navbar from "../../komponen/Navbar";
 import SidebarMateri from "../../komponen/SidebarMateri";
 import { db } from "../../../config/firebase";
 import { doc, getDoc, updateDoc, increment, setDoc } from "firebase/firestore";
-import MateriPagination from "../../komponen/MateriPagination"; // <-- import
+import MateriPagination from "../../komponen/MateriPagination";
 
 // ---------- IMPOR CODEMIRROR ----------
 import CodeMirror from '@uiw/react-codemirror';
@@ -745,13 +745,12 @@ const CodeEditorWithTripleVisual = ({ code, title, pyodideReady, runPythonCode, 
   );
 };
 
-// ================= KOMPONEN PRAKTIK (EDITOR) - DIPERBAIKI VALIDASI MULTI-BARIS =================
+// ================= KOMPONEN PRAKTIK (EDITOR) =================
 const CodeEditorEditable = ({ pyodideReady, runPythonCode, onValidation, initialCode = "" }) => {
   const [localCode, setLocalCode] = useState(initialCode);
   const [output, setOutput] = useState("");
   const [isRunning, setIsRunning] = useState(false);
 
-  // Update localCode jika initialCode berubah
   useEffect(() => {
     setLocalCode(initialCode);
   }, [initialCode]);
@@ -761,7 +760,6 @@ const CodeEditorEditable = ({ pyodideReady, runPythonCode, onValidation, initial
     if (onValidation) onValidation({ isValid: false, isComplete: false, code: value });
   }, [onValidation]);
 
-  // Fungsi untuk membersihkan kode dari komentar dan menggabungkan baris
   const getCleanCode = (code) => {
     return code
       .split('\n')
@@ -770,7 +768,6 @@ const CodeEditorEditable = ({ pyodideReady, runPythonCode, onValidation, initial
       .join(' ');
   };
 
-  // Fungsi untuk mengecek pola pada kode bersih
   const hasPattern = (code, pattern) => {
     const clean = getCleanCode(code);
     return pattern.test(clean);
@@ -806,7 +803,6 @@ const CodeEditorEditable = ({ pyodideReady, runPythonCode, onValidation, initial
     const printPattern = /print\s*\(\s*data\s*\[\s*2\s*\]\s*\[\s*1\s*\]\s*\)/;
     const printAllPattern = /print\s*\(\s*data\s*\)/;
 
-    // Gunakan hasPattern yang sudah menggabungkan baris
     const hasList = hasPattern(localCode, listPattern);
     const hasChange = hasPattern(localCode, changePattern);
     const hasPrint = hasPattern(localCode, printPattern);
@@ -864,7 +860,7 @@ const CodeEditorEditable = ({ pyodideReady, runPythonCode, onValidation, initial
   );
 };
 
-// ================= SOAL LATIHAN - MODIFIKASI DENGAN PRAKTIKUM SELESAI =================
+// ================= SOAL LATIHAN =================
 const normalizeAnswer = (str) => str.trim().replace(/'/g, '"').replace(/\s+/g, ' ');
 
 const CodeCompletionQuestion = ({ question, codeParts, placeholders, expectedAnswers, onCheck, praktikumSelesai }) => {
@@ -1232,6 +1228,7 @@ const Eksplorasi = ({ topicName, onComplete }) => {
 export default function OperasiNestedList() {
   const navigate = useNavigate();
   const [userId, setUserId] = useState(null);
+  const [userRole, setUserRole] = useState(null);
   const [loading, setLoading] = useState(true);
   const [progresBelajar, setProgresBelajar] = useState(null);
 
@@ -1246,16 +1243,23 @@ export default function OperasiNestedList() {
   useEffect(() => {
     const uid = localStorage.getItem('userId');
     const userEmail = localStorage.getItem('userEmail');
+    const role = localStorage.getItem('userRole');
     if (!uid || !userEmail) {
       navigate('/loginregister');
     } else {
       setUserId(uid);
+      setUserRole(role);
     }
   }, [navigate]);
 
-  // Fetch progres_belajar dari Firestore
+  // Fetch progres_belajar dari Firestore (hanya untuk mahasiswa)
   useEffect(() => {
     if (!userId) return;
+    // Jika role dosen, tidak perlu fetch progres dan tidak perlu redirect
+    if (userRole === 'dosen') {
+      setLoading(false);
+      return;
+    }
 
     const fetchProgres = async () => {
       setLoading(true);
@@ -1267,24 +1271,24 @@ export default function OperasiNestedList() {
           const progres = data.progres_belajar || 0;
           setProgresBelajar(progres);
 
-          // Halaman hanya bisa diakses jika progres >= 7
+          // Halaman hanya bisa diakses jika progres >= 7 (hanya untuk mahasiswa)
           if (progres < 7) {
-            navigate('/dashboard');
+            navigate('/PetaKonsep');
             return;
           }
         } else {
-          navigate('/dashboard');
+          navigate('/PetaKonsep');
         }
       } catch (error) {
         console.error("Gagal mengambil progres:", error);
-        navigate('/dashboard');
+        navigate('/PetaKonsep');
       } finally {
         setLoading(false);
       }
     };
 
     fetchProgres();
-  }, [userId, navigate]);
+  }, [userId, userRole, navigate]);
 
   // Ambil data praktikum dari Firestore
   useEffect(() => {
@@ -1319,9 +1323,13 @@ export default function OperasiNestedList() {
   const [praktikMessage, setPraktikMessage] = useState("");
   const [praktikMessageType, setPraktikMessageType] = useState("");
 
-  // Tampilkan modal hanya jika progres < 8 dan semua latihan benar
+  // Tampilkan modal hanya jika role mahasiswa dan progres < 8 dan semua latihan benar
   useEffect(() => {
     if (!userId) return;
+    if (userRole === 'dosen') {
+      setShowModal(false);
+      return;
+    }
     if (progresBelajar === null) return;
     if (progresBelajar >= 8) {
       setShowModal(false);
@@ -1330,11 +1338,12 @@ export default function OperasiNestedList() {
     if (allExercisesCorrect && !showModal) {
       setShowModal(true);
     }
-  }, [allExercisesCorrect, userId, showModal, progresBelajar]);
+  }, [allExercisesCorrect, userId, showModal, progresBelajar, userRole]);
 
   const handleCompleteAndNavigate = async () => {
     try {
-      if (progresBelajar < 8) {
+      // Tambah progres hanya jika mahasiswa dan masih < 8
+      if (userRole === 'mahasiswa' && progresBelajar < 8) {
         const mahasiswaRef = doc(db, "mahasiswa", userId);
         await updateDoc(mahasiswaRef, {
           progres_belajar: increment(1)
@@ -1993,13 +2002,13 @@ _buffer.getvalue()
 
           {!isEksplorasiCompleted && <div style={styles.lockMessage}>🔒 Materi terkunci. Selesaikan eksplorasi di atas dengan menjawab kedua pertanyaan.</div>}
 
-          {/* ===== PAGINATION DENGAN DISABLE NEXT ===== */}
-          <MateriPagination nextDisabled={progresBelajar !== null && progresBelajar < 8} />
+          {/* ===== PAGINATION ===== */}
+          <MateriPagination nextDisabled={userRole === 'mahasiswa' && progresBelajar !== null && progresBelajar < 8} />
 
         </div>
       </div>
 
-      {/* Modal - HANYA MUNCUL JIKA PROGRES < 8 */}
+      {/* Modal - HANYA UNTUK MAHASISWA DENGAN PROGRES < 8 */}
       {showModal && (
         <div style={styles.modalOverlay}>
           <div style={styles.modal}>

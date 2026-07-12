@@ -4,7 +4,7 @@ import SidebarMateri from "../../komponen/SidebarMateri";
 import { useNavigate } from 'react-router-dom';
 import { db } from "../../../config/firebase";
 import { doc, getDoc, updateDoc, increment } from "firebase/firestore";
-import MateriPagination from "../../komponen/MateriPagination"; // <-- import pagination
+import MateriPagination from "../../komponen/MateriPagination";
 
 // ---------- IMPOR CODEMIRROR ----------
 import CodeMirror from '@uiw/react-codemirror';
@@ -646,6 +646,7 @@ const LatihanNestedList = ({ onAllCorrectChange }) => {
 export default function PendahuluanNestedList() {
   const navigate = useNavigate();
   const [userId, setUserId] = useState(null);
+  const [userRole, setUserRole] = useState(null);
   const [loading, setLoading] = useState(true);
   const [progresBelajar, setProgresBelajar] = useState(null);
 
@@ -658,16 +659,23 @@ export default function PendahuluanNestedList() {
   useEffect(() => {
     const uid = localStorage.getItem('userId');
     const userEmail = localStorage.getItem('userEmail');
+    const role = localStorage.getItem('userRole');
     if (!uid || !userEmail) {
       navigate('/loginregister');
     } else {
       setUserId(uid);
+      setUserRole(role);
     }
   }, [navigate]);
 
-  // Fetch progres_belajar dari Firestore
+  // Fetch progres_belajar dari Firestore (hanya untuk mahasiswa)
   useEffect(() => {
     if (!userId) return;
+    // Jika role dosen, tidak perlu fetch progres dan tidak perlu redirect
+    if (userRole === 'dosen') {
+      setLoading(false);
+      return;
+    }
 
     const fetchProgres = async () => {
       setLoading(true);
@@ -679,25 +687,25 @@ export default function PendahuluanNestedList() {
           const progres = data.progres_belajar || 0;
           setProgresBelajar(progres);
 
-          // 🔒 Halaman hanya bisa diakses jika progres >= 5
+          // 🔒 Halaman hanya bisa diakses jika progres >= 5 (hanya untuk mahasiswa)
           if (progres < 5) {
-            navigate('/dashboard');
+            navigate('/PetaKonsep');
             return;
           }
           // Jika progres >= 5, boleh akses halaman
         } else {
-          navigate('/dashboard');
+          navigate('/PetaKonsep');
         }
       } catch (error) {
         console.error("Gagal mengambil progres:", error);
-        navigate('/dashboard');
+        navigate('/PetaKonsep');
       } finally {
         setLoading(false);
       }
     };
 
     fetchProgres();
-  }, [userId, navigate]);
+  }, [userId, userRole, navigate]);
 
   const [pyodideReady, setPyodideReady] = useState(false);
   const pyodideRef = useRef(null);
@@ -707,37 +715,34 @@ export default function PendahuluanNestedList() {
   const [allLatihanCorrect, setAllLatihanCorrect] = useState(false);
   const [showModal, setShowModal] = useState(false);
 
-  // Tampilkan modal hanya jika:
-  // 1. progresBelajar < 6 (belum mencapai level 6)
-  // 2. semua latihan benar
-  // 3. belum menampilkan modal
+  // Tampilkan modal hanya jika role mahasiswa dan progres < 6 dan allLatihanCorrect
   useEffect(() => {
     if (!userId) return;
+    if (userRole === 'dosen') {
+      setShowModal(false);
+      return;
+    }
     if (progresBelajar === null) return;
     if (progresBelajar >= 6) {
-      // Jika progres >= 6, tidak perlu tampilkan modal
       setShowModal(false);
       return;
     }
     if (allLatihanCorrect && !showModal) {
-      // Jika progres < 6 dan semua latihan benar, tampilkan modal
       setShowModal(true);
     }
-  }, [allLatihanCorrect, userId, showModal, progresBelajar]);
+  }, [allLatihanCorrect, userId, showModal, progresBelajar, userRole]);
 
   const handleCompleteAndNavigate = async () => {
     try {
-      // Tambah progres hanya jika masih < 6
-      if (progresBelajar < 6) {
+      // Tambah progres hanya jika mahasiswa dan masih < 6
+      if (userRole === 'mahasiswa' && progresBelajar < 6) {
         const mahasiswaRef = doc(db, "mahasiswa", userId);
         await updateDoc(mahasiswaRef, {
           progres_belajar: increment(1)
         });
-        // Update state lokal
         setProgresBelajar(progresBelajar + 1);
       }
       
-      // Tandai bonus sudah diberikan
       localStorage.setItem(BONUS_DONE_KEY, "true");
       setShowModal(false);
       navigate("/NestedList/PembuatanAksesNestedList");
@@ -973,13 +978,13 @@ _buffer.getvalue()
             <div style={styles.lockMessage}>🔒 Materi terkunci. Selesaikan eksplorasi di atas dengan menjawab kedua pertanyaan.</div>
           )}
 
-          {/* ===== PAGINATION DENGAN DISABLE NEXT ===== */}
-          <MateriPagination nextDisabled={progresBelajar !== null && progresBelajar < 6} />
+          {/* ===== PAGINATION ===== */}
+          <MateriPagination nextDisabled={userRole === 'mahasiswa' && progresBelajar !== null && progresBelajar < 6} />
 
         </div>
       </div>
 
-      {/* Modal - HANYA MUNCUL JIKA PROGRES < 6 */}
+      {/* Modal - HANYA UNTUK MAHASISWA DENGAN PROGRES < 6 */}
       {showModal && (
         <div style={styles.modalOverlay}>
           <div style={styles.modal}>
