@@ -278,7 +278,7 @@ const InformasiPage = () => {
             </p>
 
             <p className="info-judul">
-              “Implementasi Web Interaktif Sebagai Media Pembelajaran Materi <i>List</i> dan <i>Dictionary</i> pada Mata Kuliah Struktur Data dengan Python”
+              “PENGEMBANGAN MEDIA PEMBELAJARAN INTERAKTIF BERBASIS WEB PADA MATERI LIST DAN DICTIONARY DENGAN MODEL TUTORIAL”
             </p>
 
             <div className="info-identitas">
